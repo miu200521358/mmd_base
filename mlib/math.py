@@ -5,10 +5,10 @@ from typing import Any, Union
 import numpy as np
 from quaternion import from_rotation_matrix, quaternion
 
-from mlib.logger import parse2str
+from mlib.base import BaseModel
 
 
-class MRect:
+class MRect(BaseModel):
     """
     矩形クラス
 
@@ -29,9 +29,6 @@ class MRect:
         self.y = int(y)
         self.width = int(width)
         self.height = int(height)
-
-    def __str__(self) -> str:
-        return parse2str(self)
 
     @property
     def x(self) -> int:
@@ -66,7 +63,7 @@ class MRect:
         self.height = int(v)
 
 
-class MVector:
+class MVector(BaseModel):
     """ベクトル基底クラス"""
 
     __slots__ = ["vector"]
@@ -86,9 +83,6 @@ class MVector:
             self.vector = np.copy(x)
         else:
             self.vector = x.copy()
-
-    def __str__(self) -> str:
-        return parse2str(self)
 
     def copy(self):
         return self.__class__(np.copy(self.vector))

@@ -1,5 +1,4 @@
 import pytest
-from mlib.math import MVector3D
 
 
 def test_MVector3D_length():
@@ -408,7 +407,7 @@ def test_MQuaternion_to_degrees():
 
 def test_MQuaternion_to_signed_degrees():
     import numpy as np
-    from mlib.math import MQuaternion
+    from mlib.math import MQuaternion, MVector3D
 
     assert np.isclose(
         # np.array([0, 0, 0]),
@@ -582,7 +581,7 @@ def test_MQuaternion_slerp():
 
 def test_MQuaternion_from_axis_angles():
     import numpy as np
-    from mlib.math import MQuaternion
+    from mlib.math import MQuaternion, MVector3D
 
     assert np.isclose(
         np.array(
@@ -617,7 +616,7 @@ def test_MQuaternion_from_axis_angles():
 
 def test_MQuaternion_from_direction():
     import numpy as np
-    from mlib.math import MQuaternion
+    from mlib.math import MQuaternion, MVector3D
 
     assert np.isclose(
         np.array(
@@ -652,7 +651,7 @@ def test_MQuaternion_from_direction():
 
 def test_MQuaternion_rotate():
     import numpy as np
-    from mlib.math import MQuaternion
+    from mlib.math import MQuaternion, MVector3D
 
     assert np.isclose(
         np.array(
@@ -1047,7 +1046,7 @@ def test_MMatrix4x4_to_quternion():
 
 def test_MMatrix4x4_mul():
     import numpy as np
-    from mlib.math import MMatrix4x4
+    from mlib.math import MMatrix4x4, MVector3D
 
     assert np.isclose(
         np.array([31.7184134, 15.6814818, -12.166896800000002]),
