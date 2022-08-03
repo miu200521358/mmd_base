@@ -1,6 +1,6 @@
 import operator
 from math import acos, cos, degrees, radians, sin, sqrt
-from typing import Any, Union
+from typing import Any, TypeVar, Union
 
 import numpy as np
 from quaternion import from_rotation_matrix, quaternion
@@ -263,6 +263,9 @@ class MVector(BaseModel):
     @x.setter
     def x(self, v):
         self.vector[0] = v
+
+
+TMVector = TypeVar("TMVector", bound=MVector)
 
 
 class MVector2D(MVector):

@@ -63,21 +63,23 @@ def test_DisplaySlots_init():
     from mlib.model.pmx import DisplaySlot, DisplaySlots, Switch
 
     dd = DisplaySlots()
+    dd.append(DisplaySlot("Root", "Root", Switch.ON))
+    dd.append(DisplaySlot("表情", "Exp", Switch.ON))
 
-    d: DisplaySlot = dd.get(0)
+    d: DisplaySlot = dd[0]
     assert 0 == d.index
     assert "Root" == d.name
 
-    d: DisplaySlot = dd.get(1)
+    d: DisplaySlot = dd[1]
     assert 1 == d.index
     assert "表情" == d.name
 
     d: DisplaySlot = dd.get_by_name("表情")
     assert 1 == d.index
     assert "表情" == d.name
-    assert Switch.ON == d.special_flag
+    assert Switch.ON == d.special_flg
 
-    d: DisplaySlot = dd.get(2)
+    d: DisplaySlot = dd[2]
     assert not d
 
     with pytest.raises(KeyError) as e:
