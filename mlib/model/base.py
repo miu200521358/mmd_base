@@ -127,7 +127,7 @@ class BaseIndexListModel(Generic[TBaseIndexModel], BaseModel):
 
     __slots__ = ["data"]
 
-    def __init__(self, data: list[TBaseIndexModel] = []) -> None:
+    def __init__(self, data: list[TBaseIndexModel] = None) -> None:
         """
         モデルリスト
 
@@ -137,7 +137,7 @@ class BaseIndexListModel(Generic[TBaseIndexModel], BaseModel):
             リスト, by default []
         """
         super().__init__()
-        self.__data = data
+        self.__data = data or []
         self.__index = 0
 
     def __getitem__(self, index: int) -> Optional[TBaseIndexModel]:
@@ -198,7 +198,7 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel], BaseModel):
 
     __slots__ = ["data"]
 
-    def __init__(self, data: list[TBaseIndexNameModel] = []) -> None:
+    def __init__(self, data: list[TBaseIndexNameModel] = None) -> None:
         """
         モデルリスト
 
@@ -208,7 +208,7 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel], BaseModel):
             リスト, by default []
         """
         super().__init__()
-        self.data = data
+        self.data = data or []
         self.names = dict([(v.name, v.index) for v in self.data])
 
     def __getitem__(self, index: int) -> Optional[TBaseIndexNameModel]:
