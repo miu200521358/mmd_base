@@ -267,5 +267,17 @@ def test_read_by_filepath_ok():
     ).all()
 
 
+def test_read_by_filepath_complicated():
+    from mlib.model.pmx import PmxModel
+    from mlib.reader.pmx import PmxReader
+
+    reader = PmxReader()
+    model: PmxModel = reader.read_by_filepath(
+        "D:\\MMD\\MikuMikuDance_v926x64\\UserFile\\Model\\刀剣乱舞\\"
+        + "025_一期一振\\一期一振 ちゃむ式 20211211\\01_10_極_一期_ちゃむ20211211.pmx",
+    )
+    assert "極 一期 ちゃむ" == model.name
+
+
 if __name__ == "__main__":
     pytest.main()

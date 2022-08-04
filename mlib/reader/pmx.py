@@ -1,3 +1,5 @@
+from struct import Struct
+
 from mlib.base import Encoding
 from mlib.exception import MParseException
 from mlib.math import MVector3D
@@ -27,10 +29,7 @@ from mlib.model.pmx import (
     PmxModel,
     RigidBody,
     RigidBodyCollisionGroup,
-    RigidBodyMode,
-    RigidBodyShape,
     Sdef,
-    SphereMode,
     Surface,
     Texture,
     ToonSharing,
@@ -38,7 +37,7 @@ from mlib.model.pmx import (
     Vertex,
     VertexMorphOffset,
 )
-from mlib.reader.base import BaseReader
+from mlib.reader.base import BaseReader, StructUnpackType
 
 
 class PmxReader(BaseReader[PmxModel]):
@@ -50,7 +49,7 @@ class PmxReader(BaseReader[PmxModel]):
 
     def read_by_buffer_header(self, model: PmxModel):
         # pmx宣言
-        model.signature = self.unpack("4s", 4)
+        model.signature = self.unpack_text(4)
 
         # pmxバージョン
         model.version = self.read_float()
@@ -66,32 +65,29 @@ class PmxReader(BaseReader[PmxModel]):
             )
 
         # 後続するデータ列のバイトサイズ  PMX2.0は 8 で固定
-        _ = self.read_ubyte()
+        _ = self.read_byte()
 
         # [0] - エンコード方式  | 0:UTF16 1:UTF8
-        encode_type = self.read_ubyte()
+        encode_type = self.read_byte()
         self.define_encoding(Encoding.UTF_8 if encode_type else Encoding.UTF_16_LE)
 
         # [1] - 追加UV数 	| 0～4 詳細は頂点参照
-        model.extended_uv_count = self.read_ubyte()
-
         # [2] - 頂点Indexサイズ | 1,2,4 のいずれか
-        model.vertex_count = self.read_ubyte()
-
         # [3] - テクスチャIndexサイズ | 1,2,4 のいずれか
-        model.texture_count = self.read_ubyte()
-
         # [4] - 材質Indexサイズ | 1,2,4 のいずれか
-        model.material_count = self.read_ubyte()
-
         # [5] - ボーンIndexサイズ | 1,2,4 のいずれか
-        model.bone_count = self.read_ubyte()
-
         # [6] - モーフIndexサイズ | 1,2,4 のいずれか
-        model.morph_count = self.read_ubyte()
-
         # [7] - 剛体Indexサイズ | 1,2,4 のいずれか
-        model.rigidbody_count = self.read_ubyte()
+
+        (
+            model.extended_uv_count,
+            model.vertex_count,
+            model.texture_count,
+            model.material_count,
+            model.bone_count,
+            model.morph_count,
+            model.rigidbody_count,
+        ) = self.unpack(Struct("<BBBBBBB").unpack_from, 7)
 
         # モデル名（日本語）
         model.name = self.read_text()
@@ -99,14 +95,58 @@ class PmxReader(BaseReader[PmxModel]):
     def read_by_buffer(self, model: PmxModel):
 
         # モデルの各要素サイズから読み取り処理を設定
-        self.read_vertex_index = self.define_read_index(
+        self.read_vertex_index, self.vertex_index_format = self.define_read_index(
             model.vertex_count, is_vertex=True
         )
-        self.read_texture_index = self.define_read_index(model.texture_count)
-        self.read_material_index = self.define_read_index(model.material_count)
-        self.read_bone_index = self.define_read_index(model.bone_count)
-        self.read_morph_index = self.define_read_index(model.morph_count)
-        self.read_rigidbody_index = self.define_read_index(model.rigidbody_count)
+        self.read_texture_index, self.texture_index_format = self.define_read_index(
+            model.texture_count
+        )
+        self.read_material_index, self.material_index_format = self.define_read_index(
+            model.material_count
+        )
+        self.read_bone_index, self.bone_index_format = self.define_read_index(
+            model.bone_count
+        )
+        self.read_morph_index, self.morph_index_format = self.define_read_index(
+            model.morph_count
+        )
+        self.read_rigidbody_index, self.rigidbody_index_format = self.define_read_index(
+            model.rigidbody_count
+        )
+
+        self.read_by_format[Vertex] = StructUnpackType(
+            self.read_vertices, Struct(f"<{'fff' * 2}{'ff'}").unpack_from, 4 * 8
+        )
+        self.read_by_format[Bdef2] = StructUnpackType(
+            self.read_vertices,
+            Struct(f"<{self.bone_index_format * 2}f").unpack_from,
+            model.bone_count * 2 + 4,
+        )
+        self.read_by_format[Bdef4] = StructUnpackType(
+            self.read_vertices,
+            Struct(f"<{self.bone_index_format * 4}{'f' * 4}").unpack_from,
+            model.bone_count * 4 + 4 * 4,
+        )
+        self.read_by_format[Sdef] = StructUnpackType(
+            self.read_vertices,
+            Struct(f"<{self.bone_index_format * 2}f{'fff' * 3}").unpack_from,
+            model.bone_count * 2 + 4 + (4 * 3) * 3,
+        )
+        self.read_by_format[Material] = StructUnpackType(
+            self.read_materials,
+            Struct(f"<fffffffffffbfffff{self.texture_index_format * 2}bb").unpack_from,
+            (model.texture_count * 2) + (1 * 3) + (4 * 16),
+        )
+        self.read_by_format[RigidBody] = StructUnpackType(
+            self.read_rigidbodies,
+            Struct(f"<{self.bone_index_format}bHb{'fff' * 3}fffffb").unpack_from,
+            (model.bone_count) + (1 * 3) + (2) + (4 * 3 * 3) + (4 * 5),
+        )
+        self.read_by_format[Joint] = StructUnpackType(
+            self.read_joints,
+            Struct(f"<b{self.rigidbody_index_format * 2}{'fff' * 8}").unpack_from,
+            1 + (model.rigidbody_count * 2) + (4 * 3 * 8),
+        )
 
         # モデル名（英語）
         model.english_name = self.read_text()
@@ -148,50 +188,59 @@ class PmxReader(BaseReader[PmxModel]):
         """頂点データ読み込み"""
         for _ in range(self.read_int()):
             vertex = Vertex()
-            vertex.position = self.read_MVector3D()
-            vertex.normal = self.read_MVector3D()
-            vertex.uv = self.read_MVector2D()
+            (
+                vertex.position.x,
+                vertex.position.y,
+                vertex.position.z,
+                vertex.normal.x,
+                vertex.normal.y,
+                vertex.normal.z,
+                vertex.uv.x,
+                vertex.uv.y,
+            ) = self.unpack(
+                self.read_by_format[Vertex].unpack, self.read_by_format[Vertex].size
+            )
 
             if model.extended_uv_count > 0:
                 vertex.extended_uvs.append(self.read_MVector4D())
 
-            vertex.deform_type = DeformType(self.read_ubyte())
+            vertex.deform_type = DeformType(self.read_byte())
             if vertex.deform_type == DeformType.BDEF1:
                 vertex.deform = Bdef1(self.read_bone_index())
             elif vertex.deform_type == DeformType.BDEF2:
                 vertex.deform = Bdef2(
-                    self.read_bone_index(), self.read_bone_index(), self.read_float()
+                    *self.unpack(
+                        self.read_by_format[Bdef2].unpack,
+                        self.read_by_format[Bdef2].size,
+                    )
                 )
             elif vertex.deform_type == DeformType.BDEF4:
                 vertex.deform = Bdef4(
-                    self.read_bone_index(),
-                    self.read_bone_index(),
-                    self.read_bone_index(),
-                    self.read_bone_index(),
-                    self.read_float(),
-                    self.read_float(),
-                    self.read_float(),
-                    self.read_float(),
+                    *self.unpack(
+                        self.read_by_format[Bdef4].unpack,
+                        self.read_by_format[Bdef4].size,
+                    )
                 )
             else:
                 vertex.deform = Sdef(
-                    self.read_bone_index(),
-                    self.read_bone_index(),
-                    self.read_float(),
-                    self.read_MVector3D(),
-                    self.read_MVector3D(),
-                    self.read_MVector3D(),
+                    *self.unpack(
+                        self.read_by_format[Sdef].unpack, self.read_by_format[Sdef].size
+                    )
                 )
             vertex.edge_factor = self.read_float()
             model.vertices.append(vertex)
 
     def read_surfaces(self, model: PmxModel):
         """面データ読み込み"""
-        for _ in range(0, self.read_int(), 3):
-            v0 = self.read_vertex_index()
-            v1 = self.read_vertex_index()
-            v2 = self.read_vertex_index()
+        surfaces_vertex_count = self.read_int()
+        surfaces_vertices = self.unpack(
+            Struct(f"<{self.vertex_index_format * surfaces_vertex_count}").unpack_from,
+            model.vertex_count * surfaces_vertex_count,
+        )
 
+        for v0, v1, v2 in zip(
+            surfaces_vertices[:-2:3], surfaces_vertices[1:-1:3], surfaces_vertices[2::3]
+        ):
             model.surfaces.append(Surface(v0, v1, v2))
 
     def read_textures(self, model: PmxModel):
@@ -205,17 +254,35 @@ class PmxReader(BaseReader[PmxModel]):
             material = Material()
             material.name = self.read_text()
             material.english_name = self.read_text()
-            material.diffuse_color = self.read_MVector4D()
-            material.specular_color = self.read_MVector3D()
-            material.specular_factor = self.read_float()
-            material.ambient_color = self.read_MVector3D()
-            material.draw_flg = DrawFlg(self.read_byte())
-            material.edge_color = self.read_MVector4D()
-            material.edge_size = self.read_float()
-            material.texture_index = self.read_texture_index()
-            material.sphere_texture_index = self.read_texture_index()
-            material.sphere_mode = SphereMode(self.read_byte())
-            material.toon_sharing_flg = ToonSharing(self.read_byte())
+
+            (
+                material.diffuse_color.x,
+                material.diffuse_color.y,
+                material.diffuse_color.z,
+                material.diffuse_color.w,
+                material.specular_color.x,
+                material.specular_color.y,
+                material.specular_color.z,
+                material.specular_factor,
+                material.ambient_color.x,
+                material.ambient_color.y,
+                material.ambient_color.z,
+                draw_flg,
+                material.edge_color.x,
+                material.edge_color.y,
+                material.edge_color.z,
+                material.edge_color.w,
+                material.edge_size,
+                material.texture_index,
+                material.sphere_texture_index,
+                material.sphere_mode,
+                material.toon_sharing_flg,
+            ) = self.unpack(
+                self.read_by_format[Material].unpack, self.read_by_format[Material].size
+            )
+
+            material.draw_flg = DrawFlg(draw_flg)
+
             if material.toon_sharing_flg == ToonSharing.INDIVIDUAL:
                 # 個別の場合、テクスチャINDEX
                 material.toon_texture_index = self.read_texture_index()
@@ -299,7 +366,7 @@ class PmxReader(BaseReader[PmxModel]):
                 elif morph.morph_type == MorphType.BONE:
                     morph.offsets.append(
                         BoneMorphOffset(
-                            self.read_vertex_index(),
+                            self.read_bone_index(),
                             self.read_MVector3D(),
                             self.read_MQuaternion(),
                         )
@@ -357,38 +424,87 @@ class PmxReader(BaseReader[PmxModel]):
             rigidbody = RigidBody()
             rigidbody.name = self.read_text()
             rigidbody.english_name = self.read_text()
-            rigidbody.bone_index = self.read_bone_index()
-            rigidbody.collision_group = self.read_byte()
-            rigidbody.no_collision_group = RigidBodyCollisionGroup(self.read_ushort())
-            rigidbody.shape_type = RigidBodyShape(self.read_byte())
-            rigidbody.shape_size = self.read_MVector3D()
-            rigidbody.shape_position = self.read_MVector3D()
-            rigidbody.shape_rotation.radians = self.read_MVector3D()
-            rigidbody.param.mass = self.read_float()
-            rigidbody.param.linear_damping = self.read_float()
-            rigidbody.param.angular_damping = self.read_float()
-            rigidbody.param.restitution = self.read_float()
-            rigidbody.param.friction = self.read_float()
-            rigidbody.mode = RigidBodyMode(self.read_byte())
+
+            shape_rotation_radians = MVector3D()
+
+            (
+                rigidbody.bone_index,
+                rigidbody.collision_group,
+                no_collision_group,
+                rigidbody.shape_type,
+                rigidbody.shape_size.x,
+                rigidbody.shape_size.y,
+                rigidbody.shape_size.z,
+                rigidbody.shape_position.x,
+                rigidbody.shape_position.y,
+                rigidbody.shape_position.z,
+                shape_rotation_radians.x,
+                shape_rotation_radians.y,
+                shape_rotation_radians.z,
+                rigidbody.param.mass,
+                rigidbody.param.linear_damping,
+                rigidbody.param.angular_damping,
+                rigidbody.param.restitution,
+                rigidbody.param.friction,
+                rigidbody.mode,
+            ) = self.unpack(
+                self.read_by_format[RigidBody].unpack,
+                self.read_by_format[RigidBody].size,
+            )
+
+            rigidbody.no_collision_group = RigidBodyCollisionGroup(no_collision_group)
+            rigidbody.shape_rotation.radians = shape_rotation_radians
+
             model.rigidbodies.append(rigidbody)
 
     def read_joints(self, model: PmxModel):
         """モデルデータ読み込み"""
         for _ in range(self.read_int()):
             joint = Joint()
+
+            rotation_radians = MVector3D()
+            rotation_limit_min_radians = MVector3D()
+            rotation_limit_max_radians = MVector3D()
+
             joint.name = self.read_text()
             joint.english_name = self.read_text()
-            joint.joint_type = self.read_byte()
-            joint.rigidbody_index_a = self.read_rigidbody_index()
-            joint.rigidbody_index_b = self.read_rigidbody_index()
-            joint.position = self.read_MVector3D()
-            joint.rotation.radians = self.read_MVector3D()
-            joint.param.translation_limit_min = self.read_MVector3D()
-            joint.param.translation_limit_max = self.read_MVector3D()
-            joint.param.rotation_limit_min.radians = self.read_MVector3D()
-            joint.param.rotation_limit_max.radians = self.read_MVector3D()
-            joint.param.spring_constant_translation = self.read_MVector3D()
-            joint.param.spring_constant_rotation = self.read_MVector3D()
+            (
+                joint.joint_type,
+                joint.rigidbody_index_a,
+                joint.rigidbody_index_b,
+                joint.position.x,
+                joint.position.y,
+                joint.position.z,
+                rotation_radians.x,
+                rotation_radians.y,
+                rotation_radians.z,
+                joint.param.translation_limit_min.x,
+                joint.param.translation_limit_min.y,
+                joint.param.translation_limit_min.z,
+                joint.param.translation_limit_max.x,
+                joint.param.translation_limit_max.y,
+                joint.param.translation_limit_max.z,
+                rotation_limit_min_radians.x,
+                rotation_limit_min_radians.y,
+                rotation_limit_min_radians.z,
+                rotation_limit_max_radians.x,
+                rotation_limit_max_radians.y,
+                rotation_limit_max_radians.z,
+                joint.param.spring_constant_translation.x,
+                joint.param.spring_constant_translation.y,
+                joint.param.spring_constant_translation.z,
+                joint.param.spring_constant_rotation.x,
+                joint.param.spring_constant_rotation.y,
+                joint.param.spring_constant_rotation.z,
+            ) = self.unpack(
+                self.read_by_format[Joint].unpack,
+                self.read_by_format[Joint].size,
+            )
+
+            joint.rotation.radians = rotation_radians
+            joint.param.rotation_limit_min.radians = rotation_limit_min_radians
+            joint.param.rotation_limit_max.radians = rotation_limit_max_radians
+
             model.joints.append(joint)
 
     def define_read_index(self, count: int, is_vertex=False):
@@ -410,30 +526,30 @@ class PmxReader(BaseReader[PmxModel]):
         if count == 1 and is_vertex:
 
             def read_index():
-                return self.read_ubyte()
+                return self.read_byte()
 
-            return read_index
+            return read_index, "B"
         elif count == 2 and is_vertex:
 
             def read_index():
                 return self.read_ushort()
 
-            return read_index
+            return read_index, "H"
         elif count == 1 and not is_vertex:
 
             def read_index():
-                return self.read_byte()
+                return self.read_sbyte()
 
-            return read_index
+            return read_index, "b"
         elif count == 2 and not is_vertex:
 
             def read_index():
                 return self.read_short()
 
-            return read_index
+            return read_index, "h"
         else:
 
             def read_index():
                 return self.read_int()
 
-            return read_index
+            return read_index, "i"

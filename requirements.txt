@@ -3,9 +3,11 @@ black
 isort
 flake8
 pytest
+line_profiler
 
 pyinstaller==5.2
 numpy==1.23.1
 numpy-quaternion==2022.4.2
 bezier==2021.2.12
 wxPython==4.1.1
+Cython==0.29.32

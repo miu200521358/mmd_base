@@ -1,6 +1,7 @@
 import struct
 from abc import ABCMeta, abstractmethod
-from typing import Any, Generic, Union
+from struct import Struct
+from typing import Any, Callable, Generic
 
 import numpy as np
 from mlib.base import BaseModel, Encoding, TBaseModel
@@ -9,11 +10,42 @@ from mlib.math import MQuaternion, MVector2D, MVector3D, MVector4D
 from mlib.model.base import TBaseHashModel
 
 
+class StructUnpackType:
+    def __init__(self, reader: Callable, unpack: Callable, size: int) -> None:
+        self.reader = reader
+        self.unpack = unpack
+        self.size = size
+
+
 class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
     def __init__(self) -> None:
         super().__init__()
         self.offset = 0
         self.buffer: bytes = b""
+
+        # バイナリ解凍処理のマッピング
+        self.read_by_format = {
+            np.byte: StructUnpackType(self.read_sbyte, Struct("<b").unpack_from, 1),
+            np.ubyte: StructUnpackType(self.read_byte, Struct("<B").unpack_from, 1),
+            np.short: StructUnpackType(self.read_short, Struct("<h").unpack_from, 2),
+            np.ushort: StructUnpackType(self.read_ushort, Struct("<H").unpack_from, 2),
+            int: StructUnpackType(self.read_int, Struct("<i").unpack_from, 4),
+            np.uint: StructUnpackType(self.read_uint, Struct("<I").unpack_from, 4),
+            float: StructUnpackType(self.read_float, Struct("<f").unpack_from, 4),
+            np.double: StructUnpackType(self.read_double, Struct("<d").unpack_from, 8),
+            MVector2D: StructUnpackType(
+                self.read_MVector2D, Struct("<ff").unpack_from, 4 * 2
+            ),
+            MVector3D: StructUnpackType(
+                self.read_MVector3D, Struct("<fff").unpack_from, 4 * 3
+            ),
+            MVector4D: StructUnpackType(
+                self.read_MVector4D, Struct("<ffff").unpack_from, 4 * 4
+            ),
+            MQuaternion: StructUnpackType(
+                self.read_MQuaternion, Struct("<ffff").unpack_from, 4 * 4
+            ),
+        }
 
     def read_name_by_filepath(self, path: str) -> str:
         """
@@ -140,9 +172,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
 
         def read_text() -> str:
             format_size = self.read_int()
-            return self.decode_text(
-                encoding, self.unpack(f"{format_size}s", format_size)
-            )
+            return self.decode_text(encoding, self.unpack_text(format_size))
 
         return read_text
 
@@ -203,9 +233,11 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             MVector2Dデータ
             オフセット
         """
-        return self.read_to_model(
-            [("x", float), ("y", float)],
-            MVector2D(),
+        return MVector2D(
+            *self.unpack(
+                self.read_by_format[MVector2D].unpack,
+                self.read_by_format[MVector2D].size,
+            )
         )
 
     def read_MVector3D(
@@ -227,9 +259,11 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             MVector3Dデータ
             オフセット
         """
-        return self.read_to_model(
-            [("x", float), ("y", float), ("z", float)],
-            MVector3D(),
+        return MVector3D(
+            *self.unpack(
+                self.read_by_format[MVector3D].unpack,
+                self.read_by_format[MVector3D].size,
+            )
         )
 
     def read_MVector4D(
@@ -251,9 +285,11 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             MVector4Dデータ
             オフセット
         """
-        return self.read_to_model(
-            [("x", float), ("y", float), ("z", float), ("w", float)],
-            MVector4D(),
+        return MVector4D(
+            *self.unpack(
+                self.read_by_format[MVector4D].unpack,
+                self.read_by_format[MVector4D].size,
+            )
         )
 
     def read_MQuaternion(
@@ -275,11 +311,13 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             MQuaternionデータ
             オフセット
         """
-        return self.read_to_model(
-            [("x", float), ("y", float), ("z", float), ("scalar", float)],
-            MQuaternion(),
+        x, y, z, scalar = self.unpack(
+            self.read_by_format[MQuaternion].unpack,
+            self.read_by_format[MQuaternion].size,
         )
+        return MQuaternion(scalar, x, y, z)
 
+    # @profile
     def read_to_model(
         self,
         formats: list[
@@ -316,169 +354,110 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
                 submodel: TBaseModel = format_type()
                 v = self.read_to_model([(attr_name, submodel.__class__)], submodel)
             else:
-                v = self.read_by_format(format_type)
+                v = self.read_by_format[format_type].reader()
+
             model.__setattr__(attr_name, v)
         return model
 
-    def read_byte(self) -> int:
-        """byteを読み込む"""
-        return int(self.read_by_format(np.byte))
+    def read_sbyte(self) -> int:
+        """
+        byteを読み込む
+        np.byte:    sbyte	    : 1  - 符号あり  | char
+        """
+        return int(
+            self.unpack(
+                self.read_by_format[np.byte].unpack, self.read_by_format[np.byte].size
+            )
+        )
 
-    def read_ubyte(self) -> int:
-        """byteを読み込む"""
-        return int(self.read_by_format(np.ubyte))
+    def read_byte(self) -> int:
+        """
+        byteを読み込む
+        np.ubyte:   byte	    : 1  - 符号なし  | unsigned char
+        """
+        return int(
+            self.unpack(
+                self.read_by_format[np.ubyte].unpack, self.read_by_format[np.ubyte].size
+            )
+        )
 
     def read_short(self) -> int:
-        """shortを読み込む"""
-        return int(self.read_by_format(np.short))
+        """
+        shortを読み込む
+        np.short:   short	    : 2  - 符号あり  | short
+        """
+        return int(
+            self.unpack(
+                self.read_by_format[np.short].unpack, self.read_by_format[np.short].size
+            )
+        )
 
     def read_ushort(self) -> int:
-        """ushortを読み込む"""
-        return int(self.read_by_format(np.ushort))
+        """
+        ushortを読み込む
+        np.ushort   ushort	    : 2  - 符号なし  | unsigned short
+        """
+        return int(
+            self.unpack(
+                self.read_by_format[np.ushort].unpack,
+                self.read_by_format[np.ushort].size,
+            )
+        )
 
     def read_int(self) -> int:
-        """intを読み込む"""
-        return int(self.read_by_format(int))
+        """
+        intを読み込む
+        int:        int 	    : 4  - 符号あり  | int (32bit固定)
+        """
+        return int(
+            self.unpack(self.read_by_format[int].unpack, self.read_by_format[int].size)
+        )
 
     def read_uint(self) -> int:
-        """uintを読み込む"""
-        return int(self.read_by_format(np.uint))
-
-    def read_int8(self) -> np.int8:
-        """int8を読み込む"""
-        return np.int8(self.read_by_format(np.int8))
-
-    def read_uint8(self) -> np.uint8:
-        """uint8を読み込む"""
-        return np.uint8(self.read_by_format(np.uint8))
+        """
+        uintを読み込む
+        np.uint     uint	    : 4  - 符号なし  | unsigned int
+        """
+        return int(
+            self.unpack(
+                self.read_by_format[np.uint].unpack, self.read_by_format[np.uint].size
+            )
+        )
 
     def read_float(self) -> float:
-        """floatを読み込む"""
-        return float(self.read_by_format(float))
+        """
+        floatを読み込む
+        float       float	    : 4  - 単精度実数 | float
+        """
+        return float(
+            self.unpack(
+                self.read_by_format[float].unpack, self.read_by_format[float].size
+            )
+        )
 
     def read_double(self) -> np.double:
-        """doubleを読み込む"""
-        return np.double(self.read_by_format(np.double))
-
-    def read_str(self) -> str:
-        """strを読み込む"""
-        return str(self.read_by_format(str))
-
-    def read_by_format(
-        self,
-        format_type: type[
-            Union[
-                str,
-                np.byte,
-                np.ubyte,
-                np.short,
-                np.ushort,
-                int,
-                np.uint,
-                np.int8,
-                np.uint8,
-                float,
-                np.double,
-            ]
-        ],
-    ) -> Union[
-        str,
-        np.byte,
-        np.ubyte,
-        np.short,
-        np.ushort,
-        int,
-        np.uint,
-        np.int8,
-        np.uint8,
-        float,
-        np.double,
-    ]:
         """
-        指定したクラスタイプに従ってバッファから解凍して該当クラスインスタンスを返す
-
-        Parameters
-        ----------
-        format_type : type[ Union[ str, np.byte, np.ubyte, np.short, np.ushort,
-                                    int, np.uint, np.int8, np.uint8, float, np.double, ] ]
-            str:        文字列
-            np.byte:    sbyte	    : 1  - 符号あり  | char
-            np.ubyte:   byte	    : 1  - 符号なし  | unsigned char
-            np.short:   short	    : 2  - 符号あり  | short
-            np.ushort   ushort	    : 2  - 符号なし  | unsigned short
-            int:        int 	    : 4  - 符号あり  | int (32bit固定)
-            np.uint     uint	    : 4  - 符号なし  | unsigned int
-            np.int8     longlong    : 8  - 符号あり  | long long
-            np.uint8    ulonglong   : 8  - 符号なし  | unsigned long long
-            float       float	    : 4  - 単精度実数 | float
-            np.double   double	    : 8  - 浮動小数点数 | double
-
-        Returns
-        -------
-        Union[ str, np.byte, np.ubyte, np.short, np.ushort, int, np.uint, np.int8, np.uint8, float, np.double, ]
-            指定されたtypeに相当するインスタンス
-
-        Raises
-        ------
-        MParseException
-            対象外フォーマットタイプを指定された場合
+        doubleを読み込む
+        np.double   double	    : 8  - 浮動小数点数 | double
         """
-        if format_type == str:
-            format_name = "s"
-            return self.read_text()
-        elif format_type == np.byte:
-            format_name = "b"
-            format_size = 1
-        elif format_type == np.ubyte:
-            format_name = "B"
-            format_size = 1
-        elif format_type == np.short:
-            format_name = "h"
-            format_size = 2
-        elif format_type == np.ushort:
-            format_name = "H"
-            format_size = 2
-        elif format_type == int:
-            format_name = "i"
-            format_size = 4
-        elif format_type == np.uint:
-            format_name = "I"
-            format_size = 4
-        elif format_type == np.int8:
-            format_name = "q"
-            format_size = 8
-        elif format_type == np.uint8:
-            format_name = "Q"
-            format_size = 8
-        elif format_type == float:
-            format_name = "f"
-            format_size = 4
-        elif format_type == np.double:
-            format_name = "d"
-            format_size = 8
-        else:
-            raise MParseException(
-                "Unknown read_by_format format_type: %s", [format_type]
-            )
+        return np.array(
+            [
+                self.unpack(
+                    self.read_by_format[np.double].unpack,
+                    self.read_by_format[np.double].size,
+                )
+            ],
+            dtype=np.double,
+        )[0]
 
-        return format_type(self.unpack(format_name, format_size))
-
-    def unpack(
-        self,
-        format: str,
-        format_size: int,
-    ) -> Any:
+    def unpack_text(self, format_size: int):
         """
         バイナリを解凍
 
         Parameters
         ----------
-        buffer : TBuffer
-            バッファ
         offset : int
             オフセット
-        format : str
-            読み取りフォーマット
 
         Returns
         -------
@@ -486,7 +465,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             読み取り結果
         """
         # バイナリ読み取り
-        b: tuple = struct.unpack_from(format, self.buffer, self.offset)
+        b: tuple = struct.unpack_from(f"{format_size}s", self.buffer, self.offset)
         # オフセット加算
         self.offset += format_size
 
@@ -494,3 +473,33 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             return b[0]
 
         return None
+
+    def unpack(
+        self,
+        unpack: Callable,
+        format_size: int,
+    ):
+        """
+        バイナリを解凍
+
+        Parameters
+        ----------
+        unpack : StructUnpack
+            解凍定義
+        format_size : int
+            桁数
+
+        Returns
+        -------
+        Any
+            読み取り結果
+        """
+        # バイナリ読み取り
+        b: tuple = unpack(self.buffer, self.offset)
+        # オフセット加算
+        self.offset += format_size
+
+        if len(b) == 1:
+            return b[0]
+
+        return b
