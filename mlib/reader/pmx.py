@@ -16,6 +16,7 @@ from mlib.model.pmx import (
     DisplaySlotReference,
     DisplayType,
     DrawFlg,
+    Face,
     GroupMorphOffset,
     Ik,
     IkLink,
@@ -30,7 +31,6 @@ from mlib.model.pmx import (
     RigidBody,
     RigidBodyCollisionGroup,
     Sdef,
-    Surface,
     Texture,
     ToonSharing,
     UvMorphOffset,
@@ -161,7 +161,7 @@ class PmxReader(BaseReader[PmxModel]):
         self.read_vertices(model)
 
         # 面
-        self.read_surfaces(model)
+        self.read_faces(model)
 
         # テクスチャ
         self.read_textures(model)
@@ -230,18 +230,18 @@ class PmxReader(BaseReader[PmxModel]):
             vertex.edge_factor = self.read_float()
             model.vertices.append(vertex)
 
-    def read_surfaces(self, model: PmxModel):
+    def read_faces(self, model: PmxModel):
         """面データ読み込み"""
-        surfaces_vertex_count = self.read_int()
-        surfaces_vertices = self.unpack(
-            Struct(f"<{self.vertex_index_format * surfaces_vertex_count}").unpack_from,
-            model.vertex_count * surfaces_vertex_count,
+        faces_vertex_count = self.read_int()
+        faces_vertices = self.unpack(
+            Struct(f"<{self.vertex_index_format * faces_vertex_count}").unpack_from,
+            model.vertex_count * faces_vertex_count,
         )
 
         for v0, v1, v2 in zip(
-            surfaces_vertices[:-2:3], surfaces_vertices[1:-1:3], surfaces_vertices[2::3]
+            faces_vertices[:-2:3], faces_vertices[1:-1:3], faces_vertices[2::3]
         ):
-            model.surfaces.append(Surface(v0, v1, v2))
+            model.faces.append(Face(v0, v1, v2))
 
     def read_textures(self, model: PmxModel):
         """テクスチャデータ読み込み"""

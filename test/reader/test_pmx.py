@@ -67,7 +67,7 @@ def test_read_by_filepath_ok():
     ).all()
     assert 1 == model.vertices[0].edge_factor
     # 面
-    assert [2, 1, 0] == model.surfaces[0].vertices
+    assert [2, 1, 0] == model.faces[0].vertices
     # テクスチャ
     assert "tex\\_09.png" == model.textures[16].texture_path
     assert "tex\\MatcapWarp_01.png" == model.textures[1].texture_path

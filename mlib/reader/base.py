@@ -22,6 +22,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         super().__init__()
         self.offset = 0
         self.buffer: bytes = b""
+        self.bnames: dict[bytearray, str] = {}
 
         # バイナリ解凍処理のマッピング
         self.read_by_format = {
@@ -177,6 +178,9 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         return read_text
 
     def decode_text(self, main_encoding: Encoding, fbytes: bytearray) -> str:
+        if fbytes in self.bnames:
+            return self.bnames[fbytes]
+
         """
         テキストデコード
 
@@ -202,14 +206,18 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             try:
                 if target_encoding == Encoding.SHIFT_JIS:
                     # shift-jisは一旦cp932に変換してもう一度戻したので返す
-                    return (
+                    text = (
                         fbytes.decode(Encoding.SHIFT_JIS.value, errors="replace")
                         .encode(Encoding.CP932.value, errors="replace")
                         .decode(Encoding.CP932.value, errors="replace")
                     )
+                    self.bnames[fbytes] = text
+                    return text
 
                 # 変換できなかった文字は「?」に変換する
-                return fbytes.decode(encoding=target_encoding.value, errors="replace")
+                text = fbytes.decode(encoding=target_encoding.value, errors="replace")
+                self.bnames[fbytes] = text
+                return text
             except Exception:
                 pass
         return ""

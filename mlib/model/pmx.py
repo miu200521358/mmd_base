@@ -225,10 +225,10 @@ class Vertices(BaseIndexListModel[Vertex]):
     """
 
     def __init__(self):
-        super().__init__([])
+        super().__init__()
 
 
-class Surface(BaseIndexModel):
+class Face(BaseIndexModel):
     """
     面データ
 
@@ -247,13 +247,13 @@ class Surface(BaseIndexModel):
         self.vertices = [vertex_index0, vertex_index1, vertex_index2]
 
 
-class Surfaces(BaseIndexListModel[Surface]):
+class Faces(BaseIndexListModel[Face]):
     """
     面リスト
     """
 
     def __init__(self):
-        super().__init__([])
+        super().__init__()
 
 
 class Texture(BaseIndexModel):
@@ -277,7 +277,7 @@ class Textures(BaseIndexListModel[Texture]):
     """
 
     def __init__(self):
-        super().__init__([])
+        super().__init__()
 
 
 @unique
@@ -405,7 +405,7 @@ class Materials(BaseIndexNameListModel[Material]):
     """
 
     def __init__(self):
-        super().__init__([])
+        super().__init__()
 
 
 class IkLink(BaseModel):
@@ -593,7 +593,7 @@ class Bones(BaseIndexNameListModel[Bone]):
     """
 
     def __init__(self):
-        super().__init__([])
+        super().__init__()
 
 
 class MorphOffset(BaseModel):
@@ -826,12 +826,12 @@ class Morph(BaseIndexNameModel):
         english_name: str = None,
         panel: MorphPanel = None,
         morph_type: MorphType = None,
-        offsets: list[TMorphOffset] = None,
+        offsets: list[MorphOffset] = None,
     ):
         super().__init__(name=name or "", english_name=english_name or "")
         self.panel: MorphPanel = panel or MorphPanel.EYE_UPPER_LEFT
         self.morph_type: MorphType = morph_type or MorphType.GROUP
-        self.offsets: list[TMorphOffset] = offsets or []
+        self.offsets: list[MorphOffset] = offsets or []
 
 
 class Morphs(BaseIndexNameListModel[Morph]):
@@ -840,7 +840,7 @@ class Morphs(BaseIndexNameListModel[Morph]):
     """
 
     def __init__(self):
-        super().__init__([])
+        super().__init__()
 
 
 @unique
@@ -903,7 +903,7 @@ class DisplaySlots(BaseIndexNameListModel[DisplaySlot]):
     def __init__(
         self,
     ):
-        super().__init__([])
+        super().__init__()
 
 
 class RigidBodyParam(BaseModel):
@@ -1064,7 +1064,7 @@ class RigidBodies(BaseIndexNameListModel[RigidBody]):
     """
 
     def __init__(self):
-        super().__init__([])
+        super().__init__()
 
 
 class JointLimitParam(BaseModel):
@@ -1191,7 +1191,7 @@ class Joints(BaseIndexNameListModel[Joint]):
     """
 
     def __init__(self):
-        super().__init__([])
+        super().__init__()
 
 
 class PmxModel(BaseHashModel):
@@ -1252,7 +1252,7 @@ class PmxModel(BaseHashModel):
         self.english_comment: str = ""
         self.json_data: dict = {}
         self.vertices = Vertices()
-        self.surfaces = Surfaces()
+        self.faces = Faces()
         self.textures = Textures()
         self.materials = Materials()
         self.bones = Bones()
