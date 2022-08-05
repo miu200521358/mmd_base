@@ -16,7 +16,7 @@ def test_read_by_filepath_ok():
     import os
 
     import numpy as np
-    from mlib.model.vmd import VmdMotion
+    from mlib.model.vmd.collection import VmdMotion
     from mlib.reader.vmd import VmdReader
 
     reader = VmdReader()

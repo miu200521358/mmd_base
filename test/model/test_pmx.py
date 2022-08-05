@@ -3,7 +3,7 @@ import pytest
 
 def test_Bdef2_get_indecies():
     import numpy as np
-    from mlib.model.pmx import Bdef2
+    from mlib.model.pmx.part import Bdef2
 
     assert np.isclose(
         np.array([1, 2]),
@@ -18,7 +18,7 @@ def test_Bdef2_get_indecies():
 
 def test_Bdef4_get_indecies():
     import numpy as np
-    from mlib.model.pmx import Bdef4
+    from mlib.model.pmx.part import Bdef4
 
     assert np.isclose(
         np.array([1, 2, 3, 4]),
@@ -33,7 +33,7 @@ def test_Bdef4_get_indecies():
 
 def test_Bdef4_normalized():
     import numpy as np
-    from mlib.model.pmx import Bdef4
+    from mlib.model.pmx.part import Bdef4
 
     d = Bdef4(1, 2, 3, 4, 5, 6, 7, 8)
     d.normalize()
@@ -44,7 +44,7 @@ def test_Bdef4_normalized():
 
 
 def test_Material_draw_flg():
-    from mlib.model.pmx import DrawFlg, Material
+    from mlib.model.pmx.part import DrawFlg, Material
 
     m = Material()
     m.draw_flg |= DrawFlg.DOUBLE_SIDED_DRAWING
@@ -53,14 +53,15 @@ def test_Material_draw_flg():
 
 
 def test_Bone_copy():
-    from mlib.model.pmx import Bone
+    from mlib.model.pmx.part import Bone
 
     b = Bone()
     assert b != b.copy()
 
 
 def test_DisplaySlots_init():
-    from mlib.model.pmx import DisplaySlot, DisplaySlots, Switch
+    from mlib.model.pmx.collection import DisplaySlots
+    from mlib.model.pmx.part import DisplaySlot, Switch
 
     dd = DisplaySlots()
     dd.append(DisplaySlot("Root", "Root", Switch.ON))

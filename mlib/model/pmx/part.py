@@ -4,11 +4,8 @@ from typing import Optional, TypeVar
 
 import numpy as np
 from mlib.math import MQuaternion, MVector2D, MVector3D, MVector4D
-from mlib.model.base import (
-    BaseHashModel,
-    BaseIndexListModel,
+from mlib.model.base.part import (
     BaseIndexModel,
-    BaseIndexNameListModel,
     BaseIndexNameModel,
     BaseModel,
     BaseRotationModel,
@@ -219,15 +216,6 @@ class Vertex(BaseIndexModel):
         self.edge_factor: float = edge_factor or 0
 
 
-class Vertices(BaseIndexListModel[Vertex]):
-    """
-    頂点リスト
-    """
-
-    def __init__(self):
-        super().__init__()
-
-
 class Face(BaseIndexModel):
     """
     面データ
@@ -247,15 +235,6 @@ class Face(BaseIndexModel):
         self.vertices = [vertex_index0, vertex_index1, vertex_index2]
 
 
-class Faces(BaseIndexListModel[Face]):
-    """
-    面リスト
-    """
-
-    def __init__(self):
-        super().__init__()
-
-
 class Texture(BaseIndexModel):
     """
     テクスチャ
@@ -269,15 +248,6 @@ class Texture(BaseIndexModel):
     def __init__(self, texture_path: str):
         super().__init__()
         self.texture_path = texture_path
-
-
-class Textures(BaseIndexListModel[Texture]):
-    """
-    テクスチャリスト
-    """
-
-    def __init__(self):
-        super().__init__()
 
 
 @unique
@@ -397,15 +367,6 @@ class Material(BaseIndexNameModel):
         self.toon_texture_index: int = toon_texture_index or -1
         self.comment: str = comment or ""
         self.vertices_count: int = vertices_count or 0
-
-
-class Materials(BaseIndexNameListModel[Material]):
-    """
-    材質リスト
-    """
-
-    def __init__(self):
-        super().__init__()
 
 
 class IkLink(BaseModel):
@@ -585,15 +546,6 @@ class Bone(BaseIndexNameModel):
         self.ik: Optional[Ik] = ik or None
         self.display: bool = display or False
         self.is_system: bool = is_system or False
-
-
-class Bones(BaseIndexNameListModel[Bone]):
-    """
-    ボーンリスト
-    """
-
-    def __init__(self):
-        super().__init__()
 
 
 class MorphOffset(BaseModel):
@@ -834,15 +786,6 @@ class Morph(BaseIndexNameModel):
         self.offsets: list[MorphOffset] = offsets or []
 
 
-class Morphs(BaseIndexNameListModel[Morph]):
-    """
-    モーフリスト
-    """
-
-    def __init__(self):
-        super().__init__()
-
-
 @unique
 class DisplayType(IntEnum):
     """表示枠要素タイプ"""
@@ -893,17 +836,6 @@ class DisplaySlot(BaseIndexNameModel):
         super().__init__(name=name or "", english_name=english_name or "")
         self.special_flg = special_flg or Switch.OFF
         self.references: list[DisplaySlotReference] = []
-
-
-class DisplaySlots(BaseIndexNameListModel[DisplaySlot]):
-    """
-    表示枠リスト
-    """
-
-    def __init__(
-        self,
-    ):
-        super().__init__()
 
 
 class RigidBodyParam(BaseModel):
@@ -1058,15 +990,6 @@ class RigidBody(BaseIndexNameModel):
         self.z_direction = MVector3D()
 
 
-class RigidBodies(BaseIndexNameListModel[RigidBody]):
-    """
-    剛体リスト
-    """
-
-    def __init__(self):
-        super().__init__()
-
-
 class JointLimitParam(BaseModel):
     """
     ジョイント制限パラメーター
@@ -1183,86 +1106,3 @@ class Joint(BaseIndexNameModel):
         self.position: MVector3D = position or MVector3D()
         self.rotation: BaseRotationModel = rotation or BaseRotationModel()
         self.param = param or JointParam()
-
-
-class Joints(BaseIndexNameListModel[Joint]):
-    """
-    ジョイントリスト
-    """
-
-    def __init__(self):
-        super().__init__()
-
-
-class PmxModel(BaseHashModel):
-    """
-    Pmxモデルデータ
-
-    Parameters
-    ----------
-    path : str, optional
-        パス, by default ""
-    signature : str, optional
-        signature, by default ""
-    version : float, optional
-        バージョン, by default 0.0
-    extended_uv_count : int, optional
-        追加UV数, by default 0
-    vertex_count : int, optional
-        頂点数, by default 0
-    texture_count : int, optional
-        テクスチャ数, by default 0
-    material_count : int, optional
-        材質数, by default 0
-    bone_count : int, optional
-        ボーン数, by default 0
-    morph_count : int, optional
-        モーフ数, by default 0
-    rigidbody_count : int, optional
-        剛体数, by default 0
-    name : str, optional
-        モデル名, by default ""
-    english_name : str, optional
-        モデル名英, by default ""
-    comment : str, optional
-        コメント, by default ""
-    english_comment : str, optional
-        コメント英, by default ""
-    json_data : dict, optional
-        JSONデータ（vroidデータ用）, by default {}
-    """
-
-    def __init__(
-        self,
-        path: str = None,
-    ):
-        super().__init__(path=path or "")
-        self.signature: str = ""
-        self.version: float = 0.0
-        self.extended_uv_count: int = 0
-        self.vertex_count: int = 0
-        self.texture_count: int = 0
-        self.material_count: int = 0
-        self.bone_count: int = 0
-        self.morph_count: int = 0
-        self.rigidbody_count: int = 0
-        self.name: str = ""
-        self.english_name: str = ""
-        self.comment: str = ""
-        self.english_comment: str = ""
-        self.json_data: dict = {}
-        self.vertices = Vertices()
-        self.faces = Faces()
-        self.textures = Textures()
-        self.materials = Materials()
-        self.bones = Bones()
-        self.morphs = Morphs()
-        self.display_slots = DisplaySlots()
-        self.rigidbodies = RigidBodies()
-        self.joints = Joints()
-
-    def get_name(self) -> str:
-        return self.name
-
-
-TPmxModel = TypeVar("TPmxModel", bound=PmxModel)

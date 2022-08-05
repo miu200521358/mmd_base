@@ -3,8 +3,9 @@ from struct import Struct
 from mlib.base import Encoding
 from mlib.exception import MParseException
 from mlib.math import MVector3D
-from mlib.model.base import Switch
-from mlib.model.pmx import (
+from mlib.model.base.part import Switch
+from mlib.model.pmx.collection import PmxModel
+from mlib.model.pmx.part import (
     Bdef1,
     Bdef2,
     Bdef4,
@@ -27,7 +28,6 @@ from mlib.model.pmx import (
     Morph,
     MorphPanel,
     MorphType,
-    PmxModel,
     RigidBody,
     RigidBodyCollisionGroup,
     Sdef,

@@ -1,5 +1,5 @@
 import pytest
-from mlib.model.pmx import (
+from mlib.model.pmx.part import (
     BoneFlg,
     DeformType,
     DisplayType,
@@ -27,7 +27,7 @@ def test_read_by_filepath_ok():
     import os
 
     import numpy as np
-    from mlib.model.pmx import PmxModel
+    from mlib.model.pmx.collection import PmxModel
     from mlib.reader.pmx import PmxReader
 
     reader = PmxReader()
@@ -268,7 +268,7 @@ def test_read_by_filepath_ok():
 
 
 def test_read_by_filepath_complicated():
-    from mlib.model.pmx import PmxModel
+    from mlib.model.pmx.collection import PmxModel
     from mlib.reader.pmx import PmxReader
 
     reader = PmxReader()

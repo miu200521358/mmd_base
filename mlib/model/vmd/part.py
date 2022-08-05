@@ -1,15 +1,6 @@
-from typing import TypeVar
-
 from mlib.base import BaseModel
 from mlib.math import MQuaternion, MVector2D, MVector3D
-from mlib.model.base import (
-    BaseHashModel,
-    BaseIndexDictModel,
-    BaseIndexModel,
-    BaseIndexNameDictModel,
-    BaseIndexNameModel,
-    BaseRotationModel,
-)
+from mlib.model.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel
 
 
 class Interpolation(BaseModel):
@@ -162,15 +153,6 @@ class VmdBoneFrame(BaseVmdNameFrame):
         self.interpolations: BoneInterpolations = interpolations or BoneInterpolations()
 
 
-class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame]):
-    """
-    ボーンキーフレ辞書
-    """
-
-    def __init__(self):
-        super().__init__()
-
-
 class VmdMorphFrame(BaseVmdNameFrame):
     """
     VMDのモーフ1フレーム
@@ -200,15 +182,6 @@ class VmdMorphFrame(BaseVmdNameFrame):
         super().__init__(index, name, regist, read)
         self.name: str = name or ""
         self.ratio: float = ratio or 0.0
-
-
-class VmdMorphFrames(BaseIndexNameDictModel[VmdMorphFrame]):
-    """
-    モーフキーフレリスト
-    """
-
-    def __init__(self):
-        super().__init__()
 
 
 class CameraInterpolations(BaseModel):
@@ -297,15 +270,6 @@ class VmdCameraFrame(BaseVmdFrame):
         )
 
 
-class VmdCameraFrames(BaseIndexDictModel[VmdCameraFrame]):
-    """
-    カメラキーフレリスト
-    """
-
-    def __init__(self):
-        super().__init__()
-
-
 class VmdLightFrame(BaseVmdFrame):
     """
     照明キーフレ
@@ -337,15 +301,6 @@ class VmdLightFrame(BaseVmdFrame):
         self.position: MVector3D = position or MVector3D()
 
 
-class VmdLightFrames(BaseIndexDictModel[VmdLightFrame]):
-    """
-    照明キーフレリスト
-    """
-
-    def __init__(self):
-        super().__init__()
-
-
 class VmdShadowFrame(BaseVmdFrame):
     """
     セルフ影キーフレ
@@ -375,15 +330,6 @@ class VmdShadowFrame(BaseVmdFrame):
         super().__init__(index, regist, read)
         self.type: int = mode or 0
         self.distance: float = distance or 0.0
-
-
-class VmdShadowFrames(BaseIndexDictModel[VmdShadowFrame]):
-    """
-    照明キーフレリスト
-    """
-
-    def __init__(self):
-        super().__init__()
 
 
 class VmdIkOnoff(BaseModel):
@@ -437,61 +383,3 @@ class VmdShowIkFrame(BaseVmdFrame):
         super().__init__(index, regist, read)
         self.show: bool = show or True
         self.iks: list[VmdIkOnoff] = iks or []
-
-
-class VmdShowIkFrames(BaseIndexDictModel[VmdShowIkFrame]):
-    """
-    IKキーフレリスト
-    """
-
-    def __init__(self):
-        super().__init__()
-
-
-class VmdMotion(BaseHashModel):
-    """
-    VMDモーション
-
-    Parameters
-    ----------
-    path : str, optional
-        パス, by default None
-    signature : str, optional
-        パス, by default None
-    model_name : str, optional
-        パス, by default None
-    bones : VmdBoneFrames
-        ボーンキーフレリスト, by default []
-    morphs : VmdMorphFrames
-        モーフキーフレリスト, by default []
-    morphs : VmdMorphFrames
-        モーフキーフレリスト, by default []
-    cameras : VmdCameraFrames
-        カメラキーフレリスト, by default []
-    lights : VmdLightFrames
-        照明キーフレリスト, by default []
-    shadows : VmdShadowFrames
-        セルフ影キーフレリスト, by default []
-    showiks : VmdShowIkFrames
-        IKキーフレリスト, by default []
-    """
-
-    def __init__(
-        self,
-        path: str = None,
-    ):
-        super().__init__(path=path or "")
-        self.signature: str = ""
-        self.model_name: str = ""
-        self.bones: VmdBoneFrames = VmdBoneFrames()
-        self.morphs: VmdMorphFrames = VmdMorphFrames()
-        self.cameras: VmdCameraFrames = VmdCameraFrames()
-        self.lights: VmdLightFrames = VmdLightFrames()
-        self.shadows: VmdShadowFrames = VmdShadowFrames()
-        self.showiks: VmdShowIkFrames = VmdShowIkFrames()
-
-    def get_name(self) -> str:
-        return self.model_name
-
-
-TVmdMotion = TypeVar("TVmdMotion", bound=VmdMotion)

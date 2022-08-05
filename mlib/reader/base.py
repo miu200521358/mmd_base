@@ -7,7 +7,7 @@ import numpy as np
 from mlib.base import BaseModel, Encoding, TBaseModel
 from mlib.exception import MParseException
 from mlib.math import MQuaternion, MVector2D, MVector3D, MVector4D
-from mlib.model.base import TBaseHashModel
+from mlib.model.base.collection import TBaseHashModel
 
 
 class StructUnpackType:

@@ -3,15 +3,22 @@ from struct import Struct
 
 from mlib.base import Encoding
 from mlib.math import MVector3D
-from mlib.model.vmd import (VmdBoneFrame, VmdCameraFrame, VmdIkOnoff,
-                            VmdLightFrame, VmdMorphFrame, VmdMotion,
-                            VmdShadowFrame, VmdShowIkFrame)
+from mlib.model.vmd.collection import VmdMotion
+from mlib.model.vmd.part import (
+    VmdBoneFrame,
+    VmdCameraFrame,
+    VmdIkOnoff,
+    VmdLightFrame,
+    VmdMorphFrame,
+    VmdShadowFrame,
+    VmdShowIkFrame,
+)
 from mlib.reader.base import BaseReader, StructUnpackType
 
 RE_TEXT_TRIM = re.compile(rb"\x00+$")
 
 
-class VmdReader(BaseReader[VmdMotion]):
+class VmdReader(BaseReader[VmdMotion]):  # type: ignore
     def __init__(self) -> None:
         super().__init__()
 
