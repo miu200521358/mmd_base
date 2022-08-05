@@ -1,3 +1,4 @@
+from typing import List
 from mlib.base import BaseModel
 from mlib.math import MQuaternion, MVector2D, MVector3D
 from mlib.model.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel
@@ -364,7 +365,7 @@ class VmdShowIkFrame(BaseVmdFrame):
         キーフレ, by default None
     show : bool, optional
         表示有無, by default None
-    iks : list[VmdIk], optional
+    iks : List[VmdIk], optional
         IKリスト, by default None
     regist : bool, optional
         登録対象か否か, by default None
@@ -376,10 +377,10 @@ class VmdShowIkFrame(BaseVmdFrame):
         self,
         index: int = None,
         show: bool = None,
-        iks: list[VmdIkOnoff] = None,
+        iks: List[VmdIkOnoff] = None,
         regist: bool = None,
         read: bool = None,
     ):
         super().__init__(index, regist, read)
         self.show: bool = show or True
-        self.iks: list[VmdIkOnoff] = iks or []
+        self.iks: List[VmdIkOnoff] = iks or []

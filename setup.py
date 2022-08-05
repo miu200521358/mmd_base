@@ -19,7 +19,7 @@ def get_ext():
     ext = []
 
     for source in glob("mlib\\**\\*.py", recursive=True):
-        if "__init__" in source:
+        if "__init__" in source or "collection" in source or "reader" in source:
             continue
         path = source.replace("\\", ".").replace(".py", "")
         print("%s -> %s" % (source, path))

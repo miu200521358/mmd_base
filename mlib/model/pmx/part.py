@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Flag, IntEnum, unique
-from typing import Optional, TypeVar
+from typing import List, Optional, TypeVar
 
 import numpy as np
 from mlib.math import MQuaternion, MVector2D, MVector3D, MVector4D
@@ -33,15 +33,15 @@ class Deform(BaseModel, ABC):
 
     Parameters
     ----------
-    indecies : list[int]
+    indecies : List[int]
         ボーンINDEXリスト
-    weights : list[float]
+    weights : List[float]
         ウェイトリスト
     count : int
         デフォームボーン個数
     """
 
-    def __init__(self, indecies: list[int], weights: list[float], count: int):
+    def __init__(self, indecies: List[int], weights: List[float], count: int):
         super().__init__()
         self.indecies = np.array(indecies, dtype=np.int32)
         self.weights = np.array(weights, dtype=np.float64)
@@ -186,7 +186,7 @@ class Vertex(BaseIndexModel):
         頂点法線, by default MVector3D()
     uv : MVector2D, optional
         UV, by default MVector2D()
-    extended_uvs : list[MVector4D], optional
+    extended_uvs : List[MVector4D], optional
         追加UV, by default []
     deform_type: DeformType, optional
         ウェイト変形方式 0:BDEF1 1:BDEF2 2:BDEF4 3:SDEF, by default DeformType.BDEF1
@@ -201,7 +201,7 @@ class Vertex(BaseIndexModel):
         position: MVector3D = None,
         normal: MVector3D = None,
         uv: MVector2D = None,
-        extended_uvs: list[MVector4D] = None,
+        extended_uvs: List[MVector4D] = None,
         deform_type: DeformType = None,
         deform: Deform = None,
         edge_factor: float = None,
@@ -210,7 +210,7 @@ class Vertex(BaseIndexModel):
         self.position: MVector3D = position or MVector3D()
         self.normal: MVector3D = normal or MVector3D()
         self.uv: MVector2D = uv or MVector2D()
-        self.extended_uvs: list[MVector4D] = extended_uvs or []
+        self.extended_uvs: List[MVector4D] = extended_uvs or []
         self.deform_type: DeformType = deform_type or DeformType.BDEF1
         self.deform: Deform = deform or Bdef1(-1)
         self.edge_factor: float = edge_factor or 0
@@ -416,7 +416,7 @@ class Ik(BaseModel):
     unit_radians : float, optional
         IKループ計算時の1回あたりの制限角度 -> ラジアン角, by default 0
         unit_rotation の x に値が入っている
-    links : list[IkLink], optional
+    links : List[IkLink], optional
         IKリンクリスト, by default []
     """
 
@@ -425,7 +425,7 @@ class Ik(BaseModel):
         bone_index: int = None,
         loop_count: int = None,
         unit_radians: float = None,
-        links: list[IkLink] = None,
+        links: List[IkLink] = None,
     ):
         super().__init__()
         self.bone_index = bone_index or -1
@@ -433,7 +433,7 @@ class Ik(BaseModel):
         self.unit_rotation: BaseRotationModel = BaseRotationModel(
             MVector3D(unit_radians or 0, 0, 0)
         )
-        self.links: list[IkLink] = links or []
+        self.links: List[IkLink] = links or []
 
 
 @unique
@@ -768,7 +768,7 @@ class Morph(BaseIndexNameModel):
         モーフパネル, by default MorphPanel.UPPER_LEFT_EYE
     morph_type : MorphType, optional
         モーフ種類, by default MorphType.GROUP
-    offsets : list[TMorphOffset], optional
+    offsets : List[TMorphOffset], optional
         モーフオフセット
     """
 
@@ -778,12 +778,12 @@ class Morph(BaseIndexNameModel):
         english_name: str = None,
         panel: MorphPanel = None,
         morph_type: MorphType = None,
-        offsets: list[MorphOffset] = None,
+        offsets: List[MorphOffset] = None,
     ):
         super().__init__(name=name or "", english_name=english_name or "")
         self.panel: MorphPanel = panel or MorphPanel.EYE_UPPER_LEFT
         self.morph_type: MorphType = morph_type or MorphType.GROUP
-        self.offsets: list[MorphOffset] = offsets or []
+        self.offsets: List[MorphOffset] = offsets or []
 
 
 @unique
@@ -826,7 +826,7 @@ class DisplaySlot(BaseIndexNameModel):
         枠名英, by default ""
     special_flg : Switch, optional
         特殊枠フラグ - 0:通常枠 1:特殊枠, by default Switch.OFF
-    references : list[DisplaySlotReference], optional
+    references : List[DisplaySlotReference], optional
         表示枠要素, by default []
     """
 
@@ -835,7 +835,7 @@ class DisplaySlot(BaseIndexNameModel):
     ):
         super().__init__(name=name or "", english_name=english_name or "")
         self.special_flg = special_flg or Switch.OFF
-        self.references: list[DisplaySlotReference] = []
+        self.references: List[DisplaySlotReference] = []
 
 
 class RigidBodyParam(BaseModel):
