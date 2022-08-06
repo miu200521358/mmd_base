@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from enum import Flag, IntEnum, unique
-from typing import List, Optional, TypeVar
+from typing import List, Optional
 
 import numpy as np
 from mlib.math import MQuaternion, MVector2D, MVector3D, MVector4D
-from mlib.model.base.part import (
+from mlib.base.part import (
     BaseIndexModel,
     BaseIndexNameModel,
     BaseModel,
@@ -553,9 +553,6 @@ class MorphOffset(BaseModel):
 
     def __init__(self):
         super().__init__()
-
-
-TMorphOffset = TypeVar("TMorphOffset", bound=MorphOffset)
 
 
 class VertexMorphOffset(MorphOffset):

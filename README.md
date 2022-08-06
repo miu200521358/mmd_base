@@ -12,3 +12,14 @@ Windows用MMDツールライブラリ
 ## profile
  
  1. `cls & python -m cProfile -s tottime example.py`
+
+
+
+```
+color.rgb = ambient;
+color.a = diffuse.a;
+color *=  colorMap;
+shadow = color;
+color.rgb += pow(dot(H, N), specularPower) * specular;
+color = lerp(shadow, color, max(0.0f, dot(N, L) * 3));
+```

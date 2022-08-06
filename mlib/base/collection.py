@@ -2,8 +2,11 @@ import hashlib
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, Optional, TypeVar, Union
 
-from mlib.base import BaseModel, Encoding
-from mlib.model.base.part import TBaseIndexModel, TBaseIndexNameModel
+from mlib.base.base import BaseModel, Encoding
+from mlib.base.part import BaseIndexModel, BaseIndexNameModel
+
+TBaseIndexModel = TypeVar("TBaseIndexModel", bound=BaseIndexModel)
+TBaseIndexNameModel = TypeVar("TBaseIndexNameModel", bound=BaseIndexNameModel)
 
 
 class BaseIndexListModel(Generic[TBaseIndexModel]):
@@ -63,11 +66,11 @@ class BaseIndexListModel(Generic[TBaseIndexModel]):
     def __len__(self) -> int:
         return len(self.data)
 
-    def __iter__(self):
+    def __iter__(self) -> list[TBaseIndexModel]:
         self.__iter_index = -1
         return self.data
 
-    def __next__(self):
+    def __next__(self) -> TBaseIndexModel:
         self.__iter_index += 1
         if self.__iter_index >= len(self.data):
             raise StopIteration
@@ -365,6 +368,3 @@ class BaseHashModel(BaseModel, ABC):
         sha1.update(self.path.encode(Encoding.UTF_8.value))
 
         return sha1.hexdigest()
-
-
-TBaseHashModel = TypeVar("TBaseHashModel", bound=BaseHashModel)

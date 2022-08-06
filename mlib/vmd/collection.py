@@ -1,11 +1,9 @@
-from typing import TypeVar
-
-from mlib.model.base.collection import (
+from mlib.base.collection import (
     BaseHashModel,
     BaseIndexDictModel,
     BaseIndexNameDictModel,
 )
-from mlib.model.vmd.part import (
+from mlib.vmd.part import (
     VmdBoneFrame,
     VmdCameraFrame,
     VmdLightFrame,
@@ -113,6 +111,3 @@ class VmdMotion(BaseHashModel):
 
     def get_name(self) -> str:
         return self.model_name
-
-
-TVmdMotion = TypeVar("TVmdMotion", bound=VmdMotion)

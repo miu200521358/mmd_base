@@ -5,7 +5,7 @@ def test_read_by_filepath_error():
     import os
 
     from mlib.exception import MParseException
-    from mlib.reader.vmd import VmdReader
+    from mlib.vmd.reader import VmdReader
 
     reader = VmdReader()
     with pytest.raises(MParseException):
@@ -16,8 +16,8 @@ def test_read_by_filepath_ok():
     import os
 
     import numpy as np
-    from mlib.model.vmd.collection import VmdMotion
-    from mlib.reader.vmd import VmdReader
+    from mlib.vmd.collection import VmdMotion
+    from mlib.vmd.reader import VmdReader
 
     reader = VmdReader()
     motion: VmdMotion = reader.read_by_filepath(

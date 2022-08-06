@@ -1,22 +1,105 @@
 import pytest
-from mlib.model.pmx.part import (
-    BoneFlg,
-    DeformType,
-    DisplayType,
-    DrawFlg,
-    MorphPanel,
-    MorphType,
-    RigidBodyCollisionGroup,
-    RigidBodyMode,
-    RigidBodyShape,
-)
+
+
+def test_Bdef2_get_indecies():
+    import numpy as np
+    from mlib.pmx.part import Bdef2
+
+    assert np.isclose(
+        np.array([1, 2]),
+        Bdef2(1, 2, 0.3).get_indecies(),
+    ).all()
+
+    assert np.isclose(
+        np.array([2]),
+        Bdef2(1, 2, 0.3).get_indecies(0.5),
+    ).all()
+
+
+def test_Bdef4_get_indecies():
+    import numpy as np
+    from mlib.pmx.part import Bdef4
+
+    assert np.isclose(
+        np.array([1, 2, 3, 4]),
+        Bdef4(1, 2, 3, 4, 0.3, 0.2, 0.4, 0.1).get_indecies(),
+    ).all()
+
+    assert np.isclose(
+        np.array([1, 3]),
+        Bdef4(1, 2, 3, 4, 0.3, 0.2, 0.4, 0.1).get_indecies(0.3),
+    ).all()
+
+
+def test_Bdef4_normalized():
+    import numpy as np
+    from mlib.pmx.part import Bdef4
+
+    d = Bdef4(1, 2, 3, 4, 5, 6, 7, 8)
+    d.normalize()
+    assert np.isclose(
+        np.array([0.19230769, 0.23076923, 0.26923077, 0.30769231]),
+        d.weights,
+    ).all()
+
+
+def test_Material_draw_flg():
+    from mlib.pmx.part import DrawFlg, Material
+
+    m = Material()
+    m.draw_flg |= DrawFlg.DOUBLE_SIDED_DRAWING
+    assert DrawFlg.DOUBLE_SIDED_DRAWING in m.draw_flg
+    assert DrawFlg.DRAWING_EDGE not in m.draw_flg
+
+
+def test_Bone_copy():
+    from mlib.pmx.part import Bone
+
+    b = Bone()
+    assert b != b.copy()
+
+
+def test_DisplaySlots_init():
+    from mlib.pmx.collection import DisplaySlots
+    from mlib.pmx.part import DisplaySlot, Switch
+
+    dd = DisplaySlots()
+    dd.append(DisplaySlot("Root", "Root", Switch.ON))
+    dd.append(DisplaySlot("表情", "Exp", Switch.ON))
+
+    d: DisplaySlot = dd[0]
+    assert 0 == d.index
+    assert "Root" == d.name
+
+    d: DisplaySlot = dd[1]
+    assert 1 == d.index
+    assert "表情" == d.name
+
+    d: DisplaySlot = dd.get_by_name("表情")
+    assert 1 == d.index
+    assert "表情" == d.name
+    assert Switch.ON == d.special_flg
+
+    d: DisplaySlot = dd[2]
+    assert not d
+
+    with pytest.raises(KeyError) as e:
+        dd.get(2, required=True)
+        assert "Not Found 2" == e.value
+
+    d: DisplaySlot = dd.get_by_name("センター")
+    assert not d
+
+    with pytest.raises(KeyError) as e:
+        dd.get_by_name("センター", required=True)
+        assert "Not Found センター" == e.value
 
 
 def test_read_by_filepath_error():
     import os
 
     from mlib.exception import MParseException
-    from mlib.reader.pmx import PmxReader
+    from mlib.pmx.reader import PmxReader
 
     reader = PmxReader()
     with pytest.raises(MParseException):
@@ -27,8 +110,19 @@ def test_read_by_filepath_ok():
     import os
 
     import numpy as np
-    from mlib.model.pmx.collection import PmxModel
-    from mlib.reader.pmx import PmxReader
+    from mlib.pmx.collection import PmxModel
+    from mlib.pmx.part import (
+        BoneFlg,
+        DeformType,
+        DisplayType,
+        DrawFlg,
+        MorphPanel,
+        MorphType,
+        RigidBodyCollisionGroup,
+        RigidBodyMode,
+        RigidBodyShape,
+    )
+    from mlib.pmx.reader import PmxReader
 
     reader = PmxReader()
     model: PmxModel = reader.read_by_filepath(
@@ -268,8 +362,8 @@ def test_read_by_filepath_ok():
 
 
 def test_read_by_filepath_complicated():
-    from mlib.model.pmx.collection import PmxModel
-    from mlib.reader.pmx import PmxReader
+    from mlib.pmx.collection import PmxModel
+    from mlib.pmx.reader import PmxReader
 
     reader = PmxReader()
     model: PmxModel = reader.read_by_filepath(

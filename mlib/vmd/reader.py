@@ -1,10 +1,11 @@
 import re
 from struct import Struct
 
-from mlib.base import Encoding
+from mlib.base.base import Encoding
+from mlib.base.reader import BaseReader, StructUnpackType
 from mlib.math import MVector3D
-from mlib.model.vmd.collection import VmdMotion
-from mlib.model.vmd.part import (
+from mlib.vmd.collection import VmdMotion
+from mlib.vmd.part import (
     VmdBoneFrame,
     VmdCameraFrame,
     VmdIkOnoff,
@@ -13,7 +14,6 @@ from mlib.model.vmd.part import (
     VmdShadowFrame,
     VmdShowIkFrame,
 )
-from mlib.reader.base import BaseReader, StructUnpackType
 
 RE_TEXT_TRIM = re.compile(rb"\x00+$")
 

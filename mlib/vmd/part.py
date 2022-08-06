@@ -1,7 +1,7 @@
 from typing import List
-from mlib.base import BaseModel
+from mlib.base.base import BaseModel
 from mlib.math import MQuaternion, MVector2D, MVector3D
-from mlib.model.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel
+from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel
 
 
 class Interpolation(BaseModel):

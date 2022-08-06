@@ -1,11 +1,9 @@
-from typing import TypeVar
-
-from mlib.model.base.collection import (
+from mlib.base.collection import (
     BaseHashModel,
     BaseIndexListModel,
     BaseIndexNameListModel,
 )
-from mlib.model.pmx.part import (
+from mlib.pmx.part import (
     Bone,
     DisplaySlot,
     Face,
@@ -170,6 +168,3 @@ class PmxModel(BaseHashModel):
 
     def get_name(self) -> str:
         return self.name
-
-
-TPmxModel = TypeVar("TPmxModel", bound=PmxModel)

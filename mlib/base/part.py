@@ -1,8 +1,7 @@
 from enum import Enum, unique
-from typing import TypeVar
 
 import numpy as np
-from mlib.base import BaseModel
+from mlib.base.base import BaseModel
 from mlib.math import MQuaternion, MVector3D
 
 
@@ -90,9 +89,6 @@ class BaseIndexModel(BaseModel):
         self.index = index
 
 
-TBaseIndexModel = TypeVar("TBaseIndexModel", bound=BaseIndexModel)
-
-
 class BaseIndexNameModel(BaseIndexModel):
     """
     INDEXと名前を持つ基底クラス
@@ -115,6 +111,3 @@ class BaseIndexNameModel(BaseIndexModel):
         self.index = index
         self.name = name
         self.english_name = english_name
-
-
-TBaseIndexNameModel = TypeVar("TBaseIndexNameModel", bound=BaseIndexNameModel)

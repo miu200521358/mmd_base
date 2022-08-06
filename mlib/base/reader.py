@@ -1,13 +1,16 @@
 import struct
 from abc import ABCMeta, abstractmethod
 from struct import Struct
-from typing import Any, Callable, Generic
+from typing import Any, Callable, Generic, TypeVar
 
 import numpy as np
-from mlib.base import BaseModel, Encoding, TBaseModel
+from mlib.base.collection import BaseHashModel
+from mlib.base.base import BaseModel, Encoding
 from mlib.exception import MParseException
 from mlib.math import MQuaternion, MVector2D, MVector3D, MVector4D
-from mlib.model.base.collection import TBaseHashModel
+
+TBaseModel = TypeVar("TBaseModel", bound=BaseModel)
+TBaseHashModel = TypeVar("TBaseHashModel", bound=BaseHashModel)
 
 
 class StructUnpackType:
