@@ -3,7 +3,6 @@ from enum import Flag, IntEnum, unique
 from typing import List, Optional
 
 import numpy as np
-from mlib.math import MQuaternion, MVector2D, MVector3D, MVector4D
 from mlib.base.part import (
     BaseIndexModel,
     BaseIndexNameModel,
@@ -11,6 +10,7 @@ from mlib.base.part import (
     BaseRotationModel,
     Switch,
 )
+from mlib.math import MQuaternion, MVector2D, MVector3D, MVector4D
 
 
 @unique

@@ -1,11 +1,12 @@
+import functools
 import struct
 from abc import ABCMeta, abstractmethod
 from struct import Struct
 from typing import Any, Callable, Generic, TypeVar
 
 import numpy as np
-from mlib.base.collection import BaseHashModel
 from mlib.base.base import BaseModel, Encoding
+from mlib.base.collection import BaseHashModel
 from mlib.exception import MParseException
 from mlib.math import MQuaternion, MVector2D, MVector3D, MVector4D
 
@@ -25,7 +26,6 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         super().__init__()
         self.offset = 0
         self.buffer: bytes = b""
-        self.bnames: dict[bytearray, str] = {}
 
         # バイナリ解凍処理のマッピング
         self.read_by_format = {
@@ -180,10 +180,8 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
 
         return read_text
 
+    @functools.lru_cache()
     def decode_text(self, main_encoding: Encoding, fbytes: bytearray) -> str:
-        if fbytes in self.bnames:
-            return self.bnames[fbytes]
-
         """
         テキストデコード
 
@@ -209,18 +207,14 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             try:
                 if target_encoding == Encoding.SHIFT_JIS:
                     # shift-jisは一旦cp932に変換してもう一度戻したので返す
-                    text = (
+                    return (
                         fbytes.decode(Encoding.SHIFT_JIS.value, errors="replace")
                         .encode(Encoding.CP932.value, errors="replace")
                         .decode(Encoding.CP932.value, errors="replace")
                     )
-                    self.bnames[fbytes] = text
-                    return text
 
                 # 変換できなかった文字は「?」に変換する
-                text = fbytes.decode(encoding=target_encoding.value, errors="replace")
-                self.bnames[fbytes] = text
-                return text
+                return fbytes.decode(encoding=target_encoding.value, errors="replace")
             except Exception:
                 pass
         return ""

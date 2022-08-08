@@ -27,7 +27,7 @@ class BaseIndexListModel(Generic[TBaseIndexModel]):
         self.data = data or []
         self.__iter_index = 0
 
-    def __getitem__(self, index: int) -> Optional[TBaseIndexModel]:
+    def __getitem__(self, index: int) -> TBaseIndexModel:
         return self.get(index)
 
     def __setitem__(self, index: int, value: TBaseIndexModel):
@@ -36,7 +36,7 @@ class BaseIndexListModel(Generic[TBaseIndexModel]):
     def __delitem__(self, index: int):
         del self.data[index]
 
-    def get(self, index: int, required: bool = False) -> Optional[TBaseIndexModel]:
+    def get(self, index: int) -> TBaseIndexModel:
         """
         リストから要素を取得する
 
@@ -44,19 +44,14 @@ class BaseIndexListModel(Generic[TBaseIndexModel]):
         ----------
         index : int
             インデックス番号
-        required : bool, optional
-            必須要素であるか, by default False
 
         Returns
         -------
-        Optional[TBaseIndexModel]
-            要素（必須でない場合かつ見つからなければNone）
+        TBaseIndexModel
+            要素
         """
         if index >= len(self.data):
-            if required:
-                raise KeyError(f"Not Found: {index}")
-            else:
-                return None
+            raise KeyError(f"Not Found: {index}")
         return self.data[index]
 
     def append(self, v: TBaseIndexModel) -> None:
@@ -66,9 +61,9 @@ class BaseIndexListModel(Generic[TBaseIndexModel]):
     def __len__(self) -> int:
         return len(self.data)
 
-    def __iter__(self) -> list[TBaseIndexModel]:
+    def __iter__(self):
         self.__iter_index = -1
-        return self.data
+        return self
 
     def __next__(self) -> TBaseIndexModel:
         self.__iter_index += 1
@@ -83,7 +78,7 @@ TBaseIndexListModel = TypeVar("TBaseIndexListModel", bound=BaseIndexListModel)
 class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
     """BaseIndexNameModelのリスト基底クラス"""
 
-    __slots__ = ["data", "__names"]
+    __slots__ = ["data", "__names", "__iter_index"]
 
     def __init__(self, data: list[TBaseIndexNameModel] = None) -> None:
         """
@@ -97,12 +92,16 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
         super().__init__()
         self.data: list[TBaseIndexNameModel] = data or []
         self.__names = dict([(v.name, v.index) for v in self.data])
+        self.__iter_index = 0
 
     def __getitem__(self, index: int) -> Optional[TBaseIndexNameModel]:
         return self.get(index)
 
-    def __setitem__(self, index: int, value: TBaseIndexNameModel):
-        self.data[index] = value
+    def __setitem__(self, index: int, v: TBaseIndexNameModel):
+        self.data[index] = v
+        if v.name not in self.__names:
+            # 名前は先勝ちで保持
+            self.__names[v.name] = v.index
 
     def get(self, index: int, required: bool = False) -> Optional[TBaseIndexNameModel]:
         """
@@ -158,6 +157,19 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
         if v.name not in self.__names:
             # 名前は先勝ちで保持
             self.__names[v.name] = v.index
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __iter__(self):
+        self.__iter_index = -1
+        return self
+
+    def __next__(self) -> TBaseIndexNameModel:
+        self.__iter_index += 1
+        if self.__iter_index >= len(self.data):
+            raise StopIteration
+        return self.data[self.__iter_index]
 
 
 class BaseIndexDictModel(Generic[TBaseIndexModel]):

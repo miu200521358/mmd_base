@@ -166,29 +166,53 @@ class MVector(BaseModel):
         """
         return self.__class__(np.cross(self.vector, other.vector))
 
+    def inner(self, other) -> float:
+        """
+        内積（一次元配列）
+        """
+        return float(np.inner(self.vector, other.vector))
+
     def dot(self, other) -> float:
         """
-        内積
+        内積（二次元の場合、二次元のまま返す）
         """
         return float(np.dot(self.vector, other.vector))
 
     def __lt__(self, other) -> bool:
-        return bool(np.all(np.less(self.vector, other.vector)))
+        if isinstance(other, MVector):
+            return bool(np.all(np.less(self.vector, other.vector)))
+        else:
+            return bool(np.all(np.less(self.vector, other)))
 
     def __le__(self, other) -> bool:
-        return bool(np.all(np.less_equal(self.vector, other.vector)))
+        if isinstance(other, MVector):
+            return bool(np.all(np.less_equal(self.vector, other.vector)))
+        else:
+            return bool(np.all(np.less_equal(self.vector, other)))
 
     def __eq__(self, other) -> bool:
-        return bool(np.all(self.vector == other.vector))
+        if isinstance(other, MVector):
+            return bool(np.all(np.equal(self.vector, other.vector)))
+        else:
+            return bool(np.all(np.equal(self.vector, other)))
 
     def __ne__(self, other) -> bool:
-        return bool(np.all(self.vector != other.vector))
+        if isinstance(other, MVector):
+            return bool(np.all(np.not_equal(self.vector, other.vector)))
+        else:
+            return bool(np.all(np.not_equal(self.vector, other)))
 
     def __gt__(self, other) -> bool:
-        return bool(np.all(np.greater(self.vector, other.vector)))
+        if isinstance(other, MVector):
+            return bool(np.all(np.greater(self.vector, other.vector)))
+        else:
+            return bool(np.all(np.greater(self.vector, other)))
 
     def __ge__(self, other) -> bool:
-        return bool(np.all(np.greater_equal(self.vector, other.vector)))
+        if isinstance(other, MVector):
+            return bool(np.all(np.greater_equal(self.vector, other.vector)))
+        else:
+            return bool(np.all(np.greater_equal(self.vector, other)))
 
     def __bool__(self) -> bool:
         return bool(np.all(self.vector == 0))
@@ -887,6 +911,7 @@ class MMatrix4x4(MVector):
         m42=0.0,
         m43=0.0,
         m44=1.0,
+        identity=False,
     ):
         if isinstance(m11, int) or isinstance(m11, float):
             # 実数の場合
@@ -944,6 +969,9 @@ class MMatrix4x4(MVector):
         else:
             # listの場合
             self.vector = MMatrix4x4(*m11)
+        if identity:
+            # フラグが立ってたら初期化を実行する
+            self.identity()
 
     def inverse(self):
         """
@@ -1063,6 +1091,9 @@ class MMatrix4x4(MVector):
 
         return q
 
+    def to_position(self) -> MVector3D:
+        return MVector3D(self.vector[3, 0:3])
+
     def __mul__(self, other):
         if isinstance(other, MMatrix4x4):
             # 行列同士のかけ算
@@ -1080,6 +1111,14 @@ class MMatrix4x4(MVector):
             # vec4 とのかけ算は vec4 を返す
             return MVector4D(np.sum(self.vector * other.vector, axis=1))
         return super().__mul__(other)
+
+    def __getitem__(self, index) -> float:
+        y, x = index
+        return self.vector[y, x]
+
+    def __setitem__(self, index, v: float):
+        y, x = index
+        self.vector[y, x] = v
 
 
 def operate_vector(v: MVector, other: Union[MVector, float, int], op) -> MVector:

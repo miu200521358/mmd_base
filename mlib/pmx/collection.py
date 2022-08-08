@@ -1,8 +1,11 @@
+from typing import Optional
+
 from mlib.base.collection import (
     BaseHashModel,
     BaseIndexListModel,
     BaseIndexNameListModel,
 )
+from mlib.pmx.mesh import Mesh
 from mlib.pmx.part import (
     Bone,
     DisplaySlot,
@@ -14,6 +17,7 @@ from mlib.pmx.part import (
     Texture,
     Vertex,
 )
+from mlib.pmx.shader import MShader
 
 
 class Vertices(BaseIndexListModel[Vertex]):
@@ -60,6 +64,20 @@ class Bones(BaseIndexNameListModel[Bone]):
     def __init__(self):
         super().__init__()
 
+    def get_max_layer(self) -> int:
+        """
+        最大変形階層を取得
+
+        Returns
+        -------
+        int
+            最大変形階層
+        """
+        return max([b.layer for b in self.data])
+
+    def get_bones_by_layer(self, layer: int) -> list[Bone]:
+        return [b for b in self.data if b.layer == layer]
+
 
 class Morphs(BaseIndexNameListModel[Morph]):
     """
@@ -97,6 +115,60 @@ class Joints(BaseIndexNameListModel[Joint]):
 
     def __init__(self):
         super().__init__()
+
+
+class Meshs(BaseIndexListModel[Mesh]):
+    """
+    メッシュリスト
+    """
+
+    def __init__(
+        self,
+        vertices: Vertices,
+        faces: Faces,
+        materials: Materials,
+        textures: Textures,
+    ):
+        super().__init__()
+
+        self.shader = MShader()
+        material_face_count = 0
+        vertex_poses: list[float] = []
+        vertex_uvs: list[float] = []
+        face_indexes: list[int] = []
+        for material in materials:
+            texture: Optional[Texture] = None
+            if material.texture_index >= 0:
+                texture = textures[material.texture_index]
+            sphere_texture: Optional[Texture] = None
+            if material.sphere_texture_index >= 0:
+                sphere_texture = textures[material.sphere_texture_index]
+
+            face_count = material.vertices_count // 3
+            for face_index in range(face_count):
+                face = faces[face_index + material_face_count]
+                vertex_poses.extend(
+                    vertices[vidx].position.vector for vidx in face.vertices
+                )
+                vertex_uvs.extend(vertices[vidx].uv.vector for vidx in face.vertices)
+                face_indexes.extend(face.vertices)
+            material_face_count += face_count
+
+            self.data.append(
+                Mesh(
+                    self.shader,
+                    vertex_poses,
+                    vertex_uvs,
+                    face_indexes,
+                    material,
+                    texture,
+                    sphere_texture,
+                )
+            )
+
+    def draw(self):
+        for m in self.data:
+            m.draw()
 
 
 class PmxModel(BaseHashModel):
@@ -165,6 +237,22 @@ class PmxModel(BaseHashModel):
         self.display_slots = DisplaySlots()
         self.rigidbodies = RigidBodies()
         self.joints = Joints()
+        self.for_draw = False
+        self.meshs = None
 
     def get_name(self) -> str:
         return self.name
+
+    def init_draw(self):
+        if self.for_draw:
+            # 既にフラグが立ってたら描画初期化済み
+            return
+
+        # 描画初期化
+        self.for_draw = True
+        self.meshs = Meshs(self.vertices, self.faces, self.materials, self.textures)
+
+    def draw(self):
+        if not self.for_draw:
+            return
+        self.meshs.draw()

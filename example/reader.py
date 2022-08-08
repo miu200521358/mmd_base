@@ -30,4 +30,4 @@ def read_motion():
 
 
 if __name__ == "__main__":
-    read_model()
+    read_motion()
