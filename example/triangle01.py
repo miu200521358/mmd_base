@@ -6,8 +6,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import numpy as np
 import OpenGL.GL as gl
 import wx
-from mlib.math import MMatrix4x4, MQuaternion, MVector3D
-from mlib.pmx.reader import PmxReader
+from mlib.math import MMatrix4x4, MQuaternion
 from OpenGL.GL import shaders
 from wx import glcanvas
 
@@ -41,49 +40,49 @@ void main() {
 
 class Geometries:
     def __init__(self) -> None:
-        # self.triangle = np.array(
-        #     [
-        #         -0.5,
-        #         -0.5,
-        #         0.0,
-        #         1.0,
-        #         0.0,
-        #         0.0,
-        #         0.5,
-        #         -0.5,
-        #         0.0,
-        #         0.0,
-        #         1.0,
-        #         0.0,
-        #         0.0,
-        #         0.5,
-        #         0.0,
-        #         0.0,
-        #         0.0,
-        #         1.0,
-        #     ],
-        #     dtype=np.float32,
-        # )
+        self.triangle = np.array(
+            [
+                -0.5,
+                -0.5,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.5,
+                -0.5,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.5,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+            ],
+            dtype=np.float32,
+        )
 
-        # self.vao_triangle = gl.glGenVertexArrays(1)
-        # gl.glBindVertexArray(self.vao_triangle)
+        self.vao_triangle = gl.glGenVertexArrays(1)
+        gl.glBindVertexArray(self.vao_triangle)
 
-        # vbo_triangle = gl.glGenBuffers(1)
-        # gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_triangle)
-        # gl.glBufferData(
-        #     gl.GL_ARRAY_BUFFER, self.triangle.nbytes, self.triangle, gl.GL_STATIC_DRAW
-        # )
+        vbo_triangle = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_triangle)
+        gl.glBufferData(
+            gl.GL_ARRAY_BUFFER, self.triangle.nbytes, self.triangle, gl.GL_STATIC_DRAW
+        )
 
-        # gl.glVertexAttribPointer(
-        #     0, 3, gl.GL_FLOAT, gl.GL_FALSE, 24, gl.ctypes.c_void_p(0)
-        # )
-        # gl.glEnableVertexAttribArray(0)
+        gl.glVertexAttribPointer(
+            0, 3, gl.GL_FLOAT, gl.GL_FALSE, 24, gl.ctypes.c_void_p(0)
+        )
+        gl.glEnableVertexAttribArray(0)
 
-        # gl.glVertexAttribPointer(
-        #     1, 3, gl.GL_FLOAT, gl.GL_FALSE, 24, gl.ctypes.c_void_p(12)
-        # )
-        # gl.glEnableVertexAttribArray(1)
-        # gl.glBindVertexArray(0)
+        gl.glVertexAttribPointer(
+            1, 3, gl.GL_FLOAT, gl.GL_FALSE, 24, gl.ctypes.c_void_p(12)
+        )
+        gl.glEnableVertexAttribArray(1)
+        gl.glBindVertexArray(0)
 
         # # quad ------------------
 
@@ -137,62 +136,6 @@ class Geometries:
         # gl.glEnableVertexAttribArray(1)
         # gl.glBindVertexArray(0)
 
-        # # ------------------
-
-        self.model = PmxReader().read_by_filepath(
-            # "C:/MMD/mmd_base/test/resources/曲げ柱tex.pmx"
-            # "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/Tda式初音ミク・アペンドVer1.10/Tda式初音ミク・アペンド_Ver1.10.pmx",
-            "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/初音ミクVer2 準標準.pmx"
-        )
-        self.model.init_draw()
-        if not self.model.meshs:
-            return
-        vertex_position_list = []
-        prev_face_count = 0
-        for material in self.model.materials:
-            face_count = material.vertices_count // 3
-            for face_index in range(prev_face_count, prev_face_count + face_count):
-                vertex_position_list.append(
-                    np.array(
-                        [
-                            (
-                                (
-                                    self.model.vertices[vidx].position
-                                    + MVector3D(0, -10, 0)
-                                )
-                                / 15
-                            ).vector
-                            for vidx in self.model.faces[face_index].vertices
-                        ],
-                        dtype=np.float32,
-                    )
-                )
-            prev_face_count += face_count
-        self.vertices = np.array(vertex_position_list, dtype=np.float32)
-
-        self.vao_vertices = gl.glGenVertexArrays(1)
-        gl.glBindVertexArray(self.vao_vertices)
-
-        vbo_vertices = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_vertices)
-        gl.glBufferData(
-            gl.GL_ARRAY_BUFFER,
-            self.vertices.nbytes,
-            self.vertices,
-            gl.GL_STATIC_DRAW,
-        )
-
-        gl.glVertexAttribPointer(
-            0, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, gl.ctypes.c_void_p(0)
-        )
-        gl.glEnableVertexAttribArray(0)
-
-        gl.glVertexAttribPointer(
-            1, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, gl.ctypes.c_void_p(12)
-        )
-        gl.glEnableVertexAttribArray(1)
-        gl.glBindVertexArray(0)
-
     def bind_triangle(self):
         gl.glBindVertexArray(self.vao_triangle)
         self.count = len(self.triangle) // 3
@@ -234,7 +177,7 @@ class OpenGLCanvas(glcanvas.GLCanvas):
 
     def InitGL(self):
         self.mesh = Geometries()
-        self.mesh.bind_vertices()
+        self.mesh.bind_triangle()
 
         shader = shaders.compileProgram(
             shaders.compileShader(vertex_shader, gl.GL_VERTEX_SHADER),

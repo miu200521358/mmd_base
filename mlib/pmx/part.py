@@ -1,8 +1,10 @@
+import os
 from abc import ABC, abstractmethod
 from enum import Flag, IntEnum, unique
 from typing import List, Optional
 
 import numpy as np
+import OpenGL.GL as gl
 from mlib.base.part import (
     BaseIndexModel,
     BaseIndexNameModel,
@@ -11,6 +13,7 @@ from mlib.base.part import (
     Switch,
 )
 from mlib.math import MQuaternion, MVector2D, MVector3D, MVector4D
+from PIL import Image, ImageOps
 
 
 @unique
@@ -248,6 +251,45 @@ class Texture(BaseIndexModel):
     def __init__(self, texture_path: str):
         super().__init__()
         self.texture_path = texture_path
+        self.for_draw = False
+
+    def init_draw(self, model_path: str, index: int, is_individual: bool = True):
+        if self.for_draw:
+            # 既にフラグが立ってたら描画初期化済み
+            return
+
+        # 描画初期化
+        self.for_draw = True
+
+        # global texture
+        if is_individual:
+            tex_path = os.path.abspath(
+                os.path.join(os.path.dirname(model_path), self.texture_path)
+            )
+        else:
+            tex_path = self.texture_path
+        image = Image.open(tex_path).convert("RGBA")
+        image = ImageOps.flip(image)
+        ix, iy = image.size
+        gl.glBindTexture(gl.GL_TEXTURE_2D, index)
+        gl.glTexImage2D(
+            gl.GL_TEXTURE_2D,
+            0,
+            gl.GL_RGBA,
+            ix,
+            iy,
+            0,
+            gl.GL_RGBA,
+            gl.GL_UNSIGNED_BYTE,
+            image.tobytes(),
+        )
+        gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP)
+        gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP)
+        gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT)
+        gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT)
+        gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
+        gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
+        gl.glTexEnvf(gl.GL_TEXTURE_ENV, gl.GL_TEXTURE_ENV_MODE, gl.GL_DECAL)
 
 
 @unique

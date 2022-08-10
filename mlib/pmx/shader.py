@@ -1,120 +1,119 @@
+import os
+from enum import IntEnum
+from pathlib import Path
+
 import OpenGL.GL as gl
-from mlib.base.base import BaseModel
-
-MESH_BONE_LIMIT = 20
+import OpenGL.GLU as glu
 
 
-class MShader(BaseModel):
-    def __init__(self) -> None:
-        super().__init__()
+class VsLayout(IntEnum):
+    POSITION_ID = 0
+    NORMAL_ID = 1
+    UV_ID = 2
+    FACE_ID = 3
 
-        self.program = None
-        if not self.compile():
-            raise IOError
+    COLOR_DIFFUSE_ID = 4
+    COLOR_AMBIENT_ID = 5
+    COLOR_SPECULAR_ID = 6
 
-    def compile(self) -> bool:
-        vertex_shader_src = """
-            # version 330
-            in layout(location = 0) vec3 positions;
-            in layout(location = 1) vec3 colors;
 
-            out vec3 newColor;
+class MShader:
+    def __init__(self, width: int, height: int) -> None:
 
-            void main() {
-                gl_Position = vec4(positions, 1.0);
-                newColor = colors;
-            }
-            """
+        vertex_shader_src = Path(
+            os.path.join(os.path.dirname(__file__), "pmx.vert")
+        ).read_text(encoding="utf-8")
+        vertex_shader_src = vertex_shader_src % (
+            VsLayout.POSITION_ID.value,
+            VsLayout.NORMAL_ID.value,
+            VsLayout.UV_ID.value,
+        )
 
-        fragment_shader_src = """
-            # version 330
+        fragments_shader_src = Path(
+            os.path.join(os.path.dirname(__file__), "pmx.frag")
+        ).read_text(encoding="utf-8")
 
-            in vec3 newColor;
-            out vec4  outColor;
+        self.vertex_shader = gl.glCreateShader(gl.GL_VERTEX_SHADER)
+        gl.glShaderSource(self.vertex_shader, vertex_shader_src)
+        gl.glCompileShader(self.vertex_shader)
+        gl.glGetShaderiv(self.vertex_shader, gl.GL_COMPILE_STATUS)
 
-            void main() {
-                outColor = vec4(newColor, 1.0);
-            }
-        """
+        self.fragments_shader = gl.glCreateShader(gl.GL_FRAGMENT_SHADER)
+        gl.glShaderSource(self.fragments_shader, fragments_shader_src)
+        gl.glCompileShader(self.fragments_shader)
+        gl.glGetShaderiv(self.fragments_shader, gl.GL_COMPILE_STATUS)
+
+        # プログラムオブジェクト作成しアタッチ
         self.program = gl.glCreateProgram()
-        if not self.create_shader(gl.GL_VERTEX_SHADER, vertex_shader_src):
-            # FIXME
-            print("GL_VERTEX_SHADER ERROR")
-            return False
-        if not self.create_shader(gl.GL_FRAGMENT_SHADER, fragment_shader_src):
-            print("GL_FRAGMENT_SHADER ERROR")
-            return False
-        else:
-            if not self.link():
-                print("SHADER LINK ERROR")
-                return False
-            self.create_variable()
-            return True
+        gl.glAttachShader(self.program, self.vertex_shader)
+        gl.glAttachShader(self.program, self.fragments_shader)
 
-    def create_shader(self, shader_type: gl.Constant, src: str) -> bool:
-        shader = gl.glCreateShader(shader_type)
-        gl.glShaderSource(shader, src)
-        gl.glCompileShader(shader)
-        r = gl.glGetShaderiv(shader, gl.GL_COMPILE_STATUS)
-        if r == 0:
-            return False
-        gl.glAttachShader(self.program, shader)
-        gl.glDeleteShader(shader)
-        return True
+        gl.glLinkProgram(self.program)
+        gl.glGetProgramiv(self.program, gl.GL_LINK_STATUS)
 
-    def link(self) -> bool:
-        if self.program:
-            gl.glLinkProgram(self.program)
-        r = gl.glGetProgramiv(self.program, gl.GL_LINK_STATUS)
-        if r == 0:
-            gl.glDeleteProgram(self.program)
-            return False
-        else:
-            gl.glGetProgramiv(self.program, gl.GL_LINK_STATUS)
-            gl.glGetProgramiv(self.program, gl.GL_LINK_STATUS)
-            return True
+        # -----------------------
 
-    def create_variable(self) -> None:
-        self.shader_on()
-        self.glsl_id_vertex: int = gl.glGetAttribLocation(self.program, "Vertex")
-        # self.glsl_id_uv: int = gl.glGetAttribLocation(self.program, "InputUV")
-        # self.glsl_id_color: int = gl.glGetUniformLocation(self.program, "InputColor")
-        # self.glsl_id_texture01: int = gl.glGetUniformLocation(self.program, "Texture01")
-        # self.glsl_id_alpha: int = gl.glGetUniformLocation(self.program, "Alpha")
-        # self.glsl_id_is_texture: int = gl.glGetUniformLocation(
-        #     self.program, "IsTexture"
-        # )
-        # self.glsl_id_bone_indexes: int = gl.glGetAttribLocation(
-        #     self.program, "BoneIndices"
-        # )
-        # self.glsl_id_bone_weights: int = gl.glGetAttribLocation(
-        #     self.program, "BoneWeights"
-        # )
+        gl.glClearColor(0.7, 0.7, 0.7, 1.0)
+        gl.glEnable(gl.GL_DEPTH_TEST)  # enable shading
 
-        gl.glVertexAttribPointer(
-            0, 3, gl.GL_FLOAT, gl.GL_FALSE, 24, gl.ctypes.c_void_p(0)
-        )
-        gl.glEnableVertexAttribArray(0)
+        gl.glMatrixMode(gl.GL_PROJECTION)
+        gl.glLoadIdentity()
 
-        gl.glVertexAttribPointer(
-            1, 3, gl.GL_FLOAT, gl.GL_FALSE, 24, gl.ctypes.c_void_p(12)
-        )
-        gl.glEnableVertexAttribArray(1)
-        gl.glBindVertexArray(0)
+        camera_length = 160.0
 
-        self.glsl_id_bone_matrix: int = gl.glGetUniformLocation(
-            self.program, "BoneMatrix"
-        )
+        # set perspective
+        glu.gluPerspective(30.0, float(width) / float(height), 0.10, camera_length)
+
+        # modeling transform
+        gl.glMatrixMode(gl.GL_MODELVIEW)
+
+        # light color
+        light_ambient = [0.25, 0.25, 0.25]
+        light_diffuse = [1.0, 1.0, 1.0]
+        light_specular = [1.0, 1.0, 1.0]
+
+        # light position
+        light_position = [-0.5, -1.0, 0.5]
+
+        # light setting
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_AMBIENT, light_ambient)
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, light_diffuse)
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, light_specular)
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, light_position)
+        gl.glEnable(gl.GL_LIGHT0)
+        gl.glEnable(gl.GL_LIGHTING)
+
+        # -----------------
+        gl.glUseProgram(self.program)
+
+        # ボーンデフォーム行列
+        self.bone_matrix_uniform = gl.glGetUniformLocation(self.program, "BoneMatrix")
+
+        # ライトの位置
+        self.light_vec_uniform = gl.glGetUniformLocation(self.program, "lightPos")
+        gl.glUniform3f(self.light_vec_uniform, *light_position)
+
+        # カメラの位置
+        self.camera_vec_uniform = gl.glGetUniformLocation(self.program, "cameraPos")
+        gl.glUniform3f(self.camera_vec_uniform, 0, 0, camera_length)
+
+        # マテリアル設定
+        self.diffuse_uniform = gl.glGetUniformLocation(self.program, "diffuse")
+        self.ambient_uniform = gl.glGetUniformLocation(self.program, "ambient")
+        self.specular_uniform = gl.glGetUniformLocation(self.program, "specular")
+
+        # --------
+
+        # # テクスチャの設定
         # gl.glActiveTexture(gl.GL_TEXTURE0)
-        # gl.glUniform1i(self.glsl_id_texture01, 0)
-        self.shader_off()
+        # gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+        # self.texture_uniform = gl.glGetUniformLocation(self.program, "texture")
 
-    def shader_on(self) -> bool:
-        if self.program:
-            gl.glUseProgram(self.program)
-        else:
-            return False
-        return True
-
-    def shader_off(self) -> None:
+        # -----------------------
         gl.glUseProgram(0)
+
+        gl.glDetachShader(self.program, self.vertex_shader)
+        gl.glDetachShader(self.program, self.fragments_shader)
+
+        gl.glDeleteShader(self.vertex_shader)
+        gl.glDeleteShader(self.fragments_shader)

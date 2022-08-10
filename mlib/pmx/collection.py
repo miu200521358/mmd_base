@@ -1,10 +1,17 @@
+import os
+from ctypes import c_float, sizeof
+from glob import glob
 from typing import Optional
 
+import numpy as np
+import OpenGL.GL as gl
 from mlib.base.collection import (
     BaseHashModel,
+    BaseIndexDictModel,
     BaseIndexListModel,
     BaseIndexNameListModel,
 )
+from mlib.math import MVector3D
 from mlib.pmx.mesh import Mesh
 from mlib.pmx.part import (
     Bone,
@@ -15,9 +22,10 @@ from mlib.pmx.part import (
     Morph,
     RigidBody,
     Texture,
+    ToonSharing,
     Vertex,
 )
-from mlib.pmx.shader import MShader
+from mlib.pmx.shader import MShader, VsLayout
 
 
 class Vertices(BaseIndexListModel[Vertex]):
@@ -41,6 +49,15 @@ class Faces(BaseIndexListModel[Face]):
 class Textures(BaseIndexListModel[Texture]):
     """
     テクスチャリスト
+    """
+
+    def __init__(self):
+        super().__init__()
+
+
+class ToonTextures(BaseIndexDictModel[Texture]):
+    """
+    共有テクスチャ辞書
     """
 
     def __init__(self):
@@ -117,60 +134,6 @@ class Joints(BaseIndexNameListModel[Joint]):
         super().__init__()
 
 
-class Meshs(BaseIndexListModel[Mesh]):
-    """
-    メッシュリスト
-    """
-
-    def __init__(
-        self,
-        vertices: Vertices,
-        faces: Faces,
-        materials: Materials,
-        textures: Textures,
-    ):
-        super().__init__()
-
-        self.shader = MShader()
-        material_face_count = 0
-        vertex_poses: list[float] = []
-        vertex_uvs: list[float] = []
-        face_indexes: list[int] = []
-        for material in materials:
-            texture: Optional[Texture] = None
-            if material.texture_index >= 0:
-                texture = textures[material.texture_index]
-            sphere_texture: Optional[Texture] = None
-            if material.sphere_texture_index >= 0:
-                sphere_texture = textures[material.sphere_texture_index]
-
-            face_count = material.vertices_count // 3
-            for face_index in range(face_count):
-                face = faces[face_index + material_face_count]
-                vertex_poses.extend(
-                    vertices[vidx].position.vector for vidx in face.vertices
-                )
-                vertex_uvs.extend(vertices[vidx].uv.vector for vidx in face.vertices)
-                face_indexes.extend(face.vertices)
-            material_face_count += face_count
-
-            self.data.append(
-                Mesh(
-                    self.shader,
-                    vertex_poses,
-                    vertex_uvs,
-                    face_indexes,
-                    material,
-                    texture,
-                    sphere_texture,
-                )
-            )
-
-    def draw(self):
-        for m in self.data:
-            m.draw()
-
-
 class PmxModel(BaseHashModel):
     """
     Pmxモデルデータ
@@ -231,6 +194,7 @@ class PmxModel(BaseHashModel):
         self.vertices = Vertices()
         self.faces = Faces()
         self.textures = Textures()
+        self.toon_textures = ToonTextures()
         self.materials = Materials()
         self.bones = Bones()
         self.morphs = Morphs()
@@ -243,16 +207,202 @@ class PmxModel(BaseHashModel):
     def get_name(self) -> str:
         return self.name
 
-    def init_draw(self):
+    def init_draw(self, shader):
         if self.for_draw:
             # 既にフラグが立ってたら描画初期化済み
             return
 
         # 描画初期化
         self.for_draw = True
-        self.meshs = Meshs(self.vertices, self.faces, self.materials, self.textures)
+        # 共有Toon読み込み
+        for tidx, tpath in enumerate(glob("resources/share_toon/*.bmp")):
+            self.toon_textures[tidx] = Texture(os.path.abspath(tpath))
+
+        self.meshs = Meshs(shader, self)
+
+    def update(self):
+        if not self.for_draw:
+            return
+        self.meshs.update()
 
     def draw(self):
         if not self.for_draw:
             return
         self.meshs.draw()
+
+
+class Meshs(BaseIndexListModel[Mesh]):
+    """
+    メッシュリスト
+    """
+
+    VERTEX_BINDING_POINT = 0
+
+    def __init__(self, shader: MShader, model: PmxModel):
+        super().__init__()
+
+        self.shader = shader
+
+        # 頂点情報
+        self.vertices = np.array(
+            [
+                np.array(
+                    [
+                        *(v.position + MVector3D(0, 0, 0)).vector,
+                        *v.normal.vector,
+                        *v.uv.vector,
+                    ],
+                    dtype=np.float32,
+                )
+                for v in model.vertices
+            ],
+            dtype=np.float32,
+        )
+        # 面情報
+        self.faces = np.array(
+            [np.array(f.vertices, dtype=np.int8) for f in model.faces], dtype=np.int8
+        )
+
+        prev_face_count = 0
+        for material in model.materials:
+            texture: Optional[Texture] = None
+            if material.texture_index >= 0:
+                texture = model.textures[material.texture_index]
+                texture.init_draw(model.path, material.texture_index)
+
+            toon_texture: Optional[Texture] = None
+            if ToonSharing.SHARING == material.toon_sharing_flg:
+                # 共有Toon
+                toon_texture = model.toon_textures[material.toon_texture_index]
+                toon_texture.init_draw(
+                    model.path, material.toon_texture_index, is_individual=False
+                )
+            elif (
+                ToonSharing.INDIVIDUAL == material.toon_sharing_flg
+                and material.toon_texture_index >= 0
+            ):
+                # 個別Toon
+                toon_texture = model.textures[material.toon_texture_index]
+                # 共有Toonのを優先させるため、INDEXをずらす
+                toon_texture.init_draw(model.path, material.toon_texture_index + 10)
+
+            sphere_texture: Optional[Texture] = None
+            if material.sphere_texture_index >= 0:
+                sphere_texture = model.textures[material.sphere_texture_index]
+                sphere_texture.init_draw(model.path, material.texture_index)
+
+            self.data.append(
+                Mesh(material, texture, toon_texture, sphere_texture, prev_face_count)
+            )
+
+            prev_face_count += material.vertices_count // 3
+
+        # ---------------------
+        # VAO
+        self.vao_vertices = gl.glGenVertexArrays(1)
+        gl.glBindVertexArray(self.vao_vertices)
+
+        # ---------------------
+        # VBO: 頂点
+
+        self.vbo_vertices = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo_vertices)
+        gl.glBufferData(
+            gl.GL_ARRAY_BUFFER,
+            self.vertices.nbytes,
+            self.vertices,
+            gl.GL_STATIC_DRAW,
+        )
+        gl.glVertexAttribPointer(
+            VsLayout.POSITION_ID,
+            3,
+            gl.GL_FLOAT,
+            gl.GL_FALSE,
+            0,
+            gl.ctypes.c_void_p(0),
+        )
+        gl.glVertexAttribPointer(
+            VsLayout.NORMAL_ID,
+            3,
+            gl.GL_FLOAT,
+            gl.GL_FALSE,
+            0,
+            gl.ctypes.c_void_p(0),
+        )
+        gl.glVertexAttribPointer(
+            VsLayout.UV_ID,
+            2,
+            gl.GL_FLOAT,
+            gl.GL_FALSE,
+            0,
+            gl.ctypes.c_void_p(0),
+        )
+
+        # ---------------------
+        # EBO: 面
+
+        self.ebo_faces = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.ebo_faces)
+        gl.glBufferData(
+            gl.GL_ELEMENT_ARRAY_BUFFER,
+            self.faces.nbytes,
+            self.faces,
+            gl.GL_STATIC_DRAW,
+        )
+
+        # ---------------------
+        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+
+    def update(self):
+        pass
+
+    def draw(self):
+        for m in self.data:
+            gl.glUseProgram(self.shader.program)
+            gl.glBindVertexArray(self.vao_vertices)
+
+            gl.glEnableVertexAttribArray(VsLayout.POSITION_ID)
+            gl.glEnableVertexAttribArray(VsLayout.NORMAL_ID)
+            gl.glEnableVertexAttribArray(VsLayout.UV_ID)
+
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo_vertices)
+            gl.glVertexAttribPointer(
+                VsLayout.POSITION_ID,
+                3,
+                gl.GL_FLOAT,
+                gl.GL_FALSE,
+                0,
+                gl.ctypes.c_void_p(0),
+            )
+            gl.glVertexAttribPointer(
+                VsLayout.NORMAL_ID,
+                3,
+                gl.GL_FLOAT,
+                gl.GL_FALSE,
+                0,
+                gl.ctypes.c_void_p(0),
+            )
+            gl.glVertexAttribPointer(
+                VsLayout.UV_ID,
+                2,
+                gl.GL_FLOAT,
+                gl.GL_FALSE,
+                0,
+                gl.ctypes.c_void_p(0),
+            )
+
+            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.ebo_faces)
+
+            m.draw(
+                self.shader,
+            )
+
+            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
+            gl.glDisableVertexAttribArray(VsLayout.POSITION_ID)
+            gl.glDisableVertexAttribArray(VsLayout.NORMAL_ID)
+            gl.glDisableVertexAttribArray(VsLayout.UV_ID)
+
+            gl.glBindVertexArray(0)
+            gl.glUseProgram(0)

@@ -1,6 +1,6 @@
 import hashlib
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, Optional, TypeVar, Union
+from typing import Any, Dict, Generic, TypeVar, Union
 
 from mlib.base.base import BaseModel, Encoding
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel
@@ -94,7 +94,7 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
         self.__names = dict([(v.name, v.index) for v in self.data])
         self.__iter_index = 0
 
-    def __getitem__(self, index: int) -> Optional[TBaseIndexNameModel]:
+    def __getitem__(self, index: int) -> TBaseIndexNameModel:
         return self.get(index)
 
     def __setitem__(self, index: int, v: TBaseIndexNameModel):
@@ -103,7 +103,7 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
             # 名前は先勝ちで保持
             self.__names[v.name] = v.index
 
-    def get(self, index: int, required: bool = False) -> Optional[TBaseIndexNameModel]:
+    def get(self, index: int) -> TBaseIndexNameModel:
         """
         リストから要素を取得する
 
@@ -116,19 +116,14 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
 
         Returns
         -------
-        Optional[TBaseIndexNameModel]
+        TBaseIndexNameModel
             要素（必須でない場合かつ見つからなければNone）
         """
         if index >= len(self.data):
-            if required:
-                raise KeyError(f"Not Found: {index}")
-            else:
-                return None
+            raise KeyError(f"Not Found: {index}")
         return self.data[index]
 
-    def get_by_name(
-        self, name: str, required: bool = False
-    ) -> Optional[TBaseIndexNameModel]:
+    def get_by_name(self, name: str) -> TBaseIndexNameModel:
         """
         リストから要素を取得する
 
@@ -141,14 +136,11 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
 
         Returns
         -------
-        Optional[TBaseIndexNameModel]
+        TBaseIndexNameModel
             要素（必須でない場合かつ見つからなければNone）
         """
         if name not in self.__names:
-            if required:
-                raise KeyError(f"Not Found: {name}")
-            else:
-                return None
+            raise KeyError(f"Not Found: {name}")
         return self.data[self.__names[name]]
 
     def append(self, v: TBaseIndexNameModel) -> None:
@@ -191,7 +183,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel]):
         self.__keys: list[int] = sorted(list(self.data.keys()))
         self.__iter_index: int = 0
 
-    def __getitem__(self, index: int) -> Optional[TBaseIndexModel]:
+    def __getitem__(self, index: int) -> TBaseIndexModel:
         return self.get(index)
 
     def __setitem__(self, index: int, value: TBaseIndexModel):
@@ -204,7 +196,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel]):
     def append(self, value: TBaseIndexModel):
         self.data[value.index] = value
 
-    def get(self, index: int, required: bool = False) -> Optional[TBaseIndexModel]:
+    def get(self, index: int) -> TBaseIndexModel:
         """
         辞書から要素を取得する
 
@@ -217,14 +209,11 @@ class BaseIndexDictModel(Generic[TBaseIndexModel]):
 
         Returns
         -------
-        Optional[TBaseIndexModel]
-            要素（必須でない場合かつ見つからなければNone）
+        TBaseIndexModel
+            要素
         """
         if index not in self.data:
-            if required:
-                raise KeyError(f"Not Found: {index}")
-            else:
-                return None
+            raise KeyError(f"Not Found: {index}")
         return self.data[index]
 
     def __len__(self) -> int:
@@ -265,7 +254,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel]):
 
     def __getitem__(
         self, key: Any
-    ) -> Optional[Union[TBaseIndexNameModel, Dict[int, TBaseIndexNameModel]]]:
+    ) -> Union[TBaseIndexNameModel, Dict[int, TBaseIndexNameModel]]:
         if isinstance(key, tuple):
             name, index = key
         elif isinstance(key, str):
@@ -290,8 +279,8 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel]):
         )
 
     def get(
-        self, name: str, index: int = None, required: bool = False
-    ) -> Optional[Union[TBaseIndexNameModel, Dict[int, TBaseIndexNameModel]]]:
+        self, name: str, index: int = None
+    ) -> Union[TBaseIndexNameModel, Dict[int, TBaseIndexNameModel]]:
         """
         辞書から要素を取得する
 
@@ -304,24 +293,18 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel]):
 
         Returns
         -------
-        Optional[TBaseIndexNameModel]
+        TBaseIndexNameModel
             要素（必須でない場合かつ見つからなければNone）
         """
         if name not in self.data:
-            if required:
-                raise KeyError(f"Not Found Name: {(name, index)}")
-            else:
-                return None
+            raise KeyError(f"Not Found Name: {(name, index)}")
 
         if index is None:
             # INDEXが未指定の場合、辞書そのものを返す
             return self.data[name]
 
         elif index not in self.data[name]:
-            if required:
-                raise KeyError(f"Not Found Index: {(name, index)}")
-            else:
-                return None
+            raise KeyError(f"Not Found Index: {(name, index)}")
         return self.data[name][index]
 
     def __len__(self) -> int:
