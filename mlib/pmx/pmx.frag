@@ -19,11 +19,11 @@ in vec3 vetexNormal;
 in vec3 lightDirection;
 in vec2 sphereUv;
 
-out vec4  outColor;
+out vec4 outColor;
 
 void main() {
     outColor = vertexColor;
-    
+
     if (useTexture == 1) {
         // テクスチャ適用
         outColor *= texture(textureSampler, vertexUv);
@@ -45,7 +45,7 @@ void main() {
 
     if (useToon == 1) {
         // Toon適用
-        float lightNormal = dot( vetexNormal, -lightDirection );
+        float lightNormal = dot(vetexNormal, -lightDirection);
         outColor *= texture(toonSampler, vec2(0, 0.5 - lightNormal * 0.5));
     }
 

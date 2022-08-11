@@ -7,13 +7,16 @@ in layout(location = %d) vec2 extendUv;
 
 uniform vec3 lightPos;
 uniform vec3 cameraPos;
-uniform mat4 BoneMatrix;
-uniform mat4 ViewMatrix;
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 modelMatrix;
+uniform mat4 modelViewProjectionMatrix;
 
 uniform vec4 diffuse;
 uniform vec3 ambient;
 uniform vec4 specular;
 
+uniform int useToon;
 uniform int useSphere;
 uniform int sphereMode;
 
@@ -25,28 +28,32 @@ out vec3 lightDirection;
 out vec2 sphereUv;
 
 void main() {
-    vec4 pvec = BoneMatrix * vec4(position, 1.0);
-    gl_Position = vec4( -pvec.x, pvec.y, pvec.z, pvec.w );  // 座標系による反転を行う、カリングも反転
+    mat4 modelViewMatrix = viewMatrix * modelMatrix;
+
+    // カメラ視点のワールドビュー射影変換
+    gl_Position = modelViewProjectionMatrix * vec4(position, 1.0);
+
+    // カメラとの相対位置
+    vec3 eye = cameraPos - (mat3(modelMatrix) * position);
 
     // 頂点法線
-    vec3 N = (BoneMatrix * normalize(vec4(normal, 1.0))).rgb;
-    vec3 vetexNormal = vec3(-N[0], N[1], N[2]); // 座標系による反転
+    vetexNormal = (mat3(modelMatrix) * normalize(normal));
 
     // 照明位置
-    vec3 lightDirection = -normalize(lightPos);
+    vec3 lightDirection = normalize(lightPos);
 
     // 頂点色設定
-    vertexColor = clamp(vec4(ambient, diffuse.w), 0.0, 1.0);
-    // 色傾向
-    float factor = clamp(dot(vetexNormal, lightDirection), 0.0f, 1.0f);
+    vertexColor = clamp(vec4(ambient, diffuse.a), 0.0, 1.0);
 
-    // ディフューズ色＋アンビエント色 計算
-    // TODO TOONでないとき、の条件付与
-    vertexColor.rgb += diffuse.rgb * factor;
-
+    if (useToon == 0) {
+        // ディフューズ色＋アンビエント色 計算
+        float factor = clamp(dot(vetexNormal, -lightDirection), 0.0f, 1.0f);
+        vertexColor.rgb += diffuse.rgb * factor;
+    }
+    vertexColor.a = diffuse.a;
     // saturate
     vertexColor = clamp(vertexColor, 0.0, 1.0);
-    
+
     // テクスチャ描画位置
     vertexUv = uv;
 
@@ -58,16 +65,13 @@ void main() {
         }
         else {
 	        // スフィアマップテクスチャ座標
-            vec3 normalWv = mat3(ViewMatrix) * vetexNormal;
+            vec3 normalWv = mat3(modelViewMatrix) * vetexNormal;
 	        sphereUv.x = normalWv.x * 0.5f + 0.5f;
 	        sphereUv.y = normalWv.y * -0.5f + 0.5f;
         }
     }
 
-    // カメラとの相対位置
-    vec3 eye = cameraPos - gl_Position.rgb;
-
     // スペキュラ色計算
-    vec3 HalfVector = normalize( normalize(eye) + lightDirection );
-    vertexSpecular = clamp(pow( max(0, dot( HalfVector, vetexNormal )), specular.w ) * specular.rgb, 0.0f, 1.0f);
+    vec3 HalfVector = normalize( normalize(eye) + -lightDirection );
+    vertexSpecular = clamp(pow( max(0, dot( HalfVector, vetexNormal )), specular.a ) * specular.rgb, 0.0f, 1.0f);
 }
