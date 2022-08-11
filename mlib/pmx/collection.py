@@ -20,6 +20,7 @@ from mlib.pmx.part import (
     Morph,
     RigidBody,
     Texture,
+    TextureType,
     ToonSharing,
     Vertex,
 )
@@ -257,7 +258,7 @@ class Meshs(BaseIndexListModel[Mesh]):
             dtype=np.float32,
         )
 
-        face_dtype = (
+        face_dtype: type = (
             np.uint8
             if model.vertex_count == 1
             else np.uint16
@@ -266,7 +267,7 @@ class Meshs(BaseIndexListModel[Mesh]):
         )
 
         # 面情報
-        self.faces = np.array(
+        self.faces: np.ndarray = np.array(
             [
                 np.array(
                     [f.vertices[0], f.vertices[1], f.vertices[2]], dtype=face_dtype
@@ -281,14 +282,14 @@ class Meshs(BaseIndexListModel[Mesh]):
             texture: Optional[Texture] = None
             if material.texture_index >= 0:
                 texture = model.textures[material.texture_index]
-                texture.init_draw(model.path, material.texture_index)
+                texture.init_draw(model.path, TextureType.TEXTURE)
 
             toon_texture: Optional[Texture] = None
             if ToonSharing.SHARING == material.toon_sharing_flg:
                 # 共有Toon
                 toon_texture = model.toon_textures[material.toon_texture_index]
                 toon_texture.init_draw(
-                    model.path, material.toon_texture_index, is_individual=False
+                    model.path, TextureType.TOON, is_individual=False
                 )
             elif (
                 ToonSharing.INDIVIDUAL == material.toon_sharing_flg
@@ -296,13 +297,12 @@ class Meshs(BaseIndexListModel[Mesh]):
             ):
                 # 個別Toon
                 toon_texture = model.textures[material.toon_texture_index]
-                # 共有Toonのを優先させるため、INDEXをずらす
-                toon_texture.init_draw(model.path, material.toon_texture_index + 10)
+                toon_texture.init_draw(model.path, TextureType.TOON)
 
             sphere_texture: Optional[Texture] = None
             if material.sphere_texture_index >= 0:
                 sphere_texture = model.textures[material.sphere_texture_index]
-                sphere_texture.init_draw(model.path, material.texture_index)
+                sphere_texture.init_draw(model.path, TextureType.SPHERE)
 
             self.append(
                 Mesh(

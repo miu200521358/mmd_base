@@ -21,7 +21,7 @@ class PmxPanel(wx.Panel):
         self.SetBackgroundColour("#626D58")
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.canvas = PmxCanvas(self, args.pmx, 600, 600)
+        self.canvas = PmxCanvas(self, args.pmx, 800, 800)
         self.sizer.Add(self.canvas, 0, wx.ALL | wx.EXPAND, 0)
 
         self.rot_btn = wx.Button(
@@ -51,7 +51,7 @@ class PmxPanel(wx.Panel):
 
 class PmxFrame(wx.Frame):
     def __init__(self, *args, **kw):
-        self.size = (600, 800)
+        self.size = (1000, 1000)
         wx.Frame.__init__(
             self,
             None,

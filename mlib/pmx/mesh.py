@@ -114,7 +114,7 @@ class Mesh(BaseIndexModel):
         toon_texture: Optional[Texture],
         sphere_texture: Optional[Texture],
         prev_vertices_count: int,
-        face_dtype: np.dtype,
+        face_dtype: type,
     ):
         super().__init__()
         self.material = material
@@ -138,6 +138,12 @@ class Mesh(BaseIndexModel):
             *self.material.specular_color.vector,
             self.material.specular_factor
         )
+
+        # テクスチャ使用有無
+        gl.glUniform1i(shader.user_texture_uniform, self.texture is not None)
+        if self.texture:
+            self.texture.bind()
+            gl.glUniform1i(shader.texture_uniform, self.texture.texture_type.value)
 
         gl.glDrawElements(
             gl.GL_TRIANGLES,

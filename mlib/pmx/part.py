@@ -238,6 +238,13 @@ class Face(BaseIndexModel):
         self.vertices = [vertex_index0, vertex_index1, vertex_index2]
 
 
+@unique
+class TextureType(IntEnum):
+    TEXTURE = 0
+    TOON = 1
+    SPHERE = 2
+
+
 class Texture(BaseIndexModel):
     """
     テクスチャ
@@ -253,7 +260,9 @@ class Texture(BaseIndexModel):
         self.texture_path = texture_path
         self.for_draw = False
 
-    def init_draw(self, model_path: str, index: int, is_individual: bool = True):
+    def init_draw(
+        self, model_path: str, texture_type: TextureType, is_individual: bool = True
+    ):
         if self.for_draw:
             # 既にフラグが立ってたら描画初期化済み
             return
@@ -268,28 +277,49 @@ class Texture(BaseIndexModel):
             )
         else:
             tex_path = self.texture_path
-        image = Image.open(tex_path).convert("RGBA")
-        image = ImageOps.flip(image)
-        ix, iy = image.size
-        gl.glBindTexture(gl.GL_TEXTURE_2D, index)
+        self.image = Image.open(tex_path).convert("RGBA")
+        self.image = ImageOps.flip(self.image)
+        self.image_size_x, self.image_size_y = self.image.size
+
+        # テクスチャオブジェクト生成
+        self.texture = gl.glGenTextures(1)
+        self.texture_type = texture_type
+        self.texture_id = (
+            gl.GL_TEXTURE0
+            if texture_type == TextureType.TEXTURE
+            else gl.GL_TEXTURE1
+            if texture_type == TextureType.TOON
+            else gl.GL_TEXTURE2
+        )
+        self.set_texture()
+
+    def set_texture(self):
+        self.bind()
         gl.glTexImage2D(
             gl.GL_TEXTURE_2D,
             0,
             gl.GL_RGBA,
-            ix,
-            iy,
+            self.image_size_x,
+            self.image_size_y,
             0,
             gl.GL_RGBA,
             gl.GL_UNSIGNED_BYTE,
-            image.tobytes(),
+            self.image.tobytes(),
         )
-        gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP)
-        gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP)
-        gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT)
-        gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT)
-        gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
-        gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
-        gl.glTexEnvf(gl.GL_TEXTURE_ENV, gl.GL_TEXTURE_ENV_MODE, gl.GL_DECAL)
+
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
+        gl.glGenerateMipmap(gl.GL_TEXTURE_2D)
+        self.unbind()
+
+    def bind(self) -> None:
+        gl.glActiveTexture(self.texture_id)
+        gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture)
+
+    def unbind(self) -> None:
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 
 
 @unique

@@ -119,10 +119,9 @@ class MShader:
 
         # --------
 
-        # # テクスチャの設定
-        # gl.glActiveTexture(gl.GL_TEXTURE0)
-        # gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
-        # self.texture_uniform = gl.glGetUniformLocation(self.program, "texture")
+        # テクスチャの設定
+        self.user_texture_uniform = gl.glGetUniformLocation(self.program, "useTexture")
+        self.texture_uniform = gl.glGetUniformLocation(self.program, "textureSampler")
 
     def use(self):
         gl.glUseProgram(self.program)
