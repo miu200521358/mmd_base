@@ -1,10 +1,8 @@
 import os
-from ctypes import c_float, sizeof
 from glob import glob
 from typing import Optional
 
 import numpy as np
-import OpenGL.GL as gl
 from mlib.base.collection import (
     BaseHashModel,
     BaseIndexDictModel,
@@ -12,7 +10,7 @@ from mlib.base.collection import (
     BaseIndexNameListModel,
 )
 from mlib.math import MVector3D
-from mlib.pmx.mesh import Mesh
+from mlib.pmx.mesh import IBO, VBO, Mesh
 from mlib.pmx.part import (
     Bone,
     DisplaySlot,
@@ -245,25 +243,32 @@ class Meshs(BaseIndexListModel[Mesh]):
 
         # 頂点情報
         self.vertices = np.array(
-            [
-                np.array(
-                    [
-                        *(v.position + MVector3D(0, 0, 0)).vector,
-                        *v.normal.vector,
-                        *v.uv.vector,
-                    ],
-                    dtype=np.float32,
-                )
-                for v in model.vertices
-            ],
+            [(v.position + MVector3D(0, -10, 0)).vector / 15 for v in model.vertices],
+            dtype=np.float32,
+        )
+        # self.vertices = np.array(
+        #     [
+        #         (model.vertices[vidx].position + MVector3D(0, 0, 0)).vector / 15
+        #         for f in model.faces
+        #         for vidx in f.vertices
+        #     ],
+        #     dtype=np.float32,
+        # )
+        self.normals = np.array(
+            [v.normal.vector for v in model.vertices],
+            dtype=np.float32,
+        )
+        self.uvs = np.array(
+            [v.uv.vector for v in model.vertices],
             dtype=np.float32,
         )
         # 面情報
         self.faces = np.array(
-            [np.array(f.vertices, dtype=np.int8) for f in model.faces], dtype=np.int8
+            [np.array(f.vertices, dtype=np.uint32) for f in model.faces],
+            dtype=np.uint32,
         )
 
-        prev_face_count = 0
+        prev_vertex_count = 0
         for material in model.materials:
             texture: Optional[Texture] = None
             if material.texture_index >= 0:
@@ -291,118 +296,35 @@ class Meshs(BaseIndexListModel[Mesh]):
                 sphere_texture = model.textures[material.sphere_texture_index]
                 sphere_texture.init_draw(model.path, material.texture_index)
 
-            self.data.append(
-                Mesh(material, texture, toon_texture, sphere_texture, prev_face_count)
+            self.append(
+                Mesh(material, texture, toon_texture, sphere_texture, prev_vertex_count)
             )
 
-            prev_face_count += material.vertices_count // 3
+            prev_vertex_count += material.vertices_count
 
         # ---------------------
-        # VAO
-        self.vao_vertices = gl.glGenVertexArrays(1)
-        gl.glBindVertexArray(self.vao_vertices)
 
-        # ---------------------
-        # VBO: 頂点
+        self.vbo_vertices = VBO(self.vertices)
+        self.vbo_normals = VBO(self.normals)
+        self.vbo_uvs = VBO(self.uvs)
 
-        self.vbo_vertices = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo_vertices)
-        gl.glBufferData(
-            gl.GL_ARRAY_BUFFER,
-            self.vertices.nbytes,
-            self.vertices,
-            gl.GL_STATIC_DRAW,
-        )
-        gl.glVertexAttribPointer(
-            VsLayout.POSITION_ID,
-            3,
-            gl.GL_FLOAT,
-            gl.GL_FALSE,
-            0,
-            gl.ctypes.c_void_p(0),
-        )
-        gl.glVertexAttribPointer(
-            VsLayout.NORMAL_ID,
-            3,
-            gl.GL_FLOAT,
-            gl.GL_FALSE,
-            0,
-            gl.ctypes.c_void_p(0),
-        )
-        gl.glVertexAttribPointer(
-            VsLayout.UV_ID,
-            2,
-            gl.GL_FLOAT,
-            gl.GL_FALSE,
-            0,
-            gl.ctypes.c_void_p(0),
-        )
-
-        # ---------------------
-        # EBO: 面
-
-        self.ebo_faces = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.ebo_faces)
-        gl.glBufferData(
-            gl.GL_ELEMENT_ARRAY_BUFFER,
-            self.faces.nbytes,
-            self.faces,
-            gl.GL_STATIC_DRAW,
-        )
-
-        # ---------------------
-        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-        gl.glBindVertexArray(0)
+        self.ibo_faces = IBO(self.faces)
 
     def update(self):
         pass
 
     def draw(self):
-        for m in self.data:
-            gl.glUseProgram(self.shader.program)
-            gl.glBindVertexArray(self.vao_vertices)
 
-            gl.glEnableVertexAttribArray(VsLayout.POSITION_ID)
-            gl.glEnableVertexAttribArray(VsLayout.NORMAL_ID)
-            gl.glEnableVertexAttribArray(VsLayout.UV_ID)
+        for mesh in self.data:
+            self.shader.use()
+            self.vbo_vertices.set_slot(VsLayout.POSITION_ID)
+            # self.vbo_normals.set_slot(VsLayout.NORMAL_ID)
+            # self.vbo_uvs.set_slot(VsLayout.UV_ID)
+            self.ibo_faces.bind()
 
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo_vertices)
-            gl.glVertexAttribPointer(
-                VsLayout.POSITION_ID,
-                3,
-                gl.GL_FLOAT,
-                gl.GL_FALSE,
-                0,
-                gl.ctypes.c_void_p(0),
-            )
-            gl.glVertexAttribPointer(
-                VsLayout.NORMAL_ID,
-                3,
-                gl.GL_FLOAT,
-                gl.GL_FALSE,
-                0,
-                gl.ctypes.c_void_p(0),
-            )
-            gl.glVertexAttribPointer(
-                VsLayout.UV_ID,
-                2,
-                gl.GL_FLOAT,
-                gl.GL_FALSE,
-                0,
-                gl.ctypes.c_void_p(0),
-            )
+            # 描画
+            mesh.draw(self.shader, self.ibo_faces)
 
-            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.ebo_faces)
-
-            m.draw(
-                self.shader,
-            )
-
-            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
-            gl.glDisableVertexAttribArray(VsLayout.POSITION_ID)
-            gl.glDisableVertexAttribArray(VsLayout.NORMAL_ID)
-            gl.glDisableVertexAttribArray(VsLayout.UV_ID)
-
-            gl.glBindVertexArray(0)
-            gl.glUseProgram(0)
+            self.ibo_faces.unbind()
+            self.vbo_vertices.unbind()
+            self.shader.unuse()

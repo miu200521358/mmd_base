@@ -19,7 +19,29 @@ class VsLayout(IntEnum):
 
 class MShader:
     def __init__(self, width: int, height: int) -> None:
+        self.program = gl.glCreateProgram()
+        self.compile()
+        self.use()
 
+        self.initialize(width, height)
+
+        self.unuse()
+
+    def __del__(self) -> None:
+        gl.glDeleteProgram(self.program)
+
+    def load_shader(self, src: str, shader_type: int) -> int:
+        shader = gl.glCreateShader(shader_type)
+        gl.glShaderSource(shader, src)
+        gl.glCompileShader(shader)
+        error = gl.glGetShaderiv(shader, gl.GL_COMPILE_STATUS)
+        if error != gl.GL_TRUE:
+            info = gl.glGetShaderInfoLog(shader)
+            gl.glDeleteShader(shader)
+            raise Exception(info)
+        return shader
+
+    def compile(self) -> None:
         vertex_shader_src = Path(
             os.path.join(os.path.dirname(__file__), "pmx.vert")
         ).read_text(encoding="utf-8")
@@ -33,39 +55,24 @@ class MShader:
             os.path.join(os.path.dirname(__file__), "pmx.frag")
         ).read_text(encoding="utf-8")
 
-        self.vertex_shader = gl.glCreateShader(gl.GL_VERTEX_SHADER)
-        gl.glShaderSource(self.vertex_shader, vertex_shader_src)
-        gl.glCompileShader(self.vertex_shader)
-        gl.glGetShaderiv(self.vertex_shader, gl.GL_COMPILE_STATUS)
-
-        self.fragments_shader = gl.glCreateShader(gl.GL_FRAGMENT_SHADER)
-        gl.glShaderSource(self.fragments_shader, fragments_shader_src)
-        gl.glCompileShader(self.fragments_shader)
-        gl.glGetShaderiv(self.fragments_shader, gl.GL_COMPILE_STATUS)
-
-        # プログラムオブジェクト作成しアタッチ
-        self.program = gl.glCreateProgram()
-        gl.glAttachShader(self.program, self.vertex_shader)
-        gl.glAttachShader(self.program, self.fragments_shader)
-
+        vs = self.load_shader(vertex_shader_src, gl.GL_VERTEX_SHADER)
+        if not vs:
+            return
+        fs = self.load_shader(fragments_shader_src, gl.GL_FRAGMENT_SHADER)
+        if not fs:
+            return
+        gl.glAttachShader(self.program, vs)
+        gl.glAttachShader(self.program, fs)
         gl.glLinkProgram(self.program)
-        gl.glGetProgramiv(self.program, gl.GL_LINK_STATUS)
+        error = gl.glGetProgramiv(self.program, gl.GL_LINK_STATUS)
+        gl.glDeleteShader(vs)
+        gl.glDeleteShader(fs)
+        if error != gl.GL_TRUE:
+            info = gl.glGetShaderInfoLog(self.program)
+            raise Exception(info)
 
-        # -----------------------
-
-        gl.glClearColor(0.7, 0.7, 0.7, 1.0)
-        gl.glEnable(gl.GL_DEPTH_TEST)  # enable shading
-
-        gl.glMatrixMode(gl.GL_PROJECTION)
-        gl.glLoadIdentity()
-
+    def initialize(self, width: int, height: int):
         camera_length = 160.0
-
-        # set perspective
-        glu.gluPerspective(30.0, float(width) / float(height), 0.10, camera_length)
-
-        # modeling transform
-        gl.glMatrixMode(gl.GL_MODELVIEW)
 
         # light color
         light_ambient = [0.25, 0.25, 0.25]
@@ -83,8 +90,16 @@ class MShader:
         gl.glEnable(gl.GL_LIGHT0)
         gl.glEnable(gl.GL_LIGHTING)
 
-        # -----------------
-        gl.glUseProgram(self.program)
+        gl.glEnable(gl.GL_DEPTH_TEST)  # enable shading
+
+        gl.glMatrixMode(gl.GL_PROJECTION)
+        gl.glLoadIdentity()
+
+        # set perspective
+        glu.gluPerspective(30.0, float(width) / float(height), 0.10, camera_length)
+
+        # modeling transform
+        gl.glMatrixMode(gl.GL_MODELVIEW)
 
         # ボーンデフォーム行列
         self.bone_matrix_uniform = gl.glGetUniformLocation(self.program, "BoneMatrix")
@@ -109,11 +124,8 @@ class MShader:
         # gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
         # self.texture_uniform = gl.glGetUniformLocation(self.program, "texture")
 
-        # -----------------------
+    def use(self):
+        gl.glUseProgram(self.program)
+
+    def unuse(self):
         gl.glUseProgram(0)
-
-        gl.glDetachShader(self.program, self.vertex_shader)
-        gl.glDetachShader(self.program, self.fragments_shader)
-
-        gl.glDeleteShader(self.vertex_shader)
-        gl.glDeleteShader(self.fragments_shader)

@@ -44,9 +44,9 @@ class PmxPanel(wx.Panel):
     def rotate(self, event: wx.Event):
         if not self.canvas.rotate:
             self.canvas.rotate = True
-            self.canvas.Refresh()
         else:
             self.canvas.rotate = False
+        self.canvas.OnDraw(event)
 
 
 class PmxFrame(wx.Frame):
@@ -59,8 +59,7 @@ class PmxFrame(wx.Frame):
             size=self.size,
             style=wx.DEFAULT_FRAME_STYLE | wx.FULL_REPAINT_ON_RESIZE,
         )
-        self.SetMinSize(self.size)
-        self.SetMaxSize(self.size)
+
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.panel = PmxPanel(self)
 

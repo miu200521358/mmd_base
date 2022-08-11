@@ -110,9 +110,9 @@ void main() {
 class Geometries:
     def __init__(self) -> None:
         self.model = PmxReader().read_by_filepath(
-            # "C:/MMD/mmd_base/test/resources/曲げ柱tex.pmx"
+            "C:/MMD/mmd_base/test/resources/曲げ柱tex.pmx"
             # "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/Tda式初音ミク・アペンドVer1.10/Tda式初音ミク・アペンド_Ver1.10.pmx",
-            "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/初音ミクVer2 準標準.pmx"
+            # "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/初音ミクVer2 準標準.pmx"
         )
         vertex_position_list = []
         vertex_normal_list = []
