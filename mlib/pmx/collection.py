@@ -246,14 +246,6 @@ class Meshs(BaseIndexListModel[Mesh]):
             [(v.position + MVector3D(0, -10, 0)).vector / 15 for v in model.vertices],
             dtype=np.float32,
         )
-        # self.vertices = np.array(
-        #     [
-        #         (model.vertices[vidx].position + MVector3D(0, 0, 0)).vector / 15
-        #         for f in model.faces
-        #         for vidx in f.vertices
-        #     ],
-        #     dtype=np.float32,
-        # )
         self.normals = np.array(
             [v.normal.vector for v in model.vertices],
             dtype=np.float32,
@@ -262,13 +254,27 @@ class Meshs(BaseIndexListModel[Mesh]):
             [v.uv.vector for v in model.vertices],
             dtype=np.float32,
         )
-        # 面情報
-        self.faces = np.array(
-            [np.array(f.vertices, dtype=np.uint32) for f in model.faces],
-            dtype=np.uint32,
+
+        face_dtype = (
+            np.uint8
+            if model.vertex_count == 1
+            else np.uint16
+            if model.vertex_count == 2
+            else np.uint32
         )
 
-        prev_vertex_count = 0
+        # 面情報
+        self.faces = np.array(
+            [
+                np.array(
+                    [f.vertices[0], f.vertices[1], f.vertices[2]], dtype=face_dtype
+                )
+                for f in model.faces
+            ],
+            dtype=face_dtype,
+        )
+
+        prev_vertices_count = 0
         for material in model.materials:
             texture: Optional[Texture] = None
             if material.texture_index >= 0:
@@ -297,10 +303,12 @@ class Meshs(BaseIndexListModel[Mesh]):
                 sphere_texture.init_draw(model.path, material.texture_index)
 
             self.append(
-                Mesh(material, texture, toon_texture, sphere_texture, prev_vertex_count)
+                Mesh(
+                    material, texture, toon_texture, sphere_texture, prev_vertices_count
+                )
             )
 
-            prev_vertex_count += material.vertices_count
+            prev_vertices_count += material.vertices_count
 
         # ---------------------
 
@@ -314,7 +322,6 @@ class Meshs(BaseIndexListModel[Mesh]):
         pass
 
     def draw(self):
-
         for mesh in self.data:
             self.shader.use()
             self.vbo_vertices.set_slot(VsLayout.POSITION_ID)

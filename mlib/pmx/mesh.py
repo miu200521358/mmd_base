@@ -4,7 +4,7 @@ import numpy as np
 import OpenGL.GL as gl
 from mlib.base.part import BaseIndexModel
 from mlib.pmx.part import Material, Texture
-from mlib.pmx.shader import MShader
+from mlib.pmx.shader import MShader, VsLayout
 
 
 class VBO:
@@ -24,14 +24,15 @@ class VBO:
 
     def set_vertex_attribute(self, data: np.ndarray) -> None:
         self.component_count = data.shape[1]
+        self.vbo_size = data[0].nbytes
         self.bind()
         gl.glBufferData(gl.GL_ARRAY_BUFFER, data.nbytes, data, gl.GL_STATIC_DRAW)
 
-    def set_slot(self, slot: int) -> None:
+    def set_slot(self, slot: VsLayout) -> None:
         self.bind()
-        gl.glEnableVertexAttribArray(slot)
+        gl.glEnableVertexAttribArray(slot.value)
         gl.glVertexAttribPointer(
-            slot,
+            slot.value,
             self.component_count,
             gl.GL_FLOAT,
             gl.GL_FALSE,
@@ -43,8 +44,16 @@ class VBO:
 class IBO:
     def __init__(self, data: np.ndarray) -> None:
         self.ibo = gl.glGenBuffers(1)
-        self.data = data
-        self.set_indices()
+        self.dtype = (
+            gl.GL_UNSIGNED_BYTE
+            if data.dtype == np.uint8
+            else gl.GL_UNSIGNED_SHORT
+            if data.dtype == np.uint16
+            else gl.GL_UNSIGNED_INT
+        )
+        self.dsize = np.dtype(data.dtype).itemsize
+
+        self.set_indices(data)
 
     def __del__(self) -> None:
         if self.ibo:
@@ -56,10 +65,13 @@ class IBO:
     def unbind(self) -> None:
         gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
 
-    def set_indices(self) -> None:
+    def set_indices(self, data: np.ndarray) -> None:
         self.bind()
         gl.glBufferData(
-            gl.GL_ELEMENT_ARRAY_BUFFER, self.data.nbytes, self.data, gl.GL_STATIC_DRAW
+            gl.GL_ELEMENT_ARRAY_BUFFER,
+            data.nbytes,
+            data,
+            gl.GL_STATIC_DRAW,
         )
 
 
@@ -74,14 +86,14 @@ class Mesh(BaseIndexModel):
         texture: Optional[Texture],
         toon_texture: Optional[Texture],
         sphere_texture: Optional[Texture],
-        prev_vertex_count: int,
+        prev_vertices_count: int,
     ):
         super().__init__()
         self.material = material
         self.texture = texture
         self.toon_texture = toon_texture
         self.sphere_texture = sphere_texture
-        self.prev_vertex_count = prev_vertex_count
+        self.prev_vertices_count = prev_vertices_count
 
     def draw(
         self,
@@ -101,6 +113,6 @@ class Mesh(BaseIndexModel):
         gl.glDrawElements(
             gl.GL_TRIANGLES,
             self.material.vertices_count,
-            gl.GL_UNSIGNED_INT,
-            gl.ctypes.c_void_p(self.prev_vertex_count),
+            ibo.dtype,
+            gl.ctypes.c_void_p(self.prev_vertices_count * ibo.dsize),
         )

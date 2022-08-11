@@ -31,7 +31,7 @@ class PmxPanel(wx.Panel):
         self.rot_btn.ForegroundColour = (0, 0, 0)
         self.sizer.Add(self.rot_btn, 0, wx.ALIGN_LEFT | wx.SHAPED, 5)
 
-        self.Bind(wx.EVT_BUTTON, self.rotate, self.rot_btn)
+        self.rot_btn.Bind(wx.EVT_BUTTON, self.rotate)
 
         self.Layout()
         self.fit()
