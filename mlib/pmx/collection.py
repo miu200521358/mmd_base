@@ -250,6 +250,11 @@ class Meshs(BaseIndexListModel[Mesh]):
                         *(v.position + MVector3D(0, -10, 0)).vector / 15,
                         *v.normal.vector,
                         *v.uv.vector,
+                        *(
+                            v.extended_uvs[0].vector
+                            if len(v.extended_uvs) > 0
+                            else [0, 0]
+                        ),
                     ],
                     dtype=np.float32,
                 )
@@ -326,6 +331,7 @@ class Meshs(BaseIndexListModel[Mesh]):
                 VsLayout.POSITION_ID.value: {"size": 3, "offset": 0},
                 VsLayout.NORMAL_ID.value: {"size": 3, "offset": 3},
                 VsLayout.UV_ID.value: {"size": 2, "offset": 6},
+                VsLayout.EXTEND_UV_ID.value: {"size": 2, "offset": 8},
             },
         )
 
@@ -341,6 +347,7 @@ class Meshs(BaseIndexListModel[Mesh]):
             self.vbo_vertices.set_slot(VsLayout.POSITION_ID)
             self.vbo_vertices.set_slot(VsLayout.NORMAL_ID)
             self.vbo_vertices.set_slot(VsLayout.UV_ID)
+            self.vbo_vertices.set_slot(VsLayout.EXTEND_UV_ID)
             self.ibo_faces.bind()
 
             # 描画

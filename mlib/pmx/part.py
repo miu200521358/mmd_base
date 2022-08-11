@@ -280,6 +280,7 @@ class Texture(BaseIndexModel):
         self.image = Image.open(tex_path).convert("RGBA")
         self.image = ImageOps.flip(self.image)
         self.image_size_x, self.image_size_y = self.image.size
+        self.texture_type = texture_type
 
         # テクスチャオブジェクト生成
         self.texture = gl.glGenTextures(1)
@@ -306,17 +307,24 @@ class Texture(BaseIndexModel):
             gl.GL_UNSIGNED_BYTE,
             self.image.tobytes(),
         )
-
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT)
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT)
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
-        gl.glGenerateMipmap(gl.GL_TEXTURE_2D)
         self.unbind()
 
     def bind(self) -> None:
         gl.glActiveTexture(self.texture_id)
         gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture)
+
+        if self.texture_type == TextureType.TEXTURE:
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAX_LEVEL, 0)
+        elif self.texture_type == TextureType.TOON:
+            gl.glTexParameteri(
+                gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE
+            )
+            gl.glTexParameteri(
+                gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE
+            )
+
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
 
     def unbind(self) -> None:
         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)

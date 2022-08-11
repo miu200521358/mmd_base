@@ -140,10 +140,25 @@ class Mesh(BaseIndexModel):
         )
 
         # テクスチャ使用有無
-        gl.glUniform1i(shader.user_texture_uniform, self.texture is not None)
+        gl.glUniform1i(shader.use_texture_uniform, self.texture is not None)
         if self.texture:
             self.texture.bind()
             gl.glUniform1i(shader.texture_uniform, self.texture.texture_type.value)
+
+        # Toon使用有無
+        gl.glUniform1i(shader.use_toon_uniform, self.toon_texture is not None)
+        if self.toon_texture:
+            self.toon_texture.bind()
+            gl.glUniform1i(shader.toon_uniform, self.toon_texture.texture_type.value)
+
+        # Sphere使用有無
+        gl.glUniform1i(shader.use_sphere_uniform, self.sphere_texture is not None)
+        if self.sphere_texture:
+            self.sphere_texture.bind()
+            gl.glUniform1i(shader.sphere_mode_uniform, self.material.sphere_mode)
+            gl.glUniform1i(
+                shader.sphere_uniform, self.sphere_texture.texture_type.value
+            )
 
         gl.glDrawElements(
             gl.GL_TRIANGLES,

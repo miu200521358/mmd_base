@@ -4,17 +4,14 @@ from pathlib import Path
 
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
+from mlib.math import MMatrix4x4, MVector3D
 
 
 class VsLayout(IntEnum):
     POSITION_ID = 0
     NORMAL_ID = 1
     UV_ID = 2
-    FACE_ID = 3
-
-    COLOR_DIFFUSE_ID = 4
-    COLOR_AMBIENT_ID = 5
-    COLOR_SPECULAR_ID = 6
+    EXTEND_UV_ID = 3
 
 
 class MShader:
@@ -49,6 +46,7 @@ class MShader:
             VsLayout.POSITION_ID.value,
             VsLayout.NORMAL_ID.value,
             VsLayout.UV_ID.value,
+            VsLayout.EXTEND_UV_ID.value,
         )
 
         fragments_shader_src = Path(
@@ -101,6 +99,15 @@ class MShader:
         # modeling transform
         gl.glMatrixMode(gl.GL_MODELVIEW)
 
+        camera_mat = MMatrix4x4(identity=True)
+        camera_mat.translate(MVector3D(0, 0, camera_length))
+
+        # ビュー行列
+        self.view_matrix_uniform = gl.glGetUniformLocation(self.program, "ViewMatrix")
+        gl.glUniformMatrix4fv(
+            self.view_matrix_uniform, 1, gl.GL_FALSE, camera_mat.inverse().vector
+        )
+
         # ボーンデフォーム行列
         self.bone_matrix_uniform = gl.glGetUniformLocation(self.program, "BoneMatrix")
 
@@ -120,8 +127,17 @@ class MShader:
         # --------
 
         # テクスチャの設定
-        self.user_texture_uniform = gl.glGetUniformLocation(self.program, "useTexture")
+        self.use_texture_uniform = gl.glGetUniformLocation(self.program, "useTexture")
         self.texture_uniform = gl.glGetUniformLocation(self.program, "textureSampler")
+
+        # Toonの設定
+        self.use_toon_uniform = gl.glGetUniformLocation(self.program, "useToon")
+        self.toon_uniform = gl.glGetUniformLocation(self.program, "toonSampler")
+
+        # Sphereの設定
+        self.use_sphere_uniform = gl.glGetUniformLocation(self.program, "useSphere")
+        self.sphere_mode_uniform = gl.glGetUniformLocation(self.program, "sphereMode")
+        self.sphere_uniform = gl.glGetUniformLocation(self.program, "sphereSampler")
 
     def use(self):
         gl.glUseProgram(self.program)
