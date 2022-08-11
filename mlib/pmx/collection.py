@@ -10,7 +10,7 @@ from mlib.base.collection import (
     BaseIndexNameListModel,
 )
 from mlib.math import MVector3D
-from mlib.pmx.mesh import IBO, VBO, Mesh
+from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.part import (
     Bone,
     DisplaySlot,
@@ -243,15 +243,17 @@ class Meshs(BaseIndexListModel[Mesh]):
 
         # 頂点情報
         self.vertices = np.array(
-            [(v.position + MVector3D(0, -10, 0)).vector / 15 for v in model.vertices],
-            dtype=np.float32,
-        )
-        self.normals = np.array(
-            [v.normal.vector for v in model.vertices],
-            dtype=np.float32,
-        )
-        self.uvs = np.array(
-            [v.uv.vector for v in model.vertices],
+            [
+                np.array(
+                    [
+                        *(v.position + MVector3D(0, -10, 0)).vector / 15,
+                        *v.normal.vector,
+                        *v.uv.vector,
+                    ],
+                    dtype=np.float32,
+                )
+                for v in model.vertices
+            ],
             dtype=np.float32,
         )
 
@@ -304,7 +306,12 @@ class Meshs(BaseIndexListModel[Mesh]):
 
             self.append(
                 Mesh(
-                    material, texture, toon_texture, sphere_texture, prev_vertices_count
+                    material,
+                    texture,
+                    toon_texture,
+                    sphere_texture,
+                    prev_vertices_count,
+                    face_dtype,
                 )
             )
 
@@ -312,9 +319,15 @@ class Meshs(BaseIndexListModel[Mesh]):
 
         # ---------------------
 
-        self.vbo_vertices = VBO(self.vertices)
-        self.vbo_normals = VBO(self.normals)
-        self.vbo_uvs = VBO(self.uvs)
+        self.vao = VAO()
+        self.vbo_vertices = VBO(
+            self.vertices,
+            {
+                VsLayout.POSITION_ID.value: {"size": 3, "offset": 0},
+                VsLayout.NORMAL_ID.value: {"size": 3, "offset": 3},
+                VsLayout.UV_ID.value: {"size": 2, "offset": 6},
+            },
+        )
 
         self.ibo_faces = IBO(self.faces)
 
@@ -324,9 +337,10 @@ class Meshs(BaseIndexListModel[Mesh]):
     def draw(self):
         for mesh in self.data:
             self.shader.use()
+            self.vao.bind()
             self.vbo_vertices.set_slot(VsLayout.POSITION_ID)
-            # self.vbo_normals.set_slot(VsLayout.NORMAL_ID)
-            # self.vbo_uvs.set_slot(VsLayout.UV_ID)
+            self.vbo_vertices.set_slot(VsLayout.NORMAL_ID)
+            self.vbo_vertices.set_slot(VsLayout.UV_ID)
             self.ibo_faces.bind()
 
             # 描画
@@ -334,4 +348,5 @@ class Meshs(BaseIndexListModel[Mesh]):
 
             self.ibo_faces.unbind()
             self.vbo_vertices.unbind()
+            self.vao.unbind()
             self.shader.unuse()
