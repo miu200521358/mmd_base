@@ -1,4 +1,5 @@
 import OpenGL.GL as gl
+import OpenGL.GLU as glu
 import wx
 from mlib.math import MMatrix4x4, MQuaternion
 from mlib.pmx.reader import PmxReader
@@ -12,10 +13,9 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.context = glcanvas.GLContext(self)
         self.size = wx.Size(width, height)
         self.SetCurrent(self.context)
-        gl.glClearColor(0.6, 0.6, 0.6, 1)
+        gl.glClearColor(0.4, 0.4, 0.4, 1)
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.Bind(wx.EVT_SIZE, self.OnResize)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 
         self.shader = MShader(width, height)
@@ -25,15 +25,12 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.rotate = False
         self.rot_mat = MMatrix4x4(identity=True)
 
-        self.shader.resize(self.size.width, self.size.height)
+    def OnEraseBackground(self, event):
+        pass  # Do nothing, to avoid flashing on MSW (これがないとチラつくらしい）
 
-    def OnEraseBackground(self, event: wx.Event):
-        # Do nothing, to avoid flashing on MSW (これがないとチラつくらしい）
-        pass
-
-    def OnResize(self, event: wx.Event):
-        self.size = self.GetClientSize()
-        self.shader.resize(self.size.width, self.size.height)
+    def OnSize(self, event):
+        self.size: wx.Size = self.GetClientSize()
+        gl.glViewport(0, 0, self.size.width, self.size.height)
         event.Skip()
 
     def OnPaint(self, event: wx.Event):
@@ -45,8 +42,12 @@ class PmxCanvas(glcanvas.GLCanvas):
         gl.glMatrixMode(gl.GL_MODELVIEW)
         gl.glLoadIdentity()
 
-        gl.glClearColor(0.6, 0.6, 0.6, 1)
+        gl.glClearColor(0.4, 0.4, 0.4, 1)
 
+        # set camera
+        glu.gluLookAt(0.0, 10.0, -30.0, 0.0, 10.0, 0.0, 0.0, 1.0, 0.0)
+
+        gl.glPushMatrix()
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
         if self.rotate:
@@ -54,18 +55,19 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         self.shader.use()
 
-        # gl.glUniformMatrix4fv(
-        #     self.shader.bone_matrix_uniform, 1, gl.GL_FALSE, self.rot_mat.vector
-        # )
+        gl.glUniformMatrix4fv(
+            self.shader.bone_matrix_uniform, 1, gl.GL_FALSE, self.rot_mat.vector
+        )
         self.Refresh()
 
         if self.model:
             self.model.update()
 
+        self.shader.unuse()
+        gl.glPopMatrix()
+
         if self.model:
             self.model.draw()
-
-        self.shader.unuse()
 
         gl.glFlush()  # enforce OpenGL command
         self.SwapBuffers()

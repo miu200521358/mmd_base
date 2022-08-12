@@ -1,5 +1,5 @@
 import operator
-from math import acos, cos, degrees, radians, sin, sqrt, tan  # type: ignore
+from math import acos, cos, degrees, radians, sin, sqrt  # type: ignore
 from typing import Any, Union
 
 import numpy as np
@@ -537,10 +537,7 @@ class MQuaternion(MVector):
     def __init__(self, scalar=0, x=0, y=0, z=0):
         if isinstance(scalar, int) or isinstance(scalar, float):
             # 実数の場合
-            if np.isclose([scalar, x, y, z], 0).all():
-                self.vector = quaternion(1, 0, 0, 0)
-            else:
-                self.vector = quaternion(scalar, x, y, z)
+            self.vector = quaternion(scalar, x, y, z)
         elif isinstance(scalar, quaternion):
             # quaternionの場合
             self.vector = quaternion(*scalar.components)
@@ -712,29 +709,29 @@ class MQuaternion(MVector):
         # q(w,x,y,z)から(x,y,z,w)に並べ替え.
         q2 = np.array([self.x, self.y, self.z, self.scalar], dtype=np.float64)
 
-        mat = MMatrix4x4(identity=True)
-        mat[0, 0] = q2[3] * q2[3] + q2[0] * q2[0] - q2[1] * q2[1] - q2[2] * q2[2]
-        mat[0, 1] = 2.0 * q2[0] * q2[1] - 2.0 * q2[3] * q2[2]
-        mat[0, 2] = 2.0 * q2[0] * q2[2] + 2.0 * q2[3] * q2[1]
-        mat[0, 3] = 0.0
+        mat = MMatrix4x4()
+        mat.vector[0, 0] = q2[3] * q2[3] + q2[0] * q2[0] - q2[1] * q2[1] - q2[2] * q2[2]
+        mat.vector[0, 1] = 2.0 * q2[0] * q2[1] - 2.0 * q2[3] * q2[2]
+        mat.vector[0, 2] = 2.0 * q2[0] * q2[2] + 2.0 * q2[3] * q2[1]
+        mat.vector[0, 3] = 0.0
 
-        mat[1, 0] = 2.0 * q2[0] * q2[1] + 2.0 * q2[3] * q2[2]
-        mat[1, 1] = q2[3] * q2[3] - q2[0] * q2[0] + q2[1] * q2[1] - q2[2] * q2[2]
-        mat[1, 2] = 2.0 * q2[1] * q2[2] - 2.0 * q2[3] * q2[0]
-        mat[1, 3] = 0.0
+        mat.vector[1, 0] = 2.0 * q2[0] * q2[1] + 2.0 * q2[3] * q2[2]
+        mat.vector[1, 1] = q2[3] * q2[3] - q2[0] * q2[0] + q2[1] * q2[1] - q2[2] * q2[2]
+        mat.vector[1, 2] = 2.0 * q2[1] * q2[2] - 2.0 * q2[3] * q2[0]
+        mat.vector[1, 3] = 0.0
 
-        mat[2, 0] = 2.0 * q2[0] * q2[2] - 2.0 * q2[3] * q2[1]
-        mat[2, 1] = 2.0 * q2[1] * q2[2] + 2.0 * q2[3] * q2[0]
-        mat[2, 2] = q2[3] * q2[3] - q2[0] * q2[0] - q2[1] * q2[1] + q2[2] * q2[2]
-        mat[2, 3] = 0.0
+        mat.vector[2, 0] = 2.0 * q2[0] * q2[2] - 2.0 * q2[3] * q2[1]
+        mat.vector[2, 1] = 2.0 * q2[1] * q2[2] + 2.0 * q2[3] * q2[0]
+        mat.vector[2, 2] = q2[3] * q2[3] - q2[0] * q2[0] - q2[1] * q2[1] + q2[2] * q2[2]
+        mat.vector[2, 3] = 0.0
 
-        mat[3, 0] = 0.0
-        mat[3, 1] = 0.0
-        mat[3, 2] = 0.0
-        mat[3, 3] = q2[3] * q2[3] + q2[0] * q2[0] + q2[1] * q2[1] + q2[2] * q2[2]
+        mat.vector[3, 0] = 0.0
+        mat.vector[3, 1] = 0.0
+        mat.vector[3, 2] = 0.0
+        mat.vector[3, 3] = q2[3] * q2[3] + q2[0] * q2[0] + q2[1] * q2[1] + q2[2] * q2[2]
 
-        mat /= mat[3, 3]
-        mat[3, 3] = 1.0
+        mat.vector /= mat.vector[3, 3]
+        mat.vector[3, 3] = 1.0
 
         return mat
 
@@ -992,7 +989,8 @@ class MMatrix4x4(MVector):
         """
         平行移動行列
         """
-        self.vector[3, :3] += v.vector
+        vmat = self.vector[:, :3] * v.vector
+        self.vector[:, 3] += np.sum(vmat, axis=1)
 
     def scale(self, v: MVector3D):
         """
@@ -1005,6 +1003,55 @@ class MMatrix4x4(MVector):
         初期化
         """
         self.vector = np.eye(4, dtype=np.float64)
+
+    def look_at(self, eye: MVector3D, center: MVector3D, up: MVector3D):
+        forward = center - eye
+        forward.normalize()
+        if np.isclose(forward, 0).all():
+            return
+
+        side = forward.cross(up).normalized()
+        upv = side.cross(forward).normalized()
+
+        m = MMatrix4x4()
+        m.vector[0, :-1] = side.vector
+        m.vector[1, :-1] = upv.vector
+        m.vector[2, :-1] = -forward.vector
+        m.vector[-1, -1] = 1.0
+
+        self *= m
+        self.translate(-eye)
+
+    def perspective(
+        self,
+        vertical_angle: float,
+        aspect_ratio: float,
+        near_plane: float,
+        far_plane: float,
+    ):
+        """
+        パースペクティブ行列
+        """
+        if near_plane == far_plane or aspect_ratio == 0:
+            return
+
+        rad = radians(vertical_angle / 2)
+        sine = sin(rad)
+
+        if sine == 0:
+            return
+
+        cotan = cos(rad) / sine
+        clip = far_plane - near_plane
+
+        m = MMatrix4x4()
+        m.vector[0, 0] = cotan / aspect_ratio
+        m.vector[1, 1] = cotan
+        m.vector[2, 2] = -(near_plane + far_plane) / clip
+        m.vector[2, 3] = -(2 * near_plane * far_plane) / clip
+        m.vector[3, 2] = -1
+
+        self *= m
 
     def map_vector(self, v: MVector3D) -> MVector3D:
         return MVector3D(*np.sum(v.vector * self.vector[:3, :3], axis=1))
@@ -1050,7 +1097,7 @@ class MMatrix4x4(MVector):
     def __mul__(self, other):
         if isinstance(other, MMatrix4x4):
             # 行列同士のかけ算
-            return MMatrix4x4(np.matmul(self.vector, other.vector))
+            return MMatrix4x4(np.dot(self.vector, other.vector))
         elif isinstance(other, MVector3D):
             # vec3 とのかけ算は vec3 を返す
             s = np.sum(self.vector[:, :3] * other.vector, axis=1) + self.vector[:, 3]
@@ -1072,52 +1119,6 @@ class MMatrix4x4(MVector):
     def __setitem__(self, index, v: float):
         y, x = index
         self.vector[y, x] = v
-
-    @classmethod
-    def look_at(cls, eye: MVector3D, center: MVector3D, up: MVector3D):
-        forward = (center - eye).normalized()
-        if np.isclose(forward.vector, 0).all():
-            return MMatrix4x4(identity=True)
-
-        side = forward.cross(up).normalized()
-        upv = side.cross(forward).normalized()
-
-        m = MMatrix4x4()
-        m[0, :3] = side.vector
-        m[1, :3] = upv.vector
-        m[2, :3] = -forward.vector
-        m[3, 3] = 1.0
-
-        return m
-
-    @classmethod
-    def perspective(
-        cls,
-        vertical_degree: float,
-        aspect_ratio: float,
-        near_plane: float,
-        far_plane: float,
-    ):
-        """
-        パースペクティブ行列
-        """
-        m = MMatrix4x4(identity=True)
-
-        if near_plane == far_plane or aspect_ratio == 0:
-            return m
-
-        rad = radians(vertical_degree) / 2
-        cot = 1 / tan(rad)
-        clip = near_plane - far_plane
-
-        m[0, 0] = cot / aspect_ratio
-        m[1, 1] = cot
-        m[2, 2] = (near_plane + far_plane) / clip
-        m[2, 3] = -1
-        m[3, 2] = (2 * near_plane * far_plane) / clip
-        m[3, 3] = 0
-
-        return m
 
 
 def operate_vector(v: MVector, other: Union[MVector, float, int], op) -> MVector:

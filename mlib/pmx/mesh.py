@@ -129,9 +129,6 @@ class Mesh(BaseIndexModel):
         shader: MShader,
         ibo: IBO,
     ):
-        # カメラ設定
-        shader.update_camera_uniform()
-
         # ------------------
         # 材質色設定
         gl.glUniform4f(shader.diffuse_uniform, *self.material.diffuse_color.vector)

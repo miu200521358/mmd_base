@@ -9,6 +9,7 @@ from mlib.base.collection import (
     BaseIndexListModel,
     BaseIndexNameListModel,
 )
+from mlib.math import MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.part import (
     Bone,
@@ -246,10 +247,9 @@ class Meshs(BaseIndexListModel[Mesh]):
             [
                 np.array(
                     [
-                        *v.position.vector,
+                        *(v.position + MVector3D(0, -10, 0)).vector / 15,
                         *v.normal.vector,
-                        v.uv.x,
-                        1 - v.uv.y,
+                        *v.uv.vector,
                         *(
                             v.extended_uvs[0].vector
                             if len(v.extended_uvs) > 0
