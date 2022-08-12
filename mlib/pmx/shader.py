@@ -2,6 +2,7 @@ import os
 from enum import IntEnum
 from pathlib import Path
 
+import numpy as np
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
 from mlib.math import MMatrix4x4, MQuaternion, MVector3D
@@ -102,15 +103,15 @@ class MShader:
 
         gl.glEnable(gl.GL_DEPTH_TEST)  # enable shading
 
-        gl.glMatrixMode(gl.GL_PROJECTION)
-        gl.glLoadIdentity()
+        # gl.glMatrixMode(gl.GL_PROJECTION)
+        # gl.glLoadIdentity()
 
-        # set perspective
-        gl.glMatrixMode(gl.GL_PROJECTION)
-        gl.glLoadIdentity()
-        glu.gluPerspective(
-            self.vertical_degrees, self.aspect_ratio, self.near_plane, self.far_plane
-        )
+        # # set perspective
+        # gl.glMatrixMode(gl.GL_PROJECTION)
+        # gl.glLoadIdentity()
+        # glu.gluPerspective(
+        #     self.vertical_degrees, self.aspect_ratio, self.near_plane, self.far_plane
+        # )
 
         # modeling transform
         gl.glMatrixMode(gl.GL_MODELVIEW)
@@ -158,6 +159,36 @@ class MShader:
         self.use_sphere_uniform = gl.glGetUniformLocation(self.program, "useSphere")
         self.sphere_mode_uniform = gl.glGetUniformLocation(self.program, "sphereMode")
         self.sphere_uniform = gl.glGetUniformLocation(self.program, "sphereSampler")
+
+    def fit(self, width: int, height: int):
+        self.use()
+
+        self.width = width
+        self.height = height
+        self.aspect_ratio = float(self.width) / float(self.height)
+
+        # ビューポートの設定
+        gl.glViewport(0, 0, self.width, self.height)
+
+        # 視野領域の決定
+        gl.glMatrixMode(gl.GL_PROJECTION)
+        gl.glLoadIdentity()
+        glu.gluPerspective(
+            self.vertical_degrees, self.aspect_ratio, self.near_plane, self.far_plane
+        )
+        self.projection_matrix = np.array(
+            gl.glGetFloatv(gl.GL_PROJECTION_MATRIX), dtype=np.float32
+        )
+        # gl.glUniformMatrix4fv(
+        #     self.projection_matrix_uniform,
+        #     1,
+        #     gl.GL_FALSE,
+        #     self.projection_matrix,
+        # )
+
+        # self.update_uniform()
+
+        self.unuse()
 
     def use(self):
         gl.glUseProgram(self.program)

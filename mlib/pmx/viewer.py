@@ -19,6 +19,8 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 
         self.shader = MShader(width, height)
+        self.shader.fit(width, height)
+
         self.model = PmxReader().read_by_filepath(pmx_path)
         self.model.init_draw(self.shader)
 
