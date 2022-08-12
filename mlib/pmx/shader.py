@@ -22,7 +22,7 @@ class MShader:
         self.aspect_ratio = float(self.width) / float(self.height)
         self.near_plane = 0.01
         self.far_plane = 500000
-        self.look_at_eye = MVector3D(0.0, 0.0, 0.0)
+        self.look_at_center = MVector3D(0.0, 0.0, 0.0)
         self.look_at_up = MVector3D(0.0, 1.0, 0.0)
 
         self.program = gl.glCreateProgram()
@@ -195,11 +195,12 @@ class MShader:
 
         # ビュー行列
         self.view_matrix = MMatrix4x4.look_at(
-            camera_pos, self.look_at_eye, self.look_at_up
+            camera_pos, self.look_at_center, self.look_at_up
         )
-        self.view_matrix[3, 0] = -self.camera_position.x
-        self.view_matrix[3, 1] = -self.camera_position.y
-        self.view_matrix[3, 2] = -self.camera_position.z
+        # self.view_matrix[3, 0] = -self.camera_position.x
+        # self.view_matrix[3, 1] = -self.camera_position.y
+        # self.view_matrix[3, 2] = -self.camera_position.z
+        self.view_matrix.translate(-self.camera_position)
 
         gl.glUniformMatrix4fv(
             self.view_matrix_uniform,

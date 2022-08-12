@@ -31,7 +31,7 @@ void main() {
     mat4 modelViewMatrix = viewMatrix * modelMatrix;
 
     // カメラ視点のワールドビュー射影変換
-    gl_Position = modelViewProjectionMatrix * vec4(-position.x, position.y, position.z, 1.0);
+    gl_Position = modelViewProjectionMatrix * vec4(position, 1.0);
 
     // カメラとの相対位置
     vec3 eye = cameraPos - (mat3(modelMatrix) * position);
