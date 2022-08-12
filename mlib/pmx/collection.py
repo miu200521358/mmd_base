@@ -249,7 +249,8 @@ class Meshs(BaseIndexListModel[Mesh]):
                     [
                         *(v.position + MVector3D(0, -10, 0)).vector / 15,
                         *v.normal.vector,
-                        *v.uv.vector,
+                        v.uv.x,
+                        1 - v.uv.y,
                         *(
                             v.extended_uvs[0].vector
                             if len(v.extended_uvs) > 0
