@@ -3,6 +3,7 @@ from typing import Optional
 import numpy as np
 import OpenGL.GL as gl
 from mlib.base.part import BaseIndexModel
+from mlib.math import MMatrix4x4
 from mlib.pmx.part import Material, Texture
 from mlib.pmx.shader import MShader, VsLayout
 
@@ -129,6 +130,11 @@ class Mesh(BaseIndexModel):
         shader: MShader,
         ibo: IBO,
     ):
+        # ボーンデフォーム設定
+        gl.glUniformMatrix4fv(
+            shader.bone_matrix_uniform, 1, gl.GL_FALSE, MMatrix4x4(identity=True).vector
+        )
+
         # ------------------
         # 材質色設定
         gl.glUniform4f(shader.diffuse_uniform, *self.material.diffuse_color.vector)

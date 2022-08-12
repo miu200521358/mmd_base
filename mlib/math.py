@@ -709,29 +709,29 @@ class MQuaternion(MVector):
         # q(w,x,y,z)から(x,y,z,w)に並べ替え.
         q2 = np.array([self.x, self.y, self.z, self.scalar], dtype=np.float64)
 
-        mat = MMatrix4x4()
-        mat.vector[0, 0] = q2[3] * q2[3] + q2[0] * q2[0] - q2[1] * q2[1] - q2[2] * q2[2]
-        mat.vector[0, 1] = 2.0 * q2[0] * q2[1] - 2.0 * q2[3] * q2[2]
-        mat.vector[0, 2] = 2.0 * q2[0] * q2[2] + 2.0 * q2[3] * q2[1]
-        mat.vector[0, 3] = 0.0
+        mat = MMatrix4x4(identity=True)
+        mat[0, 0] = q2[3] * q2[3] + q2[0] * q2[0] - q2[1] * q2[1] - q2[2] * q2[2]
+        mat[0, 1] = 2.0 * q2[0] * q2[1] - 2.0 * q2[3] * q2[2]
+        mat[0, 2] = 2.0 * q2[0] * q2[2] + 2.0 * q2[3] * q2[1]
+        mat[0, 3] = 0.0
 
-        mat.vector[1, 0] = 2.0 * q2[0] * q2[1] + 2.0 * q2[3] * q2[2]
-        mat.vector[1, 1] = q2[3] * q2[3] - q2[0] * q2[0] + q2[1] * q2[1] - q2[2] * q2[2]
-        mat.vector[1, 2] = 2.0 * q2[1] * q2[2] - 2.0 * q2[3] * q2[0]
-        mat.vector[1, 3] = 0.0
+        mat[1, 0] = 2.0 * q2[0] * q2[1] + 2.0 * q2[3] * q2[2]
+        mat[1, 1] = q2[3] * q2[3] - q2[0] * q2[0] + q2[1] * q2[1] - q2[2] * q2[2]
+        mat[1, 2] = 2.0 * q2[1] * q2[2] - 2.0 * q2[3] * q2[0]
+        mat[1, 3] = 0.0
 
-        mat.vector[2, 0] = 2.0 * q2[0] * q2[2] - 2.0 * q2[3] * q2[1]
-        mat.vector[2, 1] = 2.0 * q2[1] * q2[2] + 2.0 * q2[3] * q2[0]
-        mat.vector[2, 2] = q2[3] * q2[3] - q2[0] * q2[0] - q2[1] * q2[1] + q2[2] * q2[2]
-        mat.vector[2, 3] = 0.0
+        mat[2, 0] = 2.0 * q2[0] * q2[2] - 2.0 * q2[3] * q2[1]
+        mat[2, 1] = 2.0 * q2[1] * q2[2] + 2.0 * q2[3] * q2[0]
+        mat[2, 2] = q2[3] * q2[3] - q2[0] * q2[0] - q2[1] * q2[1] + q2[2] * q2[2]
+        mat[2, 3] = 0.0
 
-        mat.vector[3, 0] = 0.0
-        mat.vector[3, 1] = 0.0
-        mat.vector[3, 2] = 0.0
-        mat.vector[3, 3] = q2[3] * q2[3] + q2[0] * q2[0] + q2[1] * q2[1] + q2[2] * q2[2]
+        mat[3, 0] = 0.0
+        mat[3, 1] = 0.0
+        mat[3, 2] = 0.0
+        mat[3, 3] = q2[3] * q2[3] + q2[0] * q2[0] + q2[1] * q2[1] + q2[2] * q2[2]
 
-        mat.vector /= mat.vector[3, 3]
-        mat.vector[3, 3] = 1.0
+        mat /= mat[3, 3]
+        mat[3, 3] = 1.0
 
         return mat
 

@@ -24,7 +24,6 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.model.init_draw(self.shader)
 
         self.rotate = False
-        self.rot_mat = MMatrix4x4(identity=True)
 
     def OnEraseBackground(self, event):
         pass  # Do nothing, to avoid flashing on MSW (これがないとチラつくらしい）
@@ -51,15 +50,15 @@ class PmxCanvas(glcanvas.GLCanvas):
         gl.glPushMatrix()
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
-        if self.rotate:
-            self.rot_mat.rotate(MQuaternion.from_euler_degrees(0, 1, 0))
-
         self.shader.use()
 
-        gl.glUniformMatrix4fv(
-            self.shader.bone_matrix_uniform, 1, gl.GL_FALSE, self.rot_mat.vector
-        )
-        self.Refresh()
+        # if self.rotate:
+        #     self.shader.camera_rotation *= MQuaternion.from_euler_degrees(0, 1, 0)
+
+        # gl.glUniformMatrix4fv(
+        #     self.shader.bone_matrix_uniform, 1, gl.GL_FALSE, self.rot_mat.vector
+        # )
+        # self.Refresh()
 
         if self.model:
             self.model.update()
