@@ -26,11 +26,11 @@ out vec2 sphereUv;
 
 void main() {
     vec4 pvec = BoneMatrix * vec4(position, 1.0);
-    gl_Position = vec4( -pvec.x, pvec.y, pvec.z, pvec.w );  // 座標系による反転を行う、カリングも反転
+    gl_Position = vec4( pvec.x, pvec.y, pvec.z, pvec.w );  // 座標系による反転を行う、カリングも反転
 
     // 頂点法線
     vec3 N = (BoneMatrix * normalize(vec4(normal, 1.0))).rgb;
-    vec3 vetexNormal = vec3(-N[0], N[1], N[2]); // 座標系による反転
+    vec3 vetexNormal = vec3(N[0], N[1], N[2]); // 座標系による反転
 
     // 照明位置
     vec3 lightDirection = -normalize(lightPos);

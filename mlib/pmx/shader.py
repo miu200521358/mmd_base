@@ -113,8 +113,8 @@ class MShader:
         #     self.vertical_degrees, self.aspect_ratio, self.near_plane, self.far_plane
         # )
 
-        # modeling transform
-        gl.glMatrixMode(gl.GL_MODELVIEW)
+        # # modeling transform
+        # gl.glMatrixMode(gl.GL_MODELVIEW)
 
         # # ビュー行列
         # self.view_matrix_uniform = gl.glGetUniformLocation(self.program, "ViewMatrix")
@@ -131,14 +131,6 @@ class MShader:
 
         # カメラの位置
         self.camera_vec_uniform = gl.glGetUniformLocation(self.program, "cameraPos")
-
-        # カメラ位置
-        camera_mat = MMatrix4x4(identity=True)
-        camera_mat.rotate(self.camera_rotation)
-        camera_mat.translate(self.camera_position)
-        camera_pos: MVector3D = camera_mat * MVector3D()
-
-        gl.glUniform3f(self.camera_vec_uniform, *camera_pos.vector)
 
         # マテリアル設定
         self.diffuse_uniform = gl.glGetUniformLocation(self.program, "diffuse")
@@ -159,6 +151,24 @@ class MShader:
         self.use_sphere_uniform = gl.glGetUniformLocation(self.program, "useSphere")
         self.sphere_mode_uniform = gl.glGetUniformLocation(self.program, "sphereMode")
         self.sphere_uniform = gl.glGetUniformLocation(self.program, "sphereSampler")
+
+        self.fit(self.width, self.height)
+
+    def update_uniform(self):
+        # カメラ位置
+        camera_mat = MMatrix4x4(identity=True)
+        camera_mat.rotate(self.camera_rotation)
+        camera_mat.translate(self.camera_position)
+        camera_pos: MVector3D = camera_mat * MVector3D()
+
+        gl.glUniform3f(self.camera_vec_uniform, *camera_pos.vector)
+
+        # 視点位置の決定
+        gl.glMatrixMode(gl.GL_MODELVIEW)
+        gl.glLoadIdentity()
+        glu.gluLookAt(
+            *camera_pos.vector, *self.look_at_center.vector, *self.look_at_up.vector
+        )
 
     def fit(self, width: int, height: int):
         self.use()
@@ -186,7 +196,7 @@ class MShader:
         #     self.projection_matrix,
         # )
 
-        # self.update_uniform()
+        self.update_uniform()
 
         self.unuse()
 
