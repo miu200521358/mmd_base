@@ -36,7 +36,7 @@ class MShader:
         self.model_program = gl.glCreateProgram()
 
         model_vertex_shader_src = Path(
-            os.path.join(os.path.dirname(__file__), "shader", "model.vert")
+            os.path.join(os.path.dirname(__file__), "glsl", "model.vert")
         ).read_text(encoding="utf-8")
         model_vertex_shader_src = model_vertex_shader_src % (
             VsLayout.POSITION_ID.value,
@@ -46,7 +46,7 @@ class MShader:
         )
 
         model_fragments_shader_src = Path(
-            os.path.join(os.path.dirname(__file__), "shader", "model.frag")
+            os.path.join(os.path.dirname(__file__), "glsl", "model.frag")
         ).read_text(encoding="utf-8")
 
         self.compile(
@@ -57,30 +57,7 @@ class MShader:
         self.initialize(self.model_program)
         self.unuse()
 
-        # エッジ描画シェーダー ------------------
-        self.edge_program = gl.glCreateProgram()
-
-        edge_vertex_shader_src = Path(
-            os.path.join(os.path.dirname(__file__), "shader", "edge.vert")
-        ).read_text(encoding="utf-8")
-        edge_vertex_shader_src = edge_vertex_shader_src % (
-            VsLayout.POSITION_ID.value,
-            VsLayout.NORMAL_ID.value,
-            VsLayout.UV_ID.value,
-            VsLayout.EXTEND_UV_ID.value,
-        )
-
-        edge_fragments_shader_src = Path(
-            os.path.join(os.path.dirname(__file__), "shader", "edge.frag")
-        ).read_text(encoding="utf-8")
-
-        self.compile(
-            self.edge_program, edge_vertex_shader_src, edge_fragments_shader_src
-        )
-
-        self.use(edge=True)
-        self.initialize(self.edge_program)
-        self.unuse()
+        # TODO エッジ描画シェーダー
 
     def __del__(self) -> None:
         gl.glDeleteProgram(self.model_program)
@@ -241,11 +218,8 @@ class MShader:
 
         self.unuse()
 
-    def use(self, edge=False):
-        if edge:
-            gl.glUseProgram(self.edge_program)
-        else:
-            gl.glUseProgram(self.model_program)
+    def use(self):
+        gl.glUseProgram(self.model_program)
 
     def unuse(self):
         gl.glUseProgram(0)
