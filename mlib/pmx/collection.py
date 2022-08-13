@@ -3,13 +3,27 @@ from glob import glob
 from typing import Optional
 
 import numpy as np
-from mlib.base.collection import (BaseHashModel, BaseIndexDictModel,
-                                  BaseIndexListModel, BaseIndexNameListModel)
+from mlib.base.collection import (
+    BaseHashModel,
+    BaseIndexDictModel,
+    BaseIndexListModel,
+    BaseIndexNameListModel,
+)
 from mlib.math import MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
-from mlib.pmx.part import (Bone, DisplaySlot, Face, Joint, Material, Morph,
-                           RigidBody, Texture, TextureType, ToonSharing,
-                           Vertex)
+from mlib.pmx.part import (
+    Bone,
+    DisplaySlot,
+    Face,
+    Joint,
+    Material,
+    Morph,
+    RigidBody,
+    Texture,
+    TextureType,
+    ToonSharing,
+    Vertex,
+)
 from mlib.pmx.shader import MShader, VsLayout
 
 
@@ -220,6 +234,7 @@ class Meshs(BaseIndexListModel[Mesh]):
     """
     メッシュリスト
     """
+
     def __init__(self, shader: MShader, model: PmxModel):
         super().__init__()
 
@@ -333,8 +348,10 @@ class Meshs(BaseIndexListModel[Mesh]):
             self.vbo_vertices.set_slot(VsLayout.EXTEND_UV_ID)
             self.ibo_faces.bind()
 
-            # 描画
+            # モデル描画
+            self.shader.use()
             mesh.draw(self.shader, self.ibo_faces)
+            self.shader.unuse()
 
             self.ibo_faces.unbind()
             self.vbo_vertices.unbind()

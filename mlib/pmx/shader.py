@@ -1,6 +1,7 @@
 import os
 from enum import IntEnum
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import OpenGL.GL as gl
@@ -31,16 +32,58 @@ class MShader:
         # カメラの回転
         self.camera_rotation = MQuaternion()
 
-        self.program = gl.glCreateProgram()
-        self.compile()
+        # モデル描画シェーダー ------------------
+        self.model_program = gl.glCreateProgram()
+
+        model_vertex_shader_src = Path(
+            os.path.join(os.path.dirname(__file__), "shader", "model.vert")
+        ).read_text(encoding="utf-8")
+        model_vertex_shader_src = model_vertex_shader_src % (
+            VsLayout.POSITION_ID.value,
+            VsLayout.NORMAL_ID.value,
+            VsLayout.UV_ID.value,
+            VsLayout.EXTEND_UV_ID.value,
+        )
+
+        model_fragments_shader_src = Path(
+            os.path.join(os.path.dirname(__file__), "shader", "model.frag")
+        ).read_text(encoding="utf-8")
+
+        self.compile(
+            self.model_program, model_vertex_shader_src, model_fragments_shader_src
+        )
+
         self.use()
+        self.initialize(self.model_program)
+        self.unuse()
 
-        self.initialize(width, height)
+        # エッジ描画シェーダー ------------------
+        self.edge_program = gl.glCreateProgram()
 
+        edge_vertex_shader_src = Path(
+            os.path.join(os.path.dirname(__file__), "shader", "edge.vert")
+        ).read_text(encoding="utf-8")
+        edge_vertex_shader_src = edge_vertex_shader_src % (
+            VsLayout.POSITION_ID.value,
+            VsLayout.NORMAL_ID.value,
+            VsLayout.UV_ID.value,
+            VsLayout.EXTEND_UV_ID.value,
+        )
+
+        edge_fragments_shader_src = Path(
+            os.path.join(os.path.dirname(__file__), "shader", "edge.frag")
+        ).read_text(encoding="utf-8")
+
+        self.compile(
+            self.edge_program, edge_vertex_shader_src, edge_fragments_shader_src
+        )
+
+        self.use(edge=True)
+        self.initialize(self.edge_program)
         self.unuse()
 
     def __del__(self) -> None:
-        gl.glDeleteProgram(self.program)
+        gl.glDeleteProgram(self.model_program)
 
     def load_shader(self, src: str, shader_type: int) -> int:
         shader = gl.glCreateShader(shader_type)
@@ -53,38 +96,26 @@ class MShader:
             raise Exception(info)
         return shader
 
-    def compile(self) -> None:
-        vertex_shader_src = Path(
-            os.path.join(os.path.dirname(__file__), "pmx.vert")
-        ).read_text(encoding="utf-8")
-        vertex_shader_src = vertex_shader_src % (
-            VsLayout.POSITION_ID.value,
-            VsLayout.NORMAL_ID.value,
-            VsLayout.UV_ID.value,
-            VsLayout.EXTEND_UV_ID.value,
-        )
-
-        fragments_shader_src = Path(
-            os.path.join(os.path.dirname(__file__), "pmx.frag")
-        ).read_text(encoding="utf-8")
-
+    def compile(
+        self, program: Any, vertex_shader_src: str, fragments_shader_src: str
+    ) -> None:
         vs = self.load_shader(vertex_shader_src, gl.GL_VERTEX_SHADER)
         if not vs:
             return
         fs = self.load_shader(fragments_shader_src, gl.GL_FRAGMENT_SHADER)
         if not fs:
             return
-        gl.glAttachShader(self.program, vs)
-        gl.glAttachShader(self.program, fs)
-        gl.glLinkProgram(self.program)
-        error = gl.glGetProgramiv(self.program, gl.GL_LINK_STATUS)
+        gl.glAttachShader(program, vs)
+        gl.glAttachShader(program, fs)
+        gl.glLinkProgram(program)
+        error = gl.glGetProgramiv(program, gl.GL_LINK_STATUS)
         gl.glDeleteShader(vs)
         gl.glDeleteShader(fs)
         if error != gl.GL_TRUE:
-            info = gl.glGetShaderInfoLog(self.program)
+            info = gl.glGetShaderInfoLog(program)
             raise Exception(info)
 
-    def initialize(self, width: int, height: int):
+    def initialize(self, program: Any):
         # light color
         light_diffuse = MVector3D(0.7, 0.7, 0.7)
         light_ambient = MVector3D(0.3, 0.3, 0.3)
@@ -104,60 +135,48 @@ class MShader:
         gl.glEnable(gl.GL_DEPTH_TEST)  # enable shading
         gl.glEnable(gl.GL_BLEND)
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
-        # gl.glMatrixMode(gl.GL_PROJECTION)
-        # gl.glLoadIdentity()
-
-        # # set perspective
-        # gl.glMatrixMode(gl.GL_PROJECTION)
-        # gl.glLoadIdentity()
-        # glu.gluPerspective(
-        #     self.vertical_degrees, self.aspect_ratio, self.near_plane, self.far_plane
-        # )
-
-        # # modeling transform
-        # gl.glMatrixMode(gl.GL_MODELVIEW)
 
         # ボーンデフォーム行列
-        self.bone_matrix_uniform = gl.glGetUniformLocation(self.program, "BoneMatrix")
+        self.bone_matrix_uniform = gl.glGetUniformLocation(program, "BoneMatrix")
 
         # モデルビュー行列
         self.model_view_matrix_uniform = gl.glGetUniformLocation(
-            self.program, "modelViewMatrix"
+            program, "modelViewMatrix"
         )
 
         # MVP行列
         self.model_view_projection_matrix_uniform = gl.glGetUniformLocation(
-            self.program, "modelViewProjectionMatrix"
+            program, "modelViewProjectionMatrix"
         )
 
         # ライトの位置
-        self.light_vec_uniform = gl.glGetUniformLocation(self.program, "lightPos")
+        self.light_vec_uniform = gl.glGetUniformLocation(program, "lightPos")
         gl.glUniform3f(self.light_vec_uniform, *light_position.vector)
 
         # カメラの位置
-        self.camera_vec_uniform = gl.glGetUniformLocation(self.program, "cameraPos")
+        self.camera_vec_uniform = gl.glGetUniformLocation(program, "cameraPos")
 
         # --------
 
         # マテリアル設定
-        self.diffuse_uniform = gl.glGetUniformLocation(self.program, "diffuse")
-        self.ambient_uniform = gl.glGetUniformLocation(self.program, "ambient")
-        self.specular_uniform = gl.glGetUniformLocation(self.program, "specular")
+        self.diffuse_uniform = gl.glGetUniformLocation(program, "diffuse")
+        self.ambient_uniform = gl.glGetUniformLocation(program, "ambient")
+        self.specular_uniform = gl.glGetUniformLocation(program, "specular")
 
         # --------
 
         # テクスチャの設定
-        self.use_texture_uniform = gl.glGetUniformLocation(self.program, "useTexture")
-        self.texture_uniform = gl.glGetUniformLocation(self.program, "textureSampler")
+        self.use_texture_uniform = gl.glGetUniformLocation(program, "useTexture")
+        self.texture_uniform = gl.glGetUniformLocation(program, "textureSampler")
 
         # Toonの設定
-        self.use_toon_uniform = gl.glGetUniformLocation(self.program, "useToon")
-        self.toon_uniform = gl.glGetUniformLocation(self.program, "toonSampler")
+        self.use_toon_uniform = gl.glGetUniformLocation(program, "useToon")
+        self.toon_uniform = gl.glGetUniformLocation(program, "toonSampler")
 
         # Sphereの設定
-        self.use_sphere_uniform = gl.glGetUniformLocation(self.program, "useSphere")
-        self.sphere_mode_uniform = gl.glGetUniformLocation(self.program, "sphereMode")
-        self.sphere_uniform = gl.glGetUniformLocation(self.program, "sphereSampler")
+        self.use_sphere_uniform = gl.glGetUniformLocation(program, "useSphere")
+        self.sphere_mode_uniform = gl.glGetUniformLocation(program, "sphereMode")
+        self.sphere_uniform = gl.glGetUniformLocation(program, "sphereSampler")
 
         self.fit(self.width, self.height)
 
@@ -222,8 +241,11 @@ class MShader:
 
         self.unuse()
 
-    def use(self):
-        gl.glUseProgram(self.program)
+    def use(self, edge=False):
+        if edge:
+            gl.glUseProgram(self.edge_program)
+        else:
+            gl.glUseProgram(self.model_program)
 
     def unuse(self):
         gl.glUseProgram(0)

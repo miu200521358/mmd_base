@@ -57,11 +57,10 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         self.shader.use()
         self.shader.update_camera()
+        self.shader.unuse()
 
         if self.model:
             self.model.draw()
-
-        self.shader.unuse()
 
         gl.glFlush()
         self.SwapBuffers()
