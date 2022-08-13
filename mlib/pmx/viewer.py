@@ -16,6 +16,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_SIZE, self.OnResize)
+        self.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 
         self.shader = MShader(width, height)
@@ -79,8 +80,8 @@ class PmxCanvas(glcanvas.GLCanvas):
     #         self.x, self.y = event.GetPosition()
     #         self.Refresh(False)
 
-    # def OnMouseWheel(self, event: wx.Event):
-    #     if event.GetWheelRotation() > 0:
-    #         self.zooming *= 0.9
-    #     else:
-    #         self.zooming *= 1.1
+    def OnMouseWheel(self, event: wx.Event):
+        if event.GetWheelRotation() > 0:
+            self.shader.camera_position.z -= 0.1
+        else:
+            self.shader.camera_position.z += 0.1
