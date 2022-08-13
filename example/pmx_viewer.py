@@ -24,14 +24,14 @@ class PmxPanel(wx.Panel):
         self.canvas = PmxCanvas(self, args.pmx, 800, 800)
         self.sizer.Add(self.canvas, 0, wx.ALL | wx.EXPAND, 0)
 
-        self.rot_btn = wx.Button(
-            self, -1, label="Start/Stop\nrotation", pos=(1130, 10), size=(100, 50)
+        self.reset_btn = wx.Button(
+            self, -1, label="Reset", pos=(1130, 10), size=(100, 50)
         )
-        self.rot_btn.BackgroundColour = (125, 125, 125)
-        self.rot_btn.ForegroundColour = (0, 0, 0)
-        self.sizer.Add(self.rot_btn, 0, wx.ALIGN_LEFT | wx.SHAPED, 5)
+        self.reset_btn.BackgroundColour = (125, 125, 125)
+        self.reset_btn.ForegroundColour = (0, 0, 0)
+        self.sizer.Add(self.reset_btn, 0, wx.ALIGN_LEFT | wx.SHAPED, 5)
 
-        self.rot_btn.Bind(wx.EVT_BUTTON, self.rotate)
+        self.reset_btn.Bind(wx.EVT_BUTTON, self.reset)
 
         self.Layout()
         self.fit()
@@ -41,11 +41,8 @@ class PmxPanel(wx.Panel):
         self.Layout()
         self.sizer.Fit(self.parent)
 
-    def rotate(self, event: wx.Event):
-        if not self.canvas.is_rotate:
-            self.canvas.is_rotate = True
-        else:
-            self.canvas.is_rotate = False
+    def reset(self, event: wx.Event):
+        self.canvas.reset()
         self.canvas.OnDraw(event)
 
 

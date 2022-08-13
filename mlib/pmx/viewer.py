@@ -1,6 +1,6 @@
 import OpenGL.GL as gl
 import wx
-from mlib.math import MQuaternion
+from mlib.math import MQuaternion, MVector3D
 from mlib.pmx.reader import PmxReader
 from mlib.pmx.shader import MShader
 from wx import glcanvas
@@ -11,16 +11,18 @@ class PmxCanvas(glcanvas.GLCanvas):
         glcanvas.GLCanvas.__init__(self, parent, -1, size=(width, height))
         self.context = glcanvas.GLContext(self)
         self.size = wx.Size(width, height)
+        self.last_pos = wx.Point(0, 0)
+        self.now_pos = wx.Point(0, 0)
         self.SetCurrent(self.context)
         gl.glClearColor(0.4, 0.4, 0.4, 1)
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_SIZE, self.OnResize)
         self.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
-        self.Bind(wx.EVT_LEFT_DOWN, self.OnMouseDown)
+        self.Bind(wx.EVT_MIDDLE_DOWN, self.OnMouseDown)
         self.Bind(wx.EVT_RIGHT_DOWN, self.OnMouseDown)
         self.Bind(wx.EVT_MOTION, self.OnMouseMotion)
-        self.Bind(wx.EVT_LEFT_UP, self.OnMouseUp)
+        self.Bind(wx.EVT_MIDDLE_UP, self.OnMouseUp)
         self.Bind(wx.EVT_RIGHT_UP, self.OnMouseUp)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 
@@ -29,7 +31,6 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.model = PmxReader().read_by_filepath(pmx_path)
         self.model.init_draw(self.shader)
 
-        self.is_rotate = False
         self.is_drag = False
 
     def OnEraseBackground(self, event):
@@ -44,20 +45,12 @@ class PmxCanvas(glcanvas.GLCanvas):
         wx.PaintDC(self)
         self.OnDraw(event)
 
+    def reset(self):
+        self.shader.look_at_center = MVector3D()
+        self.shader.camera_position = MVector3D(0, 0, -3)
+        self.shader.camera_rotation = MQuaternion()
+
     def OnDraw(self, event: wx.Event):
-        # # set camera
-        # glu.gluLookAt(0.0, 10.0, -30.0, 0.0, 10.0, 0.0, 0.0, 1.0, 0.0)
-
-        if self.is_rotate:
-            # gl.glMatrixMode(gl.GL_MODELVIEW)
-            # gl.glLoadIdentity()
-            # gl.glRotatef(10, 0, 1, 0)
-            self.shader.camera_rotation *= MQuaternion.from_euler_degrees(0, 1, 0)
-
-        # gl.glUniformMatrix4fv(
-        #     self.shader.bone_matrix_uniform, 1, gl.GL_FALSE, self.rot_mat.vector
-        # )
-
         if self.model:
             self.model.update()
 
@@ -71,9 +64,10 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         gl.glFlush()
         self.SwapBuffers()
-        self.Refresh()
+        self.Refresh(False)
 
     def OnMouseDown(self, event: wx.Event):
+        self.now_pos = self.last_pos = event.GetPosition()
         self.is_drag = True
         self.CaptureMouse()
 
@@ -82,10 +76,19 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.ReleaseMouse()
 
     def OnMouseMotion(self, event: wx.Event):
-        if self.is_drag and event.Dragging() and event.LeftIsDown():
-            pos = (self.size / 2) - event.GetPosition()
-            self.shader.camera_position.x = pos.x
-            # self.shader.camera_position.y = pos.y
+        if self.is_drag and event.Dragging():
+            self.now_pos = event.GetPosition()
+            x = (self.now_pos.x - self.last_pos.x) * 0.1
+            y = (self.now_pos.y - self.last_pos.y) * 0.1
+            if event.MiddleIsDown():
+                self.shader.look_at_center.x += x * 0.01
+                self.shader.look_at_center.y += y * 0.01
+
+                self.shader.camera_position.x += x * 0.01
+                self.shader.camera_position.y += y * 0.01
+            elif event.RightIsDown():
+                self.shader.camera_rotation *= MQuaternion.from_euler_degrees(y, -x, 0)
+            self.last_pos = self.now_pos
 
     def OnMouseWheel(self, event: wx.Event):
         if event.GetWheelRotation() > 0:

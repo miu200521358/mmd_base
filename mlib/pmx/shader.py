@@ -86,12 +86,12 @@ class MShader:
 
     def initialize(self, width: int, height: int):
         # light color
-        light_ambient = MVector3D(0.25, 0.25, 0.25)
-        light_diffuse = MVector3D(1.0, 1.0, 1.0)
+        light_diffuse = MVector3D(0.7, 0.7, 0.7)
+        light_ambient = MVector3D(0.3, 0.3, 0.3)
         light_specular = MVector3D(1.0, 1.0, 1.0)
 
         # light position
-        light_position = MVector3D(-0.5, -1.0, 0.5)
+        light_position = MVector3D(3, -2, 5)
 
         # light setting
         gl.glLightfv(gl.GL_LIGHT0, gl.GL_AMBIENT, light_ambient.vector)
@@ -102,7 +102,8 @@ class MShader:
         gl.glEnable(gl.GL_LIGHTING)
 
         gl.glEnable(gl.GL_DEPTH_TEST)  # enable shading
-
+        gl.glEnable(gl.GL_BLEND)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
         # gl.glMatrixMode(gl.GL_PROJECTION)
         # gl.glLoadIdentity()
 
