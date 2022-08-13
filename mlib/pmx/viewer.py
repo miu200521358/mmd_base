@@ -25,6 +25,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.Bind(wx.EVT_MIDDLE_UP, self.OnMouseUp)
         self.Bind(wx.EVT_RIGHT_UP, self.OnMouseUp)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+        self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 
         self.shader = MShader(width, height)
 
@@ -65,6 +66,39 @@ class PmxCanvas(glcanvas.GLCanvas):
         gl.glFlush()
         self.SwapBuffers()
         self.Refresh(False)
+
+    def OnKeyDown(self, event: wx.Event):
+        keycode = event.GetKeyCode()
+        if keycode == wx.WXK_NUMPAD0:
+            # 真下から
+            self.shader.look_at_center = MVector3D()
+            self.shader.camera_rotation = MQuaternion()
+            self.shader.camera_position = MVector3D(0, -3, -0.1)
+        elif keycode == wx.WXK_NUMPAD2:
+            # 真正面から
+            self.shader.look_at_center = MVector3D()
+            self.shader.camera_rotation = MQuaternion()
+            self.shader.camera_position = MVector3D(0, 0, -3)
+        elif keycode == wx.WXK_NUMPAD4:
+            # 左から
+            self.shader.look_at_center = MVector3D()
+            self.shader.camera_rotation = MQuaternion()
+            self.shader.camera_position = MVector3D(3, 0, -0.1)
+        elif keycode == wx.WXK_NUMPAD6:
+            # 右から
+            self.shader.look_at_center = MVector3D()
+            self.shader.camera_rotation = MQuaternion()
+            self.shader.camera_position = MVector3D(-3, 0, -0.1)
+        elif keycode == wx.WXK_NUMPAD8:
+            # 真後ろから
+            self.shader.look_at_center = MVector3D()
+            self.shader.camera_rotation = MQuaternion()
+            self.shader.camera_position = MVector3D(0, 0, 3)
+        elif keycode == wx.WXK_NUMPAD5:
+            # 真上から
+            self.shader.look_at_center = MVector3D()
+            self.shader.camera_rotation = MQuaternion()
+            self.shader.camera_position = MVector3D(0, 3, -0.1)
 
     def OnMouseDown(self, event: wx.Event):
         self.now_pos = self.last_pos = event.GetPosition()
