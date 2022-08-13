@@ -17,6 +17,11 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_SIZE, self.OnResize)
         self.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
+        self.Bind(wx.EVT_LEFT_DOWN, self.OnMouseDown)
+        self.Bind(wx.EVT_RIGHT_DOWN, self.OnMouseDown)
+        self.Bind(wx.EVT_MOTION, self.OnMouseMotion)
+        self.Bind(wx.EVT_LEFT_UP, self.OnMouseUp)
+        self.Bind(wx.EVT_RIGHT_UP, self.OnMouseUp)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 
         self.shader = MShader(width, height)
@@ -24,7 +29,8 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.model = PmxReader().read_by_filepath(pmx_path)
         self.model.init_draw(self.shader)
 
-        self.rotate = False
+        self.is_rotate = False
+        self.is_drag = False
 
     def OnEraseBackground(self, event):
         pass  # Do nothing, to avoid flashing on MSW (これがないとチラつくらしい）
@@ -42,7 +48,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         # # set camera
         # glu.gluLookAt(0.0, 10.0, -30.0, 0.0, 10.0, 0.0, 0.0, 1.0, 0.0)
 
-        if self.rotate:
+        if self.is_rotate:
             # gl.glMatrixMode(gl.GL_MODELVIEW)
             # gl.glLoadIdentity()
             # gl.glRotatef(10, 0, 1, 0)
@@ -67,21 +73,22 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.SwapBuffers()
         self.Refresh()
 
-    # def OnMouseDown(self, event: wx.Event):
-    #     self.CaptureMouse()
-    #     self.x, self.y = self.lastx, self.lasty = event.GetPosition()
+    def OnMouseDown(self, event: wx.Event):
+        self.is_drag = True
+        self.CaptureMouse()
 
-    # def OnMouseUp(self, event: wx.Event):
-    #     self.ReleaseMouse()
+    def OnMouseUp(self, event: wx.Event):
+        self.is_drag = False
+        self.ReleaseMouse()
 
-    # def OnMouseMotion(self, event: wx.Event):
-    #     if event.Dragging() and event.LeftIsDown():
-    #         self.lastx, self.lasty = self.x, self.y
-    #         self.x, self.y = event.GetPosition()
-    #         self.Refresh(False)
+    def OnMouseMotion(self, event: wx.Event):
+        if self.is_drag and event.Dragging() and event.LeftIsDown():
+            pos = (self.size / 2) - event.GetPosition()
+            self.shader.camera_position.x = pos.x
+            # self.shader.camera_position.y = pos.y
 
     def OnMouseWheel(self, event: wx.Event):
         if event.GetWheelRotation() > 0:
-            self.shader.camera_position.z -= 0.1
-        else:
             self.shader.camera_position.z += 0.1
+        else:
+            self.shader.camera_position.z -= 0.1

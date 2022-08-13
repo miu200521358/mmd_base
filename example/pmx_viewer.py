@@ -42,10 +42,10 @@ class PmxPanel(wx.Panel):
         self.sizer.Fit(self.parent)
 
     def rotate(self, event: wx.Event):
-        if not self.canvas.rotate:
-            self.canvas.rotate = True
+        if not self.canvas.is_rotate:
+            self.canvas.is_rotate = True
         else:
-            self.canvas.rotate = False
+            self.canvas.is_rotate = False
         self.canvas.OnDraw(event)
 
 
