@@ -537,7 +537,10 @@ class MQuaternion(MVector):
     def __init__(self, scalar=0, x=0, y=0, z=0):
         if isinstance(scalar, int) or isinstance(scalar, float):
             # 実数の場合
-            self.vector = quaternion(scalar, x, y, z)
+            if np.isclose([scalar, x, y, z], 0).all():
+                self.vector = quaternion(1, 0, 0, 0)
+            else:
+                self.vector = quaternion(scalar, x, y, z)
         elif isinstance(scalar, quaternion):
             # quaternionの場合
             self.vector = quaternion(*scalar.components)

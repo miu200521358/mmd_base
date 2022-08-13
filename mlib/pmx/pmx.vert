@@ -8,7 +8,8 @@ in layout(location = %d) vec2 extendUv;
 uniform vec3 lightPos;
 uniform vec3 cameraPos;
 uniform mat4 BoneMatrix;
-uniform mat4 ViewMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 modelViewProjectionMatrix;
 
 uniform vec4 diffuse;
 uniform vec3 ambient;
@@ -25,7 +26,7 @@ out vec3 lightDirection;
 out vec2 sphereUv;
 
 void main() {
-    vec4 pvec = BoneMatrix * vec4(position, 1.0);
+    vec4 pvec = modelViewProjectionMatrix * vec4(position, 1.0);
     gl_Position = vec4( pvec.x, pvec.y, pvec.z, pvec.w );  // 座標系による反転を行う、カリングも反転
 
     // 頂点法線
@@ -58,7 +59,7 @@ void main() {
         }
         else {
 	        // スフィアマップテクスチャ座標
-            vec3 normalWv = mat3(ViewMatrix) * vetexNormal;
+            vec3 normalWv = mat3(modelViewMatrix) * vetexNormal;
 	        sphereUv.x = normalWv.x * 0.5f + 0.5f;
 	        sphereUv.y = normalWv.y * -0.5f + 0.5f;
         }

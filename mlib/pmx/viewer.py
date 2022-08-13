@@ -1,7 +1,6 @@
 import OpenGL.GL as gl
-import OpenGL.GLU as glu
 import wx
-from mlib.math import MMatrix4x4, MQuaternion
+from mlib.math import MQuaternion
 from mlib.pmx.reader import PmxReader
 from mlib.pmx.shader import MShader
 from wx import glcanvas
@@ -16,6 +15,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         gl.glClearColor(0.4, 0.4, 0.4, 1)
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_SIZE, self.OnResize)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 
         self.shader = MShader(width, height)
@@ -28,7 +28,7 @@ class PmxCanvas(glcanvas.GLCanvas):
     def OnEraseBackground(self, event):
         pass  # Do nothing, to avoid flashing on MSW (これがないとチラつくらしい）
 
-    def OnSize(self, event):
+    def OnResize(self, event):
         self.size: wx.Size = self.GetClientSize()
         self.shader.fit(self.size.width, self.size.height)
         event.Skip()
@@ -38,39 +38,33 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.OnDraw(event)
 
     def OnDraw(self, event: wx.Event):
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
-        gl.glMatrixMode(gl.GL_MODELVIEW)
-        gl.glLoadIdentity()
+        # # set camera
+        # glu.gluLookAt(0.0, 10.0, -30.0, 0.0, 10.0, 0.0, 0.0, 1.0, 0.0)
 
-        gl.glClearColor(0.4, 0.4, 0.4, 1)
-
-        # set camera
-        glu.gluLookAt(0.0, 10.0, -30.0, 0.0, 10.0, 0.0, 0.0, 1.0, 0.0)
-
-        gl.glPushMatrix()
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
-
-        self.shader.use()
-
-        # if self.rotate:
-        #     self.shader.camera_rotation *= MQuaternion.from_euler_degrees(0, 1, 0)
+        if self.rotate:
+            # gl.glMatrixMode(gl.GL_MODELVIEW)
+            # gl.glLoadIdentity()
+            # gl.glRotatef(10, 0, 1, 0)
+            self.shader.camera_rotation *= MQuaternion.from_euler_degrees(0, 1, 0)
 
         # gl.glUniformMatrix4fv(
         #     self.shader.bone_matrix_uniform, 1, gl.GL_FALSE, self.rot_mat.vector
         # )
-        # self.Refresh()
 
         if self.model:
             self.model.update()
 
-        self.shader.unuse()
-        gl.glPopMatrix()
+        self.shader.use()
+        self.shader.update_camera()
 
         if self.model:
             self.model.draw()
 
-        gl.glFlush()  # enforce OpenGL command
+        self.shader.unuse()
+
+        gl.glFlush()
         self.SwapBuffers()
+        self.Refresh()
 
     # def OnMouseDown(self, event: wx.Event):
     #     self.CaptureMouse()

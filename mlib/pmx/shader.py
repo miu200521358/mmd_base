@@ -19,7 +19,7 @@ class MShader:
     def __init__(self, width: int, height: int) -> None:
         self.width = width
         self.height = height
-        self.vertical_degrees = 45.0
+        self.vertical_degrees = 30.0
         self.aspect_ratio = float(self.width) / float(self.height)
         self.near_plane = 0.01
         self.far_plane = 10000
@@ -27,7 +27,7 @@ class MShader:
         self.look_at_up = MVector3D(0.0, 1.0, 0.0)
 
         # カメラの位置
-        self.camera_position = MVector3D(0, 10, 100)
+        self.camera_position = MVector3D(0, 0, -3)
         # カメラの回転
         self.camera_rotation = MQuaternion()
 
@@ -116,14 +116,18 @@ class MShader:
         # # modeling transform
         # gl.glMatrixMode(gl.GL_MODELVIEW)
 
-        # # ビュー行列
-        # self.view_matrix_uniform = gl.glGetUniformLocation(self.program, "ViewMatrix")
-        # gl.glUniformMatrix4fv(
-        #     self.view_matrix_uniform, 1, gl.GL_FALSE, camera_mat.inverse().vector
-        # )
-
         # ボーンデフォーム行列
         self.bone_matrix_uniform = gl.glGetUniformLocation(self.program, "BoneMatrix")
+
+        # モデルビュー行列
+        self.model_view_matrix_uniform = gl.glGetUniformLocation(
+            self.program, "modelViewMatrix"
+        )
+
+        # MVP行列
+        self.model_view_projection_matrix_uniform = gl.glGetUniformLocation(
+            self.program, "modelViewProjectionMatrix"
+        )
 
         # ライトの位置
         self.light_vec_uniform = gl.glGetUniformLocation(self.program, "lightPos")
@@ -131,6 +135,8 @@ class MShader:
 
         # カメラの位置
         self.camera_vec_uniform = gl.glGetUniformLocation(self.program, "cameraPos")
+
+        # --------
 
         # マテリアル設定
         self.diffuse_uniform = gl.glGetUniformLocation(self.program, "diffuse")
@@ -154,7 +160,10 @@ class MShader:
 
         self.fit(self.width, self.height)
 
-    def update_uniform(self):
+    def update_camera(self):
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+        gl.glClearColor(0.4, 0.4, 0.4, 1)
+
         # カメラ位置
         camera_mat = MMatrix4x4(identity=True)
         camera_mat.rotate(self.camera_rotation)
@@ -168,6 +177,23 @@ class MShader:
         gl.glLoadIdentity()
         glu.gluLookAt(
             *camera_pos.vector, *self.look_at_center.vector, *self.look_at_up.vector
+        )
+
+        model_view_matrix = np.array(
+            gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX), dtype=np.float32
+        )
+        gl.glUniformMatrix4fv(
+            self.model_view_matrix_uniform,
+            1,
+            gl.GL_FALSE,
+            model_view_matrix,
+        )
+
+        gl.glUniformMatrix4fv(
+            self.model_view_projection_matrix_uniform,
+            1,
+            gl.GL_FALSE,
+            np.matmul(model_view_matrix, self.projection_matrix),
         )
 
     def fit(self, width: int, height: int):
@@ -186,17 +212,12 @@ class MShader:
         glu.gluPerspective(
             self.vertical_degrees, self.aspect_ratio, self.near_plane, self.far_plane
         )
+
         self.projection_matrix = np.array(
             gl.glGetFloatv(gl.GL_PROJECTION_MATRIX), dtype=np.float32
         )
-        # gl.glUniformMatrix4fv(
-        #     self.projection_matrix_uniform,
-        #     1,
-        #     gl.GL_FALSE,
-        #     self.projection_matrix,
-        # )
 
-        self.update_uniform()
+        self.update_camera()
 
         self.unuse()
 
