@@ -34,7 +34,7 @@ void main() {
     vetexNormal = (modelMatrix * normalize(vec4(normal.xyz, 1.0))).xyz;
 
     // 頂点色設定
-    vertexColor = clamp(vec4(ambient, 1), 0.0, 1.0);
+    vertexColor = clamp(vec4(ambient, diffuse.a), 0.0, 1.0);
 
     if (useToon == 0) {
         // ディフューズ色＋アンビエント色 計算
