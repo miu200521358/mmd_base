@@ -5,13 +5,8 @@ from typing import List, Optional
 
 import numpy as np
 import OpenGL.GL as gl
-from mlib.base.part import (
-    BaseIndexModel,
-    BaseIndexNameModel,
-    BaseModel,
-    BaseRotationModel,
-    Switch,
-)
+from mlib.base.base import BaseModel
+from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
 from mlib.math import MQuaternion, MVector2D, MVector3D, MVector4D
 from PIL import Image, ImageOps
 
@@ -624,6 +619,34 @@ class Bone(BaseIndexNameModel):
         self.ik: Optional[Ik] = ik or None
         self.display: bool = display or False
         self.is_system: bool = is_system or False
+
+
+class BoneTree(BaseModel):
+    """ボーンリンク"""
+
+    __slots__ = ["childs"]
+
+    def __init__(self, bone: Bone) -> None:
+        super().__init__()
+        self.bone = bone
+        self.children: list[BoneTree] = []
+
+    def make_tree(
+        self, bones: list[Bone], bone_link_indecies: list[tuple[int, int]], index: int
+    ):
+        if index >= len(bone_link_indecies):
+            return
+        child_index = bone_link_indecies[index][1]
+        is_exist_child = False
+        for ci, child in enumerate(self.children):
+            if child.bone.index == child_index:
+                self.children[ci].make_tree(bones, bone_link_indecies, index + 1)
+                is_exist_child = True
+                break
+
+        if not is_exist_child:
+            self.children.append(BoneTree(bones[child_index]))
+            self.children[-1].make_tree(bones, bone_link_indecies, index + 1)
 
 
 class MorphOffset(BaseModel):

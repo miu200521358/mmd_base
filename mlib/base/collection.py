@@ -107,7 +107,7 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
             # 名前は先勝ちで保持
             self.__names[v.name] = v.index
 
-    def names(self):
+    def names(self) -> dict[str, int]:
         return dict([(v.name, v.index) for v in self.data])
 
     def get_by_index(self, index: int) -> TBaseIndexNameModel:

@@ -13,6 +13,7 @@ from mlib.math import MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.part import (
     Bone,
+    BoneTree,
     DisplaySlot,
     DrawFlg,
     Face,
@@ -26,8 +27,6 @@ from mlib.pmx.part import (
     Vertex,
 )
 from mlib.pmx.shader import MShader, VsLayout
-
-from ..base.base import BaseModel
 
 
 class Vertices(BaseIndexListModel[Vertex]):
@@ -75,17 +74,6 @@ class Materials(BaseIndexNameListModel[Material]):
         super().__init__()
 
 
-class BoneLinks(BaseModel):
-    """ボーンリンク"""
-
-    __slots__ = ["childs"]
-
-    def __init__(self, bone: Bone) -> None:
-        super().__init__()
-        self.bone = bone
-        self.childs: list[BoneLinks] = []
-
-
 class Bones(BaseIndexNameListModel[Bone]):
     """
     ボーンリスト
@@ -121,10 +109,46 @@ class Bones(BaseIndexNameListModel[Bone]):
             if b.layer == layer
         ]
 
-    def create_bone_links(self, bone_index=0) -> BoneLinks:
-        bone_links = BoneLinks(self[bone_index])
+    def create_bone_links(self) -> dict[int, BoneTree]:
+        # 根元ボーンリスト（親ボーンがないボーンリスト）
+        bone_trees: dict[int, BoneTree] = dict(
+            [
+                (bidx, BoneTree(self[bidx]))
+                for bidx in list(
+                    set([b.index for b in self.data if 0 > b.parent_index])
+                )
+            ]
+        )
 
-        return bone_links
+        # 親ボーンとして登録されているボーンリスト
+        parent_indices = list(set([b.parent_index for b in self.data]))
+        # 末端ボーンリスト（親ボーンとして登録が1件もないボーンのリスト）
+        for end_bone_index in [
+            b.index
+            for b in self.data
+            if b.index not in parent_indices and b.index not in list(bone_trees.keys())
+        ]:
+            # レイヤー込みのINDEXリスト取得
+            bone_link_indecies = sorted(self.create_bone_link_indecies(end_bone_index))
+            bone_trees[bone_link_indecies[0][1]].make_tree(
+                self.data, bone_link_indecies, index=1
+            )
+
+        return bone_trees
+
+    def create_bone_link_indecies(
+        self, child_idx: int, bone_link_indecies=None
+    ) -> list[tuple[int, int]]:
+        # 階層＞リスト順（＞FK＞IK＞付与）
+        if not bone_link_indecies:
+            bone_link_indecies = []
+
+        for b in reversed(self.data):
+            if b.index == self[child_idx].parent_index:
+                bone_link_indecies.append((b.layer, b.index))
+                return self.create_bone_link_indecies(b.index, bone_link_indecies)
+
+        return bone_link_indecies
 
 
 class Morphs(BaseIndexNameListModel[Morph]):

@@ -367,5 +367,21 @@ def test_read_by_filepath_complicated():
     assert "極 一期 ちゃむ" == model.name
 
 
+def test_create_bone_links():
+    import os
+
+    from mlib.pmx.reader import PmxReader
+
+    model = PmxReader().read_by_filepath(
+        os.path.join("test", "resources", "サンプルモデル.pmx")
+    )
+
+    bone_trees = model.bones.create_bone_links()
+    assert 5 == len(bone_trees)
+    assert "全ての親" == bone_trees[0].bone.name
+    assert 3 == len(bone_trees[0].children)
+    assert "センター" == bone_trees[0].children[0].bone.name
+
+
 if __name__ == "__main__":
     pytest.main()
