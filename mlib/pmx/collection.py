@@ -14,6 +14,7 @@ from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.part import (
     Bone,
     DisplaySlot,
+    DrawFlg,
     Face,
     Joint,
     Material,
@@ -245,7 +246,10 @@ class Meshs(BaseIndexListModel[Mesh]):
             [
                 np.array(
                     [
-                        *(v.position + MVector3D(0, -10, 0)).vector / 15,
+                        *(
+                            v.position * MVector3D(-1, 1, 1) + MVector3D(0, -10, 0)
+                        ).vector
+                        / 15,
                         *v.normal.vector,
                         v.uv.x,
                         1 - v.uv.y,
@@ -254,6 +258,7 @@ class Meshs(BaseIndexListModel[Mesh]):
                             if len(v.extended_uvs) > 0
                             else [0, 0]
                         ),
+                        v.edge_factor,
                     ],
                     dtype=np.float32,
                 )
@@ -274,7 +279,7 @@ class Meshs(BaseIndexListModel[Mesh]):
         self.faces: np.ndarray = np.array(
             [
                 np.array(
-                    [f.vertices[0], f.vertices[1], f.vertices[2]], dtype=face_dtype
+                    [f.vertices[2], f.vertices[1], f.vertices[0]], dtype=face_dtype
                 )
                 for f in model.faces
             ],
@@ -331,6 +336,7 @@ class Meshs(BaseIndexListModel[Mesh]):
                 VsLayout.NORMAL_ID.value: {"size": 3, "offset": 3},
                 VsLayout.UV_ID.value: {"size": 2, "offset": 6},
                 VsLayout.EXTEND_UV_ID.value: {"size": 2, "offset": 8},
+                VsLayout.EDGE_ID.value: {"size": 1, "offset": 10},
             },
         )
 
@@ -346,12 +352,22 @@ class Meshs(BaseIndexListModel[Mesh]):
             self.vbo_vertices.set_slot(VsLayout.NORMAL_ID)
             self.vbo_vertices.set_slot(VsLayout.UV_ID)
             self.vbo_vertices.set_slot(VsLayout.EXTEND_UV_ID)
+            self.vbo_vertices.set_slot(VsLayout.EDGE_ID)
             self.ibo_faces.bind()
 
             # モデル描画
             self.shader.use()
-            mesh.draw(self.shader, self.ibo_faces)
+            mesh.draw_model(self.shader, self.ibo_faces)
             self.shader.unuse()
+
+            if (
+                DrawFlg.DRAWING_EDGE in mesh.material.draw_flg
+                and mesh.material.diffuse_color.w > 0
+            ):
+                # エッジ描画
+                self.shader.use(edge=True)
+                mesh.draw_edge(self.shader, self.ibo_faces)
+                self.shader.unuse()
 
             self.ibo_faces.unbind()
             self.vbo_vertices.unbind()

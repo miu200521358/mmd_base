@@ -4,7 +4,7 @@ import numpy as np
 import OpenGL.GL as gl
 from mlib.base.part import BaseIndexModel
 from mlib.math import MMatrix4x4
-from mlib.pmx.part import Material, Texture
+from mlib.pmx.part import DrawFlg, Material, Texture
 from mlib.pmx.shader import MShader, VsLayout
 
 
@@ -125,46 +125,97 @@ class Mesh(BaseIndexModel):
         self.prev_vertices_count = prev_vertices_count
         self.prev_vertices_pointer = prev_vertices_count * np.dtype(face_dtype).itemsize
 
-    def draw(
+    def draw_model(
         self,
         shader: MShader,
         ibo: IBO,
     ):
+        if DrawFlg.DOUBLE_SIDED_DRAWING in self.material.draw_flg:
+            # 両面描画
+            gl.glDisable(gl.GL_CULL_FACE)
+        else:
+            # 片面描画
+            gl.glEnable(gl.GL_CULL_FACE)
+            gl.glCullFace(gl.GL_BACK)
+
         # ボーンデフォーム設定
         gl.glUniformMatrix4fv(
-            shader.bone_matrix_uniform, 1, gl.GL_FALSE, MMatrix4x4(identity=True).vector
+            shader.bone_matrix_uniform[False],
+            1,
+            gl.GL_FALSE,
+            MMatrix4x4(identity=True).vector,
         )
 
         # ------------------
         # 材質色設定
-        gl.glUniform4f(shader.diffuse_uniform, *self.material.diffuse_color.vector)
-        gl.glUniform3f(shader.ambient_uniform, *self.material.ambient_color.vector)
         gl.glUniform4f(
-            shader.specular_uniform,
+            shader.diffuse_uniform[False], *self.material.diffuse_color.vector
+        )
+        gl.glUniform3f(
+            shader.ambient_uniform[False], *self.material.ambient_color.vector
+        )
+        gl.glUniform4f(
+            shader.specular_uniform[False],
             *self.material.specular_color.vector,
             self.material.specular_factor
         )
 
         # テクスチャ使用有無
-        gl.glUniform1i(shader.use_texture_uniform, self.texture is not None)
+        gl.glUniform1i(shader.use_texture_uniform[False], self.texture is not None)
         if self.texture:
             self.texture.bind()
-            gl.glUniform1i(shader.texture_uniform, self.texture.texture_type.value)
+            gl.glUniform1i(
+                shader.texture_uniform[False], self.texture.texture_type.value
+            )
 
         # Toon使用有無
-        gl.glUniform1i(shader.use_toon_uniform, self.toon_texture is not None)
+        gl.glUniform1i(shader.use_toon_uniform[False], self.toon_texture is not None)
         if self.toon_texture:
             self.toon_texture.bind()
-            gl.glUniform1i(shader.toon_uniform, self.toon_texture.texture_type.value)
+            gl.glUniform1i(
+                shader.toon_uniform[False], self.toon_texture.texture_type.value
+            )
 
         # Sphere使用有無
-        gl.glUniform1i(shader.use_sphere_uniform, self.sphere_texture is not None)
+        gl.glUniform1i(
+            shader.use_sphere_uniform[False], self.sphere_texture is not None
+        )
         if self.sphere_texture:
             self.sphere_texture.bind()
-            gl.glUniform1i(shader.sphere_mode_uniform, self.material.sphere_mode)
+            gl.glUniform1i(shader.sphere_mode_uniform[False], self.material.sphere_mode)
             gl.glUniform1i(
-                shader.sphere_uniform, self.sphere_texture.texture_type.value
+                shader.sphere_uniform[False], self.sphere_texture.texture_type.value
             )
+
+        gl.glDrawElements(
+            gl.GL_TRIANGLES,
+            self.material.vertices_count,
+            ibo.dtype,
+            gl.ctypes.c_void_p(self.prev_vertices_pointer),
+        )
+
+    def draw_edge(
+        self,
+        shader: MShader,
+        ibo: IBO,
+    ):
+        gl.glEnable(gl.GL_CULL_FACE)
+        gl.glCullFace(gl.GL_FRONT)
+
+        # ボーンデフォーム設定
+        gl.glUniformMatrix4fv(
+            shader.bone_matrix_uniform[True],
+            1,
+            gl.GL_FALSE,
+            MMatrix4x4(identity=True).vector,
+        )
+
+        # ------------------
+        # エッジ設定
+        gl.glUniform4f(
+            shader.edge_color_uniform[True], *self.material.edge_color.vector
+        )
+        gl.glUniform1f(shader.edge_size_uniform[True], self.material.edge_size)
 
         gl.glDrawElements(
             gl.GL_TRIANGLES,

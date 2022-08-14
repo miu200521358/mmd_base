@@ -55,9 +55,10 @@ class PmxCanvas(glcanvas.GLCanvas):
         if self.model:
             self.model.update()
 
-        self.shader.use()
-        self.shader.update_camera()
-        self.shader.unuse()
+        for is_edge in [False, True]:
+            self.shader.use(is_edge)
+            self.shader.update_camera(is_edge)
+            self.shader.unuse()
 
         if self.model:
             self.model.draw()

@@ -4,6 +4,7 @@ in layout(location = %d) vec3 position;
 in layout(location = %d) vec3 normal;
 in layout(location = %d) vec2 uv;
 in layout(location = %d) vec2 extendUv;
+in layout(location = %d) float vertexEdge;
 
 uniform vec3 lightPos;
 uniform vec3 cameraPos;
@@ -26,11 +27,11 @@ out vec3 lightDirection;
 out vec2 sphereUv;
 
 void main() {
-    // 頂点位置(座標系による反転)
-    gl_Position = modelViewProjectionMatrix * vec4(-position.x, position.y, position.z, 1.0);
+    // 頂点位置
+    gl_Position = modelViewProjectionMatrix * vec4(position.xyz, 1.0);
 
-    // 頂点法線 (座標系による反転)
-    vec3 vetexNormal = (BoneMatrix * normalize(vec4(-normal.x, normal.y, normal.z, 1.0))).rgb;
+    // 頂点法線
+    vec3 vetexNormal = (BoneMatrix * normalize(vec4(normal.xyz, 1.0))).rgb;
 
     // 照明位置
     vec3 lightDirection = -normalize(lightPos);
