@@ -42,9 +42,6 @@ void main() {
         vertexColor.rgb += diffuse.rgb * lightNormal;
     }
 
-    // saturate
-    vertexColor = clamp(vertexColor, 0.0, 1.0);
-    
     // テクスチャ描画位置
     vertexUv = uv;
 

@@ -43,7 +43,7 @@ void main() {
             // スフィア乗算
             outColor.rgb *= texColor.rgb;
         }
-        texColor.a *= texColor.a;
+        outColor.a *= texColor.a;
     }
 
     if (useToon == 1) {
