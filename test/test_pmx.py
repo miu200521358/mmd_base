@@ -80,18 +80,12 @@ def test_DisplaySlots_init():
     assert "表情" == d.name
     assert Switch.ON == d.special_flg
 
-    d: DisplaySlot = dd[2]
-    assert not d
-
     with pytest.raises(KeyError) as e:
-        dd.get(2, required=True)
+        dd[2]
         assert "Not Found 2" == e.value
 
-    d: DisplaySlot = dd.get_by_name("センター")
-    assert not d
-
     with pytest.raises(KeyError) as e:
-        dd.get_by_name("センター", required=True)
+        dd.get_by_name("センター")
         assert "Not Found センター" == e.value
 
 

@@ -1,27 +1,9 @@
 from typing import List
+
 from mlib.base.base import BaseModel
-from mlib.math import MQuaternion, MVector2D, MVector3D
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel
-
-
-class Interpolation(BaseModel):
-    def __init__(
-        self,
-        start: MVector2D = None,
-        end: MVector2D = None,
-    ):
-        """
-        補間曲線
-
-        Parameters
-        ----------
-        start : MVector2D, optional
-            補間曲線開始, by default None
-        end : MVector2D, optional
-            補間曲線終了, by default None
-        """
-        self.start: MVector2D = start or MVector2D()
-        self.end: MVector2D = end or MVector2D()
+from mlib.bezier import Interpolation
+from mlib.math import MMatrix4x4, MQuaternion, MVector3D
 
 
 class BaseVmdFrame(BaseIndexModel):
@@ -144,6 +126,7 @@ class VmdBoneFrame(BaseVmdNameFrame):
         index: int = None,
         position: MVector3D = None,
         rotation: MQuaternion = None,
+        matrix: MMatrix4x4 = None,
         interpolations: BoneInterpolations = None,
         regist: bool = None,
         read: bool = None,
@@ -152,6 +135,12 @@ class VmdBoneFrame(BaseVmdNameFrame):
         self.position: MVector3D = position or MVector3D()
         self.rotation: MQuaternion = rotation or MQuaternion()
         self.interpolations: BoneInterpolations = interpolations or BoneInterpolations()
+        self.matrix: MMatrix4x4 = matrix or MMatrix4x4(identity=True)
+
+    def init_matrix(self):
+        self.matrix = MMatrix4x4(identity=True)
+        self.matrix.translate(self.position)
+        self.matrix.rotate(self.rotation)
 
 
 class VmdMorphFrame(BaseVmdNameFrame):

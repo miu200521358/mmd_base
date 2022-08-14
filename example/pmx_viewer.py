@@ -21,7 +21,7 @@ class PmxPanel(wx.Panel):
         self.SetBackgroundColour("#626D58")
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.canvas = PmxCanvas(self, args.pmx, 800, 800)
+        self.canvas = PmxCanvas(self, args.pmx, args.motion, 800, 800)
         self.sizer.Add(self.canvas, 0, wx.ALL | wx.EXPAND, 0)
 
         self.reset_btn = wx.Button(

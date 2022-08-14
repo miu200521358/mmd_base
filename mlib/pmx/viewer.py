@@ -3,11 +3,14 @@ import wx
 from mlib.math import MQuaternion, MVector3D
 from mlib.pmx.reader import PmxReader
 from mlib.pmx.shader import MShader
+from mlib.vmd.reader import VmdReader
 from wx import glcanvas
 
 
 class PmxCanvas(glcanvas.GLCanvas):
-    def __init__(self, parent, pmx_path: str, width: int, height: int, *args, **kw):
+    def __init__(
+        self, parent, pmx_path: str, vmd_path: str, width: int, height: int, *args, **kw
+    ):
         glcanvas.GLCanvas.__init__(self, parent, -1, size=(width, height))
         self.context = glcanvas.GLContext(self)
         self.size = wx.Size(width, height)
@@ -31,6 +34,8 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         self.model = PmxReader().read_by_filepath(pmx_path)
         self.model.init_draw(self.shader)
+
+        self.motion = VmdReader().read_by_filepath(vmd_path) if vmd_path else None
 
         self.is_drag = False
 

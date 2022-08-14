@@ -1,8 +1,11 @@
 from mlib.base.collection import (
     BaseHashModel,
     BaseIndexDictModel,
+    BaseIndexNameDictInnerModel,
     BaseIndexNameDictModel,
 )
+from mlib.bezier import evaluate
+from mlib.math import MMatrix4x4List, MQuaternion, MMatrix4x4
 from mlib.vmd.part import (
     VmdBoneFrame,
     VmdCameraFrame,
@@ -13,7 +16,69 @@ from mlib.vmd.part import (
 )
 
 
-class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame]):
+class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
+    """
+    ボーン名別キーフレ辞書
+    """
+
+    def __init__(self, name: str):
+        super().__init__(name=name)
+
+    def __getitem__(self, index: int) -> VmdBoneFrame:
+        indices = self.indices()
+        if index not in indices:
+            # キーフレがない場合、生成したのを返す（保持はしない）
+            prev_index, middle_index, next_index = self.range_indecies(index)
+            # prevとnextの範囲内である場合、補間曲線ベースで求め直す
+            return self.calc(prev_index, middle_index, next_index, index)
+        return self.data[index]
+
+    def calc(
+        self, prev_index: int, middle_index: int, next_index: int, index: int
+    ) -> VmdBoneFrame:
+        if index in self.data:
+            return self.data[index]
+
+        bf = VmdBoneFrame(name=self.name, index=index)
+
+        if prev_index == index or index == next_index:
+            # prevと等しい場合、指定INDEX以前がないので、その次のをコピーして返す
+            # nextと等しい場合は、その前のをコピーして返す
+            bf.position = self[middle_index].position.copy()
+            bf.rotation = self[middle_index].rotation.copy()
+            bf.interpolations = self[middle_index].interpolations.copy()
+
+        prev_bf = self[prev_index]
+        next_bf = self[next_index]
+
+        _, ry, _ = evaluate(bf.interpolations.rotation, prev_index, index, next_index)
+        bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
+
+        _, xy, _ = evaluate(
+            bf.interpolations.translation_x, prev_index, index, next_index
+        )
+        bf.position.x = (
+            prev_bf.position.x + (next_bf.position.x - prev_bf.position.x) * xy
+        )
+
+        _, yy, _ = evaluate(
+            bf.interpolations.translation_x, prev_index, index, next_index
+        )
+        bf.position.y = (
+            prev_bf.position.y + (next_bf.position.y - prev_bf.position.y) * yy
+        )
+
+        _, zy, _ = evaluate(
+            bf.interpolations.translation_x, prev_index, index, next_index
+        )
+        bf.position.z = (
+            prev_bf.position.z + (next_bf.position.z - prev_bf.position.z) * zy
+        )
+
+        return bf
+
+
+class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
     """
     ボーンキーフレ辞書
     """
@@ -21,8 +86,58 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame]):
     def __init__(self):
         super().__init__()
 
+    def create_inner(self, name: str):
+        return VmdBoneNameFrames(name=name)
 
-class VmdMorphFrames(BaseIndexNameDictModel[VmdMorphFrame]):
+    def get_matrix_by_index(
+        self, index: int, layered_bone_names: dict[str, list[str]]
+    ) -> dict[str, MMatrix4x4]:
+        """
+        指定されたキーフレ番号の行列計算結果を返す
+
+        Parameters
+        ----------
+        index : int
+            キーフレ番号
+        layered_bone_names : dict[str, list[str]]
+            末端ボーン名：計算対象ボーン名リスト
+
+        Returns
+        -------
+        dict[str, MMatrix4x4]
+            _description_
+        """
+        bone_frames = self.get_by_index(index)
+        matrixs = MMatrix4x4List(keys=layered_bone_names)
+        for ni, bone_name_links in enumerate(layered_bone_names.values()):
+            for bi, bone_name in enumerate(bone_name_links):
+                if bone_name in bone_frames:
+                    matrixs[ni, bi] = bone_frames[bone_name].matrix.vector
+        return matrixs.multiply()
+
+    def get_by_index(self, index: int) -> dict[str, VmdBoneFrame]:
+        """
+        指定INDEXに合う全ボーンのキーフレリストを返す
+
+        Parameters
+        ----------
+        index : int
+            キーフレ
+
+        Returns
+        -------
+        dict[str, VmdBoneFrame]
+            ボーン名：キーフレの辞書
+        """
+        bone_frames: dict[str, VmdBoneFrame] = {}
+        for bone_name in self.names():
+            bone_frames[bone_name] = self[bone_name][index]
+        return bone_frames
+
+
+class VmdMorphFrames(
+    BaseIndexNameDictModel[VmdMorphFrame, BaseIndexNameDictInnerModel[VmdMorphFrame]]
+):
     """
     モーフキーフレリスト
     """
@@ -111,3 +226,8 @@ class VmdMotion(BaseHashModel):
 
     def get_name(self) -> str:
         return self.model_name
+
+    def init_matrix(self):
+        for named_bfs in self.bones:
+            for bf in named_bfs:
+                bf.init_matrix()

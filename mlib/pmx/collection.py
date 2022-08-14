@@ -3,29 +3,16 @@ from glob import glob
 from typing import Optional
 
 import numpy as np
-from mlib.base.collection import (
-    BaseHashModel,
-    BaseIndexDictModel,
-    BaseIndexListModel,
-    BaseIndexNameListModel,
-)
+from mlib.base.collection import (BaseHashModel, BaseIndexDictModel,
+                                  BaseIndexListModel, BaseIndexNameListModel)
 from mlib.math import MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
-from mlib.pmx.part import (
-    Bone,
-    DisplaySlot,
-    DrawFlg,
-    Face,
-    Joint,
-    Material,
-    Morph,
-    RigidBody,
-    Texture,
-    TextureType,
-    ToonSharing,
-    Vertex,
-)
+from mlib.pmx.part import (Bone, DisplaySlot, DrawFlg, Face, Joint, Material,
+                           Morph, RigidBody, Texture, TextureType, ToonSharing,
+                           Vertex)
 from mlib.pmx.shader import MShader, VsLayout
+
+from ..base.base import BaseModel
 
 
 class Vertices(BaseIndexListModel[Vertex]):
@@ -73,6 +60,17 @@ class Materials(BaseIndexNameListModel[Material]):
         super().__init__()
 
 
+class BoneLinks(BaseModel):
+    """ボーンリンク"""
+
+    __slots__ = ["childs"]
+
+    def __init__(self, bone: Bone) -> None:
+        super().__init__()
+        self.bone = bone
+        self.childs: list[BoneLinks] = []
+
+
 class Bones(BaseIndexNameListModel[Bone]):
     """
     ボーンリスト
@@ -92,8 +90,26 @@ class Bones(BaseIndexNameListModel[Bone]):
         """
         return max([b.layer for b in self.data])
 
-    def get_bones_by_layer(self, layer: int) -> list[Bone]:
-        return [b for b in self.data if b.layer == layer]
+    def get_bone_name_by_layer(self) -> list[str]:
+        """
+        レイヤー順ボーン名リスト
+
+        Returns
+        -------
+        list[str]
+            レイヤー順ボーン名リスト
+        """
+        return [
+            b.name
+            for layer in range(self.get_max_layer() + 1)
+            for b in self.data
+            if b.layer == layer
+        ]
+
+    def create_bone_links(self, bone_index=0) -> BoneLinks:
+        bone_links = BoneLinks(self[bone_index])
+
+        return bone_links
 
 
 class Morphs(BaseIndexNameListModel[Morph]):

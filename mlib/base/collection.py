@@ -1,7 +1,8 @@
 import hashlib
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, TypeVar, Union
+from typing import Any, Dict, Generic, TypeVar
 
+import numpy as np
 from mlib.base.base import BaseModel, Encoding
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel
 
@@ -91,11 +92,14 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
         """
         super().__init__()
         self.data: list[TBaseIndexNameModel] = data or []
-        self.__names = dict([(v.name, v.index) for v in self.data])
+        self.__names = self.names()
         self.__iter_index = 0
 
-    def __getitem__(self, index: int) -> TBaseIndexNameModel:
-        return self.get(index)
+    def __getitem__(self, key: Any) -> TBaseIndexNameModel:
+        if isinstance(key, int):
+            return self.get_by_index(key)
+        else:
+            return self.get_by_name(key)
 
     def __setitem__(self, index: int, v: TBaseIndexNameModel):
         self.data[index] = v
@@ -103,7 +107,10 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
             # 名前は先勝ちで保持
             self.__names[v.name] = v.index
 
-    def get(self, index: int) -> TBaseIndexNameModel:
+    def names(self):
+        return dict([(v.name, v.index) for v in self.data])
+
+    def get_by_index(self, index: int) -> TBaseIndexNameModel:
         """
         リストから要素を取得する
 
@@ -111,13 +118,11 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
         ----------
         index : int
             インデックス番号
-        required : bool, optional
-            必須要素であるか, by default False
 
         Returns
         -------
         TBaseIndexNameModel
-            要素（必須でない場合かつ見つからなければNone）
+            要素
         """
         if index >= len(self.data):
             raise KeyError(f"Not Found: {index}")
@@ -131,13 +136,11 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
         ----------
         name : str
             名前
-        required : bool, optional
-            必須要素であるか, by default False
 
         Returns
         -------
         TBaseIndexNameModel
-            要素（必須でない場合かつ見つからなければNone）
+            要素
         """
         if name not in self.__names:
             raise KeyError(f"Not Found: {name}")
@@ -167,7 +170,7 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
 class BaseIndexDictModel(Generic[TBaseIndexModel]):
     """BaseIndexModelの辞書基底クラス"""
 
-    __slots__ = ["data", "__keys", "__iter_index"]
+    __slots__ = ["data", "__indices", "__iter_index"]
 
     def __init__(self, data: Dict[int, TBaseIndexModel] = None) -> None:
         """
@@ -180,15 +183,18 @@ class BaseIndexDictModel(Generic[TBaseIndexModel]):
         """
         super().__init__()
         self.data: Dict[int, TBaseIndexModel] = data or {}
-        self.__keys: list[int] = sorted(list(self.data.keys()))
+        self.__indices: list[int] = self.indices()
         self.__iter_index: int = 0
+
+    def indices(self) -> list[int]:
+        return sorted(list(self.data.keys()))
 
     def __getitem__(self, index: int) -> TBaseIndexModel:
         return self.get(index)
 
     def __setitem__(self, index: int, value: TBaseIndexModel):
         self.data[index] = value
-        self.__keys = sorted(list(self.data.keys()))
+        self.__indices = sorted(list(self.data.keys()))
 
     def __delitem__(self, index: int):
         del self.data[index]
@@ -221,66 +227,75 @@ class BaseIndexDictModel(Generic[TBaseIndexModel]):
 
     def __iter__(self):
         self.__iter_index = -1
-        return self.__keys
+        return self
 
-    def __next__(self):
+    def __next__(self) -> TBaseIndexModel:
         self.__iter_index += 1
-        if self.__iter_index >= len(self.__keys):
+        if self.__iter_index >= len(self.__indices):
             raise StopIteration
-        return self.data[self.__keys[self.__iter_index]]
+        return self.data[self.__indices[self.__iter_index]]
 
 
 TBaseIndexDictModel = TypeVar("TBaseIndexDictModel", bound=BaseIndexDictModel)
 
 
-class BaseIndexNameDictModel(Generic[TBaseIndexNameModel]):
-    """BaseIndexNameModelの辞書基底クラス"""
+class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
+    """BaseIndexNameModelの内部辞書基底クラス"""
 
-    __slots__ = ["data", "__iter_name", "__iter_index"]
+    __slots__ = ["data", "__indices", "__iter_index", "name"]
 
-    def __init__(self, data: Dict[str, Dict[int, TBaseIndexNameModel]] = None) -> None:
+    def __init__(
+        self, name: str = None, data: Dict[int, TBaseIndexNameModel] = None
+    ) -> None:
         """
         モデル辞書
 
         Parameters
         ----------
-        data : Dict[TBaseIndexNameModel], optional
-            辞書, by default {}
+        data : Dict[str, TBaseIndexNameModel], optional
+            辞書データ, by default {}
         """
         super().__init__()
-        self.data: Dict[str, Dict[int, TBaseIndexNameModel]] = data or {}
-        self.__iter_name: str = ""
-        self.__iter_index: int = 0
+        self.data: Dict[int, TBaseIndexNameModel] = data or {}
+        self.__indices = self.indices()
+        self.name = data[0].name if data else name if name else None
 
-    def __getitem__(
-        self, key: Any
-    ) -> Union[TBaseIndexNameModel, Dict[int, TBaseIndexNameModel]]:
-        if isinstance(key, tuple):
-            name, index = key
-        elif isinstance(key, str):
-            name = key
-            index = None
-        return self.get(name, index)
+    def range_indecies(self, index: int) -> tuple[int, int, int]:
+        """
+        指定されたINDEXの前後を返す
 
-    def append(self, value: TBaseIndexNameModel):
-        if value.name not in self.data:
-            self.data[value.name] = {}
-        self.data[value.name][value.index] = value
+        Parameters
+        ----------
+        index : int
+            指定INDEX
 
-    def __delitem__(self, name: str, index: int = None):
-        if index is None:
-            del self.data[name]
-        else:
-            del self.data[name][index]
+        Returns
+        -------
+        tuple[int, int]
+            INDEXがデータ内にある場合: index, index, index
+            INDEXがデータ内にない場合: 前のindex, 対象INDEXに相当する場所にあるINDEX, 次のindex
+                prev_idx == idx: 指定されたINDEXが一番先頭
+                idx == next_idx: 指定されたINDEXが一番最後
+        """
+        indices = self.indices()
+        if index in indices:
+            return index, index, index
 
-    def keys(self) -> Dict[str, list[int]]:
-        return dict(
-            [(k, [v for v in sorted(list(self.data[k]))]) for k in self.data.keys()]
-        )
+        # index がない場合、前後のINDEXを取得する
+        indices = np.sort(indices + [index])
+        idx = np.where(indices == index)[0]
+        prev_idx = np.max([0, idx - 1])
+        next_idx = np.min([len(indices) - 1, idx + 1])
 
-    def get(
-        self, name: str, index: int = None
-    ) -> Union[TBaseIndexNameModel, Dict[int, TBaseIndexNameModel]]:
+        return indices[prev_idx], indices[idx], indices[next_idx]
+
+    def indices(self):
+        return sorted(list(self.data.keys()))
+
+    def __getitem__(self, index: int) -> TBaseIndexNameModel:
+        return self.get(index)
+
+    def get(self, index: int) -> TBaseIndexNameModel:
         """
         辞書から要素を取得する
 
@@ -288,40 +303,116 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel]):
         ----------
         index : int
             インデックス番号
-        required : bool, optional
-            必須要素であるか, by default False
 
         Returns
         -------
         TBaseIndexNameModel
-            要素（必須でない場合かつ見つからなければNone）
         """
-        if name not in self.data:
-            raise KeyError(f"Not Found Name: {(name, index)}")
+        if index not in self.data:
+            raise KeyError(f"Not Found index: {index}")
+        return self.data[index]
 
-        if index is None:
-            # INDEXが未指定の場合、辞書そのものを返す
-            return self.data[name]
+    def __delitem__(self, index: int):
+        del self.data[index]
 
-        elif index not in self.data[name]:
-            raise KeyError(f"Not Found Index: {(name, index)}")
-        return self.data[name][index]
+    def append(self, value: TBaseIndexNameModel):
+        self.data[value.index] = value
+        self.__indices = sorted(list(self.data.keys()))
+        self.name = value.name
 
     def __len__(self) -> int:
         return len(self.data)
 
-    def __iter__(self, name: str):
+    def __iter__(self):
         self.__iter_index = -1
-        self.__iter_name = name
+        return self
+
+    def __next__(self) -> TBaseIndexNameModel:
+        self.__iter_index += 1
+        if self.__iter_index >= len(self.__indices):
+            raise StopIteration
+        return self.data[self.__indices[self.__iter_index]]
+
+
+TBaseIndexNameDictInnerModel = TypeVar(
+    "TBaseIndexNameDictInnerModel", bound=BaseIndexNameDictInnerModel
+)
+
+
+class BaseIndexNameDictModel(
+    Generic[TBaseIndexNameModel, TBaseIndexNameDictInnerModel]
+):
+    """BaseIndexNameModelの辞書基底クラス"""
+
+    __slots__ = ["data", "__iter_index", "__names"]
+
+    def __init__(self, data: Dict[str, TBaseIndexNameDictInnerModel] = None) -> None:
+        """
+        モデル辞書
+
+        Parameters
+        ----------
+        data : TBaseIndexNameDictInnerModel, optional
+            辞書データ, by default {}
+        """
+        super().__init__()
+        self.data: Dict[str, TBaseIndexNameDictInnerModel] = data or {}
+        self.__names = self.names()
+        self.__iter_index: int = 0
+
+    def names(self):
+        return sorted(list(self.data.keys()))
+
+    def __getitem__(self, name: str) -> TBaseIndexNameDictInnerModel:
+        return self.get(name)
+
+    def __delitem__(self, name: str, index: int = None):
+        if index is None:
+            del self.data[name]
+        else:
+            del self.data[name][index]
+
+    def create_inner(self, name: str) -> TBaseIndexNameDictInnerModel:
+        pass
+
+    def append(self, value: TBaseIndexNameModel):
+        if value.name not in self.data:
+            self.data[value.name] = self.create_inner(value.name)
+        self.data[value.name].append(value)
+        self.__names = sorted(list(self.data.keys()))
+
+    def get(self, name: str) -> TBaseIndexNameDictInnerModel:
+        """
+        辞書から要素を取得する
+
+        Parameters
+        ----------
+        name : str
+            キー名
+        index : int
+            インデックス番号
+
+        Returns
+        -------
+        TBaseIndexNameDictInnerModel
+        """
+        if name not in self.data:
+            raise KeyError(f"Not Found Name: {name}")
+
         return self.data[name]
 
-    def __next__(self):
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __iter__(self):
+        self.__iter_index = -1
+        return self
+
+    def __next__(self) -> TBaseIndexNameDictInnerModel:
         self.__iter_index += 1
-        if self.__iter_index >= len(self.keys[self.__iter_name]):
+        if self.__iter_index >= len(self.__names):
             raise StopIteration
-        return self.data[self.__iter_name][
-            self.keys[self.__iter_name][self.__iter_index]
-        ]
+        return self.data[self.__names[self.__iter_index]]
 
 
 TBaseIndexNameDictModel = TypeVar(

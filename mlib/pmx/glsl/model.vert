@@ -18,13 +18,14 @@ uniform vec4 specular;
 uniform int useToon;
 uniform int useSphere;
 uniform int sphereMode;
+uniform vec3 lightDirection;
 
 out vec4 vertexColor;
 out vec3 vertexSpecular;
 out vec2 vertexUv;
 out vec3 vetexNormal;
-out vec3 lightDirection;
 out vec2 sphereUv;
+out vec3 eye;
 
 void main() {
     // 頂点位置
@@ -34,7 +35,7 @@ void main() {
     vetexNormal = (modelMatrix * normalize(vec4(normal.xyz, 1.0))).xyz;
 
     // 頂点色設定
-    vertexColor = clamp(vec4(ambient, diffuse.a), 0.0, 1.0);
+    vertexColor = clamp(diffuse, 0.0, 1.0);
 
     if (useToon == 0) {
         // ディフューズ色＋アンビエント色 計算
@@ -55,7 +56,7 @@ void main() {
 	        // スフィアマップテクスチャ座標
             vec3 normalWv = mat3(modelViewMatrix) * vetexNormal;
 	        sphereUv.x = normalWv.x * 0.5f + 0.5f;
-	        sphereUv.y = normalWv.y * -0.5f + 0.5f;
+	        sphereUv.y = 1 - (normalWv.y * -0.5f + 0.5f);
         }
     }
 
@@ -64,5 +65,5 @@ void main() {
 
     // スペキュラ色計算
     vec3 HalfVector = normalize( normalize(eye) + -lightDirection );
-    vertexSpecular = clamp(pow( max(0, dot( HalfVector, vetexNormal )), specular.w ) * specular.rgb, 0.0f, 1.0f);
+    vertexSpecular = pow( max(0, dot( HalfVector, vetexNormal )), specular.w ) * specular.rgb;
 }

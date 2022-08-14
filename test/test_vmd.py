@@ -25,7 +25,7 @@ def test_read_by_filepath_ok():
     )
     assert "日本 roco式 トレス用" == motion.model_name
 
-    center_bf = motion.bones["センター", 358]
+    center_bf = motion.bones["センター"][358]
     assert 358 == center_bf.index
     assert np.isclose(
         np.array([1.094920158, 0, 0.100637913]),
@@ -64,7 +64,7 @@ def test_read_by_filepath_ok():
         center_bf.interpolations.rotation.end.vector,
     ).all()
 
-    upper_bf = motion.bones["上半身", 689]
+    upper_bf = motion.bones["上半身"][689]
     assert 689 == upper_bf.index
     assert np.isclose(
         np.array([0, 0, 0]),
@@ -83,7 +83,7 @@ def test_read_by_filepath_ok():
         upper_bf.interpolations.rotation.end.vector,
     ).all()
 
-    left_leg_ik_bf = motion.bones["右足ＩＫ", 384]
+    left_leg_ik_bf = motion.bones["右足ＩＫ"][384]
     assert 384 == left_leg_ik_bf.index
     assert np.isclose(
         np.array([0.548680067, 0.134522215, -2.504074097]),

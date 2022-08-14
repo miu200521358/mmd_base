@@ -122,18 +122,21 @@ class MShader:
 
     def initialize(self, program: Any, edge=False):
         # light color
-        self.light_diffuse = MVector3D(1, 1, 1)
-        self.light_ambient = MVector3D(1.8, 1.8, 1.8)
-        self.light_specular = MVector3D(0, 0, 0)
-        self.light_diffuse4 = MVector4D(
-            self.light_diffuse.x,
-            self.light_diffuse.y,
-            self.light_diffuse.z,
+        # MMD Light Diffuse は必ず0
+        self.light_diffuse = MVector3D()
+        # MMDの照明色そのまま
+        self.light_ambient = MVector3D(154 / 255, 154 / 255, 154 / 255)
+        self.light_specular = self.light_ambient.copy()
+        # light_diffuse == MMDのambient
+        self.light_ambient4 = MVector4D(
+            self.light_ambient.x,
+            self.light_ambient.y,
+            self.light_ambient.z,
             1,
         )
 
         # light position
-        self.light_position = MVector3D(-1.5, 1, -5)
+        self.light_position = MVector3D(-1, 2, -8)
         self.light_direction = (
             self.light_position * MVector3D(-1, -1, -1)
         ).normalized()

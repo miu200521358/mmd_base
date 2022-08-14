@@ -3,7 +3,7 @@ from typing import Optional
 import numpy as np
 import OpenGL.GL as gl
 from mlib.base.part import BaseIndexModel
-from mlib.math import MMatrix4x4
+from mlib.math import MMatrix4x4, MVector4D
 from mlib.pmx.part import DrawFlg, Material, Texture
 from mlib.pmx.shader import MShader, VsLayout
 
@@ -150,10 +150,20 @@ class Mesh(BaseIndexModel):
 
         # ------------------
         # 材質色設定
+        # full.fx の AmbientColor相当
         gl.glUniform4f(
             shader.diffuse_uniform[False],
-            *(self.material.diffuse_color * shader.light_diffuse4).vector
+            *(
+                self.material.diffuse_color * shader.light_ambient4
+                + MVector4D(
+                    self.material.ambient_color.x,
+                    self.material.ambient_color.y,
+                    self.material.ambient_color.z,
+                    0,
+                )
+            ).vector
         )
+        # TODO 材質モーフの色を入れる
         gl.glUniform3f(
             shader.ambient_uniform[False],
             *(self.material.ambient_color * shader.light_ambient).vector

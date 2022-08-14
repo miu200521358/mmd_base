@@ -1100,7 +1100,7 @@ class MMatrix4x4(MVector):
     def __mul__(self, other):
         if isinstance(other, MMatrix4x4):
             # 行列同士のかけ算
-            return MMatrix4x4(np.dot(self.vector, other.vector))
+            return MMatrix4x4(np.matmul(self.vector, other.vector))
         elif isinstance(other, MVector3D):
             # vec3 とのかけ算は vec3 を返す
             s = np.sum(self.vector[:, :3] * other.vector, axis=1) + self.vector[:, 3]
@@ -1115,6 +1115,12 @@ class MMatrix4x4(MVector):
             return MVector4D(np.sum(self.vector * other.vector, axis=1))
         return super().__mul__(other)
 
+    def __imul__(self, other):
+        if isinstance(other, MMatrix4x4):
+            self.vector = np.matmul(self.vector, other.vector)
+        else:
+            raise ValueError("MMatrix4x4同士で計算してください")
+
     def __getitem__(self, index) -> float:
         y, x = index
         return self.vector[y, x]
@@ -1122,6 +1128,40 @@ class MMatrix4x4(MVector):
     def __setitem__(self, index, v: float):
         y, x = index
         self.vector[y, x] = v
+
+
+class MMatrix4x4List(MVector):
+    """
+    4x4行列クラスリスト
+    """
+
+    def __init__(self, keys: dict[str, list[str]]):
+        self.vector = {}
+        self.vector = dict(
+            [
+                (k, [MMatrix4x4(identity=True) for _ in range(len(vs))])
+                for k, vs in keys.items()
+            ]
+        )
+
+    def __setitem__(self, key: Any, value: MMatrix4x4):
+        row, col = key
+        self.vector[row][col] = value
+
+    def multiply(self) -> dict[str, MMatrix4x4]:
+        """
+        行列リストを一括で積算する
+
+        Returns
+        -------
+        list[MMatrix4x4]
+            結果行列リスト
+        """
+        results = dict([(k, MMatrix4x4(identity=True)) for k in self.vector.keys()])
+        for key, rmats in self.vector.items():
+            for mat in rmats:
+                results[key] *= mat
+        return results
 
 
 def operate_vector(v: MVector, other: Union[MVector, float, int], op) -> MVector:
