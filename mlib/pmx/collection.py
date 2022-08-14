@@ -3,13 +3,28 @@ from glob import glob
 from typing import Optional
 
 import numpy as np
-from mlib.base.collection import (BaseHashModel, BaseIndexDictModel,
-                                  BaseIndexListModel, BaseIndexNameListModel)
+from mlib.base.collection import (
+    BaseHashModel,
+    BaseIndexDictModel,
+    BaseIndexListModel,
+    BaseIndexNameListModel,
+)
 from mlib.math import MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
-from mlib.pmx.part import (Bone, DisplaySlot, DrawFlg, Face, Joint, Material,
-                           Morph, RigidBody, Texture, TextureType, ToonSharing,
-                           Vertex)
+from mlib.pmx.part import (
+    Bone,
+    DisplaySlot,
+    DrawFlg,
+    Face,
+    Joint,
+    Material,
+    Morph,
+    RigidBody,
+    Texture,
+    TextureType,
+    ToonSharing,
+    Vertex,
+)
 from mlib.pmx.shader import MShader, VsLayout
 
 from ..base.base import BaseModel
@@ -370,6 +385,8 @@ class Meshs(BaseIndexListModel[Mesh]):
             self.vbo_vertices.set_slot(VsLayout.EXTEND_UV_ID)
             self.vbo_vertices.set_slot(VsLayout.EDGE_ID)
             self.ibo_faces.bind()
+
+            # FIXME MSAA https://blog.techlab-xe.net/opengl%E3%81%A7msaa/
 
             # モデル描画
             self.shader.use()

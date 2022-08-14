@@ -16,8 +16,11 @@ uniform float edgeSize;
 
 void main() {
     // エッジサイズｘ頂点エッジ倍率ｘモーフ倍率＋モーフバイアス
-    float edgeWight = 1 + 0.002 * edgeSize * vertexEdge;
+    float edgeWight = edgeSize * vertexEdge;
 
-    // 頂点位置(座標系による反転)
-    gl_Position = modelViewProjectionMatrix * (vec4(position.xyz * edgeWight, 1.0));
+    // 頂点法線
+    vec3 vetexNormal = (modelMatrix * normalize(vec4(normal.xyz, 1.0))).xyz;
+
+    // 頂点位置
+    gl_Position = modelViewProjectionMatrix * (vec4(position.xyz + vetexNormal.xyz * edgeWight * 0.001, 1.0));
 }
