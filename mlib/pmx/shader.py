@@ -18,10 +18,14 @@ class VsLayout(IntEnum):
 
 
 class MShader:
+
+    INITIAL_VERTICAL_DEGREES = 45.0
+    INITIAL_CAMERA_POSTION_Z = -3.0
+
     def __init__(self, width: int, height: int) -> None:
         self.width = width
         self.height = height
-        self.vertical_degrees = 30.0
+        self.vertical_degrees = self.INITIAL_VERTICAL_DEGREES
         self.aspect_ratio = float(self.width) / float(self.height)
         self.near_plane = 0.01
         self.far_plane = 10000
@@ -29,7 +33,7 @@ class MShader:
         self.look_at_up = MVector3D(0.0, 1.0, 0.0)
 
         # カメラの位置
-        self.camera_position = MVector3D(0, 0.5, -3)
+        self.camera_position = MVector3D(0, 0.5, self.INITIAL_CAMERA_POSTION_Z)
         # カメラの回転
         self.camera_rotation = MQuaternion()
 
@@ -136,7 +140,7 @@ class MShader:
         )
 
         # light position
-        self.light_position = MVector3D(-1, 2, -8)
+        self.light_position = MVector3D(-1, 2, self.INITIAL_CAMERA_POSTION_Z * 2)
         self.light_direction = (
             self.light_position * MVector3D(-1, -1, -1)
         ).normalized()
