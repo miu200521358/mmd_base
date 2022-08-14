@@ -29,17 +29,17 @@ in layout(location = %d) vec4 diffuse;
 in layout(location = %d) vec3 ambient;
 
 uniform vec3 lightPos;
-uniform mat4 BoneMatrix;
+uniform mat4 modelMatrix;
 
 out vec4 vertexColor;
 out vec3 Specular;
 
 void main() {
-    gl_Position = BoneMatrix * vec4(position, 1.0);
+    gl_Position = modelMatrix * vec4(position, 1.0);
     //gl_Position = vec4( -pvec[ 0 ], pvec[ 1 ], pvec[ 2 ], pvec[ 3 ] );  // 座標系による反転を行う、カリングも反転
 
     // 頂点法線
-    vec3 vetexNormal = (BoneMatrix * normalize(vec4(normal, 1.0))).xyz;
+    vec3 vetexNormal = (modelMatrix * normalize(vec4(normal, 1.0))).xyz;
     //vec3 vetexNormal = vec3(-N[0], N[1], N[2]); // 座標系による反転
 
     // 照明位置
@@ -67,7 +67,7 @@ void main() {
 fragments_shader = """
 # version 330
 
-uniform mat4 BoneMatrix;
+uniform mat4 modelMatrix;
 
 in vec4 vertexColor;
 in vec3 Specular;
@@ -321,7 +321,7 @@ class OpenGLCanvas(glcanvas.GLCanvas):
 
         gl.glUseProgram(shader)
 
-        self.bone_matrix_uniform = gl.glGetUniformLocation(shader, "BoneMatrix")
+        self.bone_matrix_uniform = gl.glGetUniformLocation(shader, "modelMatrix")
 
         # ライトの位置
         self.light_vec_uniform = gl.glGetUniformLocation(shader, "lightPos")

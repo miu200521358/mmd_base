@@ -24,10 +24,10 @@ in layout(location = %d) vec3 positions;
 in layout(location = %d) vec3 colors;
 
 out vec3 newColor;
-uniform mat4 BoneMatrix;
+uniform mat4 modelMatrix;
 
 void main() {
-    vec4 pvec = BoneMatrix * vec4(positions, 1.0);
+    vec4 pvec = modelMatrix * vec4(positions, 1.0);
     gl_Position = vec4( -pvec[ 0 ], pvec[ 1 ], pvec[ 2 ], pvec[ 3 ] );  // 座標系による反転を行う、カリングも反転
     newColor = colors;
 }
@@ -206,7 +206,7 @@ class OpenGLCanvas(glcanvas.GLCanvas):
 
         gl.glUseProgram(shader)
 
-        self.bone_matrix = gl.glGetUniformLocation(shader, "BoneMatrix")
+        self.bone_matrix = gl.glGetUniformLocation(shader, "modelMatrix")
 
     def OnDraw(self, event: wx.Event):
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)

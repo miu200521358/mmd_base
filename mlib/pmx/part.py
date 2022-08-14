@@ -279,7 +279,6 @@ class Texture(BaseIndexModel):
             tex_path = self.texture_path
         self.image = Image.open(tex_path).convert("RGBA")
         self.image = ImageOps.flip(self.image)
-        self.image_size_x, self.image_size_y = self.image.size
         self.texture_type = texture_type
 
         # テクスチャオブジェクト生成
@@ -300,8 +299,8 @@ class Texture(BaseIndexModel):
             gl.GL_TEXTURE_2D,
             0,
             gl.GL_RGBA,
-            self.image_size_x,
-            self.image_size_y,
+            self.image.size[0],
+            self.image.size[1],
             0,
             gl.GL_RGBA,
             gl.GL_UNSIGNED_BYTE,
@@ -313,9 +312,7 @@ class Texture(BaseIndexModel):
         gl.glActiveTexture(self.texture_id)
         gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture)
 
-        if self.texture_type == TextureType.TEXTURE:
-            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAX_LEVEL, 0)
-        elif self.texture_type == TextureType.TOON:
+        if self.texture_type == TextureType.TOON:
             gl.glTexParameteri(
                 gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE
             )
@@ -323,6 +320,7 @@ class Texture(BaseIndexModel):
                 gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE
             )
 
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAX_LEVEL, 0)
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
 

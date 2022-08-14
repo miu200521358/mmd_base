@@ -8,7 +8,7 @@ in layout(location = %d) float vertexEdge;
 
 uniform vec3 lightPos;
 uniform vec3 cameraPos;
-uniform mat4 BoneMatrix;
+uniform mat4 modelMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;
 

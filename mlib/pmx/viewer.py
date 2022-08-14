@@ -14,7 +14,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.last_pos = wx.Point(0, 0)
         self.now_pos = wx.Point(0, 0)
         self.SetCurrent(self.context)
-        gl.glClearColor(0.4, 0.4, 0.4, 1)
+        gl.glClearColor(0.7, 0.7, 0.7, 1)
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_SIZE, self.OnResize)
@@ -34,11 +34,12 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         self.is_drag = False
 
-    def OnEraseBackground(self, event):
-        pass  # Do nothing, to avoid flashing on MSW (これがないとチラつくらしい）
+    def OnEraseBackground(self, event: wx.Event):
+        # Do nothing, to avoid flashing on MSW (これがないとチラつくらしい）
+        pass
 
-    def OnResize(self, event):
-        self.size: wx.Size = self.GetClientSize()
+    def OnResize(self, event: wx.Event):
+        self.size = self.GetClientSize()
         self.shader.fit(self.size.width, self.size.height)
         event.Skip()
 
@@ -48,7 +49,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
     def reset(self):
         self.shader.look_at_center = MVector3D()
-        self.shader.camera_position = MVector3D(0, 0, -3)
+        self.shader.camera_position = MVector3D(0, 0.5, -3)
         self.shader.camera_rotation = MQuaternion()
 
     def OnDraw(self, event: wx.Event):
@@ -63,7 +64,6 @@ class PmxCanvas(glcanvas.GLCanvas):
         if self.model:
             self.model.draw()
 
-        gl.glFlush()
         self.SwapBuffers()
         self.Refresh(False)
 
@@ -75,25 +75,25 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.shader.camera_rotation = MQuaternion()
             self.shader.camera_position = MVector3D(0, -3, -0.1)
         elif keycode == wx.WXK_NUMPAD2:
-            # 真正面から
+            # 真正面から(=リセット)
             self.shader.look_at_center = MVector3D()
             self.shader.camera_rotation = MQuaternion()
-            self.shader.camera_position = MVector3D(0, 0, -3)
+            self.shader.camera_position = MVector3D(0, 0.5, -3)
         elif keycode == wx.WXK_NUMPAD4:
             # 左から
             self.shader.look_at_center = MVector3D()
             self.shader.camera_rotation = MQuaternion()
-            self.shader.camera_position = MVector3D(3, 0, -0.1)
+            self.shader.camera_position = MVector3D(3, 0.5, -0.1)
         elif keycode == wx.WXK_NUMPAD6:
             # 右から
             self.shader.look_at_center = MVector3D()
             self.shader.camera_rotation = MQuaternion()
-            self.shader.camera_position = MVector3D(-3, 0, -0.1)
+            self.shader.camera_position = MVector3D(-3, 0.5, -0.1)
         elif keycode == wx.WXK_NUMPAD8:
             # 真後ろから
             self.shader.look_at_center = MVector3D()
             self.shader.camera_rotation = MQuaternion()
-            self.shader.camera_position = MVector3D(0, 0, 3)
+            self.shader.camera_position = MVector3D(0, 0.5, 3)
         elif keycode == wx.WXK_NUMPAD5:
             # 真上から
             self.shader.look_at_center = MVector3D()
@@ -125,7 +125,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.last_pos = self.now_pos
 
     def OnMouseWheel(self, event: wx.Event):
-        if event.GetWheelRotation() > 0:
-            self.shader.camera_position.z += 0.1
+        if event.GetWheelRotation() < 0:
+            self.shader.vertical_degrees += 0.5
         else:
-            self.shader.camera_position.z -= 0.1
+            self.shader.vertical_degrees = max(0.5, self.shader.vertical_degrees - 0.5)

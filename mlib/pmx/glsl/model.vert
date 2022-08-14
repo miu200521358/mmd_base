@@ -6,9 +6,8 @@ in layout(location = %d) vec2 uv;
 in layout(location = %d) vec2 extendUv;
 in layout(location = %d) float vertexEdge;
 
-uniform vec3 lightPos;
 uniform vec3 cameraPos;
-uniform mat4 BoneMatrix;
+uniform mat4 modelMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;
 
@@ -16,6 +15,7 @@ uniform vec4 diffuse;
 uniform vec3 ambient;
 uniform vec4 specular;
 
+uniform int useToon;
 uniform int useSphere;
 uniform int sphereMode;
 
@@ -31,19 +31,16 @@ void main() {
     gl_Position = modelViewProjectionMatrix * vec4(position.xyz, 1.0);
 
     // 頂点法線
-    vec3 vetexNormal = (BoneMatrix * normalize(vec4(normal.xyz, 1.0))).rgb;
-
-    // 照明位置
-    vec3 lightDirection = -normalize(lightPos);
+    vetexNormal = (modelMatrix * normalize(vec4(normal.xyz, 1.0))).xyz;
 
     // 頂点色設定
-    vertexColor = clamp(vec4(ambient, diffuse.w), 0.0, 1.0);
-    // 色傾向
-    float factor = clamp(dot(vetexNormal, lightDirection), 0.0f, 1.0f);
+    vertexColor = clamp(vec4(ambient, 1), 0.0, 1.0);
 
-    // ディフューズ色＋アンビエント色 計算
-    // TODO TOONでないとき、の条件付与
-    vertexColor.rgb += diffuse.rgb * factor;
+    if (useToon == 0) {
+        // ディフューズ色＋アンビエント色 計算
+        float lightNormal = clamp(dot( vetexNormal, -lightDirection ), 0.0, 1.0);
+        vertexColor.rgb += diffuse.rgb * lightNormal;
+    }
 
     // saturate
     vertexColor = clamp(vertexColor, 0.0, 1.0);
@@ -66,9 +63,9 @@ void main() {
     }
 
     // カメラとの相対位置
-    vec3 eye = cameraPos - gl_Position.rgb;
+    vec3 eye = cameraPos - (modelMatrix * vec4(position.xyz, 1.0)).xyz;
 
     // スペキュラ色計算
-    vec3 HalfVector = normalize( normalize(eye) + lightDirection );
+    vec3 HalfVector = normalize( normalize(eye) + -lightDirection );
     vertexSpecular = clamp(pow( max(0, dot( HalfVector, vetexNormal )), specular.w ) * specular.rgb, 0.0f, 1.0f);
 }

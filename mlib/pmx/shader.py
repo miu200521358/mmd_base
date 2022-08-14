@@ -6,7 +6,7 @@ from typing import Any
 import numpy as np
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
-from mlib.math import MMatrix4x4, MQuaternion, MVector3D
+from mlib.math import MMatrix4x4, MQuaternion, MVector3D, MVector4D
 
 
 class VsLayout(IntEnum):
@@ -29,14 +29,14 @@ class MShader:
         self.look_at_up = MVector3D(0.0, 1.0, 0.0)
 
         # カメラの位置
-        self.camera_position = MVector3D(0, 0, -3)
+        self.camera_position = MVector3D(0, 0.5, -3)
         # カメラの回転
         self.camera_rotation = MQuaternion()
 
         self.bone_matrix_uniform: dict[bool, Any] = {}
         self.model_view_matrix_uniform: dict[bool, Any] = {}
         self.model_view_projection_matrix_uniform: dict[bool, Any] = {}
-        self.light_vec_uniform: dict[bool, Any] = {}
+        self.light_direction_uniform: dict[bool, Any] = {}
         self.camera_vec_uniform: dict[bool, Any] = {}
         self.diffuse_uniform: dict[bool, Any] = {}
         self.ambient_uniform: dict[bool, Any] = {}
@@ -122,27 +122,24 @@ class MShader:
 
     def initialize(self, program: Any, edge=False):
         # light color
-        light_diffuse = MVector3D(0.7, 0.7, 0.7)
-        light_ambient = MVector3D(0.3, 0.3, 0.3)
-        light_specular = MVector3D(1.0, 1.0, 1.0)
+        self.light_diffuse = MVector3D(1, 1, 1)
+        self.light_ambient = MVector3D(1.8, 1.8, 1.8)
+        self.light_specular = MVector3D(0, 0, 0)
+        self.light_diffuse4 = MVector4D(
+            self.light_diffuse.x,
+            self.light_diffuse.y,
+            self.light_diffuse.z,
+            1,
+        )
 
         # light position
-        light_position = MVector3D(3, -2, 5)
-
-        # light setting
-        gl.glLightfv(gl.GL_LIGHT0, gl.GL_AMBIENT, light_ambient.vector)
-        gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, light_diffuse.vector)
-        gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, light_specular.vector)
-        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, light_position.vector)
-        gl.glEnable(gl.GL_LIGHT0)
-        gl.glEnable(gl.GL_LIGHTING)
-
-        gl.glEnable(gl.GL_DEPTH_TEST)  # enable shading
-        gl.glEnable(gl.GL_BLEND)
-        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+        self.light_position = MVector3D(-1.5, 1, -5)
+        self.light_direction = (
+            self.light_position * MVector3D(-1, -1, -1)
+        ).normalized()
 
         # ボーンデフォーム行列
-        self.bone_matrix_uniform[edge] = gl.glGetUniformLocation(program, "BoneMatrix")
+        self.bone_matrix_uniform[edge] = gl.glGetUniformLocation(program, "modelMatrix")
 
         # モデルビュー行列
         self.model_view_matrix_uniform[edge] = gl.glGetUniformLocation(
@@ -157,9 +154,12 @@ class MShader:
         if not edge:
             # モデルシェーダーへの割り当て
 
-            # ライトの位置
-            self.light_vec_uniform[edge] = gl.glGetUniformLocation(program, "lightPos")
-            gl.glUniform3f(self.light_vec_uniform[edge], *light_position.vector)
+            self.light_direction_uniform[edge] = gl.glGetUniformLocation(
+                program, "lightDirection"
+            )
+            gl.glUniform3f(
+                self.light_direction_uniform[edge], *self.light_direction.vector
+            )
 
             # カメラの位置
             self.camera_vec_uniform[edge] = gl.glGetUniformLocation(
@@ -210,7 +210,21 @@ class MShader:
 
     def update_camera(self, edge=False):
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
-        gl.glClearColor(0.4, 0.4, 0.4, 1)
+        gl.glClearColor(0.7, 0.7, 0.7, 1)
+
+        # 視野領域の決定
+        gl.glMatrixMode(gl.GL_PROJECTION)
+        gl.glLoadIdentity()
+        glu.gluPerspective(
+            self.vertical_degrees,
+            self.aspect_ratio,
+            self.near_plane,
+            self.far_plane,
+        )
+
+        self.projection_matrix = np.array(
+            gl.glGetFloatv(gl.GL_PROJECTION_MATRIX), dtype=np.float32
+        )
 
         # カメラ位置
         camera_mat = MMatrix4x4(identity=True)
@@ -245,6 +259,11 @@ class MShader:
             np.matmul(model_view_matrix, self.projection_matrix),
         )
 
+        # 隠面消去
+        gl.glEnable(gl.GL_DEPTH_TEST)
+        gl.glEnable(gl.GL_BLEND)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+
     def fit(self, width: int, height: int):
         self.width = width
         self.height = height
@@ -255,20 +274,6 @@ class MShader:
 
             # ビューポートの設定
             gl.glViewport(0, 0, self.width, self.height)
-
-            # 視野領域の決定
-            gl.glMatrixMode(gl.GL_PROJECTION)
-            gl.glLoadIdentity()
-            glu.gluPerspective(
-                self.vertical_degrees,
-                self.aspect_ratio,
-                self.near_plane,
-                self.far_plane,
-            )
-
-            self.projection_matrix = np.array(
-                gl.glGetFloatv(gl.GL_PROJECTION_MATRIX), dtype=np.float32
-            )
 
             self.update_camera(edge=is_edge)
 

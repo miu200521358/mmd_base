@@ -132,9 +132,11 @@ class Mesh(BaseIndexModel):
     ):
         if DrawFlg.DOUBLE_SIDED_DRAWING in self.material.draw_flg:
             # 両面描画
+            # カリングOFF
             gl.glDisable(gl.GL_CULL_FACE)
         else:
             # 片面描画
+            # カリングON
             gl.glEnable(gl.GL_CULL_FACE)
             gl.glCullFace(gl.GL_BACK)
 
@@ -149,14 +151,16 @@ class Mesh(BaseIndexModel):
         # ------------------
         # 材質色設定
         gl.glUniform4f(
-            shader.diffuse_uniform[False], *self.material.diffuse_color.vector
+            shader.diffuse_uniform[False],
+            *(self.material.diffuse_color * shader.light_diffuse4).vector
         )
         gl.glUniform3f(
-            shader.ambient_uniform[False], *self.material.ambient_color.vector
+            shader.ambient_uniform[False],
+            *(self.material.ambient_color * shader.light_ambient).vector
         )
         gl.glUniform4f(
             shader.specular_uniform[False],
-            *self.material.specular_color.vector,
+            *(self.material.specular_color * shader.light_specular).vector,
             self.material.specular_factor
         )
 
@@ -193,6 +197,15 @@ class Mesh(BaseIndexModel):
             ibo.dtype,
             gl.ctypes.c_void_p(self.prev_vertices_pointer),
         )
+
+        if self.texture:
+            self.texture.unbind()
+
+        if self.toon_texture:
+            self.toon_texture.unbind()
+
+        if self.sphere_texture:
+            self.sphere_texture.unbind()
 
     def draw_edge(
         self,

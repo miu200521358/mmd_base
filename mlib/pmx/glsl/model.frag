@@ -1,9 +1,11 @@
 # version 440
 
-uniform mat4 BoneMatrix;
+uniform mat4 modelMatrix;
 
 uniform int useTexture;
 uniform sampler2D textureSampler;
+uniform vec4 diffuse;
+uniform vec3 ambient;
 
 uniform int useToon;
 uniform sampler2D toonSampler;
@@ -12,11 +14,12 @@ uniform int useSphere;
 uniform int sphereMode;
 uniform sampler2D sphereSampler;
 
+uniform vec3 lightDirection;
+
 in vec4 vertexColor;
 in vec3 vertexSpecular;
 in vec2 vertexUv;
 in vec3 vetexNormal;
-in vec3 lightDirection;
 in vec2 sphereUv;
 
 out vec4  outColor;
@@ -46,7 +49,7 @@ void main() {
     if (useToon == 1) {
         // Toon適用
         float lightNormal = dot( vetexNormal, -lightDirection );
-        outColor *= texture(toonSampler, vec2(0, 0.5 - lightNormal * 0.5));
+        outColor *= texture(toonSampler, vec2(0, lightNormal));
     }
 
     // スペキュラ適用

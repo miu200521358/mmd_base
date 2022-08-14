@@ -250,7 +250,7 @@ class Meshs(BaseIndexListModel[Mesh]):
                             v.position * MVector3D(-1, 1, 1) + MVector3D(0, -10, 0)
                         ).vector
                         / 15,
-                        *v.normal.vector,
+                        *(v.normal * MVector3D(-1, 1, 1)).vector,
                         v.uv.x,
                         1 - v.uv.y,
                         *(
