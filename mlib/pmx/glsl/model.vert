@@ -28,11 +28,15 @@ out vec2 sphereUv;
 out vec3 eye;
 
 void main() {
+    // OpenGL的座標
+    vec4 vertexGLPosition = vec4(-position.x, position.y, position.z, 1.0);
+    vec4 vertexGLNormal = vec4(-normal.x, normal.y, normal.z, 1.0);
+
     // 頂点位置
-    gl_Position = modelViewProjectionMatrix * vec4(position.xyz, 1.0);
+    gl_Position = modelViewProjectionMatrix * vertexGLPosition;
 
     // 頂点法線
-    vetexNormal = (modelMatrix * normalize(vec4(normal.xyz, 1.0))).xyz;
+    vetexNormal = (modelMatrix * normalize(vertexGLNormal)).xyz;
 
     // 頂点色設定
     vertexColor = clamp(diffuse, 0.0, 1.0);
@@ -61,7 +65,7 @@ void main() {
     }
 
     // カメラとの相対位置
-    vec3 eye = cameraPos - (modelMatrix * vec4(position.xyz, 1.0)).xyz;
+    vec3 eye = cameraPos - (modelMatrix * vertexGLPosition).xyz;
 
     // スペキュラ色計算
     vec3 HalfVector = normalize( normalize(eye) + -lightDirection );

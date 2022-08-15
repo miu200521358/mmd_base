@@ -15,12 +15,15 @@ uniform mat4 modelViewProjectionMatrix;
 uniform float edgeSize;
 
 void main() {
+    vec4 vertexGLPosition = vec4(-position.x, position.y, position.z, 1.0);
+    vec4 vertexGLNormal = vec4(-normal.x, normal.y, normal.z, 1.0);
+
     // エッジサイズｘ頂点エッジ倍率ｘモーフ倍率＋モーフバイアス
     float edgeWight = edgeSize * vertexEdge;
 
     // 頂点法線
-    vec3 vetexNormal = (modelMatrix * normalize(vec4(normal.xyz, 1.0))).xyz;
+    vec3 vetexNormal = (modelMatrix * normalize(vertexGLNormal)).xyz;
 
     // 頂点位置
-    gl_Position = modelViewProjectionMatrix * (vec4(position.xyz + vetexNormal.xyz * edgeWight * 0.001, 1.0));
+    gl_Position = modelViewProjectionMatrix * (vec4(vertexGLPosition.xyz + vertexGLNormal.xyz * edgeWight * 0.01, 1.0));
 }

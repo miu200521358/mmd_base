@@ -5,7 +5,8 @@ from mlib.base.collection import (
     BaseIndexNameDictModel,
 )
 from mlib.bezier import evaluate
-from mlib.math import MMatrix4x4List, MQuaternion, MMatrix4x4
+from mlib.math import MMatrix4x4, MMatrix4x4List, MQuaternion
+from mlib.pmx.part import BoneTree
 from mlib.vmd.part import (
     VmdBoneFrame,
     VmdCameraFrame,
@@ -90,7 +91,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         return VmdBoneNameFrames(name=name)
 
     def get_matrix_by_index(
-        self, index: int, layered_bone_names: dict[str, list[str]]
+        self, index: int, bone_trees: dict[int, BoneTree]
     ) -> dict[str, MMatrix4x4]:
         """
         指定されたキーフレ番号の行列計算結果を返す
@@ -99,21 +100,22 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         ----------
         index : int
             キーフレ番号
-        layered_bone_names : dict[str, list[str]]
-            末端ボーン名：計算対象ボーン名リスト
+        bone_trees: dict[int, BoneTree]
+            ルートボーン番号: ボーンツリー
 
         Returns
         -------
         dict[str, MMatrix4x4]
             _description_
         """
-        bone_frames = self.get_by_index(index)
-        matrixs = MMatrix4x4List(keys=layered_bone_names)
-        for ni, bone_name_links in enumerate(layered_bone_names.values()):
-            for bi, bone_name in enumerate(bone_name_links):
-                if bone_name in bone_frames:
-                    matrixs[ni, bi] = bone_frames[bone_name].matrix.vector
-        return matrixs.multiply()
+        # bone_frames = self.get_by_index(index)
+        # matrixs = MMatrix4x4List(keys=layered_bone_names)
+        # for ni, bone_name_links in enumerate(layered_bone_names.values()):
+        #     for bi, bone_name in enumerate(bone_name_links):
+        #         if bone_name in bone_frames:
+        #             matrixs[ni, bi] = bone_frames[bone_name].matrix.vector
+        # return matrixs.multiply()
+        pass
 
     def get_by_index(self, index: int) -> dict[str, VmdBoneFrame]:
         """

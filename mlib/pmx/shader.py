@@ -20,7 +20,10 @@ class VsLayout(IntEnum):
 class MShader:
 
     INITIAL_VERTICAL_DEGREES = 45.0
-    INITIAL_CAMERA_POSTION_Z = -3.0
+    INITIAL_CAMERA_POSITION_Y = 15.0
+    INITIAL_CAMERA_POSITION_Z = -40.0
+    INITIAL_LOOK_AT_CENTER_Y = INITIAL_CAMERA_POSITION_Y * 0.8
+    INITIAL_CAMERA_POSITION_X = 40.0
 
     def __init__(self, width: int, height: int) -> None:
         self.width = width
@@ -29,13 +32,25 @@ class MShader:
         self.aspect_ratio = float(self.width) / float(self.height)
         self.near_plane = 0.01
         self.far_plane = 10000
-        self.look_at_center = MVector3D(0.0, 0.0, 0.0)
+        self.look_at_center = MVector3D(0.0, self.INITIAL_LOOK_AT_CENTER_Y, 0.0)
         self.look_at_up = MVector3D(0.0, 1.0, 0.0)
 
         # カメラの位置
-        self.camera_position = MVector3D(0, 0.5, self.INITIAL_CAMERA_POSTION_Z)
+        self.camera_position = MVector3D(
+            0.0,
+            self.INITIAL_CAMERA_POSITION_Y,
+            self.INITIAL_CAMERA_POSITION_Z,
+        )
         # カメラの回転
         self.camera_rotation = MQuaternion()
+
+        # light position
+        self.light_position = MVector3D(
+            -20, self.INITIAL_CAMERA_POSITION_Y * 2, self.INITIAL_CAMERA_POSITION_Z * 2
+        )
+        self.light_direction = (
+            self.light_position * MVector3D(-1, -1, -1)
+        ).normalized()
 
         self.bone_matrix_uniform: dict[bool, Any] = {}
         self.model_view_matrix_uniform: dict[bool, Any] = {}
@@ -138,12 +153,6 @@ class MShader:
             self.light_ambient.z,
             1,
         )
-
-        # light position
-        self.light_position = MVector3D(-1, 2, self.INITIAL_CAMERA_POSTION_Z * 2)
-        self.light_direction = (
-            self.light_position * MVector3D(-1, -1, -1)
-        ).normalized()
 
         # ボーンデフォーム行列
         self.bone_matrix_uniform[edge] = gl.glGetUniformLocation(program, "modelMatrix")
