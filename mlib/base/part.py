@@ -1,8 +1,9 @@
 from enum import Enum, unique
 
 import numpy as np
+
 from mlib.base.base import BaseModel
-from mlib.math import MQuaternion, MVector3D
+from mlib.base.math import MQuaternion, MVector3D
 
 
 @unique

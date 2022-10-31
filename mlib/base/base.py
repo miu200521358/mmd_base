@@ -1,9 +1,8 @@
-from typing import TypeVar
 from enum import Enum
+from typing import TypeVar
 
 import _pickle as cPickle  # type: ignore
-
-from mlib.logger import parse2str
+from mlib.base.logger import parse2str
 
 
 class Encoding(Enum):

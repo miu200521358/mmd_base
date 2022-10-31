@@ -2,7 +2,7 @@ import pytest
 
 
 def test_parse_str():
-    from mlib.logger import parse_str
+    from mlib.base.logger import parse_str
 
     assert "1" == parse_str(1)
     assert "1.23" == parse_str(1.23)
@@ -12,7 +12,7 @@ def test_parse_str():
 
 
 def test_parse2str():
-    from mlib.logger import parse2str
+    from mlib.base.logger import parse2str
 
     class ChildSample:
         def __init__(self, _y, _b) -> None:

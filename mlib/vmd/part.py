@@ -1,9 +1,7 @@
-from typing import List
-
 from mlib.base.base import BaseModel
+from mlib.base.bezier import Interpolation
+from mlib.base.math import MMatrix4x4, MQuaternion, MVector3D
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel
-from mlib.bezier import Interpolation
-from mlib.math import MMatrix4x4, MQuaternion, MVector3D
 
 
 class BaseVmdFrame(BaseIndexModel):
@@ -59,6 +57,7 @@ class BaseVmdNameFrame(BaseIndexNameModel):
         self.read = read or False
 
 
+# https://hariganep.seesaa.net/article/201103article_1.html
 class BoneInterpolations(BaseModel):
     """
     ボーンキーフレ用補間曲線
@@ -81,21 +80,146 @@ class BoneInterpolations(BaseModel):
         translation_y: Interpolation = None,
         translation_z: Interpolation = None,
         rotation: Interpolation = None,
-        residue0: int = 0,
-        residue1: int = 0,
-        residue2: int = 0,
-        residue3: int = 0,
-        residue4: int = 0,
+        vals: list[int] = None,
     ):
         self.translation_x: Interpolation = translation_x or Interpolation()
         self.translation_y: Interpolation = translation_y or Interpolation()
         self.translation_z: Interpolation = translation_z or Interpolation()
         self.rotation: Interpolation = rotation or Interpolation()
-        self.residue0 = residue0 or 0
-        self.residue1 = residue1 or 0
-        self.residue2 = residue2 or 0
-        self.residue3 = residue3 or 0
-        self.residue4 = residue4 or 0
+        self.vals = vals or [
+            20,
+            20,
+            0,
+            0,
+            20,
+            20,
+            20,
+            20,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            0,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            0,
+            0,
+            20,
+            20,
+            20,
+            20,
+            20,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            0,
+            0,
+            0,
+        ]
+
+    def merge(self) -> list[int]:
+        return [
+            self.translation_x.start.x,
+            self.translation_y.start.x,
+            self.translation_z.start.x,
+            self.rotation.start.x,
+            self.translation_x.start.y,
+            self.translation_y.start.y,
+            self.translation_z.start.y,
+            self.rotation.start.y,
+            self.translation_x.end.x,
+            self.translation_y.end.x,
+            self.translation_z.end.x,
+            self.rotation.end.x,
+            self.translation_x.end.y,
+            self.translation_y.end.y,
+            self.translation_z.end.y,
+            self.rotation.end.y,
+            self.translation_y.start.x,
+            self.translation_z.start.x,
+            self.rotation.start.x,
+            self.translation_x.start.y,
+            self.translation_y.start.y,
+            self.translation_z.start.y,
+            self.rotation.start.y,
+            self.translation_x.end.x,
+            self.translation_y.end.x,
+            self.translation_z.end.x,
+            self.rotation.end.x,
+            self.translation_x.end.y,
+            self.translation_y.end.y,
+            self.translation_z.end.y,
+            self.rotation.end.y,
+            self.vals[31],
+            self.translation_z.start.x,
+            self.rotation.start.x,
+            self.translation_x.start.y,
+            self.translation_y.start.y,
+            self.translation_z.start.y,
+            self.rotation.start.y,
+            self.translation_x.end.x,
+            self.translation_y.end.x,
+            self.translation_z.end.x,
+            self.rotation.end.x,
+            self.translation_x.end.y,
+            self.translation_y.end.y,
+            self.translation_z.end.y,
+            self.rotation.end.y,
+            self.vals[46],
+            self.vals[47],
+            self.rotation.start.x,
+            self.translation_x.start.y,
+            self.translation_y.start.y,
+            self.translation_z.start.y,
+            self.rotation.start.y,
+            self.translation_x.end.x,
+            self.translation_y.end.x,
+            self.translation_z.end.x,
+            self.rotation.end.x,
+            self.translation_x.end.y,
+            self.translation_y.end.y,
+            self.translation_z.end.y,
+            self.rotation.end.y,
+            self.vals[61],
+            self.vals[62],
+            self.vals[63],
+        ]
 
 
 class VmdBoneFrame(BaseVmdNameFrame):
@@ -354,7 +478,7 @@ class VmdShowIkFrame(BaseVmdFrame):
         キーフレ, by default None
     show : bool, optional
         表示有無, by default None
-    iks : List[VmdIk], optional
+    iks : list[VmdIk], optional
         IKリスト, by default None
     regist : bool, optional
         登録対象か否か, by default None
@@ -366,10 +490,10 @@ class VmdShowIkFrame(BaseVmdFrame):
         self,
         index: int = None,
         show: bool = None,
-        iks: List[VmdIkOnoff] = None,
+        iks: list[VmdIkOnoff] = None,
         regist: bool = None,
         read: bool = None,
     ):
         super().__init__(index, regist, read)
         self.show: bool = show or True
-        self.iks: List[VmdIkOnoff] = iks or []
+        self.iks: list[VmdIkOnoff] = iks or []

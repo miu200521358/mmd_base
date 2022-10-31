@@ -1,11 +1,12 @@
+import numpy as np
+from mlib.base.bezier import evaluate
 from mlib.base.collection import (
     BaseHashModel,
     BaseIndexDictModel,
     BaseIndexNameDictInnerModel,
     BaseIndexNameDictModel,
 )
-from mlib.bezier import evaluate
-from mlib.math import MMatrix4x4, MMatrix4x4List, MQuaternion
+from mlib.base.math import MMatrix4x4, MQuaternion
 from mlib.pmx.part import BoneTree
 from mlib.vmd.part import (
     VmdBoneFrame,
@@ -26,6 +27,10 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         super().__init__(name=name)
 
     def __getitem__(self, index: int) -> VmdBoneFrame:
+        if not self.data:
+            # まったくデータがない場合、生成
+            return VmdBoneFrame(name=self.name, index=index)
+
         indices = self.indices()
         if index not in indices:
             # キーフレがない場合、生成したのを返す（保持はしない）
@@ -42,12 +47,18 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
 
         bf = VmdBoneFrame(name=self.name, index=index)
 
-        if prev_index == index or index == next_index:
+        if prev_index == middle_index:
             # prevと等しい場合、指定INDEX以前がないので、その次のをコピーして返す
+            bf.position = self[next_index].position.copy()
+            bf.rotation = self[next_index].rotation.copy()
+            bf.interpolations = self[next_index].interpolations.copy()
+            return bf
+        elif next_index == middle_index:
             # nextと等しい場合は、その前のをコピーして返す
-            bf.position = self[middle_index].position.copy()
-            bf.rotation = self[middle_index].rotation.copy()
-            bf.interpolations = self[middle_index].interpolations.copy()
+            bf.position = self[prev_index].position.copy()
+            bf.rotation = self[prev_index].rotation.copy()
+            bf.interpolations = self[prev_index].interpolations.copy()
+            return bf
 
         prev_bf = self[prev_index]
         next_bf = self[next_index]
@@ -135,6 +146,12 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         for bone_name in self.names():
             bone_frames[bone_name] = self[bone_name][index]
         return bone_frames
+
+    def get(self, name: str) -> VmdBoneNameFrames:
+        if name not in self.data:
+            self.data[name] = self.create_inner(name)
+
+        return self.data[name]
 
 
 class VmdMorphFrames(
@@ -225,6 +242,9 @@ class VmdMotion(BaseHashModel):
         self.lights: VmdLightFrames = VmdLightFrames()
         self.shadows: VmdShadowFrames = VmdShadowFrames()
         self.showiks: VmdShowIkFrames = VmdShowIkFrames()
+
+    def get_bone_count(self) -> int:
+        return int(np.sum([len(bfs) for bfs in self.bones]))
 
     def get_name(self) -> str:
         return self.model_name

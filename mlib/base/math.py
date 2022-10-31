@@ -1,5 +1,5 @@
 import operator
-from math import acos, cos, degrees, radians, sin, sqrt  # type: ignore
+from math import acos, cos, degrees, radians, sin, sqrt
 from typing import Any, Union
 
 import numpy as np
@@ -215,7 +215,7 @@ class MVector(BaseModel):
             return bool(np.all(np.greater_equal(self.vector, other)))
 
     def __bool__(self) -> bool:
-        return bool(np.all(self.vector == 0))
+        return not bool(np.all(self.vector == 0))
 
     def __add__(self, other):
         return operate_vector(self, other, operator.add)
@@ -584,6 +584,12 @@ class MQuaternion(MVector):
     def xyz(self) -> MVector3D:
         return MVector3D(self.vector.components[1:])
 
+    def to_log(self) -> str:
+        return (
+            f"[x={round(self.x, 5)}, y={round(self.y, 5)}, "
+            + f"z={round(self.z, 5)}, scalar={round(self.scalar, 5)}]"
+        )
+
     def effective(self):
         self.vector.components[np.isnan(self.vector.components)] = 0
         self.vector.components[np.isinf(self.vector.components)] = 0
@@ -707,6 +713,75 @@ class MQuaternion(MVector):
         自分ともうひとつの値vとのtheta（変位量）を返す
         """
         return acos(min(1, max(-1, self.normalized().dot(v.normalized()))))
+
+    def separate_local_qq(self, global_x_axis: MVector3D):
+        # ローカル座標系（ボーンベクトルが（1，0，0）になる空間）の向き
+        local_axis = MVector3D(1, 0, 0)
+
+        # グローバル座標系（Ａスタンス）からローカル座標系（ボーンベクトルが（1，0，0）になる空間）への変換
+        global2local_qq = MQuaternion.rotate(global_x_axis, local_axis)
+        local2global_qq = MQuaternion.rotate(local_axis, global_x_axis)
+
+        mat_x1 = MMatrix4x4(identity=True)
+        mat_x1.rotate(self)  # 入力qq
+        mat_x1.translate(global_x_axis)  # グローバル軸方向に伸ばす
+        mat_x1_vec = mat_x1 * MVector3D()
+
+        # YZの回転量（自身のねじれを無視する）
+        yz_qq = MQuaternion.rotate(global_x_axis, mat_x1_vec)
+
+        # YZ回転からZ成分を抽出する --------------
+        mat_z1 = MMatrix4x4(identity=True)
+        mat_z1.rotate(yz_qq)  # YZの回転量
+        mat_z1.rotate(global2local_qq)  # グローバル軸の回転量からローカルの回転量に変換
+        mat_z1.translate(local_axis)  # ローカル軸方向に伸ばす
+
+        mat_z1_vec = mat_z1 * MVector3D()
+        mat_z1_vec.z = 0  # Z方向の移動量を潰す
+
+        # ローカル軸からZを潰した移動への回転量
+        local_z_qq = MQuaternion.rotate(local_axis, mat_z1_vec)
+
+        # ボーンローカル座標系の回転をグローバル座標系の回転に戻す
+        mat_z2 = MMatrix4x4(identity=True)
+        mat_z2.rotate(local_z_qq)  # ローカル軸上のZ回転
+        mat_z2.rotate(local2global_qq)  # ローカル軸上からグローバル軸上に変換
+
+        z_qq = mat_z2.to_quternion()
+
+        # YZ回転からY成分だけ取り出す -----------
+
+        mat_y1 = MMatrix4x4(identity=True)
+        mat_y1.rotate(yz_qq)  # グローバルYZの回転量
+
+        mat_y2 = MMatrix4x4(identity=True)
+        mat_y2.rotate(z_qq)  # グローバルZの回転量
+        mat_y2_qq = (mat_y1 * mat_y2.inverse()).to_quternion()
+
+        # X成分の捻れが混入したので、XY回転からYZ回転を取り出すことでXキャンセルをかける。
+        mat_y3 = MMatrix4x4(identity=True)
+        mat_y3.rotate(mat_y2_qq)
+        mat_y3.translate(global_x_axis)
+        mat_y3_vec = mat_y3 * MVector3D()
+
+        y_qq = MQuaternion.rotate(global_x_axis, mat_y3_vec)
+
+        # Xを再度求める -------------
+
+        mat_x4 = MMatrix4x4(identity=True)
+        mat_x4.rotate(self)
+
+        mat_x5 = MMatrix4x4(identity=True)
+        mat_x5.rotate(y_qq)
+
+        mat_x6 = MMatrix4x4(identity=True)
+        mat_x6.rotate(z_qq)
+
+        x_qq: MQuaternion = (
+            mat_x5.inverse() * mat_x4 * mat_x6.inverse()
+        ).to_quternion()
+
+        return (x_qq, y_qq, z_qq, yz_qq)
 
     def to_matrix4x4(self):
         # q(w,x,y,z)から(x,y,z,w)に並べ替え.

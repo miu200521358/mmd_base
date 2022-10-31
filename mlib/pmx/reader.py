@@ -1,43 +1,19 @@
 from struct import Struct
 
 from mlib.base.base import Encoding
-from mlib.exception import MParseException
-from mlib.math import MVector3D
+from mlib.base.exception import MParseException
+from mlib.base.math import MVector3D
 from mlib.base.part import Switch
-from mlib.pmx.collection import PmxModel
-from mlib.pmx.part import (
-    Bdef1,
-    Bdef2,
-    Bdef4,
-    Bone,
-    BoneFlg,
-    BoneMorphOffset,
-    DeformType,
-    DisplaySlot,
-    DisplaySlotReference,
-    DisplayType,
-    DrawFlg,
-    Face,
-    GroupMorphOffset,
-    Ik,
-    IkLink,
-    Joint,
-    Material,
-    MaterialMorphCalcMode,
-    MaterialMorphOffset,
-    Morph,
-    MorphPanel,
-    MorphType,
-    RigidBody,
-    RigidBodyCollisionGroup,
-    Sdef,
-    Texture,
-    ToonSharing,
-    UvMorphOffset,
-    Vertex,
-    VertexMorphOffset,
-)
 from mlib.base.reader import BaseReader, StructUnpackType
+from mlib.pmx.collection import PmxModel
+from mlib.pmx.part import (Bdef1, Bdef2, Bdef4, Bone, BoneFlg, BoneMorphOffset,
+                           DeformType, DisplaySlot, DisplaySlotReference,
+                           DisplayType, DrawFlg, Face, GroupMorphOffset, Ik,
+                           IkLink, Joint, Material, MaterialMorphCalcMode,
+                           MaterialMorphOffset, Morph, MorphPanel, MorphType,
+                           RigidBody, RigidBodyCollisionGroup, Sdef, Texture,
+                           ToonSharing, UvMorphOffset, Vertex,
+                           VertexMorphOffset)
 
 
 class PmxReader(BaseReader[PmxModel]):

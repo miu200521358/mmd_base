@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, TypeVar
 
 import numpy as np
+
 from mlib.base.base import BaseModel, Encoding
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel
 
@@ -166,6 +167,9 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
             raise StopIteration
         return self.data[self.__iter_index]
 
+    def __contains__(self, v) -> bool:
+        return v in [v.name for v in self.data] or v in [v.index for v in self.data]
+
 
 class BaseIndexDictModel(Generic[TBaseIndexModel]):
     """BaseIndexModelの辞書基底クラス"""
@@ -227,6 +231,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel]):
 
     def __iter__(self):
         self.__iter_index = -1
+        self.__indices = sorted(list(self.data.keys()))
         return self
 
     def __next__(self) -> TBaseIndexModel:
@@ -234,6 +239,9 @@ class BaseIndexDictModel(Generic[TBaseIndexModel]):
         if self.__iter_index >= len(self.__indices):
             raise StopIteration
         return self.data[self.__indices[self.__iter_index]]
+
+    def __contains__(self, v) -> bool:
+        return v in self.data.keys()
 
 
 TBaseIndexDictModel = TypeVar("TBaseIndexDictModel", bound=BaseIndexDictModel)
@@ -283,11 +291,11 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
 
         # index がない場合、前後のINDEXを取得する
         indices = np.sort(indices + [index])
-        idx = np.where(indices == index)[0]
+        idx = np.where(indices == index)[0][0]
         prev_idx = np.max([0, idx - 1])
         next_idx = np.min([len(indices) - 1, idx + 1])
 
-        return indices[prev_idx], indices[idx], indices[next_idx]
+        return int(indices[prev_idx]), int(indices[idx]), int(indices[next_idx])
 
     def indices(self):
         return sorted(list(self.data.keys()))
@@ -325,6 +333,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
 
     def __iter__(self):
         self.__iter_index = -1
+        self.__indices = sorted(list(self.data.keys()))
         return self
 
     def __next__(self) -> TBaseIndexNameModel:
@@ -332,6 +341,9 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
         if self.__iter_index >= len(self.__indices):
             raise StopIteration
         return self.data[self.__indices[self.__iter_index]]
+
+    def __contains__(self, v) -> bool:
+        return v in self.data.keys()
 
 
 TBaseIndexNameDictInnerModel = TypeVar(
@@ -361,7 +373,7 @@ class BaseIndexNameDictModel(
         self.__iter_index: int = 0
 
     def names(self):
-        return sorted(list(self.data.keys()))
+        return list(self.data.keys())
 
     def __getitem__(self, name: str) -> TBaseIndexNameDictInnerModel:
         return self.get(name)
@@ -406,6 +418,7 @@ class BaseIndexNameDictModel(
 
     def __iter__(self):
         self.__iter_index = -1
+        self.__names = sorted(list(self.data.keys()))
         return self
 
     def __next__(self) -> TBaseIndexNameDictInnerModel:
@@ -413,6 +426,9 @@ class BaseIndexNameDictModel(
         if self.__iter_index >= len(self.__names):
             raise StopIteration
         return self.data[self.__names[self.__iter_index]]
+
+    def __contains__(self, v) -> bool:
+        return v in self.data.keys()
 
 
 TBaseIndexNameDictModel = TypeVar(

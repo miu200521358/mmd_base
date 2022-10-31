@@ -1,7 +1,3 @@
-import os
-from glob import glob
-from typing import Optional
-
 import numpy as np
 from mlib.base.collection import (
     BaseHashModel,
@@ -9,10 +5,10 @@ from mlib.base.collection import (
     BaseIndexListModel,
     BaseIndexNameListModel,
 )
-from mlib.math import MVector3D
-from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
+from mlib.base.math import MVector3D
 from mlib.pmx.part import (
     Bone,
+    BoneFlg,
     BoneTree,
     DisplaySlot,
     DrawFlg,
@@ -26,7 +22,6 @@ from mlib.pmx.part import (
     ToonSharing,
     Vertex,
 )
-from mlib.pmx.shader import MShader, VsLayout
 
 
 class Vertices(BaseIndexListModel[Vertex]):
@@ -150,6 +145,61 @@ class Bones(BaseIndexNameListModel[Bone]):
 
         return bone_link_indecies
 
+    # 末端位置を取得
+    def get_tail_position(self, bone_name: str):
+        if bone_name not in self:
+            return MVector3D()
+
+        bone = self[bone_name]
+        to_pos = MVector3D()
+
+        from_pos = self[bone.name].position
+        if (
+            BoneFlg.TAIL_IS_BONE not in bone.bone_flg
+            and bone.tail_position != MVector3D()
+        ):
+            # 表示先が相対パスの場合、保持
+            to_pos = from_pos + bone.tail_position
+        elif (
+            BoneFlg.TAIL_IS_BONE in bone.bone_flg
+            and bone.tail_index >= 0
+            and bone.tail_index in self
+        ):
+            # 表示先が指定されているの場合、保持
+            to_pos = self[bone.tail_index].position
+        else:
+            # 表示先がない場合、とりあえず親ボーンからの向きにする
+            from_pos = self[bone.parent_index].position
+            to_pos = self[bone.name].position
+
+        return to_pos
+
+    # ローカルX軸の取得
+    def get_local_x_axis(self, bone_name: str):
+        if bone_name not in self:
+            return MVector3D()
+
+        bone = self[bone_name]
+        to_pos = MVector3D()
+
+        if bone.fixed_axis != MVector3D():
+            # 軸制限がある場合、親からの向きを保持
+            fixed_x_axis = bone.fixed_axis.normalized()
+        else:
+            fixed_x_axis = MVector3D()
+
+        from_pos = self[bone.name].position
+        to_pos = self.get_tail_position(bone_name)
+
+        # 軸制限の指定が無い場合、子の方向
+        x_axis = (to_pos - from_pos).normalized()
+
+        if fixed_x_axis != MVector3D() and np.sign(fixed_x_axis.x) != np.sign(x_axis.x):
+            # 軸制限の軸方向と計算上の軸方向が違う場合、逆ベクトル
+            x_axis = -fixed_x_axis
+
+        return x_axis
+
 
 class Morphs(BaseIndexNameListModel[Morph]):
     """
@@ -261,168 +311,3 @@ class PmxModel(BaseHashModel):
 
     def get_name(self) -> str:
         return self.name
-
-    def init_draw(self, shader):
-        if self.for_draw:
-            # 既にフラグが立ってたら描画初期化済み
-            return
-
-        # 描画初期化
-        self.for_draw = True
-        # 共有Toon読み込み
-        for tidx, tpath in enumerate(glob("resources/share_toon/*.bmp")):
-            self.toon_textures[tidx] = Texture(os.path.abspath(tpath))
-
-        self.meshs = Meshs(shader, self)
-
-    def update(self):
-        if not self.for_draw:
-            return
-        self.meshs.update()
-
-    def draw(self):
-        if not self.for_draw:
-            return
-        self.meshs.draw()
-
-
-class Meshs(BaseIndexListModel[Mesh]):
-    """
-    メッシュリスト
-    """
-
-    def __init__(self, shader: MShader, model: PmxModel):
-        super().__init__()
-
-        self.shader = shader
-
-        # 頂点情報
-        self.vertices = np.array(
-            [
-                np.array(
-                    [
-                        *v.position.vector,
-                        *v.normal.vector,
-                        v.uv.x,
-                        1 - v.uv.y,
-                        *(
-                            v.extended_uvs[0].vector
-                            if len(v.extended_uvs) > 0
-                            else [0, 0]
-                        ),
-                        v.edge_factor,
-                    ],
-                    dtype=np.float32,
-                )
-                for v in model.vertices
-            ],
-            dtype=np.float32,
-        )
-
-        face_dtype: type = (
-            np.uint8
-            if model.vertex_count == 1
-            else np.uint16
-            if model.vertex_count == 2
-            else np.uint32
-        )
-
-        # 面情報
-        self.faces: np.ndarray = np.array(
-            [
-                np.array(
-                    [f.vertices[2], f.vertices[1], f.vertices[0]], dtype=face_dtype
-                )
-                for f in model.faces
-            ],
-            dtype=face_dtype,
-        )
-
-        prev_vertices_count = 0
-        for material in model.materials:
-            texture: Optional[Texture] = None
-            if material.texture_index >= 0:
-                texture = model.textures[material.texture_index]
-                texture.init_draw(model.path, TextureType.TEXTURE)
-
-            toon_texture: Optional[Texture] = None
-            if ToonSharing.SHARING == material.toon_sharing_flg:
-                # 共有Toon
-                toon_texture = model.toon_textures[material.toon_texture_index]
-                toon_texture.init_draw(
-                    model.path, TextureType.TOON, is_individual=False
-                )
-            elif (
-                ToonSharing.INDIVIDUAL == material.toon_sharing_flg
-                and material.toon_texture_index >= 0
-            ):
-                # 個別Toon
-                toon_texture = model.textures[material.toon_texture_index]
-                toon_texture.init_draw(model.path, TextureType.TOON)
-
-            sphere_texture: Optional[Texture] = None
-            if material.sphere_texture_index >= 0:
-                sphere_texture = model.textures[material.sphere_texture_index]
-                sphere_texture.init_draw(model.path, TextureType.SPHERE)
-
-            self.append(
-                Mesh(
-                    material,
-                    texture,
-                    toon_texture,
-                    sphere_texture,
-                    prev_vertices_count,
-                    face_dtype,
-                )
-            )
-
-            prev_vertices_count += material.vertices_count
-
-        # ---------------------
-
-        self.vao = VAO()
-        self.vbo_vertices = VBO(
-            self.vertices,
-            {
-                VsLayout.POSITION_ID.value: {"size": 3, "offset": 0},
-                VsLayout.NORMAL_ID.value: {"size": 3, "offset": 3},
-                VsLayout.UV_ID.value: {"size": 2, "offset": 6},
-                VsLayout.EXTEND_UV_ID.value: {"size": 2, "offset": 8},
-                VsLayout.EDGE_ID.value: {"size": 1, "offset": 10},
-            },
-        )
-
-        self.ibo_faces = IBO(self.faces)
-
-    def update(self):
-        pass
-
-    def draw(self):
-        for mesh in self.data:
-            self.vao.bind()
-            self.vbo_vertices.set_slot(VsLayout.POSITION_ID)
-            self.vbo_vertices.set_slot(VsLayout.NORMAL_ID)
-            self.vbo_vertices.set_slot(VsLayout.UV_ID)
-            self.vbo_vertices.set_slot(VsLayout.EXTEND_UV_ID)
-            self.vbo_vertices.set_slot(VsLayout.EDGE_ID)
-            self.ibo_faces.bind()
-
-            # FIXME MSAA https://blog.techlab-xe.net/opengl%E3%81%A7msaa/
-
-            # モデル描画
-            self.shader.use()
-            mesh.draw_model(self.shader, self.ibo_faces)
-            self.shader.unuse()
-
-            if (
-                DrawFlg.DRAWING_EDGE in mesh.material.draw_flg
-                and mesh.material.diffuse_color.w > 0
-            ):
-                # エッジ描画
-                self.shader.use(edge=True)
-                mesh.draw_edge(self.shader, self.ibo_faces)
-                self.shader.unuse()
-
-            self.ibo_faces.unbind()
-            self.vbo_vertices.unbind()
-            self.vao.unbind()

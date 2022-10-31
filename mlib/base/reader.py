@@ -7,8 +7,8 @@ from typing import Any, Callable, Generic, TypeVar
 import numpy as np
 from mlib.base.base import BaseModel, Encoding
 from mlib.base.collection import BaseHashModel
-from mlib.exception import MParseException
-from mlib.math import MQuaternion, MVector2D, MVector3D, MVector4D
+from mlib.base.exception import MParseException
+from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
 
 TBaseModel = TypeVar("TBaseModel", bound=BaseModel)
 TBaseHashModel = TypeVar("TBaseHashModel", bound=BaseHashModel)
