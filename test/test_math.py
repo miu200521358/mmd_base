@@ -1074,5 +1074,14 @@ def test_MMatrix4x4_mul():
     ).all()
 
 
+def test_MVector3D_class():
+    from mlib.base.math import MVector3D
+
+    v1 = MVector3D(0, 1, 2)
+    v2 = MVector3D(3, 4, 5)
+    v3 = v1 + v2
+    assert MVector3D == v3.__class__
+
+
 if __name__ == "__main__":
     pytest.main()

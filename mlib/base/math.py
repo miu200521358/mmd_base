@@ -3,9 +3,8 @@ from math import acos, cos, degrees, radians, sin, sqrt
 from typing import Any, Union
 
 import numpy as np
-from quaternion import from_rotation_matrix, quaternion
-
 from mlib.base.base import BaseModel
+from quaternion import from_rotation_matrix, quaternion
 
 
 class MRect(BaseModel):
@@ -1239,7 +1238,7 @@ class MMatrix4x4List(MVector):
         return results
 
 
-def operate_vector(v: MVector, other: Union[MVector, float, int], op) -> MVector:
+def operate_vector(v: MVector, other: Union[MVector, float, int], op):
     """
     演算処理
 
