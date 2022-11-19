@@ -98,7 +98,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
 
     def read_bones(self, motion: VmdMotion):
         for _ in range(self.read_uint()):
-            bf = VmdBoneFrame(regist=True, read=True)
+            bf = VmdBoneFrame(register=True, read=True)
 
             bf.name = self.read_text(15)
             (
@@ -183,7 +183,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
 
     def read_morphs(self, motion: VmdMotion):
         for _ in range(self.read_uint()):
-            mf = VmdMorphFrame(regist=True, read=True)
+            mf = VmdMorphFrame(register=True, read=True)
 
             mf.name = self.read_text(15)
             (mf.index, mf.ratio,) = self.unpack(
@@ -195,7 +195,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
 
     def read_cameras(self, motion: VmdMotion):
         for _ in range(self.read_uint()):
-            cf = VmdCameraFrame(regist=True, read=True)
+            cf = VmdCameraFrame(register=True, read=True)
             degrees = MVector3D()
 
             (
@@ -241,7 +241,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
 
     def read_lights(self, motion: VmdMotion):
         for _ in range(self.read_uint()):
-            lf = VmdLightFrame(regist=True, read=True)
+            lf = VmdLightFrame(register=True, read=True)
 
             (
                 lf.index,
@@ -260,7 +260,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
 
     def read_shadows(self, motion: VmdMotion):
         for _ in range(self.read_uint()):
-            sf = VmdShadowFrame(regist=True, read=True)
+            sf = VmdShadowFrame(register=True, read=True)
 
             (sf.index, sf.type, sf.distance,) = self.unpack(
                 self.read_by_format[VmdShadowFrame].unpack,
@@ -271,11 +271,11 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
 
     def read_show_iks(self, motion: VmdMotion):
         for _ in range(self.read_uint()):
-            kf = VmdShowIkFrame(regist=True, read=True)
+            kf = VmdShowIkFrame(register=True, read=True)
             kf.index = self.read_uint()
             kf.show = bool(self.read_byte())
 
             for _i in range(self.read_uint()):
                 kf.iks.append(VmdIkOnoff(self.read_text(20), bool(self.read_byte())))
 
-            motion.showiks.append(kf)
+            motion.show_iks.append(kf)

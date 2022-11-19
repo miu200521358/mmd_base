@@ -16,6 +16,7 @@ def test_read_by_filepath_ok():
     import os
 
     import numpy as np
+
     from mlib.vmd.collection import VmdMotion
     from mlib.vmd.reader import VmdReader
 
@@ -23,7 +24,9 @@ def test_read_by_filepath_ok():
     motion: VmdMotion = reader.read_by_filepath(
         os.path.join("test", "resources", "サンプルモーション.vmd")
     )
+    # cSpell:disable
     assert "日本 roco式 トレス用" == motion.model_name
+    # cSpell:enable
 
     center_bf = motion.bones["センター"][358]
     assert 358 == center_bf.index

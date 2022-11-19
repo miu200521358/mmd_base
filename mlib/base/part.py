@@ -8,7 +8,7 @@ from mlib.base.math import MQuaternion, MVector3D
 
 @unique
 class Switch(Enum):
-    """ONOFFスイッチ"""
+    """ON/OFFスイッチ"""
 
     OFF = 0
     ON = 1

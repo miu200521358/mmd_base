@@ -66,8 +66,8 @@ class VmdWriter(BaseModel):
         fout.write(struct.pack("<L", len(motion.lights)))  # 照明キーフレーム数
         fout.write(struct.pack("<L", len(motion.shadows)))  # セルフ影キーフレーム数
 
-        fout.write(struct.pack("<L", len(motion.showiks)))  # モデル表示・IK on/offキーフレーム数
-        for sk in motion.showiks:
+        fout.write(struct.pack("<L", len(motion.show_iks)))  # モデル表示・IK on/offキーフレーム数
+        for sk in motion.show_iks:
             fout.write(struct.pack("<L", sk.index))
             fout.write(struct.pack("b", sk.show))
             fout.write(struct.pack("<L", len(sk.iks)))

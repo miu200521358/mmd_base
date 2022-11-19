@@ -3,6 +3,7 @@ from enum import Flag, IntEnum, unique
 from typing import List, Optional
 
 import numpy as np
+
 from mlib.base.base import BaseModel
 from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
@@ -28,7 +29,7 @@ class Deform(BaseModel, ABC):
 
     Parameters
     ----------
-    indecies : List[int]
+    indexes : List[int]
         ボーンINDEXリスト
     weights : List[float]
         ウェイトリスト
@@ -36,13 +37,13 @@ class Deform(BaseModel, ABC):
         デフォームボーン個数
     """
 
-    def __init__(self, indecies: List[int], weights: List[float], count: int):
+    def __init__(self, indexes: List[int], weights: List[float], count: int):
         super().__init__()
-        self.indecies = np.array(indecies, dtype=np.int32)
+        self.indexes = np.array(indexes, dtype=np.int32)
         self.weights = np.array(weights, dtype=np.float64)
         self.count: int = count
 
-    def get_indecies(self, weight_threshold: float = 0) -> np.ndarray:
+    def get_indexes(self, weight_threshold: float = 0) -> np.ndarray:
         """
         デフォームボーンINDEXリスト取得
 
@@ -57,7 +58,7 @@ class Deform(BaseModel, ABC):
         np.ndarray
             デフォームボーンINDEXリスト
         """
-        return self.indecies[self.weights >= weight_threshold]
+        return self.indexes[self.weights >= weight_threshold]
 
     def get_weights(self, weight_threshold: float = 0) -> np.ndarray:
         """
@@ -94,7 +95,7 @@ class Deform(BaseModel, ABC):
             wlist /= wlist.sum(axis=0, keepdims=1)
 
             # ウェイトの大きい順に指定個数までを対象とする
-            self.indecies = ilist[np.argsort(-wlist)][: self.count]
+            self.indexes = ilist[np.argsort(-wlist)][: self.count]
             self.weights = wlist[np.argsort(-wlist)][: self.count]
 
         # ウェイト正規化

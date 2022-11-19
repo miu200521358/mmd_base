@@ -1,4 +1,5 @@
 import numpy as np
+
 from mlib.base.collection import (
     BaseHashModel,
     BaseIndexDictModel,
@@ -11,15 +12,12 @@ from mlib.pmx.part import (
     BoneFlg,
     BoneTree,
     DisplaySlot,
-    DrawFlg,
     Face,
     Joint,
     Material,
     Morph,
     RigidBody,
     Texture,
-    TextureType,
-    ToonSharing,
     Vertex,
 )
 
@@ -124,26 +122,26 @@ class Bones(BaseIndexNameListModel[Bone]):
             if b.index not in parent_indices and b.index not in list(bone_trees.keys())
         ]:
             # レイヤー込みのINDEXリスト取得
-            bone_link_indecies = sorted(self.create_bone_link_indecies(end_bone_index))
-            bone_trees[bone_link_indecies[0][1]].make_tree(
-                self.data, bone_link_indecies, index=1
+            bone_link_indexes = sorted(self.create_bone_link_indexes(end_bone_index))
+            bone_trees[bone_link_indexes[0][1]].make_tree(
+                self.data, bone_link_indexes, index=1
             )
 
         return bone_trees
 
-    def create_bone_link_indecies(
-        self, child_idx: int, bone_link_indecies=None
+    def create_bone_link_indexes(
+        self, child_idx: int, bone_link_indexes=None
     ) -> list[tuple[int, int]]:
         # 階層＞リスト順（＞FK＞IK＞付与）
-        if not bone_link_indecies:
-            bone_link_indecies = []
+        if not bone_link_indexes:
+            bone_link_indexes = []
 
         for b in reversed(self.data):
             if b.index == self[child_idx].parent_index:
-                bone_link_indecies.append((b.layer, b.index))
-                return self.create_bone_link_indecies(b.index, bone_link_indecies)
+                bone_link_indexes.append((b.layer, b.index))
+                return self.create_bone_link_indexes(b.index, bone_link_indexes)
 
-        return bone_link_indecies
+        return bone_link_indexes
 
     # 末端位置を取得
     def get_tail_position(self, bone_name: str):
@@ -307,7 +305,7 @@ class PmxModel(BaseHashModel):
         self.rigidbodies = RigidBodies()
         self.joints = Joints()
         self.for_draw = False
-        self.meshs = None
+        self.meshes = None
 
     def get_name(self) -> str:
         return self.name

@@ -3,8 +3,9 @@ from math import acos, cos, degrees, radians, sin, sqrt
 from typing import Any, Union
 
 import numpy as np
-from mlib.base.base import BaseModel
 from quaternion import from_rotation_matrix, quaternion
+
+from mlib.base.base import BaseModel
 
 
 class MRect(BaseModel):
@@ -746,7 +747,7 @@ class MQuaternion(MVector):
         mat_z2.rotate(local_z_qq)  # ローカル軸上のZ回転
         mat_z2.rotate(local2global_qq)  # ローカル軸上からグローバル軸上に変換
 
-        z_qq = mat_z2.to_quternion()
+        z_qq = mat_z2.to_quaternion()
 
         # YZ回転からY成分だけ取り出す -----------
 
@@ -755,7 +756,7 @@ class MQuaternion(MVector):
 
         mat_y2 = MMatrix4x4(identity=True)
         mat_y2.rotate(z_qq)  # グローバルZの回転量
-        mat_y2_qq = (mat_y1 * mat_y2.inverse()).to_quternion()
+        mat_y2_qq = (mat_y1 * mat_y2.inverse()).to_quaternion()
 
         # X成分の捻れが混入したので、XY回転からYZ回転を取り出すことでXキャンセルをかける。
         mat_y3 = MMatrix4x4(identity=True)
@@ -778,7 +779,7 @@ class MQuaternion(MVector):
 
         x_qq: MQuaternion = (
             mat_x5.inverse() * mat_x4 * mat_x6.inverse()
-        ).to_quternion()
+        ).to_quaternion()
 
         return (x_qq, y_qq, z_qq, yz_qq)
 
@@ -1133,7 +1134,7 @@ class MMatrix4x4(MVector):
     def map_vector(self, v: MVector3D) -> MVector3D:
         return MVector3D(*np.sum(v.vector * self.vector[:3, :3], axis=1))
 
-    def to_quternion(self):
+    def to_quaternion(self):
         q = MQuaternion()
         v = self.vector
 

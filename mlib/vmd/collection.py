@@ -1,4 +1,5 @@
 import numpy as np
+
 from mlib.base.bezier import evaluate
 from mlib.base.collection import (
     BaseHashModel,
@@ -34,7 +35,7 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         indices = self.indices()
         if index not in indices:
             # キーフレがない場合、生成したのを返す（保持はしない）
-            prev_index, middle_index, next_index = self.range_indecies(index)
+            prev_index, middle_index, next_index = self.range_indexes(index)
             # prevとnextの範囲内である場合、補間曲線ベースで求め直す
             return self.calc(prev_index, middle_index, next_index, index)
         return self.data[index]
@@ -120,12 +121,12 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             _description_
         """
         # bone_frames = self.get_by_index(index)
-        # matrixs = MMatrix4x4List(keys=layered_bone_names)
+        # matrices = MMatrix4x4List(keys=layered_bone_names)
         # for ni, bone_name_links in enumerate(layered_bone_names.values()):
         #     for bi, bone_name in enumerate(bone_name_links):
         #         if bone_name in bone_frames:
-        #             matrixs[ni, bi] = bone_frames[bone_name].matrix.vector
-        # return matrixs.multiply()
+        #             matrices[ni, bi] = bone_frames[bone_name].matrix.vector
+        # return matrices.multiply()
         pass
 
     def get_by_index(self, index: int) -> dict[str, VmdBoneFrame]:
@@ -225,7 +226,7 @@ class VmdMotion(BaseHashModel):
         照明キーフレリスト, by default []
     shadows : VmdShadowFrames
         セルフ影キーフレリスト, by default []
-    showiks : VmdShowIkFrames
+    show_iks : VmdShowIkFrames
         IKキーフレリスト, by default []
     """
 
@@ -241,7 +242,7 @@ class VmdMotion(BaseHashModel):
         self.cameras: VmdCameraFrames = VmdCameraFrames()
         self.lights: VmdLightFrames = VmdLightFrames()
         self.shadows: VmdShadowFrames = VmdShadowFrames()
-        self.showiks: VmdShowIkFrames = VmdShowIkFrames()
+        self.show_iks: VmdShowIkFrames = VmdShowIkFrames()
 
     def get_bone_count(self) -> int:
         return int(np.sum([len(bfs) for bfs in self.bones]))
