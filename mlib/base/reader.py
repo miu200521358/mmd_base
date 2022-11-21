@@ -356,8 +356,8 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         v: Any = None
         for attr_name, format_type in formats:
             if isinstance(format_type(), BaseModel):
-                submodel: TBaseModel = format_type()
-                v = self.read_to_model([(attr_name, submodel.__class__)], submodel)
+                sub_model: TBaseModel = format_type()
+                v = self.read_to_model([(attr_name, sub_model.__class__)], sub_model)
             else:
                 v = self.read_by_format[format_type].reader()
 

@@ -102,19 +102,19 @@ class PmxWriter(BaseModel):
                 # deform
                 if type(vertex.deform) is Bdef1:
                     fout.write(struct.pack(TYPE_BYTE, 0))
-                    write_number(fout, bone_idx_type, vertex.deform.indecies[0])
+                    write_number(fout, bone_idx_type, vertex.deform.indexes[0])
                 elif type(vertex.deform) is Bdef2:
                     fout.write(struct.pack(TYPE_BYTE, 1))
-                    write_number(fout, bone_idx_type, vertex.deform.indecies[0])
-                    write_number(fout, bone_idx_type, vertex.deform.indecies[1])
+                    write_number(fout, bone_idx_type, vertex.deform.indexes[0])
+                    write_number(fout, bone_idx_type, vertex.deform.indexes[1])
 
                     write_number(fout, TYPE_FLOAT, vertex.deform.weights[0], True)
                 elif type(vertex.deform) is Bdef4:
                     fout.write(struct.pack(TYPE_BYTE, 2))
-                    write_number(fout, bone_idx_type, vertex.deform.indecies[0])
-                    write_number(fout, bone_idx_type, vertex.deform.indecies[1])
-                    write_number(fout, bone_idx_type, vertex.deform.indecies[2])
-                    write_number(fout, bone_idx_type, vertex.deform.indecies[3])
+                    write_number(fout, bone_idx_type, vertex.deform.indexes[0])
+                    write_number(fout, bone_idx_type, vertex.deform.indexes[1])
+                    write_number(fout, bone_idx_type, vertex.deform.indexes[2])
+                    write_number(fout, bone_idx_type, vertex.deform.indexes[3])
 
                     write_number(fout, TYPE_FLOAT, vertex.deform.weights[0], True)
                     write_number(fout, TYPE_FLOAT, vertex.deform.weights[1], True)
@@ -122,8 +122,8 @@ class PmxWriter(BaseModel):
                     write_number(fout, TYPE_FLOAT, vertex.deform.weights[3], True)
                 elif type(vertex.deform) is Sdef:
                     fout.write(struct.pack(TYPE_BYTE, 3))
-                    write_number(fout, bone_idx_type, vertex.deform.indecies[0])
-                    write_number(fout, bone_idx_type, vertex.deform.indecies[1])
+                    write_number(fout, bone_idx_type, vertex.deform.indexes[0])
+                    write_number(fout, bone_idx_type, vertex.deform.indexes[1])
                     write_number(fout, TYPE_FLOAT, vertex.deform.weights[0], True)
                     write_number(fout, TYPE_FLOAT, float(vertex.deform.sdef_c.x))
                     write_number(fout, TYPE_FLOAT, float(vertex.deform.sdef_c.y))

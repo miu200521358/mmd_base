@@ -1,38 +1,41 @@
 import pytest
 
 
-def test_Bdef2_get_indecies():
+def test_Bdef2_get_indexes():
     import numpy as np
+
     from mlib.pmx.part import Bdef2
 
     assert np.isclose(
         np.array([1, 2]),
-        Bdef2(1, 2, 0.3).get_indecies(),
+        Bdef2(1, 2, 0.3).get_indexes(),
     ).all()
 
     assert np.isclose(
         np.array([2]),
-        Bdef2(1, 2, 0.3).get_indecies(0.5),
+        Bdef2(1, 2, 0.3).get_indexes(0.5),
     ).all()
 
 
-def test_Bdef4_get_indecies():
+def test_Bdef4_get_indexes():
     import numpy as np
+
     from mlib.pmx.part import Bdef4
 
     assert np.isclose(
         np.array([1, 2, 3, 4]),
-        Bdef4(1, 2, 3, 4, 0.3, 0.2, 0.4, 0.1).get_indecies(),
+        Bdef4(1, 2, 3, 4, 0.3, 0.2, 0.4, 0.1).get_indexes(),
     ).all()
 
     assert np.isclose(
         np.array([1, 3]),
-        Bdef4(1, 2, 3, 4, 0.3, 0.2, 0.4, 0.1).get_indecies(0.3),
+        Bdef4(1, 2, 3, 4, 0.3, 0.2, 0.4, 0.1).get_indexes(0.3),
     ).all()
 
 
 def test_Bdef4_normalized():
     import numpy as np
+
     from mlib.pmx.part import Bdef4
 
     d = Bdef4(1, 2, 3, 4, 5, 6, 7, 8)
@@ -104,6 +107,7 @@ def test_read_by_filepath_ok():
     import os
 
     import numpy as np
+
     from mlib.pmx.collection import PmxModel
     from mlib.pmx.part import (
         BoneFlg,
@@ -147,7 +151,7 @@ def test_read_by_filepath_ok():
     assert DeformType.BDEF2 == model.vertices[0].deform_type
     assert np.isclose(
         np.array([4, 108]),
-        model.vertices[0].deform.get_indecies(),
+        model.vertices[0].deform.get_indexes(),
     ).all()
     assert np.isclose(
         np.array([0.7978904, 0.2021096]),
@@ -156,6 +160,7 @@ def test_read_by_filepath_ok():
     assert 1 == model.vertices[0].edge_factor
     # 面
     assert [2, 1, 0] == model.faces[0].vertices
+    # cSpell:disable
     # テクスチャ
     assert "tex\\_09.png" == model.textures[16].texture_path
     assert "tex\\MatcapWarp_01.png" == model.textures[1].texture_path
@@ -164,6 +169,7 @@ def test_read_by_filepath_ok():
     assert (
         "N00_000_00_FaceEyeline_00_FACE (Instance)" == model.materials[7].english_name
     )
+    # cSpell:enable
     assert np.isclose(
         np.array([1, 1, 1, 1]),
         model.materials[7].diffuse_color.vector,
@@ -360,11 +366,13 @@ def test_read_by_filepath_complicated():
     from mlib.pmx.reader import PmxReader
 
     reader = PmxReader()
+    # cSpell:disable
     model: PmxModel = reader.read_by_filepath(
         "D:\\MMD\\MikuMikuDance_v926x64\\UserFile\\Model\\刀剣乱舞\\"
         + "025_一期一振\\一期一振 ちゃむ式 20211211\\01_10_極_一期_ちゃむ20211211.pmx",
     )
     assert "極 一期 ちゃむ" == model.name
+    # cSpell:enable
 
 
 def test_create_bone_links():

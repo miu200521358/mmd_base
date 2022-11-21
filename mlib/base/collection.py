@@ -268,7 +268,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
         self.__indices = self.indices()
         self.name = data[0].name if data else name if name else None
 
-    def range_indecies(self, index: int) -> tuple[int, int, int]:
+    def range_indexes(self, index: int) -> tuple[int, int, int]:
         """
         指定されたINDEXの前後を返す
 

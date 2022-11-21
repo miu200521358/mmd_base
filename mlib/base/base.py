@@ -2,6 +2,7 @@ from enum import Enum
 from typing import TypeVar
 
 import _pickle as cPickle  # type: ignore
+
 from mlib.base.logger import parse2str
 
 

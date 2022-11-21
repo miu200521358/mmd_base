@@ -32,10 +32,12 @@ def test_parse2str():
             return parse2str(self)
 
     assert parse2str(ChildSample(2, "sss")) == "ChildSample[y=2, b=sss]"
+    # cSpell:disable
     assert (
         parse2str(ChildSample(1.23456789, "abcdefghijklmn"))
         == "ChildSample[y=1.23456789, b=abcdefghijklmn]"
     )
+    # cSpell:enable
     assert (
         parse2str(Sample(2, "sss", 4.5, "xyz"))
         == "Sample[x=2, a=sss, child=ChildSample[y=4.5, b=xyz]]"

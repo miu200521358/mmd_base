@@ -12,7 +12,7 @@ class BaseVmdFrame(BaseIndexModel):
     ----------
     index : int, optional
         キーフレ, by default None
-    regist : bool, optional
+    registerer : bool, optional
         登録対象か否か, by default None
     read : bool, optional
         VMDデータから読み込んだデータか, by default None
@@ -21,11 +21,11 @@ class BaseVmdFrame(BaseIndexModel):
     def __init__(
         self,
         index: int = None,
-        regist: bool = None,
+        registerer: bool = None,
         read: bool = None,
     ):
         super().__init__(index or 0)
-        self.regist = regist or False
+        self.registerer = registerer or False
         self.read = read or False
 
 
@@ -39,7 +39,7 @@ class BaseVmdNameFrame(BaseIndexNameModel):
         キーフレ, by default None
     name : str, optional
         名前, by default None
-    regist : bool, optional
+    register : bool, optional
         登録対象か否か, by default None
     read : bool, optional
         VMDデータから読み込んだデータか, by default None
@@ -49,11 +49,11 @@ class BaseVmdNameFrame(BaseIndexNameModel):
         self,
         index: int = None,
         name: str = None,
-        regist: bool = None,
+        register: bool = None,
         read: bool = None,
     ):
         super().__init__(index or 0, name or "")
-        self.regist = regist or False
+        self.register = register or False
         self.read = read or False
 
 
@@ -238,7 +238,7 @@ class VmdBoneFrame(BaseVmdNameFrame):
         回転, by default None
     interpolations : Interpolations, optional
         補間曲線, by default None
-    regist : bool, optional
+    register : bool, optional
         登録対象か否か, by default None
     read : bool, optional
         VMDデータから読み込んだデータか, by default None
@@ -252,10 +252,10 @@ class VmdBoneFrame(BaseVmdNameFrame):
         rotation: MQuaternion = None,
         matrix: MMatrix4x4 = None,
         interpolations: BoneInterpolations = None,
-        regist: bool = None,
+        register: bool = None,
         read: bool = None,
     ):
-        super().__init__(index, name, regist, read)
+        super().__init__(index, name, register, read)
         self.position: MVector3D = position or MVector3D()
         self.rotation: MQuaternion = rotation or MQuaternion()
         self.interpolations: BoneInterpolations = interpolations or BoneInterpolations()
@@ -279,7 +279,7 @@ class VmdMorphFrame(BaseVmdNameFrame):
         キーフレ, by default None
     ratio : float, optional
         変化量, by default None
-    regist : bool, optional
+    register : bool, optional
         登録対象か否か, by default None
     read : bool, optional
         VMDデータから読み込んだデータか, by default None
@@ -290,10 +290,10 @@ class VmdMorphFrame(BaseVmdNameFrame):
         index: int = None,
         name: str = None,
         ratio: float = None,
-        regist: bool = None,
+        register: bool = None,
         read: bool = None,
     ):
-        super().__init__(index, name, regist, read)
+        super().__init__(index, name, register, read)
         self.name: str = name or ""
         self.ratio: float = ratio or 0.0
 
@@ -355,7 +355,7 @@ class VmdCameraFrame(BaseVmdFrame):
         パース, by default None
     interpolations : CameraInterpolations, optional
         補間曲線, by default None
-    regist : bool, optional
+    register : bool, optional
         登録対象か否か, by default None
     read : bool, optional
         VMDデータから読み込んだデータか, by default None
@@ -370,10 +370,10 @@ class VmdCameraFrame(BaseVmdFrame):
         viewing_angle: int = None,
         perspective: bool = None,
         interpolations: CameraInterpolations = None,
-        regist: bool = None,
+        register: bool = None,
         read: bool = None,
     ):
-        super().__init__(index, regist, read)
+        super().__init__(index, register, read)
         self.position: MVector3D = position or MVector3D()
         self.rotation: BaseRotationModel = rotation or BaseRotationModel()
         self.distance: float = distance or 0.0
@@ -396,7 +396,7 @@ class VmdLightFrame(BaseVmdFrame):
         色, by default None
     position : MVector3D, optional
         位置, by default None
-    regist : bool, optional
+    register : bool, optional
         登録対象か否か, by default None
     read : bool, optional
         VMDデータから読み込んだデータか, by default None
@@ -407,10 +407,10 @@ class VmdLightFrame(BaseVmdFrame):
         index: int = None,
         color: MVector3D = None,
         position: MVector3D = None,
-        regist: bool = None,
+        register: bool = None,
         read: bool = None,
     ):
-        super().__init__(index, regist, read)
+        super().__init__(index, register, read)
         self.color: MVector3D = color or MVector3D()
         self.position: MVector3D = position or MVector3D()
 
@@ -427,7 +427,7 @@ class VmdShadowFrame(BaseVmdFrame):
         セルフ影モード, by default None
     distance : float, optional
         影範囲距離, by default None
-    regist : bool, optional
+    register : bool, optional
         登録対象か否か, by default None
     read : bool, optional
         VMDデータから読み込んだデータか, by default None
@@ -438,10 +438,10 @@ class VmdShadowFrame(BaseVmdFrame):
         index: int = None,
         mode: int = None,
         distance: float = None,
-        regist: bool = None,
+        register: bool = None,
         read: bool = None,
     ):
-        super().__init__(index, regist, read)
+        super().__init__(index, register, read)
         self.type: int = mode or 0
         self.distance: float = distance or 0.0
 
@@ -480,7 +480,7 @@ class VmdShowIkFrame(BaseVmdFrame):
         表示有無, by default None
     iks : list[VmdIk], optional
         IKリスト, by default None
-    regist : bool, optional
+    register : bool, optional
         登録対象か否か, by default None
     read : bool, optional
         VMDデータから読み込んだデータか, by default None
@@ -491,9 +491,9 @@ class VmdShowIkFrame(BaseVmdFrame):
         index: int = None,
         show: bool = None,
         iks: list[VmdIkOnoff] = None,
-        regist: bool = None,
+        register: bool = None,
         read: bool = None,
     ):
-        super().__init__(index, regist, read)
+        super().__init__(index, register, read)
         self.show: bool = show or True
         self.iks: list[VmdIkOnoff] = iks or []

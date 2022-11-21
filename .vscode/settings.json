@@ -1,7 +1,7 @@
 {
-    "python.testing.pytestArgs": [
-        "test"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    // cSpell:disable
+    "cSpell.words": [
+        "fffffb",
+        "fffffffffffbfffff",
+    ]
 }

@@ -7,6 +7,7 @@ from datetime import datetime
 from enum import IntEnum
 
 import numpy as np
+
 from mlib.base.exception import MLibException
 
 
@@ -39,7 +40,7 @@ class MLogger:
     # システム全体のロギングレベル
     total_level = logging.INFO
     # システム全体の開始出力日時
-    outout_datetime = ""
+    output_datetime = ""
 
     # LoggingMode
     mode = LoggingMode.MODE_READONLY
@@ -47,7 +48,9 @@ class MLogger:
     default_out_path = ""
     # デフォルト翻訳言語
     lang = "en"
-    translater = None
+    translator = None
+    # i18n配置ディレクトリ
+    lang_dir = None
 
     logger = None
     re_break = re.compile(r"\n")
@@ -59,7 +62,7 @@ class MLogger:
         self.default_level = level
 
         # ロガー
-        self.logger = logging.getLogger("auto-trace-3").getChild(self.module_name)
+        self.logger = logging.getLogger("mutool").getChild(self.module_name)
 
         if not out_path:
             # クラス単位の出力パスがない場合、デフォルトパス
@@ -72,20 +75,6 @@ class MLogger:
             self.file_handler.setFormatter(logging.Formatter(self.DEFAULT_FORMAT))
 
         self.stream_handler = logging.StreamHandler()
-
-    def time(self, msg, *args, **kwargs):
-        if not kwargs:
-            kwargs = {}
-
-        kwargs["level"] = self.TIMER
-        self.print_logger(msg, *args, **kwargs)
-
-    def info_debug(self, msg, *args, **kwargs):
-        if not kwargs:
-            kwargs = {}
-
-        kwargs["level"] = self.INFO_DEBUG
-        self.print_logger(msg, *args, **kwargs)
 
     def test(self, msg, *args, **kwargs):
         if not kwargs:
@@ -161,12 +150,6 @@ class MLogger:
         target_level = kwargs.pop("level", logging.INFO)
         if self.total_level <= target_level and self.default_level <= target_level:
             # システム全体のロギングレベルもクラス単位のロギングレベルもクリアしてる場合のみ出力
-            # サブモジュールのハンドラをクリア
-            logger = logging.getLogger()
-            while logger.hasHandlers():
-                logger.removeHandler(logger.handlers[0])
-            self.logger.addHandler(self.stream_handler)
-            self.logger.addHandler(self.file_handler)
 
             # モジュール名を出力するよう追加
             extra_args = {}
@@ -176,7 +159,9 @@ class MLogger:
             if self.mode == LoggingMode.MODE_UPDATE and logging.DEBUG < target_level:
                 # 更新ありの場合、既存データのチェックを行って追記する
                 messages = []
-                with open("i18n/messages.pot", mode="r", encoding="utf-8") as f:
+                with open(
+                    f"{self.lang_dir}/messages.pot", mode="r", encoding="utf-8"
+                ) as f:
                     messages = f.readlines()
 
                 new_msg = self.re_break.sub("\\\\n", msg)
@@ -192,11 +177,13 @@ class MLogger:
                     messages.append("\n")
                     print("add message: %s", new_msg)
 
-                    with open("i18n/messages.pot", mode="w", encoding="utf-8") as f:
+                    with open(
+                        f"{self.lang_dir}/messages.pot", mode="w", encoding="utf-8"
+                    ) as f:
                         f.writelines(messages)
 
             # 翻訳結果を取得する
-            trans_msg = self.translater.gettext(msg)
+            trans_msg = self.translator.gettext(msg)
 
             # ログレコード生成
             if (
@@ -313,41 +300,47 @@ class MLogger:
         msg_block = []
 
         for msg_line in msg.split("\n"):
-            # msg_block.append("[{0}] {1}".format(logging.getLevelName(level)[0], msg_line))
             msg_block.append(msg_line)
 
         return "\n".join(msg_block)
 
     @classmethod
     def initialize(
-        cls, lang: str, mode: LoggingMode, level=logging.INFO, out_path=None
+        cls,
+        lang: str,
+        root_dir: str,
+        mode: LoggingMode = LoggingMode.MODE_READONLY,
+        level=logging.INFO,
+        out_path=None,
     ):
         logging.basicConfig(level=level, format=cls.DEFAULT_FORMAT)
         cls.total_level = level
         cls.mode = mode
         cls.lang = lang
+        cls.lang_dir = f"{root_dir}/i18n"
 
         # 翻訳用クラスの設定
-        cls.translater = gettext.translation(
+        cls.translator = gettext.translation(
             "messages",  # domain: 辞書ファイルの名前
-            localedir="i18n",  # 辞書ファイル配置ディレクトリ
+            localedir=cls.lang_dir,  # 辞書ファイル配置ディレクトリ
             languages=[lang],  # 翻訳に使用する言語
             fallback=True,  # .moファイルが見つからなかった時は未翻訳の文字列を出力
         )
 
-        outout_datetime = "{0:%Y%m%d_%H%M%S}".format(datetime.now())
-        cls.outout_datetime = outout_datetime
+        output_datetime = "{0:%Y%m%d_%H%M%S}".format(datetime.now())
+        cls.output_datetime = output_datetime
+        log_dir = f"{root_dir}/../log"
 
         # ファイル出力ありの場合、ログファイル名生成
         if not out_path:
-            os.makedirs("../log", exist_ok=True)
-            cls.default_out_path = "../log/autotrace3_{0}.log".format(outout_datetime)
+            os.makedirs(log_dir, exist_ok=True)
+            cls.default_out_path = f"{log_dir}/mutool_{0}.log".format(output_datetime)
         else:
             cls.default_out_path = out_path
 
-        if os.path.exists("../log/quit.log"):
+        if os.path.exists(f"{log_dir}/quit.log"):
             # 終了ログは初期化時に削除
-            os.remove("../log/quit.log")
+            os.remove(f"{log_dir}/quit.log")
 
 
 def parse2str(obj: object) -> str:
@@ -392,9 +385,9 @@ def get_file_encoding(file_path):
     except:  # nopep8
         raise MLibException("unknown encoding!")
 
-    codelst = ("utf-8", "shift-jis")
+    codes = ("utf-8", "shift-jis")
 
-    for encoding in codelst:
+    for encoding in codes:
         try:
             fstr = fbytes.decode(encoding)  # bytes文字列から指定文字コードの文字列に変換
             fstr = fstr.encode("utf-8")  # uft-8文字列に変換
