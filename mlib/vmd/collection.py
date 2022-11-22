@@ -1,22 +1,13 @@
 import numpy as np
 
 from mlib.base.bezier import evaluate
-from mlib.base.collection import (
-    BaseHashModel,
-    BaseIndexDictModel,
-    BaseIndexNameDictInnerModel,
-    BaseIndexNameDictModel,
-)
+from mlib.base.collection import (BaseHashModel, BaseIndexDictModel,
+                                  BaseIndexNameDictInnerModel,
+                                  BaseIndexNameDictModel)
 from mlib.base.math import MMatrix4x4, MQuaternion
 from mlib.pmx.part import BoneTree
-from mlib.vmd.part import (
-    VmdBoneFrame,
-    VmdCameraFrame,
-    VmdLightFrame,
-    VmdMorphFrame,
-    VmdShadowFrame,
-    VmdShowIkFrame,
-)
+from mlib.vmd.part import (VmdBoneFrame, VmdCameraFrame, VmdLightFrame,
+                           VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame)
 
 
 class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
@@ -64,25 +55,25 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         prev_bf = self[prev_index]
         next_bf = self[next_index]
 
-        _, ry, _ = evaluate(bf.interpolations.rotation, prev_index, index, next_index)
+        _, ry, _ = evaluate(next_bf.interpolations.rotation, prev_index, index, next_index)
         bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
 
         _, xy, _ = evaluate(
-            bf.interpolations.translation_x, prev_index, index, next_index
+            next_bf.interpolations.translation_x, prev_index, index, next_index
         )
         bf.position.x = (
             prev_bf.position.x + (next_bf.position.x - prev_bf.position.x) * xy
         )
 
         _, yy, _ = evaluate(
-            bf.interpolations.translation_x, prev_index, index, next_index
+            next_bf.interpolations.translation_y, prev_index, index, next_index
         )
         bf.position.y = (
             prev_bf.position.y + (next_bf.position.y - prev_bf.position.y) * yy
         )
 
         _, zy, _ = evaluate(
-            bf.interpolations.translation_x, prev_index, index, next_index
+            next_bf.interpolations.translation_z, prev_index, index, next_index
         )
         bf.position.z = (
             prev_bf.position.z + (next_bf.position.z - prev_bf.position.z) * zy

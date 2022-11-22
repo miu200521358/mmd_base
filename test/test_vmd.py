@@ -28,6 +28,7 @@ def test_read_by_filepath_ok():
     assert "日本 roco式 トレス用" == motion.model_name
     # cSpell:enable
 
+    # キーフレがある
     center_bf = motion.bones["センター"][358]
     assert 358 == center_bf.index
     assert np.isclose(
@@ -86,47 +87,102 @@ def test_read_by_filepath_ok():
         upper_bf.interpolations.rotation.end.vector,
     ).all()
 
-    left_leg_ik_bf = motion.bones["右足ＩＫ"][384]
-    assert 384 == left_leg_ik_bf.index
+    right_leg_ik_bf = motion.bones["右足ＩＫ"][384]
+    assert 384 == right_leg_ik_bf.index
     assert np.isclose(
         np.array([0.548680067, 0.134522215, -2.504074097]),
-        left_leg_ik_bf.position.vector,
+        right_leg_ik_bf.position.vector,
     ).all()
     assert np.isclose(
         np.array([22.20309405, 6.80959631, 2.583712695]),
+        right_leg_ik_bf.rotation.to_euler_degrees_mmd().vector,
+    ).all()
+    assert np.isclose(
+        np.array([64, 0]),
+        right_leg_ik_bf.interpolations.translation_x.start.vector,
+    ).all()
+    assert np.isclose(
+        np.array([64, 127]),
+        right_leg_ik_bf.interpolations.translation_x.end.vector,
+    ).all()
+    assert np.isclose(
+        np.array([64, 0]),
+        right_leg_ik_bf.interpolations.translation_y.start.vector,
+    ).all()
+    assert np.isclose(
+        np.array([87, 87]),
+        right_leg_ik_bf.interpolations.translation_y.end.vector,
+    ).all()
+    assert np.isclose(
+        np.array([64, 0]),
+        right_leg_ik_bf.interpolations.translation_z.start.vector,
+    ).all()
+    assert np.isclose(
+        np.array([64, 127]),
+        right_leg_ik_bf.interpolations.translation_z.end.vector,
+    ).all()
+    assert np.isclose(
+        np.array([64, 0]),
+        right_leg_ik_bf.interpolations.rotation.start.vector,
+    ).all()
+    assert np.isclose(
+        np.array([87, 87]),
+        right_leg_ik_bf.interpolations.rotation.end.vector,
+    ).all()
+
+    # キーがないフレーム
+    left_leg_ik_bf = motion.bones["左足ＩＫ"][384]
+    assert 384 == left_leg_ik_bf.index
+    assert np.isclose(
+        np.array([-1.63, 0.05, 2.58]),
+        left_leg_ik_bf.position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-1.4, 6.7, -5.2]),
         left_leg_ik_bf.rotation.to_euler_degrees_mmd().vector,
+        rtol=0.1,
+        atol=0.1,
+    ).all()
+
+    left_leg_ik_bf = motion.bones["左足ＩＫ"][394]
+    assert 394 == left_leg_ik_bf.index
+    assert np.isclose(
+        np.array([0.76, 1.17, 1.34]),
+        left_leg_ik_bf.position.vector,
+        rtol=0.01,
+        atol=0.01,
     ).all()
     assert np.isclose(
-        np.array([64, 0]),
-        left_leg_ik_bf.interpolations.translation_x.start.vector,
+        np.array([-41.9, -1.6, 1.0]),
+        left_leg_ik_bf.rotation.to_euler_degrees_mmd().vector,
+        rtol=0.1,
+        atol=0.1,
+    ).all()
+
+    left_leg_ik_bf = motion.bones["左足ＩＫ"][412]
+    assert 412 == left_leg_ik_bf.index
+    assert np.isclose(
+        np.array([-0.76, -0.61, -1.76]),
+        left_leg_ik_bf.position.vector,
+        rtol=0.01,
+        atol=0.01,
     ).all()
     assert np.isclose(
-        np.array([64, 127]),
-        left_leg_ik_bf.interpolations.translation_x.end.vector,
+        np.array([43.1, 0.0, 0.0]),
+        left_leg_ik_bf.rotation.to_euler_degrees_mmd().vector,
+        rtol=0.1,
+        atol=0.1,
     ).all()
+
+    left_arm_bf = motion.bones["左腕"][384]
+    assert 384 == left_arm_bf.index
     assert np.isclose(
-        np.array([64, 0]),
-        left_leg_ik_bf.interpolations.translation_y.start.vector,
-    ).all()
-    assert np.isclose(
-        np.array([87, 87]),
-        left_leg_ik_bf.interpolations.translation_y.end.vector,
-    ).all()
-    assert np.isclose(
-        np.array([64, 0]),
-        left_leg_ik_bf.interpolations.translation_z.start.vector,
-    ).all()
-    assert np.isclose(
-        np.array([64, 127]),
-        left_leg_ik_bf.interpolations.translation_z.end.vector,
-    ).all()
-    assert np.isclose(
-        np.array([64, 0]),
-        left_leg_ik_bf.interpolations.rotation.start.vector,
-    ).all()
-    assert np.isclose(
-        np.array([87, 87]),
-        left_leg_ik_bf.interpolations.rotation.end.vector,
+        np.array([13.5, -4.3, 27.0]),
+        left_arm_bf.rotation.to_euler_degrees_mmd().vector,
+        rtol=0.1,
+        atol=0.1,
     ).all()
 
 
