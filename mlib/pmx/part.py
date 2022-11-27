@@ -1,13 +1,15 @@
+import os
 from abc import ABC, abstractmethod
 from enum import Flag, IntEnum, unique
 from typing import List, Optional
 
 import numpy as np
+import OpenGL.GL as gl
+from PIL import Image, ImageOps
 
 from mlib.base.base import BaseModel
 from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
-from mlib.base.part import (BaseIndexModel, BaseIndexNameModel,
-                            BaseRotationModel, Switch)
+from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
 
 
 @unique
@@ -253,6 +255,73 @@ class Texture(BaseIndexModel):
         super().__init__()
         self.texture_path = texture_path
         self.for_draw = False
+
+    def init_draw(
+        self, model_path: str, texture_type: TextureType, is_individual: bool = True
+    ):
+        if self.for_draw:
+            # 既にフラグが立ってたら描画初期化済み
+            return
+
+        # 描画初期化
+        self.for_draw = True
+
+        # global texture
+        if is_individual:
+            tex_path = os.path.abspath(
+                os.path.join(os.path.dirname(model_path), self.texture_path)
+            )
+        else:
+            tex_path = self.texture_path
+        self.image = Image.open(tex_path).convert("RGBA")
+        self.image = ImageOps.flip(self.image)
+        self.texture_type = texture_type
+
+        # テクスチャオブジェクト生成
+        self.texture = gl.glGenTextures(1)
+        self.texture_type = texture_type
+        self.texture_id = (
+            gl.GL_TEXTURE0
+            if texture_type == TextureType.TEXTURE
+            else gl.GL_TEXTURE1
+            if texture_type == TextureType.TOON
+            else gl.GL_TEXTURE2
+        )
+        self.set_texture()
+
+    def set_texture(self):
+        self.bind()
+        gl.glTexImage2D(
+            gl.GL_TEXTURE_2D,
+            0,
+            gl.GL_RGBA,
+            self.image.size[0],
+            self.image.size[1],
+            0,
+            gl.GL_RGBA,
+            gl.GL_UNSIGNED_BYTE,
+            self.image.tobytes(),
+        )
+        self.unbind()
+
+    def bind(self) -> None:
+        gl.glActiveTexture(self.texture_id)
+        gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture)
+
+        if self.texture_type == TextureType.TOON:
+            gl.glTexParameteri(
+                gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE
+            )
+            gl.glTexParameteri(
+                gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE
+            )
+
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAX_LEVEL, 0)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
+
+    def unbind(self) -> None:
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 
 
 @unique

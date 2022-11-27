@@ -11,3 +11,5 @@ numpy-quaternion
 Cython
 # bezier
 # wxPython
+PyOpenGL==3.1.6
+Pillow==9.3.0
