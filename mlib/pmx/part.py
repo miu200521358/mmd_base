@@ -6,7 +6,8 @@ import numpy as np
 
 from mlib.base.base import BaseModel
 from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
-from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
+from mlib.base.part import (BaseIndexModel, BaseIndexNameModel,
+                            BaseRotationModel, Switch)
 
 
 @unique
@@ -555,7 +556,7 @@ class Bone(BaseIndexNameModel):
 class BoneTree(BaseModel):
     """ボーンリンク"""
 
-    __slots__ = ["childs"]
+    __slots__ = ["bone", "children"]
 
     def __init__(self, bone: Bone) -> None:
         super().__init__()
@@ -563,21 +564,21 @@ class BoneTree(BaseModel):
         self.children: list[BoneTree] = []
 
     def make_tree(
-        self, bones: list[Bone], bone_link_indecies: list[tuple[int, int]], index: int
+        self, bones: list[Bone], bone_link_indexes: list[tuple[int, int]], index: int
     ):
-        if index >= len(bone_link_indecies):
+        if index >= len(bone_link_indexes):
             return
-        child_index = bone_link_indecies[index][1]
+        child_index = bone_link_indexes[index][1]
         is_exist_child = False
         for ci, child in enumerate(self.children):
             if child.bone.index == child_index:
-                self.children[ci].make_tree(bones, bone_link_indecies, index + 1)
+                self.children[ci].make_tree(bones, bone_link_indexes, index + 1)
                 is_exist_child = True
                 break
 
         if not is_exist_child:
             self.children.append(BoneTree(bones[child_index]))
-            self.children[-1].make_tree(bones, bone_link_indecies, index + 1)
+            self.children[-1].make_tree(bones, bone_link_indexes, index + 1)
 
 
 class MorphOffset(BaseModel):
