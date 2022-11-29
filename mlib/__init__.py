@@ -6,6 +6,4 @@ import_list = [
     if "__init__.py" not in f
 ]
 
-print(import_list)
-
 __all__ = import_list
