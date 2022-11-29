@@ -100,7 +100,7 @@ def test_read_by_filepath_error():
 
     reader = PmxReader()
     with pytest.raises(MParseException):
-        reader.read_by_filepath(os.path.join("test", "resources", "サンプルモーション.vmd"))
+        reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション.vmd"))
 
 
 def test_read_by_filepath_ok():
@@ -109,22 +109,14 @@ def test_read_by_filepath_ok():
     import numpy as np
 
     from mlib.pmx.collection import PmxModel
-    from mlib.pmx.part import (
-        BoneFlg,
-        DeformType,
-        DisplayType,
-        DrawFlg,
-        MorphPanel,
-        MorphType,
-        RigidBodyCollisionGroup,
-        RigidBodyMode,
-        RigidBodyShape,
-    )
+    from mlib.pmx.part import (BoneFlg, DeformType, DisplayType, DrawFlg,
+                               MorphPanel, MorphType, RigidBodyCollisionGroup,
+                               RigidBodyMode, RigidBodyShape)
     from mlib.pmx.reader import PmxReader
 
     reader = PmxReader()
     model: PmxModel = reader.read_by_filepath(
-        os.path.join("test", "resources", "サンプルモデル.pmx")
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
     )
     assert b"PMX " == model.signature
     assert 2.0 == model.version
@@ -381,7 +373,7 @@ def test_create_bone_links():
     from mlib.pmx.reader import PmxReader
 
     model = PmxReader().read_by_filepath(
-        os.path.join("test", "resources", "サンプルモデル.pmx")
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
     )
 
     bone_trees = model.bones.create_bone_links()

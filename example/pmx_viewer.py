@@ -1,11 +1,8 @@
-import os
+import argparse
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
-import argparse
-
 import wx
+
 from mlib.pmx.viewer import PmxCanvas
 
 

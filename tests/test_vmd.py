@@ -9,7 +9,7 @@ def test_read_by_filepath_error():
 
     reader = VmdReader()
     with pytest.raises(MParseException):
-        reader.read_by_filepath(os.path.join("test", "resources", "サンプルモデル.pmx"))
+        reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
 
 def test_read_by_filepath_ok():
@@ -22,7 +22,7 @@ def test_read_by_filepath_ok():
 
     reader = VmdReader()
     motion: VmdMotion = reader.read_by_filepath(
-        os.path.join("test", "resources", "サンプルモーション.vmd")
+        os.path.join("tests", "resources", "サンプルモーション.vmd")
     )
     # cSpell:disable
     assert "日本 roco式 トレス用" == motion.model_name
