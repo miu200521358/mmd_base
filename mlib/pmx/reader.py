@@ -6,38 +6,14 @@ from mlib.base.math import MVector3D
 from mlib.base.part import Switch
 from mlib.base.reader import BaseReader, StructUnpackType
 from mlib.pmx.collection import PmxModel
-from mlib.pmx.part import (
-    Bdef1,
-    Bdef2,
-    Bdef4,
-    Bone,
-    BoneFlg,
-    BoneMorphOffset,
-    DeformType,
-    DisplaySlot,
-    DisplaySlotReference,
-    DisplayType,
-    DrawFlg,
-    Face,
-    GroupMorphOffset,
-    Ik,
-    IkLink,
-    Joint,
-    Material,
-    MaterialMorphCalcMode,
-    MaterialMorphOffset,
-    Morph,
-    MorphPanel,
-    MorphType,
-    RigidBody,
-    RigidBodyCollisionGroup,
-    Sdef,
-    Texture,
-    ToonSharing,
-    UvMorphOffset,
-    Vertex,
-    VertexMorphOffset,
-)
+from mlib.pmx.part import (Bdef1, Bdef2, Bdef4, Bone, BoneFlg, BoneMorphOffset,
+                           DeformType, DisplaySlot, DisplaySlotReference,
+                           DisplayType, DrawFlg, Face, GroupMorphOffset, Ik,
+                           IkLink, Joint, Material, MaterialMorphCalcMode,
+                           MaterialMorphOffset, Morph, MorphPanel, MorphType,
+                           RigidBody, RigidBodyCollisionGroup, Sdef, Texture,
+                           ToonSharing, UvMorphOffset, Vertex,
+                           VertexMorphOffset)
 
 
 class PmxReader(BaseReader[PmxModel]):
@@ -185,7 +161,7 @@ class PmxReader(BaseReader[PmxModel]):
         self.read_joints(model)
 
         # ボーンツリー生成
-        model.bones.create_bone_links()
+        model.bone_trees = model.bones.create_bone_links()
 
     def read_vertices(self, model: PmxModel):
         """頂点データ読み込み"""

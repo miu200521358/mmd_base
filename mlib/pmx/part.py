@@ -622,32 +622,14 @@ class Bone(BaseIndexNameModel):
         self.is_system: bool = is_system or False
 
 
-class BoneTree(BaseModel):
+class BoneTree(BaseIndexModel):
     """ボーンリンク"""
 
-    __slots__ = ["bone", "children"]
+    __slots__ = ["bones"]
 
-    def __init__(self, bone: Bone) -> None:
+    def __init__(self, bones: list[Bone] = []) -> None:
         super().__init__()
-        self.bone = bone
-        self.children: list[BoneTree] = []
-
-    def make_tree(
-        self, bones: list[Bone], bone_link_indexes: list[tuple[int, int]], index: int
-    ):
-        if index >= len(bone_link_indexes):
-            return
-        child_index = bone_link_indexes[index][1]
-        is_exist_child = False
-        for ci, child in enumerate(self.children):
-            if child.bone.index == child_index:
-                self.children[ci].make_tree(bones, bone_link_indexes, index + 1)
-                is_exist_child = True
-                break
-
-        if not is_exist_child:
-            self.children.append(BoneTree(bones[child_index]))
-            self.children[-1].make_tree(bones, bone_link_indexes, index + 1)
+        self.bones: list[Bone] = bones
 
 
 class MorphOffset(BaseModel):

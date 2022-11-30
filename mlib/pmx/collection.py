@@ -76,6 +76,15 @@ class Materials(BaseIndexNameListModel[Material]):
         super().__init__()
 
 
+class BoneTrees(BaseIndexDictModel[BoneTree]):
+    """
+    BoneTreeリスト
+    """
+
+    def __init__(self):
+        super().__init__()
+
+
 class Bones(BaseIndexNameListModel[Bone]):
     """
     ボーンリスト
@@ -111,30 +120,20 @@ class Bones(BaseIndexNameListModel[Bone]):
             if b.layer == layer
         ]
 
-    def create_bone_links(self) -> dict[int, BoneTree]:
-        # 根元ボーンリスト（親ボーンがないボーンリスト）
-        bone_trees: dict[int, BoneTree] = dict(
-            [
-                (bidx, BoneTree(self[bidx]))
-                for bidx in list(
-                    set([b.index for b in self.data if 0 > b.parent_index])
-                )
-            ]
-        )
+    def create_bone_links(self) -> BoneTrees():
+        # ボーンツリー
+        bone_trees = BoneTrees()
 
-        # 親ボーンとして登録されているボーンリスト
-        parent_indices = list(set([b.parent_index for b in self.data]))
-        # 末端ボーンリスト（親ボーンとして登録が1件もないボーンのリスト）
-        for end_bone_index in [
-            b.index
-            for b in self.data
-            if b.index not in parent_indices and b.index not in list(bone_trees.keys())
-        ]:
-            # レイヤー込みのINDEXリスト取得
-            bone_link_indexes = sorted(self.create_bone_link_indexes(end_bone_index))
-            bone_trees[bone_link_indexes[0][1]].make_tree(
-                self.data, bone_link_indexes, index=1
+        # 計算ボーンリスト
+        for end_bone in self:
+            # レイヤー込みのINDEXリスト取得を末端ボーンをキーとして保持
+            bone_trees[end_bone.index] = BoneTree(
+                [
+                    self[bidx]
+                    for _, bidx in sorted(self.create_bone_link_indexes(end_bone.index))
+                ]
             )
+            bone_trees[end_bone.index].bones.append(end_bone)
 
         return bone_trees
 
@@ -309,6 +308,7 @@ class PmxModel(BaseHashModel):
         self.toon_textures = ToonTextures()
         self.materials = Materials()
         self.bones = Bones()
+        self.bone_trees = BoneTrees()
         self.morphs = Morphs()
         self.display_slots = DisplaySlots()
         self.rigidbodies = RigidBodies()
