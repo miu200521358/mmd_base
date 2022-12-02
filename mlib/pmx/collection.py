@@ -120,7 +120,7 @@ class Bones(BaseIndexNameListModel[Bone]):
             if b.layer == layer
         ]
 
-    def create_bone_links(self) -> BoneTrees():
+    def create_bone_links(self) -> BoneTrees:
         # ボーンツリー
         bone_trees = BoneTrees()
 

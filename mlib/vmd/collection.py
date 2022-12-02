@@ -1,13 +1,22 @@
 import numpy as np
 
 from mlib.base.bezier import evaluate
-from mlib.base.collection import (BaseHashModel, BaseIndexDictModel,
-                                  BaseIndexNameDictInnerModel,
-                                  BaseIndexNameDictModel)
+from mlib.base.collection import (
+    BaseHashModel,
+    BaseIndexDictModel,
+    BaseIndexNameDictInnerModel,
+    BaseIndexNameDictModel,
+)
 from mlib.base.math import MMatrix4x4, MQuaternion
-from mlib.pmx.part import BoneTree
-from mlib.vmd.part import (VmdBoneFrame, VmdCameraFrame, VmdLightFrame,
-                           VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame)
+from mlib.pmx.collection import BoneTrees
+from mlib.vmd.part import (
+    VmdBoneFrame,
+    VmdCameraFrame,
+    VmdLightFrame,
+    VmdMorphFrame,
+    VmdShadowFrame,
+    VmdShowIkFrame,
+)
 
 
 class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
@@ -55,7 +64,9 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         prev_bf = self[prev_index]
         next_bf = self[next_index]
 
-        _, ry, _ = evaluate(next_bf.interpolations.rotation, prev_index, index, next_index)
+        _, ry, _ = evaluate(
+            next_bf.interpolations.rotation, prev_index, index, next_index
+        )
         bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
 
         _, xy, _ = evaluate(
@@ -94,7 +105,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         return VmdBoneNameFrames(name=name)
 
     def get_matrix_by_index(
-        self, index: int, bone_trees: dict[int, BoneTree]
+        self, index: int, bone_trees: BoneTrees
     ) -> dict[str, MMatrix4x4]:
         """
         指定されたキーフレ番号の行列計算結果を返す
@@ -103,13 +114,12 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         ----------
         index : int
             キーフレ番号
-        bone_trees: dict[int, BoneTree]
+        bone_trees: BoneTrees
             ルートボーン番号: ボーンツリー
 
         Returns
         -------
         dict[str, MMatrix4x4]
-            _description_
         """
         # bone_frames = self.get_by_index(index)
         # matrices = MMatrix4x4List(keys=layered_bone_names)
