@@ -3,9 +3,10 @@ from math import acos, cos, degrees, radians, sin, sqrt
 from typing import Any, Union
 
 import numpy as np
+from numpy.linalg import inv, norm
 from quaternion import from_rotation_matrix, quaternion
 
-from mlib.base.base import BaseModel
+from .base import BaseModel
 
 
 class MRect(BaseModel):
@@ -91,13 +92,13 @@ class MVector(BaseModel):
         """
         ベクトルの長さ
         """
-        return float(np.linalg.norm(self.vector, ord=2))
+        return float(norm(self.vector, ord=2))
 
     def length_squared(self) -> float:
         """
         ベクトルの長さの二乗
         """
-        return float(np.linalg.norm(self.vector, ord=2) ** 2)
+        return float(norm(self.vector, ord=2) ** 2)
 
     def effective(self):
         self.vector[np.isinf(self.vector)] = 0
@@ -123,7 +124,7 @@ class MVector(BaseModel):
         正規化した値を返す
         """
         self.effective()
-        l2 = np.linalg.norm(self.vector, ord=2, axis=-1, keepdims=True)
+        l2 = norm(self.vector, ord=2, axis=-1, keepdims=True)
         l2[l2 == 0] = 1
         normv = self.vector / l2
         return self.__class__(normv)
@@ -133,7 +134,7 @@ class MVector(BaseModel):
         自分自身の正規化
         """
         self.effective()
-        l2 = np.linalg.norm(self.vector, ord=2, axis=-1, keepdims=True)
+        l2 = norm(self.vector, ord=2, axis=-1, keepdims=True)
         l2[l2 == 0] = 1
         self.vector /= l2
 
@@ -469,16 +470,14 @@ class MVectorDict:
     def keys(self) -> list:
         return list(self.vectors.keys())
 
-    def values(self) -> list:
-        return list(self.vectors.values())
+    def values(self) -> np.ndarray:
+        return np.array(list(self.vectors.values()))
 
     def append(self, vkey: Any, v: MVector) -> None:
         self.vectors[vkey] = v.vector
 
     def distances(self, v: MVector):
-        return np.linalg.norm(
-            (np.array(list(self.vectors.values())) - v.vector), ord=2, axis=1
-        )
+        return norm((self.values() - v.vector), ord=2, axis=1)
 
     def nearest_distance(self, v: MVector) -> float:
         """
@@ -496,7 +495,7 @@ class MVectorDict:
         """
         return float(np.min(self.distances(v)))
 
-    def nearest_value(self, v: MVector) -> MVector:
+    def nearest_value(self, v: MVector):
         """
         指定ベクトル直近値
 
@@ -507,12 +506,12 @@ class MVectorDict:
 
         Returns
         -------
-        float
+        MVector
             直近値
         """
         return v.__class__(np.array(self.values())[np.argmin(self.distances(v))])
 
-    def nearest_key(self, v: MVector) -> Any:
+    def nearest_key(self, v: MVector):
         """
         指定ベクトル直近キー
 
@@ -617,7 +616,7 @@ class MQuaternion(MVector):
         正規化した値を返す
         """
         self.effective()
-        l2 = np.linalg.norm(self.vector.components, ord=2, axis=-1, keepdims=True)
+        l2 = norm(self.vector.components, ord=2, axis=-1, keepdims=True)
         l2[l2 == 0] = 1
         normv = self.vector.components / l2
         return self.__class__(normv)
@@ -627,7 +626,7 @@ class MQuaternion(MVector):
         自分自身の正規化
         """
         self.effective()
-        l2 = np.linalg.norm(self.vector.components, ord=2, axis=-1, keepdims=True)
+        l2 = norm(self.vector.components, ord=2, axis=-1, keepdims=True)
         l2[l2 == 0] = 1
         self.vector.components /= l2
 
@@ -1055,13 +1054,13 @@ class MMatrix4x4(MVector):
         """
         逆行列
         """
-        return MMatrix4x4(np.linalg.inv(self.vector))
+        return MMatrix4x4(inv(self.vector))
 
     def rotate(self, q: MQuaternion):
         """
         回転行列
         """
-        self.vector = self.vector.dot(q.to_matrix4x4().vector)
+        self.vector = self.vector @ q.to_matrix4x4().vector
 
     def translate(self, v: MVector3D):
         """
@@ -1174,8 +1173,8 @@ class MMatrix4x4(MVector):
 
     def __mul__(self, other):
         if isinstance(other, MMatrix4x4):
-            # 行列同士のかけ算
-            return MMatrix4x4(np.matmul(self.vector, other.vector))
+            # 行列同士のかけ算は matmul で演算
+            raise ValueError("MMatrix4x4同士のかけ算は @ を使って下さい")
         elif isinstance(other, MVector3D):
             # vec3 とのかけ算は vec3 を返す
             s = np.sum(self.vector[:, :3] * other.vector, axis=1) + self.vector[:, 3]
@@ -1190,11 +1189,13 @@ class MMatrix4x4(MVector):
             return MVector4D(np.sum(self.vector * other.vector, axis=1))
         return super().__mul__(other)
 
-    def __imul__(self, other):
-        if isinstance(other, MMatrix4x4):
-            self.vector = np.matmul(self.vector, other.vector)
-        else:
-            raise ValueError("MMatrix4x4同士で計算してください")
+    def __matmul__(self, other):
+        # 行列同士のかけ算
+        return MMatrix4x4(np.matmul(self.vector, other.vector))
+
+    def __imatmul__(self, other):
+        # 行列同士のかけ算代入
+        self.vector = np.matmul(self.vector, other.vector)
 
     def __getitem__(self, index) -> float:
         y, x = index
@@ -1205,38 +1206,71 @@ class MMatrix4x4(MVector):
         self.vector[y, x] = v
 
 
-class MMatrix4x4List(MVector):
+class MMatrix4x4List:
     """
     4x4行列クラスリスト
     """
 
-    def __init__(self, keys: dict[str, list[str]]):
-        self.vector = {}
-        self.vector = dict(
-            [
-                (k, [MMatrix4x4(identity=True) for _ in range(len(vs))])
-                for k, vs in keys.items()
-            ]
-        )
-
-    def __setitem__(self, key: Any, value: MMatrix4x4):
-        row, col = key
-        self.vector[row][col] = value
-
-    def multiply(self) -> dict[str, MMatrix4x4]:
+    def __init__(self, y: int, x: int):
         """
-        行列リストを一括で積算する
+        指定した行列の数だけ多次元Matrixを作成
 
-        Returns
-        -------
-        list[MMatrix4x4]
-            結果行列リスト
+        Parameters
+        ----------
+        y : int
+            列数（キーフレ数）
+        col : int
+            行数（ボーン数）
         """
-        results = dict([(k, MMatrix4x4(identity=True)) for k in self.vector.keys()])
-        for key, rmats in self.vector.items():
-            for mat in rmats:
-                results[key] *= mat
-        return results
+        self.y = y
+        self.x = x
+        self.vector = np.tile(np.eye(4, dtype=np.float64), (y, x, 1, 1))
+
+    def translate(self, vs: list[list[MVector3D]]):
+        """
+        平行移動行列
+        """
+        vmat = self.vector[..., :3] * np.array(
+            [v2.vector for v1 in vs for v2 in v1], dtype=np.float64
+        ).reshape(self.y, self.x, 1, 3)
+        self.vector[..., 3] += np.sum(vmat, axis=-1)
+
+    def rotate(self, qs: list[list[MQuaternion]]):
+        """
+        回転行列
+        """
+
+        self.vector = self.vector @ np.array(
+            [q2.to_matrix4x4().vector for q1 in qs for q2 in q1], dtype=np.float64
+        ).reshape(self.y, self.x, 4, 4)
+
+    def scale(self, vs: list[list[MVector3D]]):
+        """
+        縮尺行列
+        """
+        self.vector[..., :3] *= np.array(
+            [v2.vector for v1 in vs for v2 in v1], dtype=np.float64
+        ).reshape(self.y, self.x, 1, 3)
+
+    def inverse(self):
+        """
+        逆行列
+        """
+        new_mat = MMatrix4x4List(self.y, self.x)
+        new_mat.vector = inv(self.vector)
+        return new_mat
+
+    def __matmul__(self, other):
+        # 行列同士のかけ算
+        new_mat = MMatrix4x4List(self.y, self.x)
+        new_mat.vector = self.vector @ other.vector
+        return new_mat
+
+    def __imatmul__(self, other):
+        # 行列同士のかけ算代入
+        new_mat = MMatrix4x4List(self.y, self.x)
+        new_mat.vector = self.vector @ other.vector
+        self.vector = new_mat.vector
 
 
 def operate_vector(v: MVector, other: Union[MVector, float, int], op):
