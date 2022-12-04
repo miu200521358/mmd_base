@@ -7,7 +7,7 @@ from mlib.base.collection import (
     BaseIndexNameDictInnerModel,
     BaseIndexNameDictModel,
 )
-from mlib.base.math import MMatrix4x4, MQuaternion
+from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion
 from mlib.pmx.collection import BoneTrees
 from mlib.vmd.part import (
     VmdBoneFrame,

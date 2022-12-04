@@ -1272,6 +1272,31 @@ class MMatrix4x4List:
         new_mat.vector = self.vector @ other.vector
         self.vector = new_mat.vector
 
+    def matmul_cols(self):
+        # colを 行列積 するため、ひとつ次元を増やす
+        tile_mats = np.tile(
+            np.eye(4, dtype=np.float64), (self.row, self.col, self.col, 1, 1)
+        )
+        # 斜めにセルを埋めていく
+        for c in range(self.col):
+            tile_mats[:, c:, c, :, :] = np.tile(
+                self.vector[:, c], (self.col - c, 1)
+            ).reshape(self.row, self.col - c, 4, 4)
+        # 行列積を求める
+        result_mats = MMatrix4x4List(self.row, self.col)
+        result_mats.vector = np.tile(
+            np.eye(4, dtype=np.float64), (self.row, self.col, 1, 1)
+        )
+        result_mats.vector = tile_mats[:, :, 0]
+        for c in range(1, self.col):
+            result_mats.vector = result_mats.vector @ tile_mats[:, :, c]
+
+        return result_mats
+
+    def positions(self) -> np.ndarray:
+        # 行列計算結果の位置
+        return self.vector[..., :3, 3]
+
 
 def operate_vector(v: MVector, other: Union[MVector, float, int], op):
     """
