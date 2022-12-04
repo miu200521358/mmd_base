@@ -1211,20 +1211,20 @@ class MMatrix4x4List:
     4x4行列クラスリスト
     """
 
-    def __init__(self, y: int, x: int):
+    def __init__(self, row: int, col: int):
         """
         指定した行列の数だけ多次元Matrixを作成
 
         Parameters
         ----------
-        y : int
+        row : int
             列数（キーフレ数）
         col : int
             行数（ボーン数）
         """
-        self.y = y
-        self.x = x
-        self.vector = np.tile(np.eye(4, dtype=np.float64), (y, x, 1, 1))
+        self.row = row
+        self.col = col
+        self.vector = np.tile(np.eye(4, dtype=np.float64), (row, col, 1, 1))
 
     def translate(self, vs: list[list[MVector3D]]):
         """
@@ -1232,7 +1232,7 @@ class MMatrix4x4List:
         """
         vmat = self.vector[..., :3] * np.array(
             [v2.vector for v1 in vs for v2 in v1], dtype=np.float64
-        ).reshape(self.y, self.x, 1, 3)
+        ).reshape(self.row, self.col, 1, 3)
         self.vector[..., 3] += np.sum(vmat, axis=-1)
 
     def rotate(self, qs: list[list[MQuaternion]]):
@@ -1242,7 +1242,7 @@ class MMatrix4x4List:
 
         self.vector = self.vector @ np.array(
             [q2.to_matrix4x4().vector for q1 in qs for q2 in q1], dtype=np.float64
-        ).reshape(self.y, self.x, 4, 4)
+        ).reshape(self.row, self.col, 4, 4)
 
     def scale(self, vs: list[list[MVector3D]]):
         """
@@ -1250,25 +1250,25 @@ class MMatrix4x4List:
         """
         self.vector[..., :3] *= np.array(
             [v2.vector for v1 in vs for v2 in v1], dtype=np.float64
-        ).reshape(self.y, self.x, 1, 3)
+        ).reshape(self.row, self.col, 1, 3)
 
     def inverse(self):
         """
         逆行列
         """
-        new_mat = MMatrix4x4List(self.y, self.x)
+        new_mat = MMatrix4x4List(self.row, self.col)
         new_mat.vector = inv(self.vector)
         return new_mat
 
     def __matmul__(self, other):
         # 行列同士のかけ算
-        new_mat = MMatrix4x4List(self.y, self.x)
+        new_mat = MMatrix4x4List(self.row, self.col)
         new_mat.vector = self.vector @ other.vector
         return new_mat
 
     def __imatmul__(self, other):
         # 行列同士のかけ算代入
-        new_mat = MMatrix4x4List(self.y, self.x)
+        new_mat = MMatrix4x4List(self.row, self.col)
         new_mat.vector = self.vector @ other.vector
         self.vector = new_mat.vector
 
