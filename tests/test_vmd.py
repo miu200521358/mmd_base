@@ -186,5 +186,34 @@ def test_read_by_filepath_ok():
     ).all()
 
 
+def test_read_by_filepath_ok():
+    import os
+
+    import numpy as np
+
+    from mlib.pmx.collection import PmxModel
+    from mlib.pmx.reader import PmxReader
+    from mlib.vmd.collection import VmdMotion
+    from mlib.vmd.reader import VmdReader
+
+    vmd_reader = VmdReader()
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモーション.vmd")
+    )
+
+    pmx_reader = PmxReader()
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
+
+    # キーフレ
+    bone_matrixes = motion.bones.get_matrix_by_indexes(
+        [10, 20, 30],
+        model.bone_trees.gets([model.bones["左人指先"].index, model.bones["右人指先"].index]),
+    )
+
+    bone_poses = bone_matrixes.positions()
+
+
 if __name__ == "__main__":
     pytest.main()

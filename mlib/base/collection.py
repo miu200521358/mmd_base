@@ -57,7 +57,8 @@ class BaseIndexListModel(Generic[TBaseIndexModel]):
         return self.data[index]
 
     def append(self, v: TBaseIndexModel) -> None:
-        v.index = len(self.data)
+        if v.index < 0:
+            v.index = len(self.data)
         self.data.append(v)
 
     def __len__(self) -> int:
@@ -102,11 +103,11 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
         else:
             return self.get_by_name(key)
 
-    def __setitem__(self, index: int, v: TBaseIndexNameModel):
-        self.data[index] = v
-        if v.name not in self.__names:
-            # 名前は先勝ちで保持
-            self.__names[v.name] = v.index
+    # def __setitem__(self, index: int, v: TBaseIndexNameModel):
+    #     self.data[index] = v
+    #     if v.name not in self.__names:
+    #         # 名前は先勝ちで保持
+    #         self.__names[v.name] = v.index
 
     def names(self) -> dict[str, int]:
         return dict([(v.name, v.index) for v in self.data])
@@ -148,7 +149,8 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
         return self.data[self.__names[name]]
 
     def append(self, v: TBaseIndexNameModel) -> None:
-        v.index = len(self.data)
+        if v.index < 0:
+            v.index = len(self.data)
         self.data.append(v)
         if v.name not in self.__names:
             # 名前は先勝ちで保持

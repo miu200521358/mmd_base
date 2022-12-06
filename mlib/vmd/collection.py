@@ -104,50 +104,28 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
     def create_inner(self, name: str):
         return VmdBoneNameFrames(name=name)
 
-    def get_matrix_by_index(
-        self, index: int, bone_trees: BoneTrees
-    ) -> dict[str, MMatrix4x4]:
+    def get_matrix_by_indexes(
+        self, fnos: list[int], bone_trees: BoneTrees
+    ) -> dict[int, MMatrix4x4]:
         """
         指定されたキーフレ番号の行列計算結果を返す
 
         Parameters
         ----------
-        index : int
-            キーフレ番号
+        fnos : list[int]
+            キーフレ番号のリスト
         bone_trees: BoneTrees
-            ルートボーン番号: ボーンツリー
+            ボーンツリー
 
         Returns
         -------
-        dict[str, MMatrix4x4]
+        行列辞書（キー：キーフレ番号、値：行列リスト）
         """
-        # bone_frames = self.get_by_index(index)
-        # matrices = MMatrix4x4List(keys=layered_bone_names)
-        # for ni, bone_name_links in enumerate(layered_bone_names.values()):
-        #     for bi, bone_name in enumerate(bone_name_links):
-        #         if bone_name in bone_frames:
-        #             matrices[ni, bi] = bone_frames[bone_name].matrix.vector
-        # return matrices.multiply()
-        pass
-
-    def get_by_index(self, index: int) -> dict[str, VmdBoneFrame]:
-        """
-        指定INDEXに合う全ボーンのキーフレリストを返す
-
-        Parameters
-        ----------
-        index : int
-            キーフレ
-
-        Returns
-        -------
-        dict[str, VmdBoneFrame]
-            ボーン名：キーフレの辞書
-        """
-        bone_frames: dict[str, VmdBoneFrame] = {}
-        for bone_name in self.names():
-            bone_frames[bone_name] = self[bone_name][index]
-        return bone_frames
+        positions = []
+        for fno in fnos:
+            for bone_tree in bone_trees.values():
+                for bone in bone_tree:
+                    pass
 
     def get(self, name: str) -> VmdBoneNameFrames:
         if name not in self.data:

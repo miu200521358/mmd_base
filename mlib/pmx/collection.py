@@ -1,6 +1,6 @@
 import os
 from glob import glob
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -15,7 +15,6 @@ from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.part import (
     Bone,
     BoneFlg,
-    BoneTree,
     DisplaySlot,
     DrawFlg,
     Face,
@@ -76,13 +75,125 @@ class Materials(BaseIndexNameListModel[Material]):
         super().__init__()
 
 
-class BoneTrees(BaseIndexDictModel[BoneTree]):
+class BoneTree(BaseIndexDictModel[Bone]):
+    """ボーンリンク"""
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def __getitem__(self, index) -> Bone:
+        if index < 0:
+            # マイナス指定の場合、後ろからの順番に置き換える
+            return super().__getitem__(len(self.data) + index)
+        return super().__getitem__(index)
+
+    def last_index(self) -> int:
+        return len(self.data) - 1
+
+
+class BoneTrees:
     """
     BoneTreeリスト
     """
 
+    __slots__ = ["data", "__names", "__iter_index"]
+
     def __init__(self):
         super().__init__()
+        self.data: dict[int, BoneTree] = {}
+        self.__names = {}
+        self.__iter_index = 0
+
+    def __getitem__(self, key: Any) -> BoneTree:
+        if isinstance(key, int):
+            return self.get_by_index(key)
+        else:
+            return self.get_by_name(key)
+
+    def __setitem__(self, index: int, bt: BoneTree):
+        self.data[index] = bt
+        if bt.data[bt.last_index()].name not in self.__names:
+            # 名前は先勝ちで保持
+            self.__names[bt.data[bt.last_index()].name] = bt.data[bt.last_index()].index
+
+    def names(self) -> dict[str, int]:
+        return dict(
+            [
+                (bt.data[bt.last_index()].name, bt.data[bt.last_index()].index)
+                for bt in self.data.values()
+            ]
+        )
+
+    def gets(self, bone_names: list[str]):
+        """
+        指定したボーン名のみを抽出する
+
+        Parameters
+        ----------
+        bone_names : list[str]
+            抽出対象ボーン名リスト
+
+        Returns
+        -------
+        抽出ボーンツリーリスト
+        """
+        new_trees = BoneTrees()
+        for bname in bone_names:
+            bt = self[bname]
+            new_trees[bt[bt.last_index()].index] = bt
+        return new_trees
+
+    def get_by_index(self, index: int) -> BoneTree:
+        """
+        リストから要素を取得する
+
+        Parameters
+        ----------
+        index : int
+            インデックス番号
+
+        Returns
+        -------
+        TBaseIndexNameModel
+            要素
+        """
+        if index >= len(self.data):
+            raise KeyError(f"Not Found: {index}")
+        return self.data[index]
+
+    def get_by_name(self, name: str) -> BoneTree:
+        """
+        リストから要素を取得する
+
+        Parameters
+        ----------
+        name : str
+            名前
+
+        Returns
+        -------
+        TBaseIndexNameModel
+            要素
+        """
+        if name not in self.__names:
+            raise KeyError(f"Not Found: {name}")
+        return self.data[self.names()[name]]
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __iter__(self):
+        self.__iter_index = -1
+        return self
+
+    def __next__(self) -> BoneTree:
+        self.__iter_index += 1
+        if self.__iter_index >= len(self.data):
+            raise StopIteration
+        return self.data[self.__iter_index]
+
+    def __contains__(self, v) -> bool:
+        return v in self.__names or v in self.data.keys()
 
 
 class Bones(BaseIndexNameListModel[Bone]):
@@ -121,25 +232,46 @@ class Bones(BaseIndexNameListModel[Bone]):
         ]
 
     def create_bone_links(self) -> BoneTrees:
+        """
+        ボーンツリー一括生成
+
+        Returns
+        -------
+        BoneTrees
+        """
         # ボーンツリー
         bone_trees = BoneTrees()
 
         # 計算ボーンリスト
         for end_bone in self:
             # レイヤー込みのINDEXリスト取得を末端ボーンをキーとして保持
-            bone_trees[end_bone.index] = BoneTree(
-                [
-                    self[bidx]
-                    for _, bidx in sorted(self.create_bone_link_indexes(end_bone.index))
-                ]
-            )
-            bone_trees[end_bone.index].bones.append(end_bone)
+            bone_tree = BoneTree()
+            for ti, (_, bidx) in enumerate(
+                sorted(self.create_bone_link_indexes(end_bone.index))
+            ):
+                bone_tree[ti] = self[bidx].copy()
+            bone_tree[len(bone_tree)] = end_bone.copy()
+            bone_trees[end_bone.index] = bone_tree
 
         return bone_trees
 
     def create_bone_link_indexes(
         self, child_idx: int, bone_link_indexes=None
     ) -> list[tuple[int, int]]:
+        """
+        指定ボーンの親ボーンを繋げてく
+
+        Parameters
+        ----------
+        child_idx : int
+            指定ボーンINDEX
+        bone_link_indexes : _type_, optional
+            既に構築済みの親ボーンリスト, by default None
+
+        Returns
+        -------
+        親ボーンリスト
+        """
         # 階層＞リスト順（＞FK＞IK＞付与）
         if not bone_link_indexes:
             bone_link_indexes = []
@@ -151,15 +283,26 @@ class Bones(BaseIndexNameListModel[Bone]):
 
         return bone_link_indexes
 
-    # 末端位置を取得
-    def get_tail_position(self, bone_name: str):
-        if bone_name not in self:
+    def get_tail_position(self, bone_index: int) -> MVector3D:
+        """
+        末端位置を取得
+
+        Parameters
+        ----------
+        bone_index : int
+            ボーンINDEX
+
+        Returns
+        -------
+        ボーンの末端位置（グローバル位置）
+        """
+        if bone_index not in self:
             return MVector3D()
 
-        bone = self[bone_name]
+        bone = self[bone_index]
         to_pos = MVector3D()
 
-        from_pos = self[bone.name].position
+        from_pos = bone.position
         if (
             BoneFlg.TAIL_IS_BONE not in bone.bone_flg
             and bone.tail_position != MVector3D()
@@ -176,16 +319,27 @@ class Bones(BaseIndexNameListModel[Bone]):
         else:
             # 表示先がない場合、とりあえず親ボーンからの向きにする
             from_pos = self[bone.parent_index].position
-            to_pos = self[bone.name].position
+            to_pos = self[bone_index].position
 
         return to_pos
 
-    # ローカルX軸の取得
-    def get_local_x_axis(self, bone_name: str):
-        if bone_name not in self:
+    def get_local_x_axis(self, bone_index: int) -> MVector3D:
+        """
+        ローカルX軸の取得
+
+        Parameters
+        ----------
+        bone_index : int
+            ボーンINDEX
+
+        Returns
+        -------
+        ローカルX軸
+        """
+        if bone_index not in self:
             return MVector3D()
 
-        bone = self[bone_name]
+        bone = self[bone_index]
         to_pos = MVector3D()
 
         if bone.fixed_axis != MVector3D():
@@ -195,7 +349,7 @@ class Bones(BaseIndexNameListModel[Bone]):
             fixed_x_axis = MVector3D()
 
         from_pos = self[bone.name].position
-        to_pos = self.get_tail_position(bone_name)
+        to_pos = self.get_tail_position(bone_index)
 
         # 軸制限の指定が無い場合、子の方向
         x_axis = (to_pos - from_pos).normalized()
@@ -205,6 +359,28 @@ class Bones(BaseIndexNameListModel[Bone]):
             x_axis = -fixed_x_axis
 
         return x_axis
+
+    def get_relative_position(self, bone_index: int) -> MVector3D:
+        """
+        該当ボーンの相対位置を取得
+
+        Parameters
+        ----------
+        bone_name : int
+            ボーンINDEX
+
+        Returns
+        -------
+        ボーンの親ボーンから見た相対位置
+        """
+        if bone_index not in self:
+            return MVector3D()
+
+        bone = self[bone_index]
+        if bone.parent_index not in self:
+            return bone.position
+
+        return bone.position - self[bone.parent_index]
 
 
 class Morphs(BaseIndexNameListModel[Morph]):

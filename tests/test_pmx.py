@@ -360,22 +360,22 @@ def test_read_by_filepath_ok():
         left_bust_joint.param.spring_constant_rotation.vector,
     ).all()
     # ボーンツリー
-    bone_tree = model.bone_trees[model.bones["左手首"].index]
-    assert "全ての親" == bone_tree.bones[0].name
-    assert "センター" == bone_tree.bones[1].name
-    assert "グルーブ" == bone_tree.bones[2].name
-    assert "腰" == bone_tree.bones[3].name
-    assert "上半身" == bone_tree.bones[4].name
-    assert "上半身2" == bone_tree.bones[5].name
-    assert "上半身3" == bone_tree.bones[6].name
-    assert "左肩P" == bone_tree.bones[7].name
-    assert "左肩" == bone_tree.bones[8].name
-    assert "左肩C" == bone_tree.bones[9].name
-    assert "左腕" == bone_tree.bones[10].name
-    assert "左腕捩" == bone_tree.bones[11].name
-    assert "左ひじ" == bone_tree.bones[12].name
-    assert "左手捩" == bone_tree.bones[13].name
-    assert "左手首" == bone_tree.bones[14].name
+    bone_tree = model.bone_trees["左手首"]
+    assert "全ての親" == bone_tree[0].name
+    assert "センター" == bone_tree[1].name
+    assert "グルーブ" == bone_tree[2].name
+    assert "腰" == bone_tree[3].name
+    assert "上半身" == bone_tree[4].name
+    assert "上半身2" == bone_tree[5].name
+    assert "上半身3" == bone_tree[6].name
+    assert "左肩P" == bone_tree[7].name
+    assert "左肩" == bone_tree[8].name
+    assert "左肩C" == bone_tree[9].name
+    assert "左腕" == bone_tree[10].name
+    assert "左腕捩" == bone_tree[11].name
+    assert "左ひじ" == bone_tree[12].name
+    assert "左手捩" == bone_tree[13].name
+    assert "左手首" == bone_tree[14].name
 
 
 def test_read_by_filepath_ok_tree():
@@ -389,28 +389,34 @@ def test_read_by_filepath_ok_tree():
         os.path.join("tests", "resources", "ボーンツリーテストモデル.pmx")
     )
     # ボーンツリー
-    bone_tree = model.bone_trees[model.bones["左人指先"].index]
-    assert "全ての親" == bone_tree.bones[0].name
-    assert "センター" == bone_tree.bones[1].name
-    assert "グルーブ" == bone_tree.bones[2].name
-    assert "腰" == bone_tree.bones[3].name
-    assert "上半身" == bone_tree.bones[4].name
-    assert "上半身2" == bone_tree.bones[5].name
-    assert "左肩P" == bone_tree.bones[6].name
-    assert "左肩" == bone_tree.bones[7].name
-    assert "左腕YZ" == bone_tree.bones[8].name
-    assert "左腕捩YZ" == bone_tree.bones[9].name
-    assert "左腕捩X" == bone_tree.bones[10].name
-    assert "左ひじYZ" == bone_tree.bones[11].name
-    assert "左手捩YZ" == bone_tree.bones[12].name
-    assert "左手捩X" == bone_tree.bones[13].name
-    assert "左手捩6" == bone_tree.bones[14].name
-    assert "左手首R" == bone_tree.bones[15].name
-    assert "左手首2" == bone_tree.bones[16].name
-    assert "左人指１" == bone_tree.bones[17].name
-    assert "左人指２" == bone_tree.bones[18].name
-    assert "左人指３" == bone_tree.bones[19].name
-    assert "左人指先" == bone_tree.bones[20].name
+    bone_tree = model.bone_trees["左人指先"]
+    assert "全ての親" == bone_tree[0].name
+    assert "センター" == bone_tree[1].name
+    assert "グルーブ" == bone_tree[2].name
+    assert "腰" == bone_tree[3].name
+    assert "上半身" == bone_tree[4].name
+    assert "上半身2" == bone_tree[5].name
+    assert "左肩P" == bone_tree[6].name
+    assert "左肩" == bone_tree[7].name
+    assert "左腕YZ" == bone_tree[8].name
+    assert "左腕捩YZ" == bone_tree[9].name
+    assert "左腕捩X" == bone_tree[10].name
+    assert "左ひじYZ" == bone_tree[11].name
+    assert "左手捩YZ" == bone_tree[12].name
+    assert "左手捩X" == bone_tree[13].name
+    assert "左手捩6" == bone_tree[14].name
+    assert "左手首R" == bone_tree[15].name
+    assert "左手首2" == bone_tree[16].name
+    assert "左人指１" == bone_tree[17].name
+    assert "左人指２" == bone_tree[18].name
+    assert "左人指３" == bone_tree[19].name
+    assert "左人指先" == bone_tree[20].name
+
+    new_bone_trees = model.bone_trees.gets(["左人指先", "右人指先"])
+    assert "全ての親" == new_bone_trees["左人指先"][0].name
+    assert "左人指先" == new_bone_trees["左人指先"][-1].name
+    assert "全ての親" == new_bone_trees["右人指先"][0].name
+    assert "右人指先" == new_bone_trees["右人指先"][-1].name
 
 
 def test_read_by_filepath_complicated():

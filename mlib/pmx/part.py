@@ -622,16 +622,6 @@ class Bone(BaseIndexNameModel):
         self.is_system: bool = is_system or False
 
 
-class BoneTree(BaseIndexModel):
-    """ボーンリンク"""
-
-    __slots__ = ["bones"]
-
-    def __init__(self, bones: list[Bone] = []) -> None:
-        super().__init__()
-        self.bones: list[Bone] = bones
-
-
 class MorphOffset(BaseModel):
     """モーフオフセット基底クラス"""
 
