@@ -25,7 +25,7 @@ class MRect(BaseModel):
         縦幅
     """
 
-    def __init__(self, x=0, y=0, width=0, height=0):
+    def __init__(self, x: int = 0, y: int = 0, width: int = 0, height: int = 0):
         self.x = int(x)
         self.y = int(y)
         self.width = int(width)
@@ -69,7 +69,7 @@ class MVector(BaseModel):
 
     __slots__ = ["vector"]
 
-    def __init__(self, x):
+    def __init__(self, x: Union[float, np.ndarray] = 0.0):
         """初期化
 
         Parameters
@@ -117,7 +117,7 @@ class MVector(BaseModel):
         -------
         MVector
         """
-        return self.__class__(np.round(self.vector, decimals=decimals))
+        return self.__class__(*np.round(self.vector, decimals=decimals))
 
     def normalized(self):
         """
@@ -153,7 +153,7 @@ class MVector(BaseModel):
         """
         if not isinstance(other, self.__class__):
             raise ValueError("同じ型同士で計算してください")
-        return self.__class__(self.vector - other.vector).length()
+        return self.__class__(*(self.vector - other.vector)).length()
 
     def abs(self):
         """
@@ -295,7 +295,7 @@ class MVector2D(MVector):
     2次元ベクトルクラス
     """
 
-    def __init__(self, x=0.0, y=0.0):
+    def __init__(self, x: float = 0.0, y: float = 0.0):
         """
         初期化
 
@@ -332,7 +332,7 @@ class MVector3D(MVector):
     3次元ベクトルクラス
     """
 
-    def __init__(self, x=0.0, y=0.0, z=0.0):
+    def __init__(self, x: float = 0.0, y: float = 0.0, z: float = 0.0):
         """
         初期化
 
@@ -402,7 +402,7 @@ class MVector4D(MVector):
     4次元ベクトルクラス
     """
 
-    def __init__(self, x=0.0, y=0.0, z=0.0, w=0.0):
+    def __init__(self, x: float = 0.0, y: float = 0.0, z: float = 0.0, w: float = 0.0):
         """
         初期化
 
@@ -533,7 +533,7 @@ class MQuaternion(MVector):
     クォータニオンクラス
     """
 
-    def __init__(self, scalar=0, x=0, y=0, z=0):
+    def __init__(self, scalar: float = 0, x: float = 0, y: float = 0, z: float = 0):
         if isinstance(scalar, int) or isinstance(scalar, float):
             # 実数の場合
             if np.isclose([scalar, x, y, z], 0).all():
@@ -676,7 +676,7 @@ class MQuaternion(MVector):
             roll = 0
             yaw = np.arctan2(-2.0 * (xy - zw), 1.0 - 2.0 * (yy + zz))
 
-        return MVector3D(np.degrees([pitch, yaw, roll]))
+        return MVector3D(*np.degrees([pitch, yaw, roll]))
 
     def to_euler_degrees_mmd(self) -> MVector3D:
         """
@@ -816,7 +816,13 @@ class MQuaternion(MVector):
         if isinstance(other, MVector3D):
             # quaternion と vec3 のかけ算は vec3 を返す
             return self.to_matrix4x4() * other
-        return super().__mul__(other)
+        elif isinstance(other, MQuaternion):
+            return MQuaternion(self.vector * other.vector).normalized()
+
+        return MQuaternion(self.vector * other)
+
+    def multiply_factor(self, factor: float):
+        return MQuaternion(self.scalar / factor, self.x, self.y, self.z)
 
     @classmethod
     def from_euler_degrees(cls, a: Union[int, float, MVector3D], b=0, c=0):
@@ -1069,11 +1075,18 @@ class MMatrix4x4(MVector):
         vmat = self.vector[:, :3] * v.vector
         self.vector[:, 3] += np.sum(vmat, axis=1)
 
-    def scale(self, v: MVector3D):
+    def scale(self, v: Union[MVector3D, float]):
         """
         縮尺行列
         """
-        self.vector[:, :3] *= v.vector
+        if isinstance(v, MVector3D):
+            self.vector[0, 0] *= v.x
+            self.vector[1, 1] *= v.y
+            self.vector[2, 2] *= v.z
+        else:
+            self.vector[0, 0] *= v
+            self.vector[1, 1] *= v
+            self.vector[2, 2] *= v
 
     def identity(self):
         """
@@ -1169,7 +1182,7 @@ class MMatrix4x4(MVector):
         return q
 
     def to_position(self) -> MVector3D:
-        return MVector3D(self.vector[3, 0:3])
+        return MVector3D(*self.vector[3, 0:3])
 
     def __mul__(self, other):
         if isinstance(other, MMatrix4x4):
@@ -1293,7 +1306,7 @@ class MMatrix4x4List:
 
         return result_mats
 
-    def positions(self) -> np.ndarray:
+    def to_positions(self) -> np.ndarray:
         # 行列計算結果の位置
         return self.vector[..., :3, 3]
 

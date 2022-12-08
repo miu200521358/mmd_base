@@ -9,7 +9,8 @@ from PIL import Image, ImageOps
 
 from mlib.base.base import BaseModel
 from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
-from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
+from mlib.base.part import (BaseIndexModel, BaseIndexNameModel,
+                            BaseRotationModel, Switch)
 
 
 @unique
@@ -92,7 +93,7 @@ class Deform(BaseModel, ABC):
         if align:
             # 揃える必要がある場合
             # 数が足りるよう、かさ増しする
-            ilist = np.array(self.indices.tolist() + [0, 0, 0, 0])
+            ilist = np.array(self.indexes.tolist() + [0, 0, 0, 0])
             wlist = np.array(self.weights.tolist() + [0, 0, 0, 0])
             # 正規化
             wlist /= wlist.sum(axis=0, keepdims=1)

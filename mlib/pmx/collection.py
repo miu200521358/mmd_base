@@ -81,14 +81,39 @@ class BoneTree(BaseIndexDictModel[Bone]):
     def __init__(self) -> None:
         super().__init__()
 
-    def __getitem__(self, index) -> Bone:
-        if index < 0:
+    def __getitem__(self, key: Any) -> Bone:
+        if isinstance(key, int) and key < 0:
             # マイナス指定の場合、後ろからの順番に置き換える
-            return super().__getitem__(len(self.data) + index)
-        return super().__getitem__(index)
+            return super().__getitem__(len(self.data) + key)
+        return super().__getitem__(key)
 
     def last_index(self) -> int:
         return len(self.data) - 1
+
+    def last_name(self) -> str:
+        return self.data[self.last_index()].name
+
+    def get_relative_position(self, key: Any) -> MVector3D:
+        """
+        該当ボーンの相対位置を取得
+
+        Parameters
+        ----------
+        bone_name : int
+            ボーンINDEX
+
+        Returns
+        -------
+        ボーンの親ボーンから見た相対位置
+        """
+        if key not in self:
+            return MVector3D()
+
+        bone = self[key]
+        if bone.parent_index not in self:
+            return bone.position
+
+        return bone.position - self[bone.parent_index]
 
 
 class BoneTrees:
@@ -96,12 +121,13 @@ class BoneTrees:
     BoneTreeリスト
     """
 
-    __slots__ = ["data", "__names", "__iter_index"]
+    __slots__ = ["data", "__names", "__indices", "__iter_index"]
 
     def __init__(self):
         super().__init__()
         self.data: dict[int, BoneTree] = {}
-        self.__names = {}
+        self.__names: dict[str, int] = {}
+        self.__indices: list[int] = []
         self.__iter_index = 0
 
     def __getitem__(self, key: Any) -> BoneTree:
@@ -184,13 +210,14 @@ class BoneTrees:
 
     def __iter__(self):
         self.__iter_index = -1
+        self.__indices = sorted(list(self.data.keys()))
         return self
 
     def __next__(self) -> BoneTree:
         self.__iter_index += 1
-        if self.__iter_index >= len(self.data):
+        if self.__iter_index >= len(self.__indices):
             raise StopIteration
-        return self.data[self.__iter_index]
+        return self.data[self.__indices[self.__iter_index]]
 
     def __contains__(self, v) -> bool:
         return v in self.__names or v in self.data.keys()
@@ -359,28 +386,6 @@ class Bones(BaseIndexNameListModel[Bone]):
             x_axis = -fixed_x_axis
 
         return x_axis
-
-    def get_relative_position(self, bone_index: int) -> MVector3D:
-        """
-        該当ボーンの相対位置を取得
-
-        Parameters
-        ----------
-        bone_name : int
-            ボーンINDEX
-
-        Returns
-        -------
-        ボーンの親ボーンから見た相対位置
-        """
-        if bone_index not in self:
-            return MVector3D()
-
-        bone = self[bone_index]
-        if bone.parent_index not in self:
-            return bone.position
-
-        return bone.position - self[bone.parent_index]
 
 
 class Morphs(BaseIndexNameListModel[Morph]):

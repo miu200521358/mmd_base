@@ -12,7 +12,7 @@ def test_read_by_filepath_error():
         reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
 
-def test_read_by_filepath_ok():
+def test_read_by_filepath_ok_calc():
     import os
 
     import numpy as np
@@ -186,7 +186,7 @@ def test_read_by_filepath_ok():
     ).all()
 
 
-def test_read_by_filepath_ok():
+def test_read_by_filepath_ok_matrix():
     import os
 
     import numpy as np
@@ -207,12 +207,194 @@ def test_read_by_filepath_ok():
     )
 
     # キーフレ
-    bone_matrixes = motion.bones.get_matrix_by_indexes(
-        [10, 20, 30],
-        model.bone_trees.gets([model.bones["左人指先"].index, model.bones["右人指先"].index]),
-    )
+    bone_trees = model.bone_trees.gets(["グルーブ", "左人指先"])
+    bone_matrixes = motion.bones.get_matrix_by_indexes([10, 999], bone_trees, model)
 
-    bone_poses = bone_matrixes.positions()
+    assert np.isclose(
+        np.array([0, 0, 0]),
+        bone_matrixes["グルーブ"][10]["全ての親"].position.vector,
+    ).all()
+    assert np.isclose(
+        np.array([0.044920, 8.218059, 0.069347]),
+        bone_matrixes["グルーブ"][10]["センター"].position.vector,
+    ).all()
+    assert np.isclose(
+        np.array([0.044920, 9.392067, 0.064877]),
+        bone_matrixes["グルーブ"][10]["グルーブ"].position.vector,
+    ).all()
+
+    assert np.isclose(
+        np.array([0.044920, 11.740084, 0.055937]),
+        bone_matrixes["左人指先"][10]["腰"].position.vector,
+    ).all()
+    assert np.isclose(
+        np.array([0.044920, 12.390969, -0.100531]),
+        bone_matrixes["左人指先"][10]["上半身"].position.vector,
+    ).all()
+    assert np.isclose(
+        np.array([0.044920, 13.803633, -0.138654]),
+        bone_matrixes["左人指先"][10]["上半身2"].position.vector,
+    ).all()
+    assert np.isclose(
+        np.array([0.044920, 15.149180, 0.044429]),
+        bone_matrixes["左人指先"][10]["上半身3"].position.vector,
+    ).all()
+    assert np.isclose(
+        np.array([0.324862, 16.470263, 0.419041]),
+        bone_matrixes["左人指先"][10]["左肩P"].position.vector,
+    ).all()
+    assert np.isclose(
+        np.array([0.324862, 16.470263, 0.419041]),
+        bone_matrixes["左人指先"][10]["左肩"].position.vector,
+    ).all()
+    assert np.isclose(
+        np.array([1.369838, 16.312170, 0.676838]),
+        bone_matrixes["左人指先"][10]["左腕"].position.vector,
+    ).all()
+    assert np.isclose(
+        np.array([1.845001, 15.024807, 0.747681]),
+        bone_matrixes["左人指先"][10]["左腕捩"].position.vector,
+    ).all()
+    assert np.isclose(
+        np.array([2.320162, 13.737446, 0.818525]),
+        bone_matrixes["左人指先"][10]["左ひじ"].position.vector,
+    ).all()
+    assert np.isclose(
+        np.array([2.516700, 12.502447, 0.336127]),
+        bone_matrixes["左人指先"][10]["左手捩"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([2.732219, 11.267447, -0.146273]),
+        bone_matrixes["左人指先"][10]["左手首"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([2.649188, 10.546797, -0.607412]),
+        bone_matrixes["左人指先"][10]["左人指１"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([2.408238, 10.209290, -0.576288]),
+        bone_matrixes["左人指先"][10]["左人指２"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([2.360455, 10.422402, -0.442668]),
+        bone_matrixes["左人指先"][10]["左人指３"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+
+    # --------
+
+    # キーフレがない場合
+    assert np.isclose(
+        np.array([0, 0, 0]),
+        bone_matrixes["グルーブ"][999]["全ての親"].position.vector,
+    ).all()
+    assert np.isclose(
+        np.array([-0.508560, 8.218059, 0.791827]),
+        bone_matrixes["グルーブ"][999]["センター"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.508560, 9.182008, 0.787357]),
+        bone_matrixes["グルーブ"][999]["グルーブ"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+
+    assert np.isclose(
+        np.array([-0.508560, 11.530025, 0.778416]),
+        bone_matrixes["左人指先"][999]["腰"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.508560, 12.180910, 0.621949]),
+        bone_matrixes["左人指先"][999]["上半身"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.437343, 13.588836, 0.523215]),
+        bone_matrixes["左人指先"][999]["上半身2"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    # 付与親
+    assert np.isclose(
+        np.array([-0.552491, 14.941880, 0.528703]),
+        bone_matrixes["左人指先"][999]["上半身3"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.590927, 16.312325, 0.819156]),
+        bone_matrixes["左人指先"][999]["左肩P"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.590927, 16.312325, 0.819156]),
+        bone_matrixes["左人指先"][999]["左肩"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([0.072990, 16.156742, 1.666761]),
+        bone_matrixes["左人指先"][999]["左腕"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([0.043336, 15.182318, 2.635117]),
+        bone_matrixes["左人指先"][999]["左腕捩"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([0.013682, 14.207894, 3.603473]),
+        bone_matrixes["左人指先"][999]["左ひじ"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([1.222444, 13.711100, 3.299384]),
+        bone_matrixes["左人指先"][999]["左手捩"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([2.431205, 13.214306, 2.995294]),
+        bone_matrixes["左人指先"][999]["左手首"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([3.283628, 13.209089, 2.884702]),
+        bone_matrixes["左人指先"][999]["左人指１"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([3.665809, 13.070156, 2.797680]),
+        bone_matrixes["左人指先"][999]["左人指２"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([3.886795, 12.968100, 2.718276]),
+        bone_matrixes["左人指先"][999]["左人指３"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
 
 
 if __name__ == "__main__":
