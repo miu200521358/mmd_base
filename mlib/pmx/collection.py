@@ -150,7 +150,7 @@ class BoneTrees:
             ]
         )
 
-    def gets(self, bone_names: list[str]):
+    def gets(self, bone_names: list[str]) -> list[BoneTree]:
         """
         指定したボーン名のみを抽出する
 
@@ -163,10 +163,10 @@ class BoneTrees:
         -------
         抽出ボーンツリーリスト
         """
-        new_trees = BoneTrees()
+        new_trees = []
         for bname in bone_names:
             bt = self[bname]
-            new_trees[bt[bt.last_index()].index] = bt
+            new_trees.append(bt)
         return new_trees
 
     def get_by_index(self, index: int) -> BoneTree:
@@ -231,32 +231,13 @@ class Bones(BaseIndexNameListModel[Bone]):
     def __init__(self):
         super().__init__()
 
-    def get_max_layer(self) -> int:
-        """
-        最大変形階層を取得
-
-        Returns
-        -------
-        int
-            最大変形階層
-        """
-        return max([b.layer for b in self.data])
-
-    def get_bone_name_by_layer(self) -> list[str]:
-        """
-        レイヤー順ボーン名リスト
-
-        Returns
-        -------
-        list[str]
-            レイヤー順ボーン名リスト
-        """
-        return [
-            b.name
-            for layer in range(self.get_max_layer() + 1)
-            for b in self.data
-            if b.layer == layer
-        ]
+    def append(self, v: Bone) -> None:
+        super().append(v)
+        if BoneFlg.IS_IK in v.bone_flg and v.ik:
+            # IKボーンの場合、リンクボーンにフラグを立てる
+            for link in v.ik.links:
+                if link.bone_index in self:
+                    self[link.bone_index].ik_target_indices.append(v.index)
 
     def create_bone_links(self) -> BoneTrees:
         """

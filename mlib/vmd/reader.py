@@ -5,9 +5,15 @@ from mlib.base.base import Encoding
 from mlib.base.math import MVector3D
 from mlib.base.reader import BaseReader, StructUnpackType
 from mlib.vmd.collection import VmdMotion
-from mlib.vmd.part import (VmdBoneFrame, VmdCameraFrame, VmdIkOnoff,
-                           VmdLightFrame, VmdMorphFrame, VmdShadowFrame,
-                           VmdShowIkFrame)
+from mlib.vmd.part import (
+    VmdBoneFrame,
+    VmdCameraFrame,
+    VmdIkOnoff,
+    VmdLightFrame,
+    VmdMorphFrame,
+    VmdShadowFrame,
+    VmdShowIkFrame,
+)
 
 RE_TEXT_TRIM = re.compile(rb"\x00+$")
 

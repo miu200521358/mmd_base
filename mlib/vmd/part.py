@@ -1,7 +1,10 @@
+from typing import Optional
+
 from mlib.base.base import BaseModel
 from mlib.base.bezier import Interpolation
-from mlib.base.math import MMatrix4x4, MQuaternion, MVector3D
-from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel
+from mlib.base.math import MQuaternion, MVector3D
+from mlib.base.part import (BaseIndexModel, BaseIndexNameModel,
+                            BaseRotationModel)
 
 
 class BaseVmdFrame(BaseIndexModel):
@@ -250,7 +253,6 @@ class VmdBoneFrame(BaseVmdNameFrame):
         index: int = None,
         position: MVector3D = None,
         rotation: MQuaternion = None,
-        matrix: MMatrix4x4 = None,
         interpolations: BoneInterpolations = None,
         register: bool = None,
         read: bool = None,
@@ -259,12 +261,8 @@ class VmdBoneFrame(BaseVmdNameFrame):
         self.position: MVector3D = position or MVector3D()
         self.rotation: MQuaternion = rotation or MQuaternion()
         self.interpolations: BoneInterpolations = interpolations or BoneInterpolations()
-        self.matrix: MMatrix4x4 = matrix or MMatrix4x4(identity=True)
-
-    def init_matrix(self):
-        self.matrix = MMatrix4x4(identity=True)
-        self.matrix.translate(self.position)
-        self.matrix.rotate(self.rotation)
+        self.ik_rotation: Optional[MQuaternion] = None
+        self.correct_rotation: Optional[MQuaternion] = None
 
 
 class VmdMorphFrame(BaseVmdNameFrame):

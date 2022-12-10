@@ -254,9 +254,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
 
     __slots__ = ["data", "__indices", "__iter_index", "name"]
 
-    def __init__(
-        self, name: str = None, data: Dict[int, TBaseIndexNameModel] = None
-    ) -> None:
+    def __init__(self, name: str, data: Dict[int, TBaseIndexNameModel] = None) -> None:
         """
         モデル辞書
 
@@ -268,9 +266,11 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
         super().__init__()
         self.data: Dict[int, TBaseIndexNameModel] = data or {}
         self.__indices = self.indices()
-        self.name = data[0].name if data else name if name else None
+        self.name = data[0].name if data else name if name else ""
 
-    def range_indexes(self, index: int) -> tuple[int, int, int]:
+    def range_indexes(
+        self, index: int, indices: list[int] = []
+    ) -> tuple[int, int, int]:
         """
         指定されたINDEXの前後を返す
 
@@ -287,19 +287,24 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
                 prev_idx == idx: 指定されたINDEXが一番先頭
                 idx == next_idx: 指定されたINDEXが一番最後
         """
-        indices = self.indices()
+        if not indices:
+            indices = self.indices()
         if index in indices:
             return index, index, index
 
         # index がない場合、前後のINDEXを取得する
-        indices = np.sort(indices + [index])
-        idx = np.where(indices == index)[0][0]
+        sorted_indices = np.sort(indices + [index])
+        idx = np.where(sorted_indices == index)[0][0]
         prev_idx = np.max([0, idx - 1])
-        next_idx = np.min([len(indices) - 1, idx + 1])
+        next_idx = np.min([len(sorted_indices) - 1, idx + 1])
 
-        return int(indices[prev_idx]), int(indices[idx]), int(indices[next_idx])
+        return (
+            int(sorted_indices[prev_idx]),
+            int(sorted_indices[idx]),
+            int(sorted_indices[next_idx]),
+        )
 
-    def indices(self):
+    def indices(self) -> list[int]:
         return sorted(list(self.data.keys()))
 
     def __getitem__(self, index: int) -> TBaseIndexNameModel:

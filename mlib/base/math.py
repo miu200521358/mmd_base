@@ -216,7 +216,12 @@ class MVector(BaseModel):
             return bool(np.all(np.greater_equal(self.vector, other)))
 
     def __bool__(self) -> bool:
-        return not bool(np.all(self.vector == 0))
+        return (
+            self is not None
+            and self.vector is not None
+            and type(self) is None.__class__
+            and not bool(np.all(self.vector == 0))
+        )
 
     def __add__(self, other):
         return operate_vector(self, other, operator.add)
@@ -549,7 +554,7 @@ class MQuaternion(MVector):
 
     @property
     def scalar(self) -> float:
-        return self.vector.components[0]
+        return self.vector.components[0]  # type: ignore
 
     @scalar.setter
     def scalar(self, v):
@@ -557,7 +562,7 @@ class MQuaternion(MVector):
 
     @property
     def x(self) -> float:
-        return self.vector.components[1]
+        return self.vector.components[1]  # type: ignore
 
     @x.setter
     def x(self, v):
@@ -565,7 +570,7 @@ class MQuaternion(MVector):
 
     @property
     def y(self) -> float:
-        return self.vector.components[2]
+        return self.vector.components[2]  # type: ignore
 
     @y.setter
     def y(self, v):
@@ -573,7 +578,7 @@ class MQuaternion(MVector):
 
     @property
     def z(self) -> float:
-        return self.vector.components[3]
+        return self.vector.components[3]  # type: ignore
 
     @z.setter
     def z(self, v):
@@ -581,7 +586,11 @@ class MQuaternion(MVector):
 
     @property
     def xyz(self) -> MVector3D:
-        return MVector3D(self.vector.components[1:])
+        return MVector3D(self.vector.components[1:])  # type: ignore
+
+    @property
+    def theta(self) -> float:
+        return 2 * acos(min(1, max(-1, self.scalar)))
 
     def to_log(self) -> str:
         return (
@@ -597,13 +606,13 @@ class MQuaternion(MVector):
         """
         ベクトルの長さ
         """
-        return float(self.vector.abs())
+        return float(self.vector.abs())  # type: ignore
 
     def length_squared(self) -> float:
         """
         ベクトルの長さの二乗
         """
-        return float(self.vector.abs() ** 2)
+        return float(self.vector.abs() ** 2)  # type: ignore
 
     def inverse(self):
         """
@@ -689,13 +698,13 @@ class MQuaternion(MVector):
         """
         角度に変換
         """
-        return degrees(2 * acos(min(1, max(-1, self.scalar))))
+        return degrees(self.theta)
 
     def to_signed_degrees(self, local_axis: MVector3D) -> float:
         """
         軸による符号付き角度に変換
         """
-        deg = degrees(2 * acos(min(1, max(-1, self.scalar))))
+        deg = degrees(self.theta)
         sign = np.sign(self.xyz.dot(local_axis)) * np.sign(self.scalar)
 
         if sign != 0:
@@ -1067,6 +1076,87 @@ class MMatrix4x4(MVector):
         回転行列
         """
         self.vector = self.vector @ q.to_matrix4x4().vector
+
+    def rotate_x(self, q: MQuaternion):
+        """
+        X軸周りの回転行列
+        """
+        theta = q.theta
+        yy = cos(theta)
+        yz = -sin(theta)
+        zy = sin(theta)
+        zz = cos(theta)
+
+        c = (yy + zz) / 2
+        s = (yz - zy) / 2
+
+        norm = sqrt(c**2 + s**2)
+
+        if norm != 0:
+            c /= norm
+            s /= norm
+
+        mat = np.eye(4, dtype=np.float64)
+        mat[1, 1] = c
+        mat[1, 2] = s
+        mat[2, 1] = -s
+        mat[2, 2] = c
+
+        self.vector = self.vector @ mat
+
+    def rotate_y(self, q: MQuaternion):
+        """
+        Y軸周りの回転行列
+        """
+        theta = q.theta
+        xx = cos(theta)
+        xz = sin(theta)
+        zx = -sin(theta)
+        zz = cos(theta)
+
+        c = (xx + zz) / 2
+        s = (xz - zx) / 2
+
+        norm = sqrt(c**2 + s**2)
+
+        if norm != 0:
+            c /= norm
+            s /= norm
+
+        mat = np.eye(4, dtype=np.float64)
+        mat[0, 0] = c
+        mat[0, 2] = s
+        mat[2, 0] = -s
+        mat[2, 2] = c
+
+        self.vector = self.vector @ mat
+
+    def rotate_z(self, q: MQuaternion):
+        """
+        Z軸周りの回転行列
+        """
+        theta = q.theta
+        xx = cos(theta)
+        xy = -sin(theta)
+        yx = sin(theta)
+        yy = cos(theta)
+
+        c = (xx + yy) / 2
+        s = (xy - yx) / 2
+
+        norm = sqrt(c**2 + s**2)
+
+        if norm != 0:
+            c /= norm
+            s /= norm
+
+        mat = np.eye(4, dtype=np.float64)
+        mat[0, 0] = c
+        mat[0, 1] = -s
+        mat[1, 0] = s
+        mat[1, 1] = c
+
+        self.vector = self.vector @ mat
 
     def translate(self, v: MVector3D):
         """

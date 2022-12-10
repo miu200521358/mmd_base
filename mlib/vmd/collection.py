@@ -1,4 +1,4 @@
-from math import acos, pi
+from math import acos, degrees, pi
 
 import numpy as np
 
@@ -10,7 +10,7 @@ from mlib.base.collection import (
     BaseIndexNameDictModel,
 )
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
-from mlib.pmx.collection import BoneTree, BoneTrees, PmxModel
+from mlib.pmx.collection import BoneTree, PmxModel
 from mlib.pmx.part import Bone, BoneFlg
 from mlib.vmd.part import (
     VmdBoneFrame,
@@ -35,16 +35,38 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
             # まったくデータがない場合、生成
             return VmdBoneFrame(name=self.name, index=index)
 
-        indices = self.indices()
-        if index not in indices:
+        if index not in self.indices():
             # キーフレがない場合、生成したのを返す（保持はしない）
             prev_index, middle_index, next_index = self.range_indexes(index)
+            ik_prev_index, ik_middle_index, ik_next_index = self.range_indexes(
+                index,
+                indices=sorted([v.index for v in self.data.values() if v.ik_rotation]),
+            )
             # prevとnextの範囲内である場合、補間曲線ベースで求め直す
-            return self.calc(prev_index, middle_index, next_index, index)
+            return self.calc(
+                prev_index,
+                middle_index,
+                next_index,
+                ik_prev_index,
+                ik_middle_index,
+                ik_next_index,
+                index,
+            )
         return self.data[index]
 
+    def indices(self):
+        # 登録対象のキーのみを検出対象とする
+        return sorted([v.index for v in self.data.values() if v.register])
+
     def calc(
-        self, prev_index: int, middle_index: int, next_index: int, index: int
+        self,
+        prev_index: int,
+        middle_index: int,
+        next_index: int,
+        ik_prev_index: int,
+        ik_middle_index: int,
+        ik_next_index: int,
+        index: int,
     ) -> VmdBoneFrame:
         if index in self.data:
             return self.data[index]
@@ -55,22 +77,42 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
             # prevと等しい場合、指定INDEX以前がないので、その次のをコピーして返す
             bf.position = self[next_index].position.copy()
             bf.rotation = self[next_index].rotation.copy()
+            bf.ik_rotation = (self[ik_next_index].ik_rotation or MQuaternion()).copy()
             bf.interpolations = self[next_index].interpolations.copy()
             return bf
         elif next_index == middle_index:
             # nextと等しい場合は、その前のをコピーして返す
             bf.position = self[prev_index].position.copy()
             bf.rotation = self[prev_index].rotation.copy()
+            bf.ik_rotation = (self[ik_prev_index].ik_rotation or MQuaternion()).copy()
             bf.interpolations = self[prev_index].interpolations.copy()
             return bf
 
         prev_bf = self[prev_index]
         next_bf = self[next_index]
 
+        prev_ik_qq = (
+            prev_bf.ik_rotation
+            if prev_bf.ik_rotation
+            else self[ik_prev_index].ik_rotation
+            if self[ik_prev_index].ik_rotation
+            else MQuaternion()
+        )
+        next_ik_qq = (
+            next_bf.ik_rotation
+            if next_bf.ik_rotation
+            else self[ik_next_index].ik_rotation
+            if self[ik_next_index].ik_rotation
+            else MQuaternion()
+        )
+
+        # FK用回転
         _, ry, _ = evaluate(
             next_bf.interpolations.rotation, prev_index, index, next_index
         )
         bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
+        # IK用回転
+        bf.ik_rotation = MQuaternion.slerp(prev_ik_qq, next_ik_qq, ry)
 
         _, xy, _ = evaluate(
             next_bf.interpolations.translation_x, prev_index, index, next_index
@@ -114,7 +156,10 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         return VmdBoneNameFrames(name=name)
 
     def get_matrix_by_indexes(
-        self, fnos: list[int], bone_trees: BoneTrees, model: PmxModel
+        self,
+        fnos: list[int],
+        bone_trees: list[BoneTree],
+        model: PmxModel,
     ) -> dict[str, dict[int, dict[str, VmdBoneFrameTree]]]:
         """
         指定されたキーフレ番号の行列計算結果を返す
@@ -123,7 +168,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         ----------
         fnos : list[int]
             キーフレ番号のリスト
-        bone_trees: BoneTrees
+        bone_trees: list[BoneTree]
             ボーンツリーリスト
 
         Returns
@@ -139,9 +184,9 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             for n, fno in enumerate(fnos):
                 for m, bone in enumerate(bone_tree):
                     # ボーンの親から見た相対位置を求める
-                    poses[n, m] = self.get_position(bone, fno, bone_tree, m)
+                    poses[n, m] = self.get_position(bone, fno, model)
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
-                    qqs[n, m] = self.get_rotation(bone, fno, model)
+                    qqs[n, m] = self.get_rotation(bone, fno, model, append_ik=True)
             matrixes = MMatrix4x4List(row, col)
             matrixes.translate(poses.tolist())
             matrixes.rotate(qqs.tolist())
@@ -166,26 +211,44 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
 
         return self.data[name]
 
-    def get_position(
-        self, bone: Bone, fno: int, bone_tree: BoneTree, idx: int
-    ) -> MVector3D:
+    def get_position(self, bone: Bone, fno: int, model: PmxModel) -> MVector3D:
         # TODO 付与親
         return (
             self[bone.name][fno].position
             + bone.position
-            - (MVector3D() if idx == 0 else bone_tree[idx - 1].position)
+            - (
+                MVector3D()
+                if bone.index < 0 or bone.parent_index not in model.bones
+                else model.bones[bone.parent_index].position
+            )
         )
 
-    def get_rotation(self, bone: Bone, fno: int, model: PmxModel) -> MQuaternion:
+    def get_rotation(
+        self, bone: Bone, fno: int, model: PmxModel, append_ik: bool
+    ) -> MQuaternion:
         # FK(捩り) > IK(捩り) > 付与親(捩り)
-        fk_qq = self.get_fix_rotation(bone, self[bone.name][fno].rotation)
+        bf = self[bone.name][fno]
+        qq = bf.rotation
+        if bf.ik_rotation:
+            # IK用回転を持っている場合、追加
+            qq *= bf.ik_rotation
 
-        effect_qq = self.get_effect_rotation(bone, fno, fk_qq, model)
+        fk_qq = self.get_fix_rotation(bone, qq)
+
+        # IKを加味した回転
+        ik_qq = self.get_ik_rotation(bone, fno, fk_qq, model) if append_ik else fk_qq
+
+        # 付与親を加味した回転
+        effect_qq = self.get_effect_rotation(bone, fno, ik_qq, model)
 
         return effect_qq.normalized()
 
     def get_effect_rotation(
-        self, bone: Bone, fno: int, qq: MQuaternion, model: PmxModel
+        self,
+        bone: Bone,
+        fno: int,
+        qq: MQuaternion,
+        model: PmxModel,
     ) -> MQuaternion:
         """
         付与親を加味した回転を求める
@@ -216,7 +279,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             else:
                 # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
                 effect_bone = model.bones[bone.effect_index]
-                effect_qq = self.get_rotation(effect_bone, fno, model)
+                effect_qq = self.get_rotation(effect_bone, fno, model, append_ik=True)
                 if bone.effect_factor > 0:
                     # 正の付与親
                     qq = qq * effect_qq.multiply_factor(bone.effect_factor)
@@ -226,6 +289,182 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                         qq
                         * (effect_qq.multiply_factor(abs(bone.effect_factor))).inverse()
                     )
+        return qq
+
+    def get_ik_rotation(
+        self,
+        bone: Bone,
+        fno: int,
+        qq: MQuaternion,
+        model: PmxModel,
+    ) -> MQuaternion:
+        """
+        IKを加味した回転を求める
+
+        Parameters
+        ----------
+        bone : Bone
+            計算対象ボーン
+        fno : int
+            計算対象キーフレ
+        qq : MQuaternion
+            計算対象クォータニオン
+        model : PmxModel
+            計算対象モデル
+        ik_bones : PmxModel
+            IK計算用キーフレ
+
+        Returns
+        -------
+        MQuaternion
+            計算結果
+        """
+        # 影響ボーン移動辞書
+        bone_positions: dict[int, MVector3D] = {}
+
+        for ik_target_bone_idx in bone.ik_target_indices:
+            # IKボーン自身の位置
+            ik_bone = model.bones[ik_target_bone_idx]
+
+            if ik_target_bone_idx not in model.bones or not ik_bone.ik:
+                continue
+
+            ik_matrixes = self.get_matrix_by_indexes(
+                [fno], [model.bone_trees[ik_bone.index]], model
+            )
+            global_result_pos = ik_matrixes[ik_bone.name][fno][ik_bone.name].position
+
+            # IKターゲットボーンツリー
+            effector_bone = model.bones[ik_bone.ik.bone_index]
+            effector_bone_tree = model.bone_trees[effector_bone.index]
+
+            # IKリンクボーンツリー
+            ik_link_bone_trees: dict[int, BoneTree] = {}
+            for ik_link in ik_bone.ik.links:
+                if ik_link.bone_index not in model.bones:
+                    continue
+                ik_link_bone_trees[ik_link.bone_index] = model.bone_trees[
+                    ik_link.bone_index
+                ]
+
+            for _ in range(ik_bone.ik.loop_count):
+                for ik_link in ik_bone.ik.links:
+                    # ikLink は末端から並んでる
+                    for axis in ["z", "x", "y"]:
+                        # ZXY の順番でIKを回す
+                        if ik_link.bone_index not in model.bones:
+                            continue
+
+                        # 現在のIKターゲットボーンのグローバル位置を取得
+                        col = len(effector_bone_tree)
+                        poses = np.full((1, col), MVector3D())
+                        qqs = np.full((1, col), MQuaternion())
+                        for m, it_bone in enumerate(effector_bone_tree):
+                            # ボーンの親から見た相対位置を求める
+                            if it_bone.index not in bone_positions:
+                                bone_positions[it_bone.index] = self.get_position(
+                                    it_bone, fno, model
+                                )
+                            poses[0, m] = bone_positions[it_bone.index]
+                            # ボーンの回転
+                            qqs[0, m] = self.get_rotation(
+                                it_bone, fno, model, append_ik=False
+                            )
+                        matrixes = MMatrix4x4List(1, col)
+                        matrixes.translate(poses.tolist())
+                        matrixes.rotate(qqs.tolist())
+                        effector_result_mats = matrixes.matmul_cols()
+                        global_effector_pos = MVector3D(
+                            *effector_result_mats.to_positions()[0, -1]
+                        )
+
+                        # 処理対象IKボーン
+                        link_bone = model.bones[ik_link.bone_index]
+                        link_bone_tree = ik_link_bone_trees[link_bone.index]
+
+                        # 処理対象IKボーンのグローバル位置と行列を取得
+                        col = len(link_bone_tree)
+                        poses = np.full((1, col), MVector3D())
+                        qqs = np.full((1, col), MQuaternion())
+                        for m, it_bone in enumerate(link_bone_tree):
+                            # ボーンの親から見た相対位置を求める
+                            if it_bone.index not in bone_positions:
+                                bone_positions[it_bone.index] = self.get_position(
+                                    it_bone, fno, model
+                                )
+                            poses[0, m] = bone_positions[it_bone.index]
+                            # ボーンの回転
+                            qqs[0, m] = self.get_rotation(
+                                it_bone, fno, model, append_ik=False
+                            )
+                        matrixes = MMatrix4x4List(1, col)
+                        matrixes.translate(poses.tolist())
+                        matrixes.rotate(qqs.tolist())
+                        link_result_mats = matrixes.matmul_cols()
+
+                        # 注目ノード（実際に動かすボーン）
+                        link_matrix = MMatrix4x4(*link_result_mats.vector[-1])
+
+                        # ワールド座標系から注目ノードの局所座標系への変換
+                        link_inverse_matrix = link_matrix.inverse()
+
+                        # 注目ノードを起点とした、エフェクタのローカル位置
+                        local_effector_pos = link_inverse_matrix * global_effector_pos
+                        # 注目ノードを起点とした、IK目標のローカル位置
+                        local_result_pos = link_inverse_matrix * global_result_pos
+
+                        if (
+                            local_effector_pos - local_result_pos
+                        ).length_squared() < 0.0001:
+                            # 位置の差がほとんどない場合、終了
+                            return qq
+
+                        #  (1) 基準関節→エフェクタ位置への方向ベクトル
+                        norm_effector_pos = local_effector_pos.normalized()
+                        #  (2) 基準関節→目標位置への方向ベクトル
+                        norm_ik_target_pos = local_result_pos.normalized()
+
+                        # ベクトル (1) を (2) に一致させるための最短回転量（Axis-Angle）
+                        # 回転角
+                        rotation_dot = norm_effector_pos.dot(norm_ik_target_pos)
+                        # 回転角度
+                        rotation_radian = acos(max(-1, min(1, rotation_dot)))
+
+                        if abs(rotation_radian) < 0.0001:
+                            # ほとんど回らない場合、スルー
+                            continue
+
+                        # 回転軸
+                        rotation_axis = norm_effector_pos.cross(
+                            norm_ik_target_pos
+                        ).normalized()
+                        # 回転角度(制限角で最大変位量を制限する)
+                        rotation_degree = min(
+                            degrees(rotation_radian), ik_bone.ik.unit_rotation.degrees.x
+                        )
+
+                        # 補正関節回転量
+                        correct_qq = MQuaternion.from_axis_angles(
+                            rotation_axis, rotation_degree
+                        )
+
+                        # 軸制限をかけた回転
+                        mat = MMatrix4x4()
+                        mat.rotate(qq)
+                        match axis:
+                            case "x":
+                                mat.rotate_x(correct_qq)
+                            case "y":
+                                mat.rotate_y(correct_qq)
+                            case "z":
+                                mat.rotate_z(correct_qq)
+                        qq = mat.to_quaternion()
+
+                        # リンクボーンの角度を保持
+                        self[link_bone.name][fno].ik_rotation = (
+                            self[link_bone.name][fno].ik_rotation or MQuaternion()
+                        ) * qq
+
         return qq
 
     def get_fix_rotation(self, bone: Bone, qq: MQuaternion) -> MQuaternion:

@@ -621,6 +621,7 @@ class Bone(BaseIndexNameModel):
         self.ik: Optional[Ik] = ik or None
         self.display: bool = display or False
         self.is_system: bool = is_system or False
+        self.ik_target_indices: list[int] = []
 
 
 class MorphOffset(BaseModel):
