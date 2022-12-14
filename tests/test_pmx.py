@@ -413,10 +413,10 @@ def test_read_by_filepath_ok_tree():
     assert "左人指先" == bone_tree[20].name
 
     new_bone_trees = model.bone_trees.gets(["左人指先", "右人指先"])
-    assert "全ての親" == new_bone_trees["左人指先"][0].name
-    assert "左人指先" == new_bone_trees["左人指先"][-1].name
-    assert "全ての親" == new_bone_trees["右人指先"][0].name
-    assert "右人指先" == new_bone_trees["右人指先"][-1].name
+    assert "全ての親" == new_bone_trees[0][0].name
+    assert "左人指先" == new_bone_trees[0][-1].name
+    assert "全ての親" == new_bone_trees[1][0].name
+    assert "右人指先" == new_bone_trees[1][-1].name
 
 
 def test_read_by_filepath_complicated():

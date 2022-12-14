@@ -187,6 +187,10 @@ class PmxReader(BaseReader[PmxModel]):
         # ボーンツリー生成
         model.bone_trees = model.bones.create_bone_links()
 
+        # 各ボーンのローカル軸
+        for bone in model.bones:
+            bone.local_axis = model.bones.get_local_x_axis(bone.index)
+
     def read_vertices(self, model: PmxModel):
         """頂点データ読み込み"""
         for i in range(self.read_int()):
@@ -314,29 +318,26 @@ class PmxReader(BaseReader[PmxModel]):
             bone.layer = self.read_int()
             bone.bone_flg = BoneFlg(self.read_short())
 
-            if BoneFlg.TAIL_IS_BONE in bone.bone_flg:
+            if bone.is_tail_bone():
                 bone.tail_index = self.read_bone_index()
             else:
                 bone.tail_position = self.read_MVector3D()
 
-            if (
-                BoneFlg.IS_EXTERNAL_TRANSLATION in bone.bone_flg
-                or BoneFlg.IS_EXTERNAL_ROTATION in bone.bone_flg
-            ):
+            if bone.is_external_translation() or bone.is_external_rotation():
                 bone.effect_index = self.read_bone_index()
                 bone.effect_factor = self.read_float()
 
-            if BoneFlg.HAS_FIXED_AXIS in bone.bone_flg:
+            if bone.has_fixed_axis():
                 bone.fixed_axis = self.read_MVector3D()
 
-            if BoneFlg.HAS_LOCAL_COORDINATE in bone.bone_flg:
+            if bone.has_local_coordinate():
                 bone.local_x_vector = self.read_MVector3D()
                 bone.local_z_vector = self.read_MVector3D()
 
-            if BoneFlg.IS_EXTERNAL_PARENT_DEFORM in bone.bone_flg:
+            if bone.is_external_parent_deform():
                 bone.external_key = self.read_int()
 
-            if BoneFlg.IS_IK in bone.bone_flg:
+            if bone.is_ik():
                 ik = Ik()
                 ik.bone_index = self.read_bone_index()
                 ik.loop_count = self.read_int()
@@ -344,7 +345,7 @@ class PmxReader(BaseReader[PmxModel]):
                 for _i in range(self.read_int()):
                     ik_link = IkLink()
                     ik_link.bone_index = self.read_bone_index()
-                    ik_link.angle_limit = bool(self.read_byte())
+                    ik_link.angle_limit = self.read_byte() == 1
                     if ik_link.angle_limit:
                         ik_link.min_angle_limit.radians = self.read_MVector3D()
                         ik_link.max_angle_limit.radians = self.read_MVector3D()

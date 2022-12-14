@@ -621,7 +621,64 @@ class Bone(BaseIndexNameModel):
         self.ik: Optional[Ik] = ik or None
         self.display: bool = display or False
         self.is_system: bool = is_system or False
+        self.ik_link_indices: list[int] = []
         self.ik_target_indices: list[int] = []
+
+        self.local_y_vector = self.local_z_vector.cross(self.local_x_vector)
+        self.correct_local_z_vector = self.local_x_vector.cross(self.local_y_vector)
+        self.local_axis = MVector3D()
+
+    def is_tail_bone(self) -> bool:
+        """表示先がボーンであるか"""
+        return BoneFlg.TAIL_IS_BONE in self.bone_flg
+
+    def can_rotate(self) -> bool:
+        """回転可能であるか"""
+        return BoneFlg.CAN_ROTATE in self.bone_flg
+
+    def can_translate(self) -> bool:
+        """移動可能であるか"""
+        return BoneFlg.CAN_TRANSLATE in self.bone_flg
+
+    def is_visible(self) -> bool:
+        """表示であるか"""
+        return BoneFlg.IS_VISIBLE in self.bone_flg
+
+    def can_manipulate(self) -> bool:
+        """操作可であるか"""
+        return BoneFlg.CAN_MANIPULATE in self.bone_flg
+
+    def is_ik(self) -> bool:
+        """IKであるか"""
+        return BoneFlg.IS_IK in self.bone_flg
+
+    def is_external_local(self) -> bool:
+        """ローカル付与であるか"""
+        return BoneFlg.IS_EXTERNAL_LOCAL in self.bone_flg
+
+    def is_external_rotation(self) -> bool:
+        """回転付与であるか"""
+        return BoneFlg.IS_EXTERNAL_ROTATION in self.bone_flg
+
+    def is_external_translation(self) -> bool:
+        """移動付与であるか"""
+        return BoneFlg.IS_EXTERNAL_TRANSLATION in self.bone_flg
+
+    def has_fixed_axis(self) -> bool:
+        """軸固定であるか"""
+        return BoneFlg.HAS_FIXED_AXIS in self.bone_flg
+
+    def has_local_coordinate(self) -> bool:
+        """ローカル軸を持つか"""
+        return BoneFlg.HAS_LOCAL_COORDINATE in self.bone_flg
+
+    def is_after_physics_deform(self) -> bool:
+        """物理後変形であるか"""
+        return BoneFlg.IS_AFTER_PHYSICS_DEFORM in self.bone_flg
+
+    def is_external_parent_deform(self) -> bool:
+        """外部親変形であるか"""
+        return BoneFlg.IS_EXTERNAL_PARENT_DEFORM in self.bone_flg
 
 
 class MorphOffset(BaseModel):

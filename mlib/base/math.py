@@ -1,10 +1,10 @@
 import operator
-from math import acos, cos, degrees, radians, sin, sqrt
+from math import acos, asin, atan2, cos, degrees, radians, sin, sqrt
 from typing import Any, Union
 
 import numpy as np
 from numpy.linalg import inv, norm
-from quaternion import from_rotation_matrix, quaternion
+from quaternion import as_rotation_matrix, from_rotation_matrix, quaternion
 
 from .base import BaseModel
 
@@ -219,8 +219,8 @@ class MVector(BaseModel):
         return (
             self is not None
             and self.vector is not None
-            and type(self) is None.__class__
-            and not bool(np.all(self.vector == 0))
+            and type(self) is not None.__class__
+            and not np.all(self.vector == 0)
         )
 
     def __add__(self, other):
@@ -592,6 +592,14 @@ class MQuaternion(MVector):
     def theta(self) -> float:
         return 2 * acos(min(1, max(-1, self.scalar)))
 
+    def __bool__(self) -> bool:
+        return (
+            self is not None
+            and self.vector is not None
+            and type(self) is not None.__class__
+            and not np.all(self.vector.components == 0)  # type: ignore
+        )
+
     def to_log(self) -> str:
         return (
             f"[x={round(self.x, 5)}, y={round(self.y, 5)}, "
@@ -722,101 +730,28 @@ class MQuaternion(MVector):
         """
         return acos(min(1, max(-1, self.normalized().dot(v.normalized()))))
 
-    def separate_local_qq(self, global_x_axis: MVector3D):
-        # ローカル座標系（ボーンベクトルが（1，0，0）になる空間）の向き
-        local_axis = MVector3D(1, 0, 0)
-
-        # グローバル座標系（Ａスタンス）からローカル座標系（ボーンベクトルが（1，0，0）になる空間）への変換
-        global2local_qq = MQuaternion.rotate(global_x_axis, local_axis)
-        local2global_qq = MQuaternion.rotate(local_axis, global_x_axis)
-
-        mat_x1 = MMatrix4x4(identity=True)
-        mat_x1.rotate(self)  # 入力qq
-        mat_x1.translate(global_x_axis)  # グローバル軸方向に伸ばす
-        mat_x1_vec = mat_x1 * MVector3D()
-
-        # YZの回転量（自身のねじれを無視する）
-        yz_qq = MQuaternion.rotate(global_x_axis, mat_x1_vec)
-
-        # YZ回転からZ成分を抽出する --------------
-        mat_z1 = MMatrix4x4(identity=True)
-        mat_z1.rotate(yz_qq)  # YZの回転量
-        mat_z1.rotate(global2local_qq)  # グローバル軸の回転量からローカルの回転量に変換
-        mat_z1.translate(local_axis)  # ローカル軸方向に伸ばす
-
-        mat_z1_vec = mat_z1 * MVector3D()
-        mat_z1_vec.z = 0  # Z方向の移動量を潰す
-
-        # ローカル軸からZを潰した移動への回転量
-        local_z_qq = MQuaternion.rotate(local_axis, mat_z1_vec)
-
-        # ボーンローカル座標系の回転をグローバル座標系の回転に戻す
-        mat_z2 = MMatrix4x4(identity=True)
-        mat_z2.rotate(local_z_qq)  # ローカル軸上のZ回転
-        mat_z2.rotate(local2global_qq)  # ローカル軸上からグローバル軸上に変換
-
-        z_qq = mat_z2.to_quaternion()
-
-        # YZ回転からY成分だけ取り出す -----------
-
-        mat_y1 = MMatrix4x4(identity=True)
-        mat_y1.rotate(yz_qq)  # グローバルYZの回転量
-
-        mat_y2 = MMatrix4x4(identity=True)
-        mat_y2.rotate(z_qq)  # グローバルZの回転量
-        mat_y2_qq = (mat_y1 * mat_y2.inverse()).to_quaternion()
-
-        # X成分の捻れが混入したので、XY回転からYZ回転を取り出すことでXキャンセルをかける。
-        mat_y3 = MMatrix4x4(identity=True)
-        mat_y3.rotate(mat_y2_qq)
-        mat_y3.translate(global_x_axis)
-        mat_y3_vec = mat_y3 * MVector3D()
-
-        y_qq = MQuaternion.rotate(global_x_axis, mat_y3_vec)
-
-        # Xを再度求める -------------
-
-        mat_x4 = MMatrix4x4(identity=True)
-        mat_x4.rotate(self)
-
-        mat_x5 = MMatrix4x4(identity=True)
-        mat_x5.rotate(y_qq)
-
-        mat_x6 = MMatrix4x4(identity=True)
-        mat_x6.rotate(z_qq)
-
-        x_qq: MQuaternion = (
-            mat_x5.inverse() * mat_x4 * mat_x6.inverse()
-        ).to_quaternion()
-
-        return (x_qq, y_qq, z_qq, yz_qq)
-
     def to_matrix4x4(self):
-        # q(w,x,y,z)から(x,y,z,w)に並べ替え.
-        q2 = np.array([self.x, self.y, self.z, self.scalar], dtype=np.float64)
+        mat3x3 = as_rotation_matrix(self.vector)
 
         mat = MMatrix4x4(identity=True)
-        mat[0, 0] = q2[3] * q2[3] + q2[0] * q2[0] - q2[1] * q2[1] - q2[2] * q2[2]
-        mat[0, 1] = 2.0 * q2[0] * q2[1] - 2.0 * q2[3] * q2[2]
-        mat[0, 2] = 2.0 * q2[0] * q2[2] + 2.0 * q2[3] * q2[1]
+        mat[0, 0] = mat3x3[0, 0]
+        mat[0, 1] = mat3x3[0, 1]
+        mat[0, 2] = mat3x3[0, 2]
         mat[0, 3] = 0.0
 
-        mat[1, 0] = 2.0 * q2[0] * q2[1] + 2.0 * q2[3] * q2[2]
-        mat[1, 1] = q2[3] * q2[3] - q2[0] * q2[0] + q2[1] * q2[1] - q2[2] * q2[2]
-        mat[1, 2] = 2.0 * q2[1] * q2[2] - 2.0 * q2[3] * q2[0]
+        mat[1, 0] = mat3x3[1, 0]
+        mat[1, 1] = mat3x3[1, 1]
+        mat[1, 2] = mat3x3[1, 2]
         mat[1, 3] = 0.0
 
-        mat[2, 0] = 2.0 * q2[0] * q2[2] - 2.0 * q2[3] * q2[1]
-        mat[2, 1] = 2.0 * q2[1] * q2[2] + 2.0 * q2[3] * q2[0]
-        mat[2, 2] = q2[3] * q2[3] - q2[0] * q2[0] - q2[1] * q2[1] + q2[2] * q2[2]
+        mat[2, 0] = mat3x3[2, 0]
+        mat[2, 1] = mat3x3[2, 1]
+        mat[2, 2] = mat3x3[2, 2]
         mat[2, 3] = 0.0
 
         mat[3, 0] = 0.0
         mat[3, 1] = 0.0
         mat[3, 2] = 0.0
-        mat[3, 3] = q2[3] * q2[3] + q2[0] * q2[0] + q2[1] * q2[1] + q2[2] * q2[2]
-
-        mat /= mat[3, 3]
         mat[3, 3] = 1.0
 
         return mat
@@ -978,6 +913,84 @@ class MQuaternion(MVector):
 
         # Construct the result quaternion.
         return q1 * factor1 + q2b * factor2
+
+    def separate_by_axis(self, global_axis: MVector3D):
+        # ローカルZ軸ベースで求める場合
+        local_z_axis = MVector3D(0, 0, -1)
+        # X軸ベクトル
+        global_x_axis = global_axis.normalized()
+        # Y軸ベクトル
+        global_y_axis = local_z_axis.cross(global_x_axis)
+        if not global_y_axis:
+            # ローカルZ軸ベースで求めるのに失敗した場合、ローカルY軸ベースで求め直す
+            local_y_axis = MVector3D(0, 1, 0)
+            # Z軸ベクトル
+            global_z_axis = local_y_axis.cross(global_x_axis)
+            # Y軸ベクトル
+            global_y_axis = global_x_axis.cross(global_z_axis)
+        else:
+            # Z軸ベクトル
+            global_z_axis = global_x_axis.cross(global_y_axis)
+
+        # X成分を抽出する ------------
+
+        # グローバル軸方向に伸ばす
+        global_x_vec = self * global_x_axis
+
+        # YZの回転量（自身のねじれを無視する）
+        yz_qq = MQuaternion.rotate(global_x_axis, global_x_vec.normalized())
+
+        # 元々の回転量 から YZ回転 を除去して、除去されたX成分を求める
+        x_qq = self * yz_qq.inverse()
+
+        # Y成分を抽出する ------------
+
+        # グローバル軸方向に伸ばす
+        global_y_vec = self * global_y_axis
+
+        # XZの回転量（自身のねじれを無視する）
+        xz_qq = MQuaternion.rotate(global_y_axis, global_y_vec.normalized())
+
+        # 元々の回転量 から XZ回転 を除去して、除去されたY成分を求める
+        y_qq = self * xz_qq.inverse()
+
+        # Z成分を抽出する ------------
+
+        # グローバル軸方向に伸ばす
+        global_z_vec = self * global_z_axis
+
+        # XYの回転量（自身のねじれを無視する）
+        xy_qq = MQuaternion.rotate(global_z_axis, global_z_vec.normalized())
+
+        # 元々の回転量 から XY回転 を除去して、除去されたZ成分を求める
+        z_qq = self * xy_qq.inverse()
+
+        return x_qq, y_qq, z_qq
+
+    def separate_euler_degrees(self) -> MVector3D:
+        """
+        ZXYの回転順序でオイラー角度を求める
+        http://mikaduki2007.blog.shinobi.jp/Entry/279/
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
+        mat = self.normalized().to_matrix4x4()
+        x_radian = asin(max(-1, min(1, -mat.vector[2, 1])))
+        if np.zeros_like([cos(x_radian)]):
+            # α = 0, β = 90 or -90
+            y_radian = atan2(-mat.vector[0, 2], mat.vector[0, 0])
+            z_radian = asin(max(-1, min(1, -mat.vector[2, 1])))
+            x_radian = 0.0
+        else:
+            y_radian = atan2(mat.vector[2, 0], mat.vector[2, 2])
+            z_radian = asin(max(-1, min(1, mat.vector[0, 1] / cos(x_radian))))
+            if mat.vector[1, 1] < 0:
+                z_radian = 180 - z_radian
+
+        return MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
 
 
 class MMatrix4x4(MVector):

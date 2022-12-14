@@ -8,7 +8,6 @@ from mlib.pmx.part import (
     Bdef1,
     Bdef2,
     Bdef4,
-    BoneFlg,
     BoneMorphOffset,
     GroupMorphOffset,
     MaterialMorphOffset,
@@ -233,7 +232,7 @@ class PmxWriter(BaseModel):
                 # ボーンフラグ
                 fout.write(struct.pack(TYPE_SHORT, bone.bone_flg.value))
 
-                if BoneFlg.TAIL_IS_BONE in bone.bone_flg:
+                if bone.is_tail_bone():
                     # 接続先ボーンのボーンIndex
                     fout.write(struct.pack(bone_idx_type, bone.tail_index))
                 else:
@@ -242,21 +241,18 @@ class PmxWriter(BaseModel):
                     write_number(fout, TYPE_FLOAT, float(bone.tail_position.y))
                     write_number(fout, TYPE_FLOAT, float(bone.tail_position.z))
 
-                if (
-                    BoneFlg.IS_EXTERNAL_TRANSLATION in bone.bone_flg
-                    or BoneFlg.IS_EXTERNAL_ROTATION in bone.bone_flg
-                ):
+                if bone.is_external_translation() or bone.is_external_rotation():
                     # 付与親指定ありの場合
                     fout.write(struct.pack(bone_idx_type, bone.effect_index))
                     write_number(fout, TYPE_FLOAT, bone.effect_factor)
 
-                if BoneFlg.HAS_FIXED_AXIS in bone.bone_flg:
+                if bone.has_fixed_axis():
                     # 軸制限先
                     write_number(fout, TYPE_FLOAT, float(bone.fixed_axis.x))
                     write_number(fout, TYPE_FLOAT, float(bone.fixed_axis.y))
                     write_number(fout, TYPE_FLOAT, float(bone.fixed_axis.z))
 
-                if BoneFlg.HAS_LOCAL_COORDINATE in bone.bone_flg:
+                if bone.has_local_coordinate():
                     # ローカルX
                     write_number(fout, TYPE_FLOAT, float(bone.local_x_vector.x))
                     write_number(fout, TYPE_FLOAT, float(bone.local_x_vector.y))
@@ -266,10 +262,10 @@ class PmxWriter(BaseModel):
                     write_number(fout, TYPE_FLOAT, float(bone.local_z_vector.y))
                     write_number(fout, TYPE_FLOAT, float(bone.local_z_vector.z))
 
-                if BoneFlg.IS_EXTERNAL_PARENT_DEFORM in bone.bone_flg:
+                if bone.is_external_parent_deform():
                     write_number(fout, TYPE_INT, bone.external_key)
 
-                if BoneFlg.IS_IK in bone.bone_flg:
+                if bone.is_ik():
                     # IKボーン
                     # n  : ボーンIndexサイズ  | IKターゲットボーンのボーンIndex
                     fout.write(struct.pack(bone_idx_type, bone.ik.bone_index))

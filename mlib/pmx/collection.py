@@ -14,7 +14,6 @@ from mlib.base.math import MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.part import (
     Bone,
-    BoneFlg,
     DisplaySlot,
     DrawFlg,
     Face,
@@ -233,11 +232,15 @@ class Bones(BaseIndexNameListModel[Bone]):
 
     def append(self, v: Bone) -> None:
         super().append(v)
-        if BoneFlg.IS_IK in v.bone_flg and v.ik:
-            # IKボーンの場合、リンクボーンにフラグを立てる
+        if v.is_ik() and v.ik:
+            # IKボーンの場合
             for link in v.ik.links:
                 if link.bone_index in self:
-                    self[link.bone_index].ik_target_indices.append(v.index)
+                    # リンクボーンにフラグを立てる
+                    self[link.bone_index].ik_link_indices.append(v.index)
+            if v.ik.bone_index in self:
+                # ターゲットボーンにもフラグを立てる
+                self[v.ik.bone_index].ik_target_indices.append(v.index)
 
     def create_bone_links(self) -> BoneTrees:
         """
@@ -311,17 +314,10 @@ class Bones(BaseIndexNameListModel[Bone]):
         to_pos = MVector3D()
 
         from_pos = bone.position
-        if (
-            BoneFlg.TAIL_IS_BONE not in bone.bone_flg
-            and bone.tail_position != MVector3D()
-        ):
+        if bone.is_tail_bone() and bone.tail_position != MVector3D():
             # 表示先が相対パスの場合、保持
             to_pos = from_pos + bone.tail_position
-        elif (
-            BoneFlg.TAIL_IS_BONE in bone.bone_flg
-            and bone.tail_index >= 0
-            and bone.tail_index in self
-        ):
+        elif bone.is_tail_bone() and bone.tail_index >= 0 and bone.tail_index in self:
             # 表示先が指定されているの場合、保持
             to_pos = self[bone.tail_index].position
         else:
@@ -348,23 +344,20 @@ class Bones(BaseIndexNameListModel[Bone]):
             return MVector3D()
 
         bone = self[bone_index]
-        to_pos = MVector3D()
 
-        if bone.fixed_axis != MVector3D():
+        if bone.is_ik() and ("足ＩＫ" in bone.name or "つま先ＩＫ" in bone.name):
+            # 足IK系は固定
+            return MVector3D(0, 1, 0)
+
+        if bone.has_fixed_axis() and bone.fixed_axis:
             # 軸制限がある場合、親からの向きを保持
-            fixed_x_axis = bone.fixed_axis.normalized()
-        else:
-            fixed_x_axis = MVector3D()
+            return bone.fixed_axis.normalized()
 
         from_pos = self[bone.name].position
         to_pos = self.get_tail_position(bone_index)
 
         # 軸制限の指定が無い場合、子の方向
         x_axis = (to_pos - from_pos).normalized()
-
-        if fixed_x_axis != MVector3D() and np.sign(fixed_x_axis.x) != np.sign(x_axis.x):
-            # 軸制限の軸方向と計算上の軸方向が違う場合、逆ベクトル
-            x_axis = -fixed_x_axis
 
         return x_axis
 

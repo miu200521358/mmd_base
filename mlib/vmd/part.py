@@ -3,8 +3,7 @@ from typing import Optional
 from mlib.base.base import BaseModel
 from mlib.base.bezier import Interpolation
 from mlib.base.math import MQuaternion, MVector3D
-from mlib.base.part import (BaseIndexModel, BaseIndexNameModel,
-                            BaseRotationModel)
+from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel
 
 
 class BaseVmdFrame(BaseIndexModel):
@@ -262,6 +261,7 @@ class VmdBoneFrame(BaseVmdNameFrame):
         self.rotation: MQuaternion = rotation or MQuaternion()
         self.interpolations: BoneInterpolations = interpolations or BoneInterpolations()
         self.ik_rotation: Optional[MQuaternion] = None
+        self.ik_target_rotation: Optional[MQuaternion] = None
         self.correct_rotation: Optional[MQuaternion] = None
 
 

@@ -200,7 +200,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel]):
 
     def __setitem__(self, index: int, value: TBaseIndexModel):
         self.data[index] = value
-        self.__indices = sorted(list(self.data.keys()))
+        self.__indices = self.indices()
 
     def __delitem__(self, index: int):
         del self.data[index]
@@ -233,7 +233,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel]):
 
     def __iter__(self):
         self.__iter_index = -1
-        self.__indices = sorted(list(self.data.keys()))
+        self.__indices = self.indices()
         return self
 
     def __next__(self) -> TBaseIndexModel:
@@ -398,7 +398,7 @@ class BaseIndexNameDictModel(
         if value.name not in self.data:
             self.data[value.name] = self.create_inner(value.name)
         self.data[value.name].append(value)
-        self.__names = sorted(list(self.data.keys()))
+        self.__names = self.names()
 
     def get(self, name: str) -> TBaseIndexNameDictInnerModel:
         """
