@@ -515,6 +515,77 @@ def test_read_by_filepath_ok_leg_ik2():
     ).all()
 
 
+def test_read_by_filepath_ok_leg_ik3():
+    import os
+
+    import numpy as np
+
+    from mlib.pmx.collection import PmxModel
+    from mlib.pmx.reader import PmxReader
+    from mlib.vmd.collection import VmdMotion
+    from mlib.vmd.reader import VmdReader
+
+    vmd_reader = VmdReader()
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモーション2.vmd")
+    )
+
+    pmx_reader = PmxReader()
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
+
+    # キーフレ
+    bone_trees = model.bone_trees.gets(["左つま先", "左足先EX"])
+    bone_matrixes = motion.bones.get_matrix_by_indexes([60], bone_trees, model)
+
+    # --------
+    # キーフレがない場合
+
+    assert np.isclose(
+        np.array([1.931959, 11.695199, -1.411883]),
+        bone_matrixes["左つま先"][60]["下半身"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([2.927524, 10.550287, -1.218106]),
+        bone_matrixes["左つま先"][60]["左足"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([2.263363, 7.061642, -3.837192]),
+        bone_matrixes["左つま先"][60]["左ひざ"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([2.747242, 2.529942, -1.331971]),
+        bone_matrixes["左つま先"][60]["左足首"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([1.809291, 0.242514, -1.182168]),
+        bone_matrixes["左つま先"][60]["左つま先"].position.vector,
+        rtol=0.02,
+        atol=0.02,
+    ).all()
+    assert np.isclose(
+        np.array([2.263363, 7.061642, -3.837192]),
+        bone_matrixes["左足先EX"][60]["左ひざD"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([1.916109, 1.177077, -1.452845]),
+        bone_matrixes["左足先EX"][60]["左足先EX"].position.vector,
+        rtol=0.1,
+        atol=0.1,
+    ).all()
+
+
 def test_read_by_filepath_ok_arm_ik():
     import os
 
