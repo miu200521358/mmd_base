@@ -12,7 +12,7 @@ import OpenGL.GL as gl
 import OpenGL.GLU as glu
 import wx
 from mlib.math import MMatrix4x4, MQuaternion, MVector3D
-from mlib.pmx.reader import PmxReader
+from mlib.pmx.pmx_reader import PmxReader
 from OpenGL.GL import shaders
 from wx import glcanvas
 

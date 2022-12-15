@@ -3,14 +3,23 @@ from math import acos, degrees, pi
 import numpy as np
 
 from mlib.base.bezier import evaluate
-from mlib.base.collection import (BaseHashModel, BaseIndexDictModel,
-                                  BaseIndexNameDictInnerModel,
-                                  BaseIndexNameDictModel)
+from mlib.base.collection import (
+    BaseHashModel,
+    BaseIndexDictModel,
+    BaseIndexNameDictInnerModel,
+    BaseIndexNameDictModel,
+)
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
-from mlib.pmx.collection import BoneTree, PmxModel
-from mlib.pmx.part import Bone
-from mlib.vmd.part import (VmdBoneFrame, VmdCameraFrame, VmdLightFrame,
-                           VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame)
+from mlib.pmx.pmx_collection import BoneTree, PmxModel
+from mlib.pmx.pmx_part import Bone
+from mlib.vmd.vmd_part import (
+    VmdBoneFrame,
+    VmdCameraFrame,
+    VmdLightFrame,
+    VmdMorphFrame,
+    VmdShadowFrame,
+    VmdShowIkFrame,
+)
 
 
 class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
@@ -26,40 +35,37 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
             # まったくデータがない場合、生成
             return VmdBoneFrame(name=self.name, index=index)
 
-        if index not in self.indices():
-            # キーフレがない場合、生成したのを返す（保持はしない）
-            prev_index, middle_index, next_index = self.range_indexes(index)
+        if index in self.data.keys():
+            return self.data[index]
 
-            if prev_index == middle_index == next_index:
-                # 登録対象キーがない場合、あるキー全部で取得し直す
-                prev_index, middle_index, next_index = self.range_indexes(
-                    index,
-                    indices=sorted([v.index for v in self.data.values()]),
-                )
+        # キーフレがない場合、生成したのを返す（保持はしない）
+        prev_index, middle_index, next_index = self.range_indexes(index)
 
-            # IK用キーはIK回転情報があるキーフレのみ対象とする
-            ik_prev_index, ik_middle_index, ik_next_index = self.range_indexes(
+        if prev_index == middle_index == next_index:
+            # 登録対象キーがない場合、あるキー全部で取得し直す
+            prev_index, middle_index, next_index = self.range_indexes(
                 index,
-                indices=sorted(
-                    [v.index for v in self.data.values() if v.ik_rotation is not None]
-                ),
+                indices=sorted([v.index for v in self.data.values()]),
             )
 
-            # prevとnextの範囲内である場合、補間曲線ベースで求め直す
-            return self.calc(
-                prev_index,
-                middle_index,
-                next_index,
-                ik_prev_index,
-                ik_middle_index,
-                ik_next_index,
-                index,
-            )
-        return self.data[index]
+        # IK用キーはIK回転情報があるキーフレのみ対象とする
+        ik_prev_index, ik_middle_index, ik_next_index = self.range_indexes(
+            index,
+            indices=sorted(
+                [v.index for v in self.data.values() if v.ik_rotation is not None]
+            ),
+        )
 
-    def indices(self):
-        # 登録対象のキーのみを検出対象とする
-        return sorted([v.index for v in self.data.values() if v.register])
+        # prevとnextの範囲内である場合、補間曲線ベースで求め直す
+        return self.calc(
+            prev_index,
+            middle_index,
+            next_index,
+            ik_prev_index,
+            ik_middle_index,
+            ik_next_index,
+            index,
+        )
 
     def calc(
         self,
@@ -202,9 +208,13 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             for n, fno in enumerate(fnos):
                 for m, bone in enumerate(bone_tree.data.values()):
                     # ボーンの親から見た相対位置を求める
-                    poses[n, m] = self.get_relative_position(bone, fno, model)
+                    poses[n, m] = self.get_relative_position(bone, fno, model).vector
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
-                    qqs[n, m] = self.get_rotation(bone, fno, model, append_ik=True)
+                    qqs[n, m] = (
+                        self.get_rotation(bone, fno, model, append_ik=True)
+                        .to_matrix4x4()
+                        .vector
+                    )
             matrixes = MMatrix4x4List(row, col)
             matrixes.translate(poses.tolist())
             matrixes.rotate(qqs.tolist())
@@ -472,10 +482,12 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                             bone_positions[it_bone.index] = self.get_relative_position(
                                 it_bone, fno, model
                             )
-                        poses[0, m] = bone_positions[it_bone.index]
+                        poses[0, m] = bone_positions[it_bone.index].vector
                         # ボーンの回転
-                        qqs[0, m] = self.get_rotation(
-                            it_bone, fno, model, append_ik=False
+                        qqs[0, m] = (
+                            self.get_rotation(it_bone, fno, model, append_ik=False)
+                            .to_matrix4x4()
+                            .vector
                         )
                     matrixes = MMatrix4x4List(1, col)
                     matrixes.translate(poses.tolist())
@@ -499,10 +511,12 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                             bone_positions[it_bone.index] = self.get_relative_position(
                                 it_bone, fno, model
                             )
-                        poses[0, m] = bone_positions[it_bone.index]
+                        poses[0, m] = bone_positions[it_bone.index].vector
                         # ボーンの回転
-                        qqs[0, m] = self.get_rotation(
-                            it_bone, fno, model, append_ik=False
+                        qqs[0, m] = (
+                            self.get_rotation(it_bone, fno, model, append_ik=False)
+                            .to_matrix4x4()
+                            .vector
                         )
                     matrixes = MMatrix4x4List(1, col)
                     matrixes.translate(poses.tolist())
@@ -520,9 +534,9 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     # 注目ノードを起点とした、IK目標のローカル位置
                     local_target_pos = link_inverse_matrix * global_target_pos
 
-                    if np.isclose(
-                        (local_effector_pos - local_target_pos).length_squared(), 0
-                    ):
+                    if (
+                        local_effector_pos - local_target_pos
+                    ).length_squared() < 0.00001:
                         # 位置の差がほとんどない場合、スルー
                         is_break = True
                         break
@@ -538,7 +552,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     # 回転角度
                     rotation_radian = acos(max(-1, min(1, rotation_dot)))
 
-                    if np.isclose(rotation_dot, 1):
+                    if abs(1 - rotation_dot) < 0.00001:
                         # ほとんど回らない場合、スルー
                         is_break = True
                         break

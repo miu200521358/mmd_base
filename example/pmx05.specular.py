@@ -10,10 +10,11 @@ import numpy as np
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
 import wx
-from mlib.math import MMatrix4x4, MQuaternion, MVector3D
-from mlib.pmx.reader import PmxReader
 from OpenGL.GL import shaders
 from wx import glcanvas
+
+from mlib.math import MMatrix4x4, MQuaternion, MVector3D
+from mlib.pmx.pmx_reader import PmxReader
 
 POSITION_ID = 0
 NORMAL_ID = 1
@@ -294,7 +295,7 @@ class OpenGLCanvas(glcanvas.GLCanvas):
         self.SetCurrent(self.context)
         gl.glClearColor(0.1, 0.15, 0.1, 1)
         self.rotate = False
-        self.rot_y = MMatrix4x4(identity=True)
+        self.rot_y = MMatrix4x4()
         # self.rot_y.identity()
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)

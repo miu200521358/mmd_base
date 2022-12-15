@@ -3,7 +3,8 @@ from typing import Optional
 from mlib.base.base import BaseModel
 from mlib.base.bezier import Interpolation
 from mlib.base.math import MQuaternion, MVector3D
-from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel
+from mlib.base.part import (BaseIndexModel, BaseIndexNameModel,
+                            BaseRotationModel)
 
 
 class BaseVmdFrame(BaseIndexModel):
@@ -22,13 +23,13 @@ class BaseVmdFrame(BaseIndexModel):
 
     def __init__(
         self,
-        index: int = None,
-        registerer: bool = None,
-        read: bool = None,
+        index: int = -1,
+        registerer: bool = False,
+        read: bool = False,
     ):
-        super().__init__(index or 0)
-        self.registerer = registerer or False
-        self.read = read or False
+        super().__init__(index)
+        self.registerer = registerer
+        self.read = read
 
 
 class BaseVmdNameFrame(BaseIndexNameModel):
@@ -49,14 +50,14 @@ class BaseVmdNameFrame(BaseIndexNameModel):
 
     def __init__(
         self,
-        index: int = None,
-        name: str = None,
-        register: bool = None,
-        read: bool = None,
+        index: int = -1,
+        name: str = "",
+        register: bool = False,
+        read: bool = False,
     ):
-        super().__init__(index or 0, name or "")
-        self.register = register or False
-        self.read = read or False
+        super().__init__(index, name)
+        self.register = register
+        self.read = read
 
 
 # https://hariganep.seesaa.net/article/201103article_1.html
@@ -248,18 +249,18 @@ class VmdBoneFrame(BaseVmdNameFrame):
 
     def __init__(
         self,
-        name: str = None,
-        index: int = None,
+        name: str = "",
+        index: int = -1,
         position: MVector3D = None,
         rotation: MQuaternion = None,
         interpolations: BoneInterpolations = None,
-        register: bool = None,
-        read: bool = None,
+        register: bool = False,
+        read: bool = False,
     ):
         super().__init__(index, name, register, read)
-        self.position: MVector3D = position or MVector3D()
-        self.rotation: MQuaternion = rotation or MQuaternion()
-        self.interpolations: BoneInterpolations = interpolations or BoneInterpolations()
+        self.position = position or MVector3D()
+        self.rotation = rotation or MQuaternion()
+        self.interpolations = interpolations or BoneInterpolations()
         self.ik_rotation: Optional[MQuaternion] = None
         self.ik_target_rotation: Optional[MQuaternion] = None
         self.correct_rotation: Optional[MQuaternion] = None
@@ -285,15 +286,14 @@ class VmdMorphFrame(BaseVmdNameFrame):
 
     def __init__(
         self,
-        index: int = None,
-        name: str = None,
-        ratio: float = None,
-        register: bool = None,
-        read: bool = None,
+        index: int = -1,
+        name: str = "",
+        ratio: float = 0.0,
+        register: bool = False,
+        read: bool = False,
     ):
         super().__init__(index, name, register, read)
-        self.name: str = name or ""
-        self.ratio: float = ratio or 0.0
+        self.ratio = ratio
 
 
 class CameraInterpolations(BaseModel):
@@ -325,12 +325,12 @@ class CameraInterpolations(BaseModel):
         distance: Interpolation = None,
         viewing_angle: Interpolation = None,
     ):
-        self.translation_x: Interpolation = translation_x or Interpolation()
-        self.translation_y: Interpolation = translation_y or Interpolation()
-        self.translation_z: Interpolation = translation_z or Interpolation()
-        self.rotation: Interpolation = rotation or Interpolation()
-        self.distance: Interpolation = distance or Interpolation()
-        self.viewing_angle: Interpolation = viewing_angle or Interpolation()
+        self.translation_x = translation_x or Interpolation()
+        self.translation_y = translation_y or Interpolation()
+        self.translation_z = translation_z or Interpolation()
+        self.rotation = rotation or Interpolation()
+        self.distance = distance or Interpolation()
+        self.viewing_angle = viewing_angle or Interpolation()
 
 
 class VmdCameraFrame(BaseVmdFrame):
@@ -361,25 +361,23 @@ class VmdCameraFrame(BaseVmdFrame):
 
     def __init__(
         self,
-        index: int = None,
+        index: int = -1,
         position: MVector3D = None,
         rotation: BaseRotationModel = None,
-        distance: float = None,
-        viewing_angle: int = None,
-        perspective: bool = None,
+        distance: float = 0.0,
+        viewing_angle: int = 0,
+        perspective: bool = False,
         interpolations: CameraInterpolations = None,
-        register: bool = None,
-        read: bool = None,
+        register: bool = False,
+        read: bool = False,
     ):
         super().__init__(index, register, read)
-        self.position: MVector3D = position or MVector3D()
-        self.rotation: BaseRotationModel = rotation or BaseRotationModel()
-        self.distance: float = distance or 0.0
-        self.viewing_angle: int = viewing_angle or 0
-        self.perspective: bool = perspective or False
-        self.interpolations: CameraInterpolations = (
-            interpolations or CameraInterpolations()
-        )
+        self.position = position or MVector3D()
+        self.rotation = rotation or BaseRotationModel()
+        self.distance = distance
+        self.viewing_angle = viewing_angle
+        self.perspective = perspective
+        self.interpolations = interpolations or CameraInterpolations()
 
 
 class VmdLightFrame(BaseVmdFrame):
@@ -402,15 +400,15 @@ class VmdLightFrame(BaseVmdFrame):
 
     def __init__(
         self,
-        index: int = None,
+        index: int = -1,
         color: MVector3D = None,
         position: MVector3D = None,
-        register: bool = None,
-        read: bool = None,
+        register: bool = False,
+        read: bool = False,
     ):
         super().__init__(index, register, read)
-        self.color: MVector3D = color or MVector3D()
-        self.position: MVector3D = position or MVector3D()
+        self.color = color or MVector3D()
+        self.position = position or MVector3D()
 
 
 class VmdShadowFrame(BaseVmdFrame):
@@ -433,15 +431,15 @@ class VmdShadowFrame(BaseVmdFrame):
 
     def __init__(
         self,
-        index: int = None,
-        mode: int = None,
-        distance: float = None,
-        register: bool = None,
-        read: bool = None,
+        index: int = -1,
+        mode: int = 0,
+        distance: float = 0.0,
+        register: bool = False,
+        read: bool = False,
     ):
         super().__init__(index, register, read)
-        self.type: int = mode or 0
-        self.distance: float = distance or 0.0
+        self.type = mode
+        self.distance = distance
 
 
 class VmdIkOnoff(BaseModel):
@@ -458,12 +456,12 @@ class VmdIkOnoff(BaseModel):
 
     def __init__(
         self,
-        name: str = None,
-        onoff: bool = None,
+        name: str = "",
+        onoff: bool = True,
     ):
         super().__init__()
-        self.name: str = name or ""
-        self.onoff: bool = onoff or True
+        self.name = name
+        self.onoff = onoff
 
 
 class VmdShowIkFrame(BaseVmdFrame):
@@ -486,12 +484,12 @@ class VmdShowIkFrame(BaseVmdFrame):
 
     def __init__(
         self,
-        index: int = None,
-        show: bool = None,
+        index: int = -1,
+        show: bool = True,
         iks: list[VmdIkOnoff] = None,
-        register: bool = None,
-        read: bool = None,
+        register: bool = False,
+        read: bool = False,
     ):
         super().__init__(index, register, read)
-        self.show: bool = show or True
-        self.iks: list[VmdIkOnoff] = iks or []
+        self.show = show
+        self.iks = iks or []

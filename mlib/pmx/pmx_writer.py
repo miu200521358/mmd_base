@@ -3,8 +3,8 @@ from math import isinf, isnan
 
 from mlib.base.base import BaseModel
 from mlib.base.logger import MLogger
-from mlib.pmx.collection import PmxModel
-from mlib.pmx.part import (
+from mlib.pmx.pmx_collection import PmxModel
+from mlib.pmx.pmx_part import (
     Bdef1,
     Bdef2,
     Bdef4,

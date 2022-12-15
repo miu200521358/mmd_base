@@ -5,7 +5,7 @@ import OpenGL.GL as gl
 
 from mlib.base.math import MMatrix4x4, MVector4D
 from mlib.base.part import BaseIndexModel
-from mlib.pmx.part import DrawFlg, Material, Texture
+from mlib.pmx.pmx_part import DrawFlg, Material, Texture
 from mlib.pmx.shader import MShader, VsLayout
 
 
@@ -146,7 +146,7 @@ class Mesh(BaseIndexModel):
             shader.bone_matrix_uniform[False],
             1,
             gl.GL_FALSE,
-            MMatrix4x4(identity=True).vector,
+            MMatrix4x4().vector,
         )
 
         # ------------------
@@ -231,7 +231,7 @@ class Mesh(BaseIndexModel):
             shader.bone_matrix_uniform[True],
             1,
             gl.GL_FALSE,
-            MMatrix4x4(identity=True).vector,
+            MMatrix4x4().vector,
         )
 
         # ------------------

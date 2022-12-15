@@ -5,8 +5,8 @@ from mlib.base.exception import MParseException
 from mlib.base.math import MVector3D
 from mlib.base.part import Switch
 from mlib.base.reader import BaseReader, StructUnpackType
-from mlib.pmx.collection import PmxModel
-from mlib.pmx.part import (
+from mlib.pmx.pmx_collection import PmxModel
+from mlib.pmx.pmx_part import (
     Bdef1,
     Bdef2,
     Bdef4,

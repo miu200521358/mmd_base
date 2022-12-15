@@ -1389,10 +1389,26 @@ def test_MMatrix4x4List_translate():
 
     ms = MMatrix4x4List(4, 3)
     vs = [
-        [MVector3D(1, 2, 3), MVector3D(4, 5, 6), MVector3D(7, 8, 9)],
-        [MVector3D(10, 11, 12), MVector3D(13, 14, 15), MVector3D(16, 17, 18)],
-        [MVector3D(19, 20, 21), MVector3D(22, 23, 24), MVector3D(25, 26, 27)],
-        [MVector3D(28, 29, 30), MVector3D(31, 32, 33), MVector3D(34, 35, 36)],
+        [
+            MVector3D(1, 2, 3).vector,
+            MVector3D(4, 5, 6).vector,
+            MVector3D(7, 8, 9).vector,
+        ],
+        [
+            MVector3D(10, 11, 12).vector,
+            MVector3D(13, 14, 15).vector,
+            MVector3D(16, 17, 18).vector,
+        ],
+        [
+            MVector3D(19, 20, 21).vector,
+            MVector3D(22, 23, 24).vector,
+            MVector3D(25, 26, 27).vector,
+        ],
+        [
+            MVector3D(28, 29, 30).vector,
+            MVector3D(31, 32, 33).vector,
+            MVector3D(34, 35, 36).vector,
+        ],
     ]
     ms.translate(vs)
 
@@ -1585,24 +1601,24 @@ def test_MMatrix4x4List_rotate():
     ms = MMatrix4x4List(4, 3)
     qs = [
         [
-            MQuaternion.from_euler_degrees(MVector3D(1, 2, 3)),
-            MQuaternion.from_euler_degrees(MVector3D(4, 5, 6)),
-            MQuaternion.from_euler_degrees(MVector3D(7, 8, 9)),
+            MQuaternion.from_euler_degrees(MVector3D(1, 2, 3)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(4, 5, 6)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(7, 8, 9)).to_matrix4x4().vector,
         ],
         [
-            MQuaternion.from_euler_degrees(MVector3D(10, 11, 12)),
-            MQuaternion.from_euler_degrees(MVector3D(13, 14, 15)),
-            MQuaternion.from_euler_degrees(MVector3D(16, 17, 18)),
+            MQuaternion.from_euler_degrees(MVector3D(10, 11, 12)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(13, 14, 15)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(16, 17, 18)).to_matrix4x4().vector,
         ],
         [
-            MQuaternion.from_euler_degrees(MVector3D(19, 20, 21)),
-            MQuaternion.from_euler_degrees(MVector3D(22, 23, 24)),
-            MQuaternion.from_euler_degrees(MVector3D(25, 26, 27)),
+            MQuaternion.from_euler_degrees(MVector3D(19, 20, 21)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(22, 23, 24)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(25, 26, 27)).to_matrix4x4().vector,
         ],
         [
-            MQuaternion.from_euler_degrees(MVector3D(28, 29, 30)),
-            MQuaternion.from_euler_degrees(MVector3D(31, 32, 33)),
-            MQuaternion.from_euler_degrees(MVector3D(34, 35, 36)),
+            MQuaternion.from_euler_degrees(MVector3D(28, 29, 30)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(31, 32, 33)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(34, 35, 36)).to_matrix4x4().vector,
         ],
     ]
     ms.rotate(qs)
@@ -1884,10 +1900,26 @@ def test_MMatrix4x4List_scale():
 
     ms = MMatrix4x4List(4, 3)
     vs = [
-        [MVector3D(1, 2, 3), MVector3D(4, 5, 6), MVector3D(7, 8, 9)],
-        [MVector3D(10, 11, 12), MVector3D(13, 14, 15), MVector3D(16, 17, 18)],
-        [MVector3D(19, 20, 21), MVector3D(22, 23, 24), MVector3D(25, 26, 27)],
-        [MVector3D(28, 29, 30), MVector3D(31, 32, 33), MVector3D(34, 35, 36)],
+        [
+            MVector3D(1, 2, 3).vector,
+            MVector3D(4, 5, 6).vector,
+            MVector3D(7, 8, 9).vector,
+        ],
+        [
+            MVector3D(10, 11, 12).vector,
+            MVector3D(13, 14, 15).vector,
+            MVector3D(16, 17, 18).vector,
+        ],
+        [
+            MVector3D(19, 20, 21).vector,
+            MVector3D(22, 23, 24).vector,
+            MVector3D(25, 26, 27).vector,
+        ],
+        [
+            MVector3D(28, 29, 30).vector,
+            MVector3D(31, 32, 33).vector,
+            MVector3D(34, 35, 36).vector,
+        ],
     ]
     ms.scale(vs)
 
@@ -2353,21 +2385,29 @@ def test_MMatrix4x4List_matmul_cols():
 
     ms = MMatrix4x4List(2, 3)
     vs1 = [
-        [MVector3D(1, 2, 3), MVector3D(4, 5, 6), MVector3D(7, 8, 9)],
-        [MVector3D(10, 11, 12), MVector3D(13, 14, 15), MVector3D(16, 17, 18)],
+        [
+            MVector3D(1, 2, 3).vector,
+            MVector3D(4, 5, 6).vector,
+            MVector3D(7, 8, 9).vector,
+        ],
+        [
+            MVector3D(10, 11, 12).vector,
+            MVector3D(13, 14, 15).vector,
+            MVector3D(16, 17, 18).vector,
+        ],
     ]
     ms.translate(vs1)
 
     qs1 = [
         [
-            MQuaternion.from_euler_degrees(MVector3D(1, 2, 3)),
-            MQuaternion.from_euler_degrees(MVector3D(4, 5, 6)),
-            MQuaternion.from_euler_degrees(MVector3D(7, 8, 9)),
+            MQuaternion.from_euler_degrees(MVector3D(1, 2, 3)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(4, 5, 6)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(7, 8, 9)).to_matrix4x4().vector,
         ],
         [
-            MQuaternion.from_euler_degrees(MVector3D(10, 11, 12)),
-            MQuaternion.from_euler_degrees(MVector3D(13, 14, 15)),
-            MQuaternion.from_euler_degrees(MVector3D(16, 17, 18)),
+            MQuaternion.from_euler_degrees(MVector3D(10, 11, 12)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(13, 14, 15)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(16, 17, 18)).to_matrix4x4().vector,
         ],
     ]
     ms.rotate(qs1)

@@ -4,8 +4,8 @@ from struct import Struct
 from mlib.base.base import Encoding
 from mlib.base.math import MVector3D
 from mlib.base.reader import BaseReader, StructUnpackType
-from mlib.vmd.collection import VmdMotion
-from mlib.vmd.part import (
+from mlib.vmd.vmd_collection import VmdMotion
+from mlib.vmd.vmd_part import (
     VmdBoneFrame,
     VmdCameraFrame,
     VmdIkOnoff,

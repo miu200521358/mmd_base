@@ -1,5 +1,5 @@
 import operator
-from math import acos, atan2, cos, degrees, pi, radians, sin, sqrt
+from math import acos, atan2, cos, degrees, radians, sin, sqrt
 from typing import Any, Union
 
 import numpy as np
@@ -300,13 +300,13 @@ class MVector2D(MVector):
     2次元ベクトルクラス
     """
 
-    def __init__(self, x: float = 0.0, y: float = 0.0):
+    def __init__(self, x: Union[float, np.ndarray] = 0.0, y: float = 0.0):
         """
         初期化
 
         Parameters
         ----------
-        x : float, optional
+        x : Union[float, np.ndarray], optional
             by default 0.0
         y : float, optional
             by default 0.0
@@ -337,13 +337,15 @@ class MVector3D(MVector):
     3次元ベクトルクラス
     """
 
-    def __init__(self, x: float = 0.0, y: float = 0.0, z: float = 0.0):
+    def __init__(
+        self, x: Union[float, np.ndarray] = 0.0, y: float = 0.0, z: float = 0.0
+    ):
         """
         初期化
 
         Parameters
         ----------
-        x : float, optional
+        x : Union[float, np.ndarray], optional
             by default 0.0
         y : float, optional
             by default 0.0
@@ -407,13 +409,19 @@ class MVector4D(MVector):
     4次元ベクトルクラス
     """
 
-    def __init__(self, x: float = 0.0, y: float = 0.0, z: float = 0.0, w: float = 0.0):
+    def __init__(
+        self,
+        x: Union[float, np.ndarray] = 0.0,
+        y: float = 0.0,
+        z: float = 0.0,
+        w: float = 0.0,
+    ):
         """
         初期化
 
         Parameters
         ----------
-        x : float, optional
+        x : Union[float, np.ndarray], optional
             by default 0.0
         y : float, optional
             by default 0.0
@@ -538,7 +546,13 @@ class MQuaternion(MVector):
     クォータニオンクラス
     """
 
-    def __init__(self, scalar: float = 0, x: float = 0, y: float = 0, z: float = 0):
+    def __init__(
+        self,
+        scalar: Union[float, quaternion, list, np.ndarray] = 0,
+        x: float = 0,
+        y: float = 0,
+        z: float = 0,
+    ):
         if isinstance(scalar, int) or isinstance(scalar, float):
             # 実数の場合
             if np.isclose([scalar, x, y, z], 0).all():
@@ -733,7 +747,7 @@ class MQuaternion(MVector):
     def to_matrix4x4(self):
         mat3x3 = as_rotation_matrix(self.vector)
 
-        mat = MMatrix4x4(identity=True)
+        mat = MMatrix4x4()
         mat[0, 0] = mat3x3[0, 0]
         mat[0, 1] = mat3x3[0, 1]
         mat[0, 2] = mat3x3[0, 2]
@@ -991,23 +1005,22 @@ class MMatrix4x4(MVector):
 
     def __init__(
         self,
-        m11=1.0,
-        m12=0.0,
-        m13=0.0,
-        m14=0.0,
-        m21=0.0,
-        m22=1.0,
-        m23=0.0,
-        m24=0.0,
-        m31=0.0,
-        m32=0.0,
-        m33=1.0,
-        m34=0.0,
-        m41=0.0,
-        m42=0.0,
-        m43=0.0,
-        m44=1.0,
-        identity=False,
+        m11: Union[float, np.ndarray] = 1.0,
+        m12: float = 0.0,
+        m13: float = 0.0,
+        m14: float = 0.0,
+        m21: float = 0.0,
+        m22: float = 1.0,
+        m23: float = 0.0,
+        m24: float = 0.0,
+        m31: float = 0.0,
+        m32: float = 0.0,
+        m33: float = 1.0,
+        m34: float = 0.0,
+        m41: float = 0.0,
+        m42: float = 0.0,
+        m43: float = 0.0,
+        m44: float = 1.0,
     ):
         if isinstance(m11, int) or isinstance(m11, float):
             # 実数の場合
@@ -1065,9 +1078,6 @@ class MMatrix4x4(MVector):
         else:
             # listの場合
             self.vector = MMatrix4x4(*m11)
-        if identity:
-            # フラグが立ってたら初期化を実行する
-            self.identity()
 
     def inverse(self):
         """
@@ -1333,30 +1343,45 @@ class MMatrix4x4List:
         self.col = col
         self.vector = np.tile(np.eye(4, dtype=np.float64), (row, col, 1, 1))
 
-    def translate(self, vs: list[list[MVector3D]]):
+    def translate(self, vs: list[list[np.ndarray]]):
         """
         平行移動行列
+
+        Parameters
+        ----------
+        vs : list[list[np.ndarray]]
+            ベクトル(v.vector)
         """
         vmat = self.vector[..., :3] * np.array(
-            [v2.vector for v1 in vs for v2 in v1], dtype=np.float64
+            [v2 for v1 in vs for v2 in v1], dtype=np.float64
         ).reshape(self.row, self.col, 1, 3)
         self.vector[..., 3] += np.sum(vmat, axis=-1)
 
-    def rotate(self, qs: list[list[MQuaternion]]):
+    def rotate(self, qs: list[list[np.ndarray]]):
         """
         回転行列
+
+        Parameters
+        ----------
+        qs : list[list[np.ndarray]]
+            クォータニオンの回転行列(qq.to_matrix4x4().vector)
         """
 
         self.vector = self.vector @ np.array(
-            [q2.to_matrix4x4().vector for q1 in qs for q2 in q1], dtype=np.float64
+            [q2 for q1 in qs for q2 in q1], dtype=np.float64
         ).reshape(self.row, self.col, 4, 4)
 
-    def scale(self, vs: list[list[MVector3D]]):
+    def scale(self, vs: list[list[np.ndarray]]):
         """
         縮尺行列
+
+        Parameters
+        ----------
+        vs : list[list[np.ndarray]]
+            ベクトル(v.vector)
         """
         self.vector[..., :3] *= np.array(
-            [v2.vector for v1 in vs for v2 in v1], dtype=np.float64
+            [v2 for v1 in vs for v2 in v1], dtype=np.float64
         ).reshape(self.row, self.col, 1, 3)
 
     def inverse(self):

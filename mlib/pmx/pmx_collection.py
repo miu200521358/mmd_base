@@ -12,7 +12,7 @@ from mlib.base.collection import (
 )
 from mlib.base.math import MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
-from mlib.pmx.part import (
+from mlib.pmx.pmx_part import (
     Bone,
     DisplaySlot,
     DrawFlg,

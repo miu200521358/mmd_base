@@ -5,7 +5,7 @@ def test_read_by_filepath_error():
     import os
 
     from mlib.base.exception import MParseException
-    from mlib.vmd.reader import VmdReader
+    from mlib.vmd.vmd_reader import VmdReader
 
     reader = VmdReader()
     with pytest.raises(MParseException):
@@ -17,8 +17,8 @@ def test_read_by_filepath_ok_calc():
 
     import numpy as np
 
-    from mlib.vmd.collection import VmdMotion
-    from mlib.vmd.reader import VmdReader
+    from mlib.vmd.vmd_collection import VmdMotion
+    from mlib.vmd.vmd_reader import VmdReader
 
     reader = VmdReader()
     motion: VmdMotion = reader.read_by_filepath(
@@ -191,10 +191,10 @@ def test_read_by_filepath_ok_matrix():
 
     import numpy as np
 
-    from mlib.pmx.collection import PmxModel
-    from mlib.pmx.reader import PmxReader
-    from mlib.vmd.collection import VmdMotion
-    from mlib.vmd.reader import VmdReader
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.vmd.vmd_collection import VmdMotion
+    from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
     motion: VmdMotion = vmd_reader.read_by_filepath(
@@ -402,10 +402,10 @@ def test_read_by_filepath_ok_leg_ik1():
 
     import numpy as np
 
-    from mlib.pmx.collection import PmxModel
-    from mlib.pmx.reader import PmxReader
-    from mlib.vmd.collection import VmdMotion
-    from mlib.vmd.reader import VmdReader
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.vmd.vmd_collection import VmdMotion
+    from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
     motion: VmdMotion = vmd_reader.read_by_filepath(
@@ -461,10 +461,10 @@ def test_read_by_filepath_ok_leg_ik2():
 
     import numpy as np
 
-    from mlib.pmx.collection import PmxModel
-    from mlib.pmx.reader import PmxReader
-    from mlib.vmd.collection import VmdMotion
-    from mlib.vmd.reader import VmdReader
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.vmd.vmd_collection import VmdMotion
+    from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
     motion: VmdMotion = vmd_reader.read_by_filepath(
@@ -520,10 +520,10 @@ def test_read_by_filepath_ok_leg_ik3():
 
     import numpy as np
 
-    from mlib.pmx.collection import PmxModel
-    from mlib.pmx.reader import PmxReader
-    from mlib.vmd.collection import VmdMotion
-    from mlib.vmd.reader import VmdReader
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.vmd.vmd_collection import VmdMotion
+    from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
     motion: VmdMotion = vmd_reader.read_by_filepath(
@@ -591,10 +591,10 @@ def test_read_by_filepath_ok_arm_ik():
 
     import numpy as np
 
-    from mlib.pmx.collection import PmxModel
-    from mlib.pmx.reader import PmxReader
-    from mlib.vmd.collection import VmdMotion
-    from mlib.vmd.reader import VmdReader
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.vmd.vmd_collection import VmdMotion
+    from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
     motion: VmdMotion = vmd_reader.read_by_filepath(

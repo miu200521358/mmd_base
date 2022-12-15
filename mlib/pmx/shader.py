@@ -244,7 +244,7 @@ class MShader:
         )
 
         # カメラ位置
-        camera_mat = MMatrix4x4(identity=True)
+        camera_mat = MMatrix4x4()
         camera_mat.rotate(self.camera_rotation)
         camera_mat.translate(self.camera_position)
         camera_pos: MVector3D = camera_mat * MVector3D()

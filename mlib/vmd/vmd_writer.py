@@ -2,7 +2,7 @@ import struct
 
 from mlib.base.base import BaseModel
 from mlib.base.logger import MLogger
-from mlib.vmd.collection import VmdMotion
+from mlib.vmd.vmd_collection import VmdMotion
 
 logger = MLogger(__name__)
 

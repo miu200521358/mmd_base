@@ -4,7 +4,7 @@ import pytest
 def test_Bdef2_get_indexes():
     import numpy as np
 
-    from mlib.pmx.part import Bdef2
+    from mlib.pmx.pmx_part import Bdef2
 
     assert np.isclose(
         np.array([1, 2]),
@@ -20,7 +20,7 @@ def test_Bdef2_get_indexes():
 def test_Bdef4_get_indexes():
     import numpy as np
 
-    from mlib.pmx.part import Bdef4
+    from mlib.pmx.pmx_part import Bdef4
 
     assert np.isclose(
         np.array([1, 2, 3, 4]),
@@ -36,7 +36,7 @@ def test_Bdef4_get_indexes():
 def test_Bdef4_normalized():
     import numpy as np
 
-    from mlib.pmx.part import Bdef4
+    from mlib.pmx.pmx_part import Bdef4
 
     d = Bdef4(1, 2, 3, 4, 5, 6, 7, 8)
     d.normalize()
@@ -47,7 +47,7 @@ def test_Bdef4_normalized():
 
 
 def test_Material_draw_flg():
-    from mlib.pmx.part import DrawFlg, Material
+    from mlib.pmx.pmx_part import DrawFlg, Material
 
     m = Material()
     m.draw_flg |= DrawFlg.DOUBLE_SIDED_DRAWING
@@ -56,15 +56,15 @@ def test_Material_draw_flg():
 
 
 def test_Bone_copy():
-    from mlib.pmx.part import Bone
+    from mlib.pmx.pmx_part import Bone
 
     b = Bone()
     assert b != b.copy()
 
 
 def test_DisplaySlots_init():
-    from mlib.pmx.collection import DisplaySlots
-    from mlib.pmx.part import DisplaySlot, Switch
+    from mlib.pmx.pmx_collection import DisplaySlots
+    from mlib.pmx.pmx_part import DisplaySlot, Switch
 
     dd = DisplaySlots()
     dd.append(DisplaySlot("Root", "Root", Switch.ON))
@@ -96,7 +96,7 @@ def test_read_by_filepath_error():
     import os
 
     from mlib.base.exception import MParseException
-    from mlib.pmx.reader import PmxReader
+    from mlib.pmx.pmx_reader import PmxReader
 
     reader = PmxReader()
     with pytest.raises(MParseException):
@@ -108,8 +108,8 @@ def test_read_by_filepath_ok():
 
     import numpy as np
 
-    from mlib.pmx.collection import PmxModel
-    from mlib.pmx.part import (
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_part import (
         BoneFlg,
         DeformType,
         DisplayType,
@@ -120,7 +120,7 @@ def test_read_by_filepath_ok():
         RigidBodyMode,
         RigidBodyShape,
     )
-    from mlib.pmx.reader import PmxReader
+    from mlib.pmx.pmx_reader import PmxReader
 
     reader = PmxReader()
     model: PmxModel = reader.read_by_filepath(
@@ -381,8 +381,8 @@ def test_read_by_filepath_ok():
 def test_read_by_filepath_ok_tree():
     import os
 
-    from mlib.pmx.collection import PmxModel
-    from mlib.pmx.reader import PmxReader
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
 
     reader = PmxReader()
     model: PmxModel = reader.read_by_filepath(
@@ -420,8 +420,8 @@ def test_read_by_filepath_ok_tree():
 
 
 def test_read_by_filepath_complicated():
-    from mlib.pmx.collection import PmxModel
-    from mlib.pmx.reader import PmxReader
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
 
     reader = PmxReader()
     # cSpell:disable

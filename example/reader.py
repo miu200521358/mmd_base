@@ -3,8 +3,8 @@ def read_model():
     import sys
 
     sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-    from mlib.pmx.collection import PmxModel
-    from mlib.pmx.reader import PmxReader
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
 
     reader = PmxReader()
     model: PmxModel = reader.read_by_filepath(
@@ -18,8 +18,8 @@ def read_motion():
     import sys
 
     sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-    from mlib.vmd.collection import VmdMotion
-    from mlib.vmd.reader import VmdReader
+    from mlib.vmd.vmd_collection import VmdMotion
+    from mlib.vmd.vmd_reader import VmdReader
 
     reader = VmdReader()
     motion: VmdMotion = reader.read_by_filepath(

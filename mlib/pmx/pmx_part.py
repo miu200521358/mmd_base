@@ -9,8 +9,7 @@ from PIL import Image, ImageOps
 
 from mlib.base.base import BaseModel
 from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
-from mlib.base.part import (BaseIndexModel, BaseIndexNameModel,
-                            BaseRotationModel, Switch)
+from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
 
 
 @unique
@@ -202,18 +201,18 @@ class Vertex(BaseIndexModel):
         normal: MVector3D = None,
         uv: MVector2D = None,
         extended_uvs: List[MVector4D] = None,
-        deform_type: DeformType = None,
+        deform_type: DeformType = DeformType.BDEF1,
         deform: Deform = None,
-        edge_factor: float = None,
+        edge_factor: float = 0,
     ):
         super().__init__()
-        self.position: MVector3D = position or MVector3D()
-        self.normal: MVector3D = normal or MVector3D()
-        self.uv: MVector2D = uv or MVector2D()
-        self.extended_uvs: List[MVector4D] = extended_uvs or []
-        self.deform_type: DeformType = deform_type or DeformType.BDEF1
-        self.deform: Deform = deform or Bdef1(-1)
-        self.edge_factor: float = edge_factor or 0
+        self.position = position or MVector3D()
+        self.normal = normal or MVector3D()
+        self.uv = uv or MVector2D()
+        self.extended_uvs = extended_uvs or []
+        self.deform_type = deform_type
+        self.deform = deform or Bdef1(-1)
+        self.edge_factor = edge_factor
 
 
 class Face(BaseIndexModel):
@@ -410,38 +409,38 @@ class Material(BaseIndexNameModel):
 
     def __init__(
         self,
-        name: str = None,
-        english_name: str = None,
+        name: str = "",
+        english_name: str = "",
         diffuse_color: MVector4D = None,
         specular_color: MVector3D = None,
-        specular_factor: float = None,
+        specular_factor: float = 0.0,
         ambient_color: MVector3D = None,
-        draw_flg: DrawFlg = None,
+        draw_flg: DrawFlg = DrawFlg.NONE,
         edge_color: MVector4D = None,
-        edge_size: float = None,
-        texture_index: int = None,
-        sphere_texture_index: int = None,
-        sphere_mode: SphereMode = None,
-        toon_sharing_flg: ToonSharing = None,
-        toon_texture_index: int = None,
-        comment: str = None,
-        vertices_count: int = None,
+        edge_size: float = 0.0,
+        texture_index: int = -1,
+        sphere_texture_index: int = -1,
+        sphere_mode: SphereMode = SphereMode.INVALID,
+        toon_sharing_flg: ToonSharing = ToonSharing.SHARING,
+        toon_texture_index: int = -1,
+        comment: str = "",
+        vertices_count: int = 0,
     ):
-        super().__init__(name=name or "", english_name=english_name or "")
-        self.diffuse_color: MVector4D = diffuse_color or MVector4D()
-        self.specular_color: MVector3D = specular_color or MVector3D()
-        self.specular_factor: float = specular_factor or 0
-        self.ambient_color: MVector3D = ambient_color or MVector3D()
-        self.draw_flg: DrawFlg = draw_flg or DrawFlg.NONE
-        self.edge_color: MVector4D = edge_color or MVector4D()
-        self.edge_size: float = edge_size or 0
-        self.texture_index: int = texture_index or -1
-        self.sphere_texture_index: int = sphere_texture_index or -1
-        self.sphere_mode: SphereMode = sphere_mode or SphereMode.INVALID
-        self.toon_sharing_flg: ToonSharing = toon_sharing_flg or ToonSharing.SHARING
-        self.toon_texture_index: int = toon_texture_index or -1
-        self.comment: str = comment or ""
-        self.vertices_count: int = vertices_count or 0
+        super().__init__(name=name, english_name=english_name)
+        self.diffuse_color = diffuse_color or MVector4D()
+        self.specular_color = specular_color or MVector3D()
+        self.specular_factor = specular_factor
+        self.ambient_color = ambient_color or MVector3D()
+        self.draw_flg = draw_flg
+        self.edge_color = edge_color or MVector4D()
+        self.edge_size = edge_size
+        self.texture_index = texture_index
+        self.sphere_texture_index = sphere_texture_index
+        self.sphere_mode = sphere_mode
+        self.toon_sharing_flg = toon_sharing_flg
+        self.toon_texture_index = toon_texture_index
+        self.comment = comment
+        self.vertices_count = vertices_count
 
 
 class IkLink(BaseModel):
@@ -462,20 +461,16 @@ class IkLink(BaseModel):
 
     def __init__(
         self,
-        bone_index: int = None,
-        angle_limit: bool = None,
+        bone_index: int = -1,
+        angle_limit: bool = False,
         min_angle_limit_radians: MVector3D = None,
         max_angle_limit_radians: MVector3D = None,
     ):
         super().__init__()
-        self.bone_index: int = bone_index or -1
-        self.angle_limit: bool = angle_limit or False
-        self.min_angle_limit: BaseRotationModel = BaseRotationModel(
-            min_angle_limit_radians or MVector3D()
-        )
-        self.max_angle_limit: BaseRotationModel = BaseRotationModel(
-            max_angle_limit_radians or MVector3D()
-        )
+        self.bone_index = bone_index
+        self.angle_limit = angle_limit
+        self.min_angle_limit = BaseRotationModel(min_angle_limit_radians or MVector3D())
+        self.max_angle_limit = BaseRotationModel(max_angle_limit_radians or MVector3D())
 
 
 class Ik(BaseModel):
@@ -497,18 +492,16 @@ class Ik(BaseModel):
 
     def __init__(
         self,
-        bone_index: int = None,
-        loop_count: int = None,
-        unit_radians: float = None,
+        bone_index: int = -1,
+        loop_count: int = 0,
+        unit_radians: float = 0.0,
         links: List[IkLink] = None,
     ):
         super().__init__()
-        self.bone_index = bone_index or -1
-        self.loop_count = loop_count or 0
-        self.unit_rotation: BaseRotationModel = BaseRotationModel(
-            MVector3D(unit_radians or 0, 0, 0)
-        )
-        self.links: List[IkLink] = links or []
+        self.bone_index = bone_index
+        self.loop_count = loop_count
+        self.unit_rotation = BaseRotationModel(MVector3D(unit_radians, 0, 0))
+        self.links = links or []
 
 
 @unique
@@ -587,40 +580,40 @@ class Bone(BaseIndexNameModel):
 
     def __init__(
         self,
-        name: str = None,
-        english_name: str = None,
+        name: str = "",
+        english_name: str = "",
         position: MVector3D = None,
-        parent_index: int = None,
-        layer: int = None,
-        bone_flg: BoneFlg = None,
+        parent_index: int = -1,
+        layer: int = 0,
+        bone_flg: BoneFlg = BoneFlg.NONE,
         tail_position: MVector3D = None,
-        tail_index: int = None,
-        effect_index: int = None,
-        effect_factor: float = None,
+        tail_index: int = -1,
+        effect_index: int = -1,
+        effect_factor: float = 0,
         fixed_axis: MVector3D = None,
         local_x_vector: MVector3D = None,
         local_z_vector: MVector3D = None,
-        external_key: int = None,
+        external_key: int = -1,
         ik: Optional[Ik] = None,
-        display: bool = None,
-        is_system: bool = None,
+        display: bool = False,
+        is_system: bool = False,
     ):
         super().__init__(name=name or "", english_name=english_name or "")
-        self.position: MVector3D = position or MVector3D()
-        self.parent_index: int = parent_index or -1
-        self.layer: int = layer or 0
-        self.bone_flg: BoneFlg = bone_flg or BoneFlg.NONE
-        self.tail_position: MVector3D = tail_position or MVector3D()
-        self.tail_index: int = tail_index or -1
-        self.effect_index: int = effect_index or -1
-        self.effect_factor: float = effect_factor or 0
-        self.fixed_axis: MVector3D = fixed_axis or MVector3D()
-        self.local_x_vector: MVector3D = local_x_vector or MVector3D()
-        self.local_z_vector: MVector3D = local_z_vector or MVector3D()
-        self.external_key: int = external_key or -1
-        self.ik: Optional[Ik] = ik or None
-        self.display: bool = display or False
-        self.is_system: bool = is_system or False
+        self.position = position or MVector3D()
+        self.parent_index = parent_index
+        self.layer = layer
+        self.bone_flg = bone_flg
+        self.tail_position = tail_position or MVector3D()
+        self.tail_index = tail_index
+        self.effect_index = effect_index
+        self.effect_factor = effect_factor
+        self.fixed_axis = fixed_axis or MVector3D()
+        self.local_x_vector = local_x_vector or MVector3D()
+        self.local_z_vector = local_z_vector or MVector3D()
+        self.external_key = external_key
+        self.ik = ik
+        self.display = display
+        self.is_system = is_system
         self.ik_link_indices: list[int] = []
         self.ik_target_indices: list[int] = []
 
@@ -904,16 +897,16 @@ class Morph(BaseIndexNameModel):
 
     def __init__(
         self,
-        name: str = None,
-        english_name: str = None,
-        panel: MorphPanel = None,
-        morph_type: MorphType = None,
+        name: str = "",
+        english_name: str = "",
+        panel: MorphPanel = MorphPanel.EYE_UPPER_LEFT,
+        morph_type: MorphType = MorphType.GROUP,
         offsets: List[MorphOffset] = None,
     ):
-        super().__init__(name=name or "", english_name=english_name or "")
-        self.panel: MorphPanel = panel or MorphPanel.EYE_UPPER_LEFT
-        self.morph_type: MorphType = morph_type or MorphType.GROUP
-        self.offsets: List[MorphOffset] = offsets or []
+        super().__init__(name=name, english_name=english_name)
+        self.panel = panel
+        self.morph_type = morph_type
+        self.offsets = offsets or []
 
 
 @unique
@@ -961,10 +954,10 @@ class DisplaySlot(BaseIndexNameModel):
     """
 
     def __init__(
-        self, name: str = None, english_name: str = None, special_flg: Switch = None
+        self, name: str = "", english_name: str = "", special_flg: Switch = Switch.OFF
     ):
-        super().__init__(name=name or "", english_name=english_name or "")
-        self.special_flg = special_flg or Switch.OFF
+        super().__init__(name=name, english_name=english_name)
+        self.special_flg = special_flg
         self.references: List[DisplaySlotReference] = []
 
 
@@ -988,18 +981,18 @@ class RigidBodyParam(BaseModel):
 
     def __init__(
         self,
-        mass: float = None,
-        linear_damping: float = None,
-        angular_damping: float = None,
-        restitution: float = None,
-        friction: float = None,
+        mass: float = 0,
+        linear_damping: float = 0,
+        angular_damping: float = 0,
+        restitution: float = 0,
+        friction: float = 0,
     ) -> None:
         super().__init__()
-        self.mass = mass or 0
-        self.linear_damping = linear_damping or 0
-        self.angular_damping = angular_damping or 0
-        self.restitution = restitution or 0
-        self.friction = friction or 0
+        self.mass = mass
+        self.linear_damping = linear_damping
+        self.angular_damping = angular_damping
+        self.restitution = restitution
+        self.friction = friction
 
 
 @unique
@@ -1090,30 +1083,28 @@ class RigidBody(BaseIndexNameModel):
 
     def __init__(
         self,
-        name: str = None,
-        english_name: str = None,
-        bone_index: int = None,
-        collision_group: int = None,
-        no_collision_group: RigidBodyCollisionGroup = None,
-        shape_type: RigidBodyShape = None,
+        name: str = "",
+        english_name: str = "",
+        bone_index: int = -1,
+        collision_group: int = 0,
+        no_collision_group: RigidBodyCollisionGroup = RigidBodyCollisionGroup.NONE,
+        shape_type: RigidBodyShape = RigidBodyShape.SPHERE,
         shape_size: MVector3D = None,
         shape_position: MVector3D = None,
         shape_rotation: BaseRotationModel = None,
         param: RigidBodyParam = None,
-        mode: RigidBodyMode = None,
+        mode: RigidBodyMode = RigidBodyMode.STATIC,
     ) -> None:
-        super().__init__(name=name or "", english_name=english_name or "")
-        self.bone_index: int = bone_index or -1
-        self.collision_group: int = collision_group or 0
-        self.no_collision_group: RigidBodyCollisionGroup = (
-            no_collision_group or RigidBodyCollisionGroup.NONE
-        )
-        self.shape_type: RigidBodyShape = shape_type or RigidBodyShape.SPHERE
-        self.shape_size: MVector3D = shape_size or MVector3D()
-        self.shape_position: MVector3D = shape_position or MVector3D()
-        self.shape_rotation: BaseRotationModel = shape_rotation or BaseRotationModel()
-        self.param: RigidBodyParam = param or RigidBodyParam()
-        self.mode: RigidBodyMode = mode or RigidBodyMode.STATIC
+        super().__init__(name=name, english_name=english_name)
+        self.bone_index = bone_index
+        self.collision_group = collision_group
+        self.no_collision_group = no_collision_group
+        self.shape_type = shape_type
+        self.shape_size = shape_size or MVector3D()
+        self.shape_position = shape_position or MVector3D()
+        self.shape_rotation = shape_rotation or BaseRotationModel()
+        self.param = param or RigidBodyParam()
+        self.mode = mode
         # 軸方向
         self.x_direction = MVector3D()
         self.y_direction = MVector3D()
@@ -1134,8 +1125,8 @@ class JointLimitParam(BaseModel):
 
     def __init__(
         self,
-        limit_min: MVector3D = None,
-        limit_max: MVector3D = None,
+        limit_min: MVector3D,
+        limit_max: MVector3D,
     ) -> None:
         super().__init__()
         self.limit_min = limit_min or MVector3D()
@@ -1174,10 +1165,10 @@ class JointParam(BaseModel):
         super().__init__()
         self.translation_limit_min = translation_limit_min or MVector3D()
         self.translation_limit_max = translation_limit_max or MVector3D()
-        self.rotation_limit_min: BaseRotationModel = BaseRotationModel(
+        self.rotation_limit_min = BaseRotationModel(
             rotation_limit_min_radians or MVector3D()
         )
-        self.rotation_limit_max: BaseRotationModel = BaseRotationModel(
+        self.rotation_limit_max = BaseRotationModel(
             rotation_limit_max_radians or MVector3D()
         )
         self.spring_constant_translation = spring_constant_translation or MVector3D()
@@ -1220,19 +1211,19 @@ class Joint(BaseIndexNameModel):
 
     def __init__(
         self,
-        name: str = None,
-        english_name: str = None,
-        joint_type: int = None,
-        rigidbody_index_a: int = None,
-        rigidbody_index_b: int = None,
+        name: str = "",
+        english_name: str = "",
+        joint_type: int = 0,
+        rigidbody_index_a: int = -1,
+        rigidbody_index_b: int = -1,
         position: MVector3D = None,
         rotation: BaseRotationModel = None,
-        param=None,
+        param: JointParam = None,
     ) -> None:
-        super().__init__(name=name or "", english_name=english_name or "")
-        self.joint_type: int = joint_type or 0
-        self.rigidbody_index_a: int = rigidbody_index_a or -1
-        self.rigidbody_index_b: int = rigidbody_index_b or -1
-        self.position: MVector3D = position or MVector3D()
-        self.rotation: BaseRotationModel = rotation or BaseRotationModel()
+        super().__init__(name=name, english_name=english_name)
+        self.joint_type = joint_type
+        self.rigidbody_index_a = rigidbody_index_a
+        self.rigidbody_index_b = rigidbody_index_b
+        self.position = position or MVector3D()
+        self.rotation = rotation or BaseRotationModel()
         self.param = param or JointParam()
