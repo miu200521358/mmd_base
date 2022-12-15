@@ -586,6 +586,66 @@ def test_read_by_filepath_ok_leg_ik3():
     ).all()
 
 
+def test_read_by_filepath_ok_leg_ik4():
+    import os
+
+    import numpy as np
+
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.vmd.vmd_collection import VmdMotion
+    from mlib.vmd.vmd_reader import VmdReader
+
+    vmd_reader = VmdReader()
+    # 好き雪 2794F
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモーション3.vmd")
+    )
+
+    pmx_reader = PmxReader()
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
+
+    # キーフレ
+    bone_trees = model.bone_trees.gets(["右つま先"])
+    bone_matrixes = motion.bones.get_matrix_by_indexes([0], bone_trees, model)
+
+    # --------
+    # キーフレがある場合
+
+    assert np.isclose(
+        np.array([1.316121, 11.687257, 2.263307]),
+        bone_matrixes["右つま先"][0]["下半身"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([0.175478, 10.780540, 2.728409]),
+        bone_matrixes["右つま先"][0]["右足"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([0.950410, 11.256771, -1.589462]),
+        bone_matrixes["右つま先"][0]["右ひざ"].position.vector,
+        rtol=0.2,
+        atol=0.2,
+    ).all()
+    assert np.isclose(
+        np.array([-1.025194, 7.871110, 1.828258]),
+        bone_matrixes["右つま先"][0]["右足首"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-1.701147, 6.066556, 3.384271]),
+        bone_matrixes["右つま先"][0]["右つま先"].position.vector,
+        rtol=0.03,
+        atol=0.03,
+    ).all()
+
+
 def test_read_by_filepath_ok_arm_ik():
     import os
 
