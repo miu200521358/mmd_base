@@ -1,5 +1,5 @@
 import operator
-from math import acos, asin, atan2, cos, degrees, radians, sin, sqrt
+from math import acos, atan2, cos, degrees, pi, radians, sin, sqrt
 from typing import Any, Union
 
 import numpy as np
@@ -970,25 +970,16 @@ class MQuaternion(MVector):
     def separate_euler_degrees(self) -> MVector3D:
         """
         ZXYの回転順序でオイラー角度を求める
-        http://mikaduki2007.blog.shinobi.jp/Entry/279/
+        https://programming-surgeon.com/script/euler-python-script/
 
         Returns
         -------
-        _type_
-            _description_
+        ZXYローカル軸別のオイラー角度
         """
         mat = self.normalized().to_matrix4x4()
-        x_radian = asin(max(-1, min(1, -mat.vector[2, 1])))
-        if np.zeros_like([cos(x_radian)]):
-            # α = 0, β = 90 or -90
-            y_radian = atan2(-mat.vector[0, 2], mat.vector[0, 0])
-            z_radian = asin(max(-1, min(1, -mat.vector[2, 1])))
-            x_radian = 0.0
-        else:
-            y_radian = atan2(mat.vector[2, 0], mat.vector[2, 2])
-            z_radian = asin(max(-1, min(1, mat.vector[0, 1] / cos(x_radian))))
-            if mat.vector[1, 1] < 0:
-                z_radian = 180 - z_radian
+        z_radian = atan2(-mat[0, 1], mat[0, 0])
+        x_radian = atan2(mat[2, 1] * cos(z_radian), mat[1, 1])
+        y_radian = atan2(-mat[2, 0], mat[2, 2])
 
         return MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
 

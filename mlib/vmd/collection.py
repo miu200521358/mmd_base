@@ -53,6 +53,7 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
                     [v.index for v in self.data.values() if v.ik_rotation is not None]
                 ),
             )
+
             # prevとnextの範囲内である場合、補間曲線ベースで求め直す
             return self.calc(
                 prev_index,
@@ -105,11 +106,27 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
             bf.interpolations = self[prev_index].interpolations.copy()
             return bf
 
-        prev_bf = self[prev_index]
-        next_bf = self[next_index]
+        prev_bf = (
+            self[prev_index]
+            if prev_index in self
+            else VmdBoneFrame(name=self.name, index=prev_index)
+        )
+        next_bf = (
+            self[next_index]
+            if next_index in self
+            else VmdBoneFrame(name=self.name, index=next_index)
+        )
 
-        ik_prev_bf = self[ik_prev_index]
-        ik_next_bf = self[ik_next_index]
+        ik_prev_bf = (
+            self[ik_prev_index]
+            if ik_prev_index in self
+            else VmdBoneFrame(name=self.name, index=ik_prev_index)
+        )
+        ik_next_bf = (
+            self[ik_next_index]
+            if ik_next_index in self
+            else VmdBoneFrame(name=self.name, index=ik_next_index)
+        )
 
         # 補間結果Yは、FKキーフレ内で計算する
         _, ry, _ = evaluate(
@@ -370,7 +387,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     ik_link.bone_index
                 ]
 
-            for _ in range(ik_bone.ik.loop_count):
+            for i in range(ik_bone.ik.loop_count):
                 is_break = False
                 for ik_link in ik_bone.ik.links:
                     # ikLink は末端から並んでる
@@ -435,9 +452,9 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     # 注目ノードを起点とした、IK目標のローカル位置
                     local_target_pos = link_inverse_matrix * global_target_pos
 
-                    if (
-                        local_effector_pos - local_target_pos
-                    ).length_squared() < 0.0001:
+                    if np.isclose(
+                        (local_effector_pos - local_target_pos).length_squared(), 0
+                    ):
                         # 位置の差がほとんどない場合、スルー
                         is_break = True
                         break
@@ -453,7 +470,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     # 回転角度
                     rotation_radian = acos(max(-1, min(1, rotation_dot)))
 
-                    if abs(rotation_radian) < 0.000001:
+                    if np.isclose(rotation_dot, 1):
                         # ほとんど回らない場合、スルー
                         is_break = True
                         break
@@ -527,11 +544,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     break
 
         # IKの計算結果の回転を加味して返す
-        bf = (
-            self.data[bone.name].data[fno]
-            if bone.name in self.data and fno in self.data[bone.name].data
-            else VmdBoneFrame(name=bone.name, index=fno)
-        )
+        bf = self[bone.name][fno]
         return bf.rotation * (bf.ik_rotation or MQuaternion())
 
     def get_fix_rotation(self, bone: Bone, qq: MQuaternion) -> MQuaternion:
