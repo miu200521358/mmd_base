@@ -439,8 +439,8 @@ def test_read_by_filepath_ok_leg_ik1():
     assert np.isclose(
         np.array([0.983212, 6.945313, 0.487476]),
         bone_matrixes["左つま先"][29]["左ひざ"].position.vector,
-        rtol=0.01,
-        atol=0.01,
+        rtol=0.03,
+        atol=0.03,
     ).all()
     assert np.isclose(
         np.array([-0.345842, 2.211842, 2.182894]),
@@ -451,8 +451,8 @@ def test_read_by_filepath_ok_leg_ik1():
     assert np.isclose(
         np.array([-0.109262, -0.025810, 1.147780]),
         bone_matrixes["左つま先"][29]["左つま先"].position.vector,
-        rtol=0.01,
-        atol=0.01,
+        rtol=0.03,
+        atol=0.03,
     ).all()
 
 

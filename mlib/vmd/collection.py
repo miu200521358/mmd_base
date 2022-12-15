@@ -3,23 +3,14 @@ from math import acos, degrees, pi
 import numpy as np
 
 from mlib.base.bezier import evaluate
-from mlib.base.collection import (
-    BaseHashModel,
-    BaseIndexDictModel,
-    BaseIndexNameDictInnerModel,
-    BaseIndexNameDictModel,
-)
+from mlib.base.collection import (BaseHashModel, BaseIndexDictModel,
+                                  BaseIndexNameDictInnerModel,
+                                  BaseIndexNameDictModel)
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
 from mlib.pmx.collection import BoneTree, PmxModel
 from mlib.pmx.part import Bone
-from mlib.vmd.part import (
-    VmdBoneFrame,
-    VmdCameraFrame,
-    VmdLightFrame,
-    VmdMorphFrame,
-    VmdShadowFrame,
-    VmdShowIkFrame,
-)
+from mlib.vmd.part import (VmdBoneFrame, VmdCameraFrame, VmdLightFrame,
+                           VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame)
 
 
 class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
@@ -239,8 +230,25 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         return self.data[name]
 
     def get_relative_position(self, bone: Bone, fno: int, model: PmxModel) -> MVector3D:
-        # TODO 付与親
-        return (
+        """
+        該当キーフレにおけるボーンの相対位置
+
+        Parameters
+        ----------
+        bone : Bone
+            計算対象ボーン
+        fno : int
+            計算対象キーフレ
+        model : PmxModel
+            計算対象モデル
+
+        Returns
+        -------
+        MVector3D
+            相対位置
+        """
+        # 自身の相対位置
+        pos = (
             self[bone.name][fno].position
             + bone.position
             - (
@@ -250,9 +258,69 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             )
         )
 
+        # 付与親を加味して返す
+        return self.get_effect_position(bone, fno, pos, model)
+
+    def get_effect_position(
+        self,
+        bone: Bone,
+        fno: int,
+        pos: MVector3D,
+        model: PmxModel,
+    ) -> MVector3D:
+        """
+        付与親を加味した移動を求める
+
+        Parameters
+        ----------
+        bone : Bone
+            計算対象ボーン
+        fno : int
+            計算対象キーフレ
+        pos : MVector3D
+            計算対象移動
+        model : PmxModel
+            計算対象モデル
+
+        Returns
+        -------
+        MVector3D
+            計算結果
+        """
+        if bone.is_external_translation() and bone.effect_index in model.bones:
+            if bone.effect_factor == 0:
+                # 付与率が0の場合、常に0になる
+                return MVector3D()
+            else:
+                # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
+                effect_bone = model.bones[bone.effect_index]
+                effect_pos = self.get_relative_position(effect_bone, fno, model)
+                pos *= effect_pos
+
+        return pos
+
     def get_rotation(
-        self, bone: Bone, fno: int, model: PmxModel, append_ik: bool
+        self, bone: Bone, fno: int, model: PmxModel, append_ik: bool = False
     ) -> MQuaternion:
+        """
+        該当キーフレにおけるボーンの相対位置
+
+        Parameters
+        ----------
+        bone : Bone
+            計算対象ボーン
+        fno : int
+            計算対象キーフレ
+        model : PmxModel
+            計算対象モデル
+        append_ik : bool
+            IKを計算するか(循環してしまう場合があるので、デフォルトFalse)
+
+        Returns
+        -------
+        MQuaternion
+            該当キーフレにおけるボーンの回転量
+        """
         # FK(捩り) > IK(捩り) > 付与親(捩り)
         bf = self[bone.name][fno]
         qq = bf.rotation.copy()
