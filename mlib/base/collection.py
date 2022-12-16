@@ -297,10 +297,10 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
 
         # index より大きい中の最小 = next
         sorted_indices = np.fromiter(indices, dtype=np.int32, count=len(indices))
-        next_indices = np.where(sorted_indices > index)[0]
-        if next_indices.any():
-            middle_idx = int(np.min(next_indices))
-            next_idx = int(np.min([len(sorted_indices) - 1, middle_idx]))
+        next_indices = np.where(sorted_indices > index)[0].tolist()
+        if next_indices:
+            middle_idx = int(min(next_indices))
+            next_idx = int(min([len(sorted_indices) - 1, middle_idx]))
         else:
             middle_idx = len(sorted_indices) - 1
             next_idx = len(sorted_indices) - 1

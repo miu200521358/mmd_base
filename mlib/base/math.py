@@ -546,6 +546,7 @@ class MQuaternion(MVector):
     クォータニオンクラス
     """
 
+    # @profile
     def __init__(
         self,
         scalar: Union[float, quaternion, list, np.ndarray] = 0,
@@ -555,7 +556,10 @@ class MQuaternion(MVector):
     ):
         if isinstance(scalar, int) or isinstance(scalar, float):
             # 実数の場合
-            if np.isclose([scalar, x, y, z], 0).all():
+            if (
+                np.abs(np.fromiter([scalar, x, y, z], dtype=np.float64, count=4))
+                < 1e-05
+            ).all():
                 self.vector = quaternion(1, 0, 0, 0)
             else:
                 self.vector = quaternion(scalar, x, y, z)
