@@ -213,7 +213,7 @@ def test_MQuaternion_normalized():
 
     assert np.isclose(
         np.array([1, 0, 0, 0]),
-        MQuaternion(0, 0, 0, 0).normalized().vector.components,
+        MQuaternion().normalized().vector.components,
     ).all()
 
 
