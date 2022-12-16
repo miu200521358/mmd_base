@@ -25,7 +25,7 @@ stime = time.perf_counter()
 # キーフレ
 bone_trees = model.bone_trees.gets(["左手首", "右手首"])
 bone_matrixes = motion.bones.get_matrix_by_indexes(
-    list(range(0, 3000)), bone_trees, model
+    list(range(0, 300)), bone_trees, model
 )
 
 # 時間計測終了
