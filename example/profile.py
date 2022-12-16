@@ -20,7 +20,7 @@ model: PmxModel = pmx_reader.read_by_filepath(
 )
 
 # 時間計測開始
-stime = time.perf_counter()
+start_time = time.perf_counter()
 
 # キーフレ
 bone_trees = model.bone_trees.gets(["左手首", "右手首"])
@@ -29,6 +29,6 @@ bone_matrixes = motion.bones.get_matrix_by_indexes(
 )
 
 # 時間計測終了
-etime = time.perf_counter()
+end_time = time.perf_counter()
 
-print(etime - stime)
+print(end_time - start_time)
