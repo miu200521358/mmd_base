@@ -4,13 +4,13 @@ isort
 flake8
 pytest
 pytest-cov
-# line_profiler
+line_profiler
 
 pyinstaller
 numpy
 numpy-quaternion
 Cython
-# bezier
-# wxPython
+bezier
+wxPython
 PyOpenGL==3.1.6
 Pillow==9.3.0

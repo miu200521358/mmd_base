@@ -6,9 +6,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import numpy as np
 import OpenGL.GL as gl
 import wx
-from mlib.math import MMatrix4x4, MQuaternion
 from OpenGL.GL import shaders
 from wx import glcanvas
+
+from mlib.math import MMatrix4x4, MQuaternion
 
 vertex_shader = """
 # version 330
@@ -61,7 +62,7 @@ class Geometries:
                 0.0,
                 1.0,
             ],
-            dtype=np.float32,
+            dtype=np.float64,
         )
 
         self.vao_triangle = gl.glGenVertexArrays(1)
@@ -113,7 +114,7 @@ class Geometries:
         #         1.0,
         #         1.0,
         #     ],
-        #     dtype=np.float32,
+        #     dtype=np.float64,
         # )
 
         # self.vao_quad = gl.glGenVertexArrays(1)

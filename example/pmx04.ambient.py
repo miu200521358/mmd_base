@@ -111,7 +111,7 @@ class Geometries:
                             ).vector
                             for vidx in self.model.faces[face_index].vertices
                         ],
-                        dtype=np.float32,
+                        dtype=np.float64,
                     )
                 )
                 vertex_normal_list.append(
@@ -120,7 +120,7 @@ class Geometries:
                             self.model.vertices[vidx].normal.vector
                             for vidx in self.model.faces[face_index].vertices
                         ],
-                        dtype=np.float32,
+                        dtype=np.float64,
                     )
                 )
                 diffuse_color_list.append(
@@ -132,9 +132,9 @@ class Geometries:
                                     len(self.model.faces[face_index].vertices)
                                 )
                             ],
-                            dtype=np.float32,
+                            dtype=np.float64,
                         ),
-                        dtype=np.float32,
+                        dtype=np.float64,
                     )
                 )
                 specular_color_list.append(
@@ -151,9 +151,9 @@ class Geometries:
                                     len(self.model.faces[face_index].vertices)
                                 )
                             ],
-                            dtype=np.float32,
+                            dtype=np.float64,
                         ),
-                        dtype=np.float32,
+                        dtype=np.float64,
                     )
                 )
                 ambient_color_list.append(
@@ -169,17 +169,17 @@ class Geometries:
                                     len(self.model.faces[face_index].vertices)
                                 )
                             ],
-                            dtype=np.float32,
+                            dtype=np.float64,
                         ),
-                        dtype=np.float32,
+                        dtype=np.float64,
                     )
                 )
             prev_face_count += face_count
-        self.vertices = np.array(vertex_position_list, dtype=np.float32)
-        self.normals = np.array(vertex_normal_list, dtype=np.float32)
-        self.diffuses = np.array(diffuse_color_list, dtype=np.float32)
-        self.speculars = np.array(specular_color_list, dtype=np.float32)
-        self.ambients = np.array(ambient_color_list, dtype=np.float32)
+        self.vertices = np.array(vertex_position_list, dtype=np.float64)
+        self.normals = np.array(vertex_normal_list, dtype=np.float64)
+        self.diffuses = np.array(diffuse_color_list, dtype=np.float64)
+        self.speculars = np.array(specular_color_list, dtype=np.float64)
+        self.ambients = np.array(ambient_color_list, dtype=np.float64)
 
         # ---------------------
         # 頂点の設定

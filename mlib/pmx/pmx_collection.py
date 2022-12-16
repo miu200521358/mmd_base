@@ -553,7 +553,8 @@ class Meshes(BaseIndexListModel[Mesh]):
         self.faces: np.ndarray = np.array(
             [
                 np.array(
-                    [f.vertices[2], f.vertices[1], f.vertices[0]], dtype=face_dtype
+                    [f.vertices[2], f.vertices[1], f.vertices[0]],
+                    dtype=face_dtype,
                 )
                 for f in model.faces
             ],

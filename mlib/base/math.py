@@ -78,7 +78,7 @@ class MVector(BaseModel):
         """
         if isinstance(x, int) or isinstance(x, float):
             # 実数の場合
-            self.vector = np.array([x], dtype=np.float64)
+            self.vector = np.fromiter([x], dtype=np.float64, count=1)
         elif isinstance(x, np.ndarray):
             # numpy-arrayの場合
             self.vector = np.copy(x)
@@ -313,7 +313,7 @@ class MVector2D(MVector):
         """
         if isinstance(x, int) or isinstance(x, float):
             # 実数の場合
-            self.vector = np.array([x, y], dtype=np.float64)
+            self.vector = np.fromiter([x, y], dtype=np.float64, count=2)
         elif isinstance(x, np.ndarray):
             # numpy-arrayの場合
             self.vector = np.copy(x)
@@ -354,7 +354,7 @@ class MVector3D(MVector):
         """
         if isinstance(x, int) or isinstance(x, float):
             # 実数の場合
-            self.vector = np.array([x, y, z], dtype=np.float64)
+            self.vector = np.fromiter([x, y, z], dtype=np.float64, count=3)
         elif isinstance(x, np.ndarray):
             # numpy-arrayの場合
             self.vector = np.copy(x)
@@ -430,7 +430,7 @@ class MVector4D(MVector):
         """
         if isinstance(x, int) or isinstance(x, float):
             # 実数の場合
-            self.vector = np.array([x, y, z, w], dtype=np.float64)
+            self.vector = np.fromiter([x, y, z, w], dtype=np.float64, count=4)
         elif isinstance(x, np.ndarray):
             # numpy-arrayの場合
             self.vector = np.copy(x)
@@ -484,7 +484,7 @@ class MVectorDict:
         return list(self.vectors.keys())
 
     def values(self) -> np.ndarray:
-        return np.array(list(self.vectors.values()))
+        return np.array(list(self.vectors.values()), dtype=np.float64)
 
     def append(self, vkey: Any, v: MVector) -> None:
         self.vectors[vkey] = v.vector
@@ -687,7 +687,10 @@ class MQuaternion(MVector):
 
         if not np.isclose([lengthSquared, lengthSquared - 1.0], 0).any():
             xx, xy, xz, xw, yy, yz, yw, zz, zw = (
-                np.array([xx, xy, xz, xw, yy, yz, yw, zz, zw]) / lengthSquared
+                np.fromiter(
+                    [xx, xy, xz, xw, yy, yz, yw, zz, zw], dtype=np.float64, count=9
+                )
+                / lengthSquared
             )
 
         pitch = np.arcsin(max(-1, min(1, -2.0 * (yz - xw))))

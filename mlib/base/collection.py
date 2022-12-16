@@ -268,6 +268,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
         self.__indices = self.indices()
         self.name = data[0].name if data else name if name else ""
 
+    # @profile
     def range_indexes(
         self, index: int, indices: list[int] = []
     ) -> tuple[int, int, int]:
@@ -293,14 +294,22 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
             return index, index, index
 
         # index がない場合、前後のINDEXを取得する
-        sorted_indices = np.sort(indices + [index])
-        idx = np.where(sorted_indices == index)[0][0]
-        prev_idx = np.max([0, idx - 1])
-        next_idx = np.min([len(sorted_indices) - 1, idx + 1])
+
+        # index より大きい中の最小 = next
+        sorted_indices = np.fromiter(indices, dtype=np.int32, count=len(indices))
+        next_indices = np.where(sorted_indices > index)[0]
+        if next_indices.any():
+            middle_idx = int(np.min(next_indices))
+            next_idx = int(np.min([len(sorted_indices) - 1, middle_idx]))
+        else:
+            middle_idx = len(sorted_indices) - 1
+            next_idx = len(sorted_indices) - 1
+        # next のひとつ前がprevとなる
+        prev_idx = np.max([0, middle_idx - 1])
 
         return (
             int(sorted_indices[prev_idx]),
-            int(sorted_indices[idx]),
+            index,
             int(sorted_indices[next_idx]),
         )
 

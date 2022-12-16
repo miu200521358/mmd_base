@@ -4,7 +4,7 @@ from wx import glcanvas
 
 from mlib.base.math import MQuaternion, MVector3D
 from mlib.pmx.pmx_reader import PmxReader
-from mlib.pmx.pmx_shader import MShader
+from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_reader import VmdReader
 
 

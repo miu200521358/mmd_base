@@ -73,7 +73,7 @@ def get_infections(values: list[float], threshold) -> np.ndarray:
     extract_idxs = get_threshold_infections(values, threshold)
     if len(extract_idxs) < 2:
         return np.array([])
-    extracts = np.array(values)[extract_idxs]
+    extracts = np.fromiter(values, dtype=np.float64, count=len(values))[extract_idxs]
     f_prime = np.gradient(extracts)
     infections = extract_idxs[np.where(np.diff(np.sign(f_prime)))[0]]
     return infections
@@ -98,7 +98,9 @@ def get_threshold_infections(values: list[float], threshold) -> np.ndarray:
             end_idx = start_idx + 1
         else:
             end_idx += 1
-    return np.array(sorted(list(set(extract_idxs))))
+    return np.fromiter(
+        sorted(list(set(extract_idxs))), dtype=np.float64, count=len(extract_idxs)
+    )
 
 
 def create_interpolation(values: list[float]):
@@ -109,7 +111,7 @@ def create_interpolation(values: list[float]):
     xs = np.arange(0, len(values))
 
     # YはXの移動分を許容範囲とする
-    ys = np.array(values)
+    ys = np.fromiter(sorted(list(set(values))), dtype=np.float64, count=len(values))
 
     # https://github.com/dhermes/bezier/issues/242
     s_vals = np.linspace(0, 1, len(values))

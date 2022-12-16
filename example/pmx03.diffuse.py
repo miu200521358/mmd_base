@@ -10,10 +10,11 @@ import numpy as np
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
 import wx
-from mlib.math import MMatrix4x4, MQuaternion, MVector3D
-from mlib.pmx.pmx_reader import PmxReader
 from OpenGL.GL import shaders
 from wx import glcanvas
+
+from mlib.math import MMatrix4x4, MQuaternion, MVector3D
+from mlib.pmx.pmx_reader import PmxReader
 
 POSITION_ID = 0
 COLOR_ID = 1
@@ -76,7 +77,7 @@ class Geometries:
                             ).vector
                             for vidx in self.model.faces[face_index].vertices
                         ],
-                        dtype=np.float32,
+                        dtype=np.float64,
                     )
                 )
                 color_list.append(
@@ -92,14 +93,14 @@ class Geometries:
                                     len(self.model.faces[face_index].vertices)
                                 )
                             ],
-                            dtype=np.float32,
+                            dtype=np.float64,
                         ),
-                        dtype=np.float32,
+                        dtype=np.float64,
                     )
                 )
             prev_face_count += face_count
-        self.vertices = np.array(vertex_position_list, dtype=np.float32)
-        self.colors = np.array(color_list, dtype=np.float32)
+        self.vertices = np.array(vertex_position_list, dtype=np.float64)
+        self.colors = np.array(color_list, dtype=np.float64)
 
         # ---------------------
         # 頂点の設定

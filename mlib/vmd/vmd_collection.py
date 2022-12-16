@@ -29,7 +29,9 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
 
     def __init__(self, name: str):
         super().__init__(name=name)
+        self.__ik_indices: list[int] = []
 
+    # @profile
     def __getitem__(self, index: int) -> VmdBoneFrame:
         if not self.data:
             # まったくデータがない場合、生成
@@ -41,19 +43,10 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         # キーフレがない場合、生成したのを返す（保持はしない）
         prev_index, middle_index, next_index = self.range_indexes(index)
 
-        if prev_index == middle_index == next_index:
-            # 登録対象キーがない場合、あるキー全部で取得し直す
-            prev_index, middle_index, next_index = self.range_indexes(
-                index,
-                indices=sorted([v.index for v in self.data.values()]),
-            )
-
         # IK用キーはIK回転情報があるキーフレのみ対象とする
         ik_prev_index, ik_middle_index, ik_next_index = self.range_indexes(
             index,
-            indices=sorted(
-                [v.index for v in self.data.values() if v.ik_rotation is not None]
-            ),
+            indices=self.__ik_indices,
         )
 
         # prevとnextの範囲内である場合、補間曲線ベースで求め直す
@@ -66,6 +59,11 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
             ik_next_index,
             index,
         )
+
+    def append(self, value: VmdBoneFrame):
+        if value.ik_rotation is not None:
+            self.__ik_indices.append(value.index)
+        return super().append(value)
 
     def calc(
         self,

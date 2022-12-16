@@ -8,12 +8,12 @@ def test_Bdef2_get_indexes():
 
     assert np.isclose(
         np.array([1, 2]),
-        Bdef2(1, 2, 0.3).get_indexes(),
+        Bdef2(1, 2, 0.3).get_indices(),
     ).all()
 
     assert np.isclose(
         np.array([2]),
-        Bdef2(1, 2, 0.3).get_indexes(0.5),
+        Bdef2(1, 2, 0.3).get_indices(0.5),
     ).all()
 
 
@@ -24,12 +24,12 @@ def test_Bdef4_get_indexes():
 
     assert np.isclose(
         np.array([1, 2, 3, 4]),
-        Bdef4(1, 2, 3, 4, 0.3, 0.2, 0.4, 0.1).get_indexes(),
+        Bdef4(1, 2, 3, 4, 0.3, 0.2, 0.4, 0.1).get_indices(),
     ).all()
 
     assert np.isclose(
         np.array([1, 3]),
-        Bdef4(1, 2, 3, 4, 0.3, 0.2, 0.4, 0.1).get_indexes(0.3),
+        Bdef4(1, 2, 3, 4, 0.3, 0.2, 0.4, 0.1).get_indices(0.3),
     ).all()
 
 
@@ -151,7 +151,7 @@ def test_read_by_filepath_ok():
     assert DeformType.BDEF2 == model.vertices[0].deform_type
     assert np.isclose(
         np.array([4, 108]),
-        model.vertices[0].deform.get_indexes(),
+        model.vertices[0].deform.get_indices(),
     ).all()
     assert np.isclose(
         np.array([0.7978904, 0.2021096]),

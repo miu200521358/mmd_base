@@ -32,7 +32,7 @@ class Deform(BaseModel, ABC):
 
     Parameters
     ----------
-    indexes : List[int]
+    indices : List[int]
         ボーンINDEXリスト
     weights : List[float]
         ウェイトリスト
@@ -40,13 +40,13 @@ class Deform(BaseModel, ABC):
         デフォームボーン個数
     """
 
-    def __init__(self, indexes: List[int], weights: List[float], count: int):
+    def __init__(self, indices: List[int], weights: List[float], count: int):
         super().__init__()
-        self.indexes = np.array(indexes, dtype=np.int32)
-        self.weights = np.array(weights, dtype=np.float64)
+        self.indices = np.fromiter(indices, dtype=np.int32, count=len(indices))
+        self.weights = np.fromiter(weights, dtype=np.float64, count=len(weights))
         self.count: int = count
 
-    def get_indexes(self, weight_threshold: float = 0) -> np.ndarray:
+    def get_indices(self, weight_threshold: float = 0) -> np.ndarray:
         """
         デフォームボーンINDEXリスト取得
 
@@ -61,7 +61,7 @@ class Deform(BaseModel, ABC):
         np.ndarray
             デフォームボーンINDEXリスト
         """
-        return self.indexes[self.weights >= weight_threshold]
+        return self.indices[self.weights >= weight_threshold]
 
     def get_weights(self, weight_threshold: float = 0) -> np.ndarray:
         """
@@ -92,13 +92,17 @@ class Deform(BaseModel, ABC):
         if align:
             # 揃える必要がある場合
             # 数が足りるよう、かさ増しする
-            ilist = np.array(self.indexes.tolist() + [0, 0, 0, 0])
-            wlist = np.array(self.weights.tolist() + [0, 0, 0, 0])
+            ilist = np.fromiter(
+                self.indices.tolist() + [0, 0, 0, 0], count=(len(self.indices) + 4)
+            )
+            wlist = np.fromiter(
+                self.weights.tolist() + [0, 0, 0, 0], count=(len(self.weights) + 4)
+            )
             # 正規化
             wlist /= wlist.sum(axis=0, keepdims=1)
 
             # ウェイトの大きい順に指定個数までを対象とする
-            self.indexes = ilist[np.argsort(-wlist)][: self.count]
+            self.indices = ilist[np.argsort(-wlist)][: self.count]
             self.weights = wlist[np.argsort(-wlist)][: self.count]
 
         # ウェイト正規化
