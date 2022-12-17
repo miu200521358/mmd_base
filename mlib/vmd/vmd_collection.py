@@ -3,14 +3,23 @@ from math import acos, degrees, pi
 import numpy as np
 
 from mlib.base.bezier import evaluate
-from mlib.base.collection import (BaseHashModel, BaseIndexDictModel,
-                                  BaseIndexNameDictInnerModel,
-                                  BaseIndexNameDictModel)
+from mlib.base.collection import (
+    BaseHashModel,
+    BaseIndexDictModel,
+    BaseIndexNameDictInnerModel,
+    BaseIndexNameDictModel,
+)
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
 from mlib.pmx.pmx_collection import BoneTree, PmxModel
 from mlib.pmx.pmx_part import Bone
-from mlib.vmd.vmd_part import (VmdBoneFrame, VmdCameraFrame, VmdLightFrame,
-                               VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame)
+from mlib.vmd.vmd_part import (
+    VmdBoneFrame,
+    VmdCameraFrame,
+    VmdLightFrame,
+    VmdMorphFrame,
+    VmdShadowFrame,
+    VmdShowIkFrame,
+)
 
 
 class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
@@ -58,7 +67,6 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
             self.__ik_indices.append(value.index)
         return super().append(value)
 
-    # @profile
     def calc(
         self,
         prev_index: int,
