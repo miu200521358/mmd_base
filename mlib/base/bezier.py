@@ -1,3 +1,5 @@
+from math import acos, cos, factorial, pi, pow, sqrt
+
 import bezier
 import numpy as np
 
@@ -136,10 +138,10 @@ def create_interpolation(values: list[float]):
     return org_ip
 
 
-# http://d.hatena.ne.jp/edvakf/20111016/1318716097
 # https://pomax.github.io/bezierinfo
 # https://shspage.hatenadiary.org/entry/20140625/1403702735
 # https://bezier.readthedocs.io/en/stable/python/reference/bezier.curve.html#bezier.curve.Curve.evaluate
+# https://edvakf.hatenadiary.org/entry/20111016/1318716097
 def evaluate(
     interpolation: Interpolation, start: int, now: int, end: int
 ) -> tuple[float, float, float]:
@@ -171,20 +173,154 @@ def evaluate(
     x2 = interpolation.end.x / IP_MAX
     y2 = interpolation.end.y / IP_MAX
 
-    t = 0.5
-    s = 0.5
+    if x >= 1:
+        return 1.0, 1.0, 1.0
 
-    # 二分法
-    for i in range(15):
-        ft = (3 * (s * s) * t * x1) + (3 * s * (t * t) * x2) + (t * t * t) - x
+    # # ベジェ曲線
+    # nodes = np.asfortranarray(
+    #     [
+    #         [0, x1, x2, 1],
+    #         [0, y1, y2, 1],
+    #     ]
+    # )
+    # curve = bezier.Curve(nodes, degree=3)
 
-        if ft > 0:
-            t -= 1 / (4 << i)
-        else:
-            t += 1 / (4 << i)
+    # # 交点を求める為のX線上の直線
+    # line1 = bezier.Curve(np.asfortranarray([[x, x], [0, 1]]), degree=1)
 
-        s = 1 - t
+    # # 交点を求める（高精度は求めない）
+    # intersections = curve.intersect(line1, _verify=False)
 
-    y = (3 * (s * s) * t * y1) + (3 * s * (t * t) * y2) + (t * t * t)
+    # if intersections.any():
+    #     # 解がある場合
+
+    #     # tからyを求め直す
+    #     t = intersections[0, 0]
+
+    #     # 評価する
+    #     y = curve.evaluate(t)[-1, -1]
+    # else:
+    #     # 解がない場合（キーフレが最後よりオーバーしている場合）
+    #     y = 1
+    #     t = 1
+
+    # P = [
+    #     np.fromiter([0.0, 0.0], dtype=np.float64, count=2),
+    #     np.fromiter([x1, y1], dtype=np.float64, count=2),
+    #     np.fromiter([x2, y2], dtype=np.float64, count=2),
+    #     np.fromiter([1.0, 1.0], dtype=np.float64, count=2),
+    # ]
+
+    t = newton(x1, x2, x)
+    s = 1 - t
+
+    y = (3 * (s**2) * t * y1) + (3 * s * (t**2) * y2) + (t**3)
+
+    # Q = BezierCurve(
+    #     P,
+    #     t,
+    # )
+
+    # # P = (
+    # #     np.dot((1 - t) ** 3, np.fromiter([0.0, 0.0], dtype=np.float64, count=2))
+    # #     + np.dot(3 * (1 - t) ** 2 * t, np.fromiter([x1, y1], dtype=np.float64, count=2))
+    # #     + np.dot(3 * (1 - t) * t**2, np.fromiter([x2, y2], dtype=np.float64, count=2))
+    # #     + np.dot(t**3, np.fromiter([0.0, 0.0], dtype=np.float64, count=2))
+    # # )
+
+    # tt = 0.5
+    # ss = 0.5
+
+    # # 二分法
+    # for i in range(15):
+    #     ft = (3 * (ss * ss) * tt * x1) + (3 * ss * (tt * tt) * x2) + (tt * tt * tt) - x
+
+    #     if ft > 0:
+    #         tt -= 1 / (4 << i)
+    #     else:
+    #         tt += 1 / (4 << i)
+
+    #     ss = 1 - tt
+
+    # yy = (3 * (ss**2) * tt * y1) + (3 * ss * (tt**2) * y2) + (tt**3)
 
     return x, y, t
+
+
+# 解を求める関数
+def func_f(x1: float, x2: float, x: float, t: float):
+    return (3 * ((1 - t) ** 2) * t * x1) + (3 * (1 - t) * (t**2) * x2) + (t**3) - x
+
+
+# Newton法（方程式の関数項、探索の開始点、微小量、誤差範囲、最大反復回数）
+def newton(
+    x1: float,
+    x2: float,
+    x: float,
+    t0: float = 0.5,
+    eps: float = 1e-10,
+    error: float = 1e-10,
+):
+    for _ in range(30):
+        # 中心差分による微分値
+        func_df = (func_f(x1, x2, x, t0 + eps) - func_f(x1, x2, x, t0 - eps)) / (
+            2 * eps
+        )
+        if abs(func_df) <= eps:  # 傾きが0に近ければ止める
+            quit()
+
+        # 次の解を計算
+        t1 = t0 - func_f(x1, x2, x, t0) / func_df
+
+        # 「誤差範囲が一定値以下」ならば終了
+        if abs(t1 - t0) <= error:
+            break
+
+        # 解を更新
+        t0 = t1
+
+    return t0
+
+
+# # 導関数
+# def derivative(x: float, t: float):
+#     return 2 * t
+
+
+# # https://www.yuulinux.tokyo/9012/
+# # ニュートン法
+# def calc_newton_method(x1: float, x2: float, x: float, t: float = 0.5):
+#     for _ in range(30):
+#         # 漸化式
+#         th = t - targetFunc(x1, x2, x, t) / derivative(t, x)
+
+#         # 収束条件
+#         if abs(t - th) < 1e-15:
+#             break
+
+#         # 近似解の更新
+#         t = th
+#     return t
+
+
+# # 2項係数計算
+# # https://qiita.com/Rahariku/items/295b1062b77ed9c96d9c
+# def BiCoe(n, k):
+#     if n < k:
+#         return -1
+#     return factorial(n) / (factorial(k) * factorial((n - k)))
+
+
+# # Bernstein多項式
+# def Bernstein(n, i, t):
+#     return BiCoe(n, i) * np.power((1 - t), (n - i)) * np.power(t, i)
+
+
+# # ベジェ曲線
+# def BezierCurve(points, t):
+#     Gt = 0
+#     n = len(points) - 1
+#     for k, point in enumerate(points):
+#         Gt += point * Bernstein(n, k, t)
+
+#     return Gt
