@@ -82,7 +82,7 @@ class MVector(BaseModel):
         ----------
         x : float, MVector, np.ndarray
         """
-        if isinstance(x, int) or isinstance(x, float):
+        if isinstance(x, (int, float)):
             # 実数の場合
             self.vector = np.fromiter([x], dtype=np.float64, count=1)
         elif isinstance(x, np.ndarray):
@@ -317,7 +317,7 @@ class MVector2D(MVector):
         y : float, optional
             by default 0.0
         """
-        if isinstance(x, int) or isinstance(x, float):
+        if isinstance(x, (int, float)):
             # 実数の場合
             self.vector = np.fromiter([x, y], dtype=np.float64, count=2)
         elif isinstance(x, np.ndarray):
@@ -358,7 +358,7 @@ class MVector3D(MVector):
         z : float, optional
             by default 0.0
         """
-        if isinstance(x, int) or isinstance(x, float):
+        if isinstance(x, (int, float)):
             # 実数の場合
             self.vector = np.fromiter([x, y, z], dtype=np.float64, count=3)
         elif isinstance(x, np.ndarray):
@@ -434,7 +434,7 @@ class MVector4D(MVector):
         z : float, optional
             by default 0.0
         """
-        if isinstance(x, int) or isinstance(x, float):
+        if isinstance(x, (int, float)):
             # 実数の場合
             self.vector = np.fromiter([x, y, z, w], dtype=np.float64, count=4)
         elif isinstance(x, np.ndarray):
@@ -559,7 +559,7 @@ class MQuaternion(MVector):
         y: float = 0.0,
         z: float = 0.0,
     ):
-        if isinstance(scalar, int) or isinstance(scalar, float):
+        if isinstance(scalar, (int, float)):
             # 実数の場合
             self.vector = quaternion(scalar, x, y, z)
         elif isinstance(scalar, quaternion):
@@ -1003,7 +1003,7 @@ class MMatrix4x4(MVector):
         m43: float = 0.0,
         m44: float = 1.0,
     ):
-        if isinstance(m11, int) or isinstance(m11, float):
+        if isinstance(m11, (int, float)):
             # 実数の場合
             self.vector = np.array(
                 [
