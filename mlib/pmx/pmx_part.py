@@ -117,6 +117,9 @@ class Deform(BaseModel, ABC):
 
 
 class Bdef1(Deform):
+
+    __slots__ = ["indices", "weights", "count", "index0"]
+
     def __init__(self, index0: int):
         super().__init__([index0], [1.0], 1)
 
@@ -125,6 +128,9 @@ class Bdef1(Deform):
 
 
 class Bdef2(Deform):
+
+    __slots__ = ["indices", "weights", "count", "index0", "index1", "weight0"]
+
     def __init__(self, index0: int, index1: int, weight0: float):
         super().__init__([index0, index1], [weight0, 1 - weight0], 2)
 
@@ -133,6 +139,21 @@ class Bdef2(Deform):
 
 
 class Bdef4(Deform):
+
+    __slots__ = [
+        "indices",
+        "weights",
+        "count",
+        "index0",
+        "index1",
+        "index2",
+        "index3",
+        "weight0",
+        "weight1",
+        "weight2",
+        "weight3",
+    ]
+
     def __init__(
         self,
         index0: int,
@@ -153,6 +174,25 @@ class Bdef4(Deform):
 
 
 class Sdef(Deform):
+
+    __slots__ = [
+        "indices",
+        "weights",
+        "count",
+        "index0",
+        "index1",
+        "weight0",
+        "sdef_c_x",
+        "sdef_c_y",
+        "sdef_c_z",
+        "sdef_r0_x",
+        "sdef_r0_y",
+        "sdef_r0_z",
+        "sdef_r1_x",
+        "sdef_r1_y",
+        "sdef_r1_z",
+    ]
+
     def __init__(
         self,
         index0: int,
@@ -199,8 +239,20 @@ class Vertex(BaseIndexModel):
         エッジ倍率, by default 0
     """
 
+    __slots__ = [
+        "index",
+        "position",
+        "normal",
+        "uv",
+        "extended_uvs",
+        "deform_type",
+        "deform",
+        "edge_factor",
+    ]
+
     def __init__(
         self,
+        index: int = -1,
         position: MVector3D = None,
         normal: MVector3D = None,
         uv: MVector2D = None,
@@ -209,7 +261,7 @@ class Vertex(BaseIndexModel):
         deform: Deform = None,
         edge_factor: float = 0,
     ):
-        super().__init__()
+        super().__init__(index=index)
         self.position = position or MVector3D()
         self.normal = normal or MVector3D()
         self.uv = uv or MVector2D()
@@ -233,8 +285,21 @@ class Face(BaseIndexModel):
         頂点2
     """
 
-    def __init__(self, vertex_index0: int, vertex_index1: int, vertex_index2: int):
-        super().__init__()
+    __slots__ = [
+        "index",
+        "vertex_index0",
+        "vertex_index1",
+        "vertex_index2",
+    ]
+
+    def __init__(
+        self,
+        index: int = -1,
+        vertex_index0: int = -1,
+        vertex_index1: int = -1,
+        vertex_index2: int = -1,
+    ):
+        super().__init__(index=index)
         self.vertices = [vertex_index0, vertex_index1, vertex_index2]
 
 
@@ -255,7 +320,17 @@ class Texture(BaseIndexModel):
         テクスチャパス
     """
 
-    def __init__(self, texture_path: str):
+    __slots__ = [
+        "index",
+        "texture_path",
+        "for_draw",
+        "image",
+        "texture_type",
+        "texture",
+        "texture_id",
+    ]
+
+    def __init__(self, index: int = -1, texture_path: str = ""):
         super().__init__()
         self.texture_path = texture_path
         self.for_draw = False
@@ -411,8 +486,29 @@ class Material(BaseIndexNameModel):
         材質に対応する面(頂点)数 (必ず3の倍数になる), by default 0
     """
 
+    __slots__ = [
+        "index",
+        "name",
+        "english_name",
+        "diffuse_color",
+        "specular_color",
+        "specular_factor",
+        "ambient_color",
+        "draw_flg",
+        "edge_color",
+        "edge_size",
+        "texture_index",
+        "sphere_texture_index",
+        "sphere_mode",
+        "toon_sharing_flg",
+        "toon_texture_index",
+        "comment",
+        "vertices_count",
+    ]
+
     def __init__(
         self,
+        index: int = -1,
         name: str = "",
         english_name: str = "",
         diffuse_color: MVector4D = None,
@@ -430,7 +526,7 @@ class Material(BaseIndexNameModel):
         comment: str = "",
         vertices_count: int = 0,
     ):
-        super().__init__(name=name, english_name=english_name)
+        super().__init__(index=index, name=name, english_name=english_name)
         self.diffuse_color = diffuse_color or MVector4D()
         self.specular_color = specular_color or MVector3D()
         self.specular_factor = specular_factor
@@ -463,6 +559,13 @@ class IkLink(BaseModel):
         上限 (x,y,z) -> ラジアン角, by default MVector3D()
     """
 
+    __slots__ = [
+        "bone_index",
+        "angle_limit",
+        "min_angle_limit_radians",
+        "max_angle_limit_radians",
+    ]
+
     def __init__(
         self,
         bone_index: int = -1,
@@ -493,6 +596,13 @@ class Ik(BaseModel):
     links : List[IkLink], optional
         IKリンクリスト, by default []
     """
+
+    __slots__ = [
+        "bone_index",
+        "loop_count",
+        "unit_radians",
+        "links",
+    ]
 
     def __init__(
         self,
@@ -582,8 +692,33 @@ class Bone(BaseIndexNameModel):
         システム計算用追加ボーン, by default False
     """
 
+    __slots__ = [
+        "index",
+        "name",
+        "english_name",
+        "position",
+        "parent_index",
+        "layer",
+        "bone_flg",
+        "tail_position",
+        "tail_index",
+        "effect_index",
+        "effect_factor",
+        "fixed_axis",
+        "local_x_vector",
+        "local_z_vector",
+        "external_key",
+        "ik",
+        "display",
+        "is_system",
+        "local_y_vector",
+        "correct_local_z_vector",
+        "local_axis",
+    ]
+
     def __init__(
         self,
+        index: int = -1,
         name: str = "",
         english_name: str = "",
         position: MVector3D = None,
@@ -602,7 +737,7 @@ class Bone(BaseIndexNameModel):
         display: bool = False,
         is_system: bool = False,
     ):
-        super().__init__(name=name or "", english_name=english_name or "")
+        super().__init__(index=index, name=name, english_name=english_name)
         self.position = position or MVector3D()
         self.parent_index = parent_index
         self.layer = layer
@@ -697,6 +832,8 @@ class VertexMorphOffset(MorphOffset):
         座標オフセット量(x,y,z)
     """
 
+    __slots__ = ["vertex_index", "position_offset"]
+
     def __init__(self, vertex_index: int, position_offset: MVector3D):
         super().__init__()
         self.vertex_index = vertex_index
@@ -714,6 +851,8 @@ class UvMorphOffset(MorphOffset):
     uv : MVector4D
         UVオフセット量(x,y,z,w) ※通常UVはz,wが不要項目になるがモーフとしてのデータ値は記録しておく
     """
+
+    __slots__ = ["vertex_index", "uv"]
 
     def __init__(self, vertex_index: int, uv: MVector4D):
         super().__init__()
@@ -735,6 +874,8 @@ class BoneMorphOffset(MorphOffset):
         回転量-クォータニオン(x,y,z,w)
     """
 
+    __slots__ = ["bone_index", "position", "rotation"]
+
     def __init__(self, bone_index: int, position: MVector3D, rotation: MQuaternion):
         super().__init__()
         self.bone_index = bone_index
@@ -753,6 +894,8 @@ class GroupMorphOffset(MorphOffset):
     morph_factor : float
         モーフ変動量
     """
+
+    __slots__ = ["morph_index", "morph_factor"]
 
     def __init__(self, morph_index: int, morph_factor: float):
         super().__init__()
@@ -799,6 +942,20 @@ class MaterialMorphOffset(MorphOffset):
     toon_texture_factor : MVector4D
         Toonテクスチャ係数 (R,G,B,A)
     """
+
+    __slots__ = [
+        "material_index",
+        "calc_mode",
+        "diffuse",
+        "specular",
+        "specular_factor",
+        "ambient",
+        "edge_color",
+        "edge_size",
+        "texture_factor",
+        "sphere_texture_factor",
+        "toon_texture_factor",
+    ]
 
     def __init__(
         self,
@@ -899,15 +1056,25 @@ class Morph(BaseIndexNameModel):
         モーフオフセット
     """
 
+    __slots__ = [
+        "index",
+        "name",
+        "english_name",
+        "panel",
+        "morph_type",
+        "offsets",
+    ]
+
     def __init__(
         self,
+        index: int = -1,
         name: str = "",
         english_name: str = "",
         panel: MorphPanel = MorphPanel.EYE_UPPER_LEFT,
         morph_type: MorphType = MorphType.GROUP,
         offsets: List[MorphOffset] = None,
     ):
-        super().__init__(name=name, english_name=english_name)
+        super().__init__(index=index, name=name, english_name=english_name)
         self.panel = panel
         self.morph_type = morph_type
         self.offsets = offsets or []
@@ -935,6 +1102,8 @@ class DisplaySlotReference(BaseModel):
         ボーンIndex or モーフIndex, by default -1
     """
 
+    __slots__ = ["display_type", "display_index"]
+
     def __init__(self, display_type: DisplayType = None, display_index: int = None):
         super().__init__()
         self.display_type = display_type or DisplayType.BONE
@@ -957,10 +1126,16 @@ class DisplaySlot(BaseIndexNameModel):
         表示枠要素, by default []
     """
 
+    __slots__ = ["index", "name", "english_name", "special_flg", "references"]
+
     def __init__(
-        self, name: str = "", english_name: str = "", special_flg: Switch = Switch.OFF
+        self,
+        index: int = -1,
+        name: str = "",
+        english_name: str = "",
+        special_flg: Switch = Switch.OFF,
     ):
-        super().__init__(name=name, english_name=english_name)
+        super().__init__(index=index, name=name, english_name=english_name)
         self.special_flg = special_flg
         self.references: List[DisplaySlotReference] = []
 
@@ -982,6 +1157,14 @@ class RigidBodyParam(BaseModel):
     friction : float, optional
         摩擦力, by default 0
     """
+
+    __slots__ = [
+        "mass",
+        "linear_damping",
+        "angular_damping",
+        "restitution",
+        "friction",
+    ]
 
     def __init__(
         self,
@@ -1085,8 +1268,27 @@ class RigidBody(BaseIndexNameModel):
         剛体の物理演算, by default RigidBodyMode.STATIC
     """
 
+    __slots__ = [
+        "index",
+        "name",
+        "english_name",
+        "bone_index",
+        "collision_group",
+        "no_collision_group",
+        "shape_type",
+        "shape_size",
+        "shape_position",
+        "shape_rotation",
+        "param",
+        "mode",
+        "x_direction",
+        "y_direction",
+        "z_direction",
+    ]
+
     def __init__(
         self,
+        index: int = -1,
         name: str = "",
         english_name: str = "",
         bone_index: int = -1,
@@ -1099,7 +1301,7 @@ class RigidBody(BaseIndexNameModel):
         param: RigidBodyParam = None,
         mode: RigidBodyMode = RigidBodyMode.STATIC,
     ) -> None:
-        super().__init__(name=name, english_name=english_name)
+        super().__init__(index=index, name=name, english_name=english_name)
         self.bone_index = bone_index
         self.collision_group = collision_group
         self.no_collision_group = no_collision_group
@@ -1126,6 +1328,8 @@ class JointLimitParam(BaseModel):
     limit_max : MVector3D, optional
         制限最大角度, by default MVector3D()
     """
+
+    __slots__ = ["limit_min", "limit_max"]
 
     def __init__(
         self,
@@ -1156,6 +1360,15 @@ class JointParam(BaseModel):
     spring_constant_rotation : MVector3D, optional
         バネ定数-回転(x,y,z), by default MVector3D()
     """
+
+    __slots__ = [
+        "translation_limit_min",
+        "translation_limit_max",
+        "rotation_limit_min_radians",
+        "rotation_limit_max_radians",
+        "spring_constant_translation",
+        "spring_constant_rotation",
+    ]
 
     def __init__(
         self,
@@ -1213,8 +1426,21 @@ class Joint(BaseIndexNameModel):
         バネ定数-回転(x,y,z), by default MVector3D()
     """
 
+    __slots__ = [
+        "index",
+        "name",
+        "english_name",
+        "joint_type",
+        "rigidbody_index_a",
+        "rigidbody_index_b",
+        "position",
+        "rotation",
+        "param",
+    ]
+
     def __init__(
         self,
+        index: int = -1,
         name: str = "",
         english_name: str = "",
         joint_type: int = 0,
@@ -1224,7 +1450,7 @@ class Joint(BaseIndexNameModel):
         rotation: BaseRotationModel = None,
         param: JointParam = None,
     ) -> None:
-        super().__init__(name=name, english_name=english_name)
+        super().__init__(index=index, name=name, english_name=english_name)
         self.joint_type = joint_type
         self.rigidbody_index_a = rigidbody_index_a
         self.rigidbody_index_b = rigidbody_index_b

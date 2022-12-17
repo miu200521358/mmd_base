@@ -4,12 +4,18 @@ from typing import Any, Union
 
 import numpy as np
 from numpy.linalg import inv, norm
-from quaternion import as_rotation_matrix, from_rotation_matrix, quaternion
+from quaternion import (
+    as_rotation_matrix,
+    from_rotation_matrix,
+    quaternion,
+    slerp_evaluate,
+)
 
 from .base import BaseModel
 
 
 class MRect(BaseModel):
+
     """
     矩形クラス
 
@@ -780,6 +786,8 @@ class MQuaternion(MVector):
         return MQuaternion(self.vector * other)
 
     def multiply_factor(self, factor: float):
+        if factor == 0:
+            return MQuaternion()
         return MQuaternion(self.scalar / factor, self.x, self.y, self.z)
 
     @classmethod
@@ -899,34 +907,7 @@ class MQuaternion(MVector):
         """
         球形補間
         """
-        # Handle the easy cases first.
-        if t <= 0.0:
-            return q1
-        elif t >= 1.0:
-            return q2
-
-        # Determine the angle between the two quaternions.
-        q2b = q2.copy()
-        d = q1.dot(q2)
-
-        if d < 0.0:
-            q2b = -q2b
-            d = -d
-
-        # Get the scale factors.  If they are too small,
-        # then revert to simple linear interpolation.
-        factor1 = 1.0 - t
-        factor2 = t
-
-        if not np.isclose(1.0 - d, 0):
-            angle = acos(max(0, min(1, d)))
-            sinOfAngle = sin(angle)
-            if not np.isclose(sinOfAngle, 0):
-                factor1 = sin((1.0 - t) * angle) / sinOfAngle
-                factor2 = sin(t * angle) / sinOfAngle
-
-        # Construct the result quaternion.
-        return q1 * factor1 + q2b * factor2
+        return MQuaternion(slerp_evaluate(q1.vector, q2.vector, t))
 
     def separate_by_axis(self, global_axis: MVector3D):
         # ローカルZ軸ベースで求める場合
@@ -1327,6 +1308,8 @@ class MMatrix4x4List:
     """
     4x4行列クラスリスト
     """
+
+    __slots__ = ["vector", "row", "col"]
 
     def __init__(self, row: int, col: int):
         """

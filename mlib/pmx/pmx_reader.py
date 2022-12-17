@@ -194,7 +194,7 @@ class PmxReader(BaseReader[PmxModel]):
     def read_vertices(self, model: PmxModel):
         """頂点データ読み込み"""
         for i in range(self.read_int()):
-            vertex = Vertex()
+            vertex = Vertex(index=i)
             (
                 vertex.position.x,
                 vertex.position.y,
@@ -235,7 +235,6 @@ class PmxReader(BaseReader[PmxModel]):
                     )
                 )
             vertex.edge_factor = self.read_float()
-            vertex.index = i
             model.vertices.append(vertex)
 
     def read_faces(self, model: PmxModel):
@@ -249,22 +248,19 @@ class PmxReader(BaseReader[PmxModel]):
         for i, (v0, v1, v2) in enumerate(
             zip(faces_vertices[:-2:3], faces_vertices[1:-1:3], faces_vertices[2::3])
         ):
-            face = Face(v0, v1, v2)
-            face.index = i
+            face = Face(i, v0, v1, v2)
             model.faces.append(face)
 
     def read_textures(self, model: PmxModel):
         """テクスチャデータ読み込み"""
         for i in range(self.read_int()):
-            texture = Texture(self.read_text())
-            texture.index = i
+            texture = Texture(i, self.read_text())
             model.textures.append(texture)
 
     def read_materials(self, model: PmxModel):
         """材質データ読み込み"""
         for i in range(self.read_int()):
-            material = Material()
-            material.index = i
+            material = Material(index=i)
             material.name = self.read_text()
             material.english_name = self.read_text()
 
@@ -309,8 +305,7 @@ class PmxReader(BaseReader[PmxModel]):
     def read_bones(self, model: PmxModel):
         """ボーンデータ読み込み"""
         for i in range(self.read_int()):
-            bone = Bone()
-            bone.index = i
+            bone = Bone(index=i)
             bone.name = self.read_text()
             bone.english_name = self.read_text()
             bone.position = self.read_MVector3D()
@@ -357,8 +352,7 @@ class PmxReader(BaseReader[PmxModel]):
     def read_morphs(self, model: PmxModel):
         """モーフデータ読み込み"""
         for i in range(self.read_int()):
-            morph = Morph()
-            morph.index = i
+            morph = Morph(index=i)
             morph.name = self.read_text()
             morph.english_name = self.read_text()
             morph.panel = MorphPanel(self.read_byte())
@@ -415,8 +409,7 @@ class PmxReader(BaseReader[PmxModel]):
     def read_display_slots(self, model: PmxModel):
         """表示枠データ読み込み"""
         for i in range(self.read_int()):
-            display_slot = DisplaySlot()
-            display_slot.index = i
+            display_slot = DisplaySlot(index=i)
             display_slot.name = self.read_text()
             display_slot.english_name = self.read_text()
             display_slot.special_flg = Switch(self.read_byte())
@@ -434,8 +427,7 @@ class PmxReader(BaseReader[PmxModel]):
     def read_rigidbodies(self, model: PmxModel):
         """剛体データ読み込み"""
         for i in range(self.read_int()):
-            rigidbody = RigidBody()
-            rigidbody.index = i
+            rigidbody = RigidBody(index=i)
             rigidbody.name = self.read_text()
             rigidbody.english_name = self.read_text()
 
@@ -474,8 +466,7 @@ class PmxReader(BaseReader[PmxModel]):
     def read_joints(self, model: PmxModel):
         """モデルデータ読み込み"""
         for i in range(self.read_int()):
-            joint = Joint()
-            joint.index = i
+            joint = Joint(index=i)
 
             rotation_radians = MVector3D()
             rotation_limit_min_radians = MVector3D()

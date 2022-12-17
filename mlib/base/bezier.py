@@ -11,6 +11,9 @@ IP_MAX = 127
 
 
 class Interpolation(BaseModel):
+
+    __slots__ = ["begin", "start", "end", "finish"]
+
     def __init__(
         self,
         begin: MVector2D = None,
@@ -176,73 +179,10 @@ def evaluate(
     if x >= 1:
         return 1.0, 1.0, 1.0
 
-    # # ベジェ曲線
-    # nodes = np.asfortranarray(
-    #     [
-    #         [0, x1, x2, 1],
-    #         [0, y1, y2, 1],
-    #     ]
-    # )
-    # curve = bezier.Curve(nodes, degree=3)
-
-    # # 交点を求める為のX線上の直線
-    # line1 = bezier.Curve(np.asfortranarray([[x, x], [0, 1]]), degree=1)
-
-    # # 交点を求める（高精度は求めない）
-    # intersections = curve.intersect(line1, _verify=False)
-
-    # if intersections.any():
-    #     # 解がある場合
-
-    #     # tからyを求め直す
-    #     t = intersections[0, 0]
-
-    #     # 評価する
-    #     y = curve.evaluate(t)[-1, -1]
-    # else:
-    #     # 解がない場合（キーフレが最後よりオーバーしている場合）
-    #     y = 1
-    #     t = 1
-
-    # P = [
-    #     np.fromiter([0.0, 0.0], dtype=np.float64, count=2),
-    #     np.fromiter([x1, y1], dtype=np.float64, count=2),
-    #     np.fromiter([x2, y2], dtype=np.float64, count=2),
-    #     np.fromiter([1.0, 1.0], dtype=np.float64, count=2),
-    # ]
-
     t = newton(x1, x2, x)
     s = 1 - t
 
     y = (3 * (s**2) * t * y1) + (3 * s * (t**2) * y2) + (t**3)
-
-    # Q = BezierCurve(
-    #     P,
-    #     t,
-    # )
-
-    # # P = (
-    # #     np.dot((1 - t) ** 3, np.fromiter([0.0, 0.0], dtype=np.float64, count=2))
-    # #     + np.dot(3 * (1 - t) ** 2 * t, np.fromiter([x1, y1], dtype=np.float64, count=2))
-    # #     + np.dot(3 * (1 - t) * t**2, np.fromiter([x2, y2], dtype=np.float64, count=2))
-    # #     + np.dot(t**3, np.fromiter([0.0, 0.0], dtype=np.float64, count=2))
-    # # )
-
-    # tt = 0.5
-    # ss = 0.5
-
-    # # 二分法
-    # for i in range(15):
-    #     ft = (3 * (ss * ss) * tt * x1) + (3 * ss * (tt * tt) * x2) + (tt * tt * tt) - x
-
-    #     if ft > 0:
-    #         tt -= 1 / (4 << i)
-    #     else:
-    #         tt += 1 / (4 << i)
-
-    #     ss = 1 - tt
-
-    # yy = (3 * (ss**2) * tt * y1) + (3 * ss * (tt**2) * y2) + (tt**3)
 
     return x, y, t
 
@@ -261,13 +201,14 @@ def newton(
     eps: float = 1e-10,
     error: float = 1e-10,
 ):
+    derivative = 2 * eps
     for _ in range(30):
         # 中心差分による微分値
-        func_df = (func_f(x1, x2, x, t0 + eps) - func_f(x1, x2, x, t0 - eps)) / (
-            2 * eps
-        )
+        func_df = (
+            func_f(x1, x2, x, t0 + eps) - func_f(x1, x2, x, t0 - eps)
+        ) / derivative
         if abs(func_df) <= eps:  # 傾きが0に近ければ止める
-            quit()
+            break
 
         # 次の解を計算
         t1 = t0 - func_f(x1, x2, x, t0) / func_df
@@ -280,47 +221,3 @@ def newton(
         t0 = t1
 
     return t0
-
-
-# # 導関数
-# def derivative(x: float, t: float):
-#     return 2 * t
-
-
-# # https://www.yuulinux.tokyo/9012/
-# # ニュートン法
-# def calc_newton_method(x1: float, x2: float, x: float, t: float = 0.5):
-#     for _ in range(30):
-#         # 漸化式
-#         th = t - targetFunc(x1, x2, x, t) / derivative(t, x)
-
-#         # 収束条件
-#         if abs(t - th) < 1e-15:
-#             break
-
-#         # 近似解の更新
-#         t = th
-#     return t
-
-
-# # 2項係数計算
-# # https://qiita.com/Rahariku/items/295b1062b77ed9c96d9c
-# def BiCoe(n, k):
-#     if n < k:
-#         return -1
-#     return factorial(n) / (factorial(k) * factorial((n - k)))
-
-
-# # Bernstein多項式
-# def Bernstein(n, i, t):
-#     return BiCoe(n, i) * np.power((1 - t), (n - i)) * np.power(t, i)
-
-
-# # ベジェ曲線
-# def BezierCurve(points, t):
-#     Gt = 0
-#     n = len(points) - 1
-#     for k, point in enumerate(points):
-#         Gt += point * Bernstein(n, k, t)
-
-#     return Gt

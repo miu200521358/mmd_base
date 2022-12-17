@@ -299,13 +299,13 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
         sorted_indices = np.fromiter(indices, dtype=np.int32, count=len(indices))
         next_indices = np.where(sorted_indices > index)[0].tolist()
         if next_indices:
-            middle_idx = int(min(next_indices))
-            next_idx = int(min([len(sorted_indices) - 1, middle_idx]))
+            middle_idx = min(next_indices)
+            next_idx = min([len(sorted_indices) - 1, middle_idx])
         else:
             middle_idx = len(sorted_indices) - 1
             next_idx = len(sorted_indices) - 1
         # next のひとつ前がprevとなる
-        prev_idx = np.max([0, middle_idx - 1])
+        prev_idx = max(0, middle_idx - 1)
 
         return (
             int(sorted_indices[prev_idx]),
