@@ -493,7 +493,7 @@ class PmxModel(BaseHashModel):
                 )
             )
         ):
-            self.toon_textures[tidx] = Texture(os.path.abspath(tpath))
+            self.toon_textures[tidx] = Texture(tidx, os.path.abspath(tpath))
 
         self.meshes = Meshes(shader, self)
 

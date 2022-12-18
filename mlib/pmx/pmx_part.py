@@ -331,7 +331,7 @@ class Texture(BaseIndexModel):
     ]
 
     def __init__(self, index: int = -1, texture_path: str = ""):
-        super().__init__()
+        super().__init__(index=index)
         self.texture_path = texture_path
         self.for_draw = False
 
