@@ -262,19 +262,19 @@ class MLogger:
         msg_block.append("■■■■■■■■■■■■■■■■■")
 
         if level == logging.CRITICAL:
-            msg_block.append("■　**CRITICAL**　")
+            msg_block.append("■　**CRITICAL**  ")
 
         if level == logging.ERROR:
-            msg_block.append("■　**ERROR**　")
+            msg_block.append("■　**ERROR**  ")
 
         if level == logging.WARNING:
-            msg_block.append("■　**WARNING**　")
+            msg_block.append("■　**WARNING**  ")
 
         if level <= logging.INFO and title:
-            msg_block.append("■　**{0}**　".format(title))
+            msg_block.append(f"■　**{title}**  ")
 
         for msg_line in msg.split("\n"):
-            msg_block.append("■　{0}".format(msg_line))
+            msg_block.append(f"■　{msg_line}")
 
         msg_block.append("■■■■■■■■■■■■■■■■■")
 
@@ -284,7 +284,7 @@ class MLogger:
         msg_block = []
 
         for msg_line in msg.split("\n"):
-            msg_block.append("-- {0} --------------------".format(msg_line))
+            msg_block.append(f"-- {msg_line} --------------------")
 
         return "\n".join(msg_block)
 
@@ -292,7 +292,7 @@ class MLogger:
         msg_block = []
 
         for msg_line in msg.split("\n"):
-            msg_block.append("■　{0}".format(msg_line))
+            msg_block.append(f"■　{msg_line}")
 
         return "\n".join(msg_block)
 
@@ -334,7 +334,7 @@ class MLogger:
         # ファイル出力ありの場合、ログファイル名生成
         if not out_path:
             os.makedirs(log_dir, exist_ok=True)
-            cls.default_out_path = f"{log_dir}/mutool_{0}.log".format(output_datetime)
+            cls.default_out_path = f"{log_dir}/mutool_{output_datetime}.log"
         else:
             cls.default_out_path = out_path
 

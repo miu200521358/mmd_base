@@ -659,15 +659,81 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         return qq
 
 
-class VmdMorphFrames(
-    BaseIndexNameDictModel[VmdMorphFrame, BaseIndexNameDictInnerModel[VmdMorphFrame]]
-):
+class VmdMorphNameFrames(BaseIndexNameDictInnerModel[VmdMorphFrame]):
     """
-    モーフキーフレリスト
+    モーフ名別キーフレ辞書
+    """
+
+    def __init__(self, name: str):
+        super().__init__(name=name)
+        self.__ik_indices: list[int] = []
+
+    def __getitem__(self, index: int) -> VmdMorphFrame:
+        if not self.data:
+            # まったくデータがない場合、生成
+            return VmdMorphFrame(name=self.name, index=index)
+
+        if index in self.data.keys():
+            return self.data[index]
+
+        # キーフレがない場合、生成したのを返す（保持はしない）
+        prev_index, middle_index, next_index = self.range_indexes(index)
+
+        # prevとnextの範囲内である場合、補間曲線ベースで求め直す
+        return self.calc(
+            prev_index,
+            middle_index,
+            next_index,
+            index,
+        )
+
+    def append(self, value: VmdMorphFrame):
+        return super().append(value)
+
+    def calc(
+        self,
+        prev_index: int,
+        middle_index: int,
+        next_index: int,
+        index: int,
+    ) -> VmdMorphFrame:
+        if index in self.data:
+            return self.data[index]
+
+        mf = VmdMorphFrame(name=self.name, index=index)
+
+        if prev_index == middle_index == next_index:
+            # 全くキーフレがない場合、そのまま返す
+            return mf
+        if prev_index == middle_index and middle_index != next_index:
+            # FKのprevと等しい場合、指定INDEX以前がないので、その次のをコピーして返す
+            mf.ratio = float(self[next_index].ratio)
+            return mf
+        elif prev_index != middle_index and next_index == middle_index:
+            # FKのnextと等しい場合は、その前のをコピーして返す
+            mf.ratio = float(self[prev_index].ratio)
+            return mf
+
+        prev_mf = self[prev_index]
+        next_mf = self[next_index]
+
+        # モーフは補間なし
+        ry = (next_index - index) / (next_index - prev_index)
+        mf.ratio = prev_mf.ratio + (next_mf.ratio - prev_mf.ratio) * ry
+
+        return mf
+
+
+class VmdMorphFrames(BaseIndexNameDictModel[VmdMorphFrame, VmdMorphNameFrames]):
+    """
+    モーフキーフレ辞書
     """
 
     def __init__(self):
         super().__init__()
+
+    def create_inner(self, name: str):
+        return VmdMorphNameFrames(name=name)
 
 
 class VmdCameraFrames(BaseIndexDictModel[VmdCameraFrame]):

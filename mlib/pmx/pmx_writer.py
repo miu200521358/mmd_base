@@ -45,32 +45,40 @@ class PmxWriter(BaseModel):
             # 追加UV数
             fout.write(struct.pack(TYPE_BYTE, model.extended_uv_count))
             # 頂点Indexサイズ | 1,2,4 のいずれか
-            vertex_idx_size, vertex_idx_type = define_write_index(len(model.vertices))
+            vertex_idx_size, vertex_idx_type = define_write_index(
+                len(model.vertices), is_vertex=True
+            )
             fout.write(struct.pack(TYPE_BYTE, vertex_idx_size))
             # テクスチャIndexサイズ | 1,2,4 のいずれか
-            texture_idx_size, texture_idx_type = define_write_index(len(model.textures))
+            texture_idx_size, texture_idx_type = define_write_index(
+                len(model.textures), is_vertex=False
+            )
             fout.write(struct.pack(TYPE_BYTE, texture_idx_size))
             # 材質Indexサイズ | 1,2,4 のいずれか
             material_idx_size, material_idx_type = define_write_index(
-                len(model.materials)
+                len(model.materials), is_vertex=False
             )
             fout.write(struct.pack(TYPE_BYTE, material_idx_size))
             # ボーンIndexサイズ | 1,2,4 のいずれか
-            bone_idx_size, bone_idx_type = define_write_index(len(model.bones))
+            bone_idx_size, bone_idx_type = define_write_index(
+                len(model.bones), is_vertex=False
+            )
             fout.write(struct.pack(TYPE_BYTE, bone_idx_size))
             # モーフIndexサイズ | 1,2,4 のいずれか
-            morph_idx_size, morph_idx_type = define_write_index(len(model.morphs))
+            morph_idx_size, morph_idx_type = define_write_index(
+                len(model.morphs), is_vertex=False
+            )
             fout.write(struct.pack(TYPE_BYTE, morph_idx_size))
             # 剛体Indexサイズ | 1,2,4 のいずれか
             rigidbody_idx_size, rigidbody_idx_type = define_write_index(
-                len(model.rigidbodies)
+                len(model.rigidbodies), is_vertex=False
             )
             fout.write(struct.pack(TYPE_BYTE, rigidbody_idx_size))
 
             # モデル名(日本語)
-            write_text(fout, model.name, "Vrm Model")
+            write_text(fout, model.name, "Pmx Model")
             # モデル名(英語)
-            write_text(fout, model.english_name, "Vrm Model")
+            write_text(fout, model.english_name, "Pmx Model")
             # コメント(日本語)
             write_text(fout, model.comment, "")
             # コメント(英語)
@@ -154,8 +162,8 @@ class PmxWriter(BaseModel):
             fout.write(struct.pack(TYPE_INT, len(model.textures)))
 
             # テクスチャデータ
-            for tex_path in model.textures:
-                write_text(fout, tex_path, "")
+            for texture in model.textures:
+                write_text(fout, texture.texture_path, "")
 
             logger.debug("-- テクスチャデータ出力終了({count})", count=len(model.textures))
 
@@ -199,7 +207,7 @@ class PmxWriter(BaseModel):
                 fout.write(struct.pack(TYPE_BYTE, material.sphere_mode))
                 # 共有Toonフラグ
                 fout.write(struct.pack(TYPE_BYTE, material.toon_sharing_flg))
-                if material.toon_sharing_flg == ToonSharing.INDIVIDUAL:
+                if material.toon_sharing_flg == ToonSharing.INDIVIDUAL.value:
                     # 個別Toonテクスチャ
                     fout.write(
                         struct.pack(texture_idx_type, material.toon_texture_index)
@@ -437,7 +445,7 @@ class PmxWriter(BaseModel):
                 fout.write(struct.pack(TYPE_BYTE, rigidbody.collision_group))
                 # 2  : ushort	| 非衝突グループフラグ
                 fout.write(
-                    struct.pack(TYPE_UNSIGNED_SHORT, rigidbody.no_collision_group)
+                    struct.pack(TYPE_UNSIGNED_SHORT, rigidbody.no_collision_group.value)
                 )
                 # 1  : byte	| 形状 - 0:球 1:箱 2:カプセル
                 fout.write(struct.pack(TYPE_BYTE, rigidbody.shape_type))
@@ -496,9 +504,9 @@ class PmxWriter(BaseModel):
                 write_number(fout, TYPE_FLOAT, float(joint.position.y))
                 write_number(fout, TYPE_FLOAT, float(joint.position.z))
                 # 12 : float3	| 回転(x,y,z) -> ラジアン角
-                write_number(fout, TYPE_FLOAT, float(joint.rotation.x))
-                write_number(fout, TYPE_FLOAT, float(joint.rotation.y))
-                write_number(fout, TYPE_FLOAT, float(joint.rotation.z))
+                write_number(fout, TYPE_FLOAT, float(joint.rotation.radians.x))
+                write_number(fout, TYPE_FLOAT, float(joint.rotation.radians.y))
+                write_number(fout, TYPE_FLOAT, float(joint.rotation.radians.z))
                 # 12 : float3	| 移動制限-下限(x,y,z)
                 write_number(
                     fout, TYPE_FLOAT, float(joint.param.translation_limit_min.x)
@@ -563,17 +571,19 @@ class PmxWriter(BaseModel):
             logger.debug("-- ジョイントデータ出力終了({count})", count=len(model.joints))
 
 
-def define_write_index(size: int, is_vertex=False) -> tuple[int, str]:
-    if 256 > size and is_vertex:
-        return 4, TYPE_UNSIGNED_BYTE
-    elif 256 <= size <= 65535 and is_vertex:
-        return 2, TYPE_UNSIGNED_SHORT
-    elif 128 > size and not is_vertex:
-        return 1, TYPE_BYTE
-    elif 128 <= size <= 32767 and not is_vertex:
-        return 2, TYPE_SHORT
+def define_write_index(size: int, is_vertex: bool) -> tuple[int, str]:
+    if is_vertex:
+        if 256 > size:
+            return 1, TYPE_UNSIGNED_BYTE
+        elif 256 <= size <= 65535:
+            return 2, TYPE_UNSIGNED_SHORT
     else:
-        return 1, TYPE_INT
+        if 128 > size:
+            return 1, TYPE_BYTE
+        elif 128 <= size <= 32767:
+            return 2, TYPE_SHORT
+
+    return 4, TYPE_INT
 
 
 def write_text(fout, text: str, default_text: str, type=TYPE_INT):
