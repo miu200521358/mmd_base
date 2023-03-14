@@ -1,31 +1,16 @@
 import os
 from glob import glob
-from typing import Any, Optional
+from typing import Optional
 
 import numpy as np
 
-from mlib.base.collection import (
-    BaseHashModel,
-    BaseIndexDictModel,
-    BaseIndexListModel,
-    BaseIndexNameListModel,
-)
+from mlib.base.collection import (BaseHashModel, BaseIndexDictModel,
+                                  BaseIndexListModel, BaseIndexNameListModel)
 from mlib.base.math import MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
-from mlib.pmx.pmx_part import (
-    Bone,
-    DisplaySlot,
-    DrawFlg,
-    Face,
-    Joint,
-    Material,
-    Morph,
-    RigidBody,
-    Texture,
-    TextureType,
-    ToonSharing,
-    Vertex,
-)
+from mlib.pmx.pmx_part import (Bone, DisplaySlot, DrawFlg, Face, Joint,
+                               Material, Morph, RigidBody, Texture,
+                               TextureType, ToonSharing, Vertex)
 from mlib.pmx.shader import MShader, VsLayout
 
 
@@ -34,7 +19,7 @@ class Vertices(BaseIndexListModel[Vertex]):
     頂点リスト
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
@@ -43,7 +28,7 @@ class Faces(BaseIndexListModel[Face]):
     面リスト
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
@@ -52,7 +37,7 @@ class Textures(BaseIndexListModel[Texture]):
     テクスチャリスト
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
@@ -61,7 +46,7 @@ class ToonTextures(BaseIndexDictModel[Texture]):
     共有テクスチャ辞書
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
@@ -70,7 +55,7 @@ class Materials(BaseIndexNameListModel[Material]):
     材質リスト
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
@@ -80,7 +65,7 @@ class BoneTree(BaseIndexDictModel[Bone]):
     def __init__(self) -> None:
         super().__init__()
 
-    def __getitem__(self, key: Any) -> Bone:
+    def __getitem__(self, key: int) -> Bone:
         if isinstance(key, int) and key < 0:
             # マイナス指定の場合、後ろからの順番に置き換える
             return super().__getitem__(len(self.data) + key)
@@ -92,13 +77,13 @@ class BoneTree(BaseIndexDictModel[Bone]):
     def last_name(self) -> str:
         return self.data[self.last_index()].name
 
-    def get_relative_position(self, key: Any) -> MVector3D:
+    def get_relative_position(self, key: int) -> MVector3D:
         """
         該当ボーンの相対位置を取得
 
         Parameters
         ----------
-        bone_name : int
+        key : int
             ボーンINDEX
 
         Returns
@@ -122,14 +107,14 @@ class BoneTrees:
 
     __slots__ = ["data", "__names", "__indices", "__iter_index"]
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.data: dict[int, BoneTree] = {}
         self.__names: dict[str, int] = {}
         self.__indices: list[int] = []
         self.__iter_index = 0
 
-    def __getitem__(self, key: Any) -> BoneTree:
+    def __getitem__(self, key: int | str) -> BoneTree:
         if isinstance(key, int):
             return self.get_by_index(key)
         else:
@@ -227,7 +212,7 @@ class Bones(BaseIndexNameListModel[Bone]):
     ボーンリスト
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def append(self, v: Bone) -> None:
@@ -367,7 +352,7 @@ class Morphs(BaseIndexNameListModel[Morph]):
     モーフリスト
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
@@ -387,7 +372,7 @@ class RigidBodies(BaseIndexNameListModel[RigidBody]):
     剛体リスト
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
@@ -396,7 +381,7 @@ class Joints(BaseIndexNameListModel[Joint]):
     ジョイントリスト
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
@@ -440,7 +425,7 @@ class PmxModel(BaseHashModel):
 
     def __init__(
         self,
-        path: str = None,
+        path: str = "",
     ):
         super().__init__(path=path or "")
         self.signature: str = ""

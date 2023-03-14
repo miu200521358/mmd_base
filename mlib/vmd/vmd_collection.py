@@ -3,23 +3,14 @@ from math import acos, degrees, pi
 import numpy as np
 
 from mlib.base.bezier import evaluate
-from mlib.base.collection import (
-    BaseHashModel,
-    BaseIndexDictModel,
-    BaseIndexNameDictInnerModel,
-    BaseIndexNameDictModel,
-)
+from mlib.base.collection import (BaseHashModel, BaseIndexDictModel,
+                                  BaseIndexNameDictInnerModel,
+                                  BaseIndexNameDictModel)
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
 from mlib.pmx.pmx_collection import BoneTree, PmxModel
 from mlib.pmx.pmx_part import Bone
-from mlib.vmd.vmd_part import (
-    VmdBoneFrame,
-    VmdCameraFrame,
-    VmdLightFrame,
-    VmdMorphFrame,
-    VmdShadowFrame,
-    VmdShowIkFrame,
-)
+from mlib.vmd.vmd_part import (VmdBoneFrame, VmdCameraFrame, VmdLightFrame,
+                               VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame)
 
 
 class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
@@ -173,7 +164,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
     ボーンキーフレ辞書
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def create_inner(self, name: str):
@@ -729,7 +720,7 @@ class VmdMorphFrames(BaseIndexNameDictModel[VmdMorphFrame, VmdMorphNameFrames]):
     モーフキーフレ辞書
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def create_inner(self, name: str):
@@ -741,7 +732,7 @@ class VmdCameraFrames(BaseIndexDictModel[VmdCameraFrame]):
     カメラキーフレリスト
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
@@ -750,7 +741,7 @@ class VmdLightFrames(BaseIndexDictModel[VmdLightFrame]):
     照明キーフレリスト
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
@@ -759,7 +750,7 @@ class VmdShadowFrames(BaseIndexDictModel[VmdShadowFrame]):
     照明キーフレリスト
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
@@ -768,7 +759,7 @@ class VmdShowIkFrames(BaseIndexDictModel[VmdShowIkFrame]):
     IKキーフレリスト
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 

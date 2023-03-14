@@ -6,11 +6,9 @@ pytest
 pytest-cov
 line_profiler
 
-pyinstaller
-numpy
-numpy-quaternion
-Cython
-bezier
-wxPython
+numpy==1.24.2
+pyinstaller==5.9.0
+numpy-quaternion==2022.4.3
+Cython==0.29.33
 PyOpenGL==3.1.6
 Pillow==9.3.0

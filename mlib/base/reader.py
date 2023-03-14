@@ -2,9 +2,10 @@ import functools
 import struct
 from abc import ABCMeta, abstractmethod
 from struct import Struct
-from typing import Any, Callable, Generic, TypeVar
+from typing import Callable, Generic, TypeVar
 
 import numpy as np
+
 from mlib.base.base import BaseModel, Encoding
 from mlib.base.collection import BaseHashModel
 from mlib.base.exception import MParseException
@@ -353,7 +354,6 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             解凍済みモデルデータ
             移動済みオフセット
         """
-        v: Any = None
         for attr_name, format_type in formats:
             if isinstance(format_type(), BaseModel):
                 sub_model: TBaseModel = format_type()
@@ -466,8 +466,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
 
         Returns
         -------
-        Any
-            読み取り結果
+        読み取り結果
         """
         # バイナリ読み取り
         b: tuple = struct.unpack_from(f"{format_size}s", self.buffer, self.offset)
@@ -496,8 +495,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
 
         Returns
         -------
-        Any
-            読み取り結果
+        読み取り結果
         """
         # バイナリ読み取り
         b: tuple = unpack(self.buffer, self.offset)

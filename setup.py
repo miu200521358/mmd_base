@@ -5,7 +5,6 @@ from glob import glob
 
 from Cython.Build import cythonize
 from Cython.Distutils import build_ext
-
 # fmt: off
 # cimport numpy を使うため
 from numpy import get_include  # type: ignore
@@ -14,7 +13,7 @@ from setuptools import Extension, setup
 # fmt: on
 
 
-bezier_path = "C:/Development/Anaconda3/envs/mmd_tool/Lib/site-packages/bezier/include"
+# bezier_path = "C:/Development/Anaconda3/envs/mmd_tool/Lib/site-packages/bezier/include"
 
 
 def get_ext():
@@ -29,7 +28,7 @@ def get_ext():
             Extension(
                 path,
                 sources=[source],
-                include_dirs=[".", bezier_path, get_include()],
+                include_dirs=[".", get_include()],
                 # define_macros=[("NPY_NO_DEPRECATED_API")],
             )
         )

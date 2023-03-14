@@ -1,4 +1,4 @@
-from math import acos, cos, factorial, pi, pow, sqrt
+from typing import Optional
 
 import bezier
 import numpy as np
@@ -16,10 +16,10 @@ class Interpolation(BaseModel):
 
     def __init__(
         self,
-        begin: MVector2D = None,
-        start: MVector2D = None,
-        end: MVector2D = None,
-        finish: MVector2D = None,
+        begin: Optional[MVector2D] = None,
+        start: Optional[MVector2D] = None,
+        end: Optional[MVector2D] = None,
+        finish: Optional[MVector2D] = None,
     ):
         """
         補間曲線

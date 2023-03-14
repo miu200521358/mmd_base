@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from enum import Flag, IntEnum, unique
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 import OpenGL.GL as gl
@@ -9,7 +9,8 @@ from PIL import Image, ImageOps
 
 from mlib.base.base import BaseModel
 from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
-from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
+from mlib.base.part import (BaseIndexModel, BaseIndexNameModel,
+                            BaseRotationModel, Switch)
 
 
 @unique
@@ -32,15 +33,15 @@ class Deform(BaseModel, ABC):
 
     Parameters
     ----------
-    indices : List[int]
+    indices : list[int]
         ボーンINDEXリスト
-    weights : List[float]
+    weights : list[float]
         ウェイトリスト
     count : int
         デフォームボーン個数
     """
 
-    def __init__(self, indices: List[int], weights: List[float], count: int):
+    def __init__(self, indices: list[int], weights: list[float], count: int):
         super().__init__()
         self.indices = np.fromiter(indices, dtype=np.int32, count=len(indices))
         self.weights = np.fromiter(weights, dtype=np.float64, count=len(weights))
@@ -229,7 +230,7 @@ class Vertex(BaseIndexModel):
         頂点法線, by default MVector3D()
     uv : MVector2D, optional
         UV, by default MVector2D()
-    extended_uvs : List[MVector4D], optional
+    extended_uvs : list[MVector4D], optional
         追加UV, by default []
     deform_type: DeformType, optional
         ウェイト変形方式 0:BDEF1 1:BDEF2 2:BDEF4 3:SDEF, by default DeformType.BDEF1
@@ -253,12 +254,12 @@ class Vertex(BaseIndexModel):
     def __init__(
         self,
         index: int = -1,
-        position: MVector3D = None,
-        normal: MVector3D = None,
-        uv: MVector2D = None,
-        extended_uvs: List[MVector4D] = None,
+        position: Optional[MVector3D] = None,
+        normal: Optional[MVector3D] = None,
+        uv: Optional[MVector2D] = None,
+        extended_uvs: Optional[list[MVector4D]] = None,
         deform_type: DeformType = DeformType.BDEF1,
-        deform: Deform = None,
+        deform: Optional[Deform] = None,
         edge_factor: float = 0,
     ):
         super().__init__(index=index)
@@ -511,12 +512,12 @@ class Material(BaseIndexNameModel):
         index: int = -1,
         name: str = "",
         english_name: str = "",
-        diffuse_color: MVector4D = None,
-        specular_color: MVector3D = None,
+        diffuse_color: Optional[MVector4D] = None,
+        specular_color: Optional[MVector3D] = None,
         specular_factor: float = 0.0,
-        ambient_color: MVector3D = None,
+        ambient_color: Optional[MVector3D] = None,
         draw_flg: DrawFlg = DrawFlg.NONE,
-        edge_color: MVector4D = None,
+        edge_color: Optional[MVector4D] = None,
         edge_size: float = 0.0,
         texture_index: int = -1,
         sphere_texture_index: int = -1,
@@ -570,8 +571,8 @@ class IkLink(BaseModel):
         self,
         bone_index: int = -1,
         angle_limit: bool = False,
-        min_angle_limit_radians: MVector3D = None,
-        max_angle_limit_radians: MVector3D = None,
+        min_angle_limit_radians: Optional[MVector3D] = None,
+        max_angle_limit_radians: Optional[MVector3D] = None,
     ):
         super().__init__()
         self.bone_index = bone_index
@@ -593,7 +594,7 @@ class Ik(BaseModel):
     unit_radians : float, optional
         IKループ計算時の1回あたりの制限角度 -> ラジアン角, by default 0
         unit_rotation の x に値が入っている
-    links : List[IkLink], optional
+    links : list[IkLink], optional
         IKリンクリスト, by default []
     """
 
@@ -609,7 +610,7 @@ class Ik(BaseModel):
         bone_index: int = -1,
         loop_count: int = 0,
         unit_radians: float = 0.0,
-        links: List[IkLink] = None,
+        links: Optional[list[IkLink]] = None,
     ):
         super().__init__()
         self.bone_index = bone_index
@@ -721,17 +722,17 @@ class Bone(BaseIndexNameModel):
         index: int = -1,
         name: str = "",
         english_name: str = "",
-        position: MVector3D = None,
+        position: Optional[MVector3D] = None,
         parent_index: int = -1,
         layer: int = 0,
         bone_flg: BoneFlg = BoneFlg.NONE,
-        tail_position: MVector3D = None,
+        tail_position: Optional[MVector3D] = None,
         tail_index: int = -1,
         effect_index: int = -1,
         effect_factor: float = 0,
-        fixed_axis: MVector3D = None,
-        local_x_vector: MVector3D = None,
-        local_z_vector: MVector3D = None,
+        fixed_axis: Optional[MVector3D] = None,
+        local_x_vector: Optional[MVector3D] = None,
+        local_z_vector: Optional[MVector3D] = None,
         external_key: int = -1,
         ik: Optional[Ik] = None,
         display: bool = False,
@@ -816,7 +817,7 @@ class Bone(BaseIndexNameModel):
 class MorphOffset(BaseModel):
     """モーフオフセット基底クラス"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
@@ -1052,7 +1053,7 @@ class Morph(BaseIndexNameModel):
         モーフパネル, by default MorphPanel.UPPER_LEFT_EYE
     morph_type : MorphType, optional
         モーフ種類, by default MorphType.GROUP
-    offsets : List[TMorphOffset], optional
+    offsets : list[TMorphOffset], optional
         モーフオフセット
     """
 
@@ -1072,7 +1073,8 @@ class Morph(BaseIndexNameModel):
         english_name: str = "",
         panel: MorphPanel = MorphPanel.EYE_UPPER_LEFT,
         morph_type: MorphType = MorphType.GROUP,
-        offsets: List[MorphOffset] = None,
+        offsets: Optional[
+            list[VertexMorphOffset | UvMorphOffset | BoneMorphOffset | GroupMorphOffset | MaterialMorphOffset]] = None,
     ):
         super().__init__(index=index, name=name, english_name=english_name)
         self.panel = panel
@@ -1104,7 +1106,7 @@ class DisplaySlotReference(BaseModel):
 
     __slots__ = ["display_type", "display_index"]
 
-    def __init__(self, display_type: DisplayType = None, display_index: int = None):
+    def __init__(self, display_type: Optional[DisplayType] = None, display_index: Optional[int] = None):
         super().__init__()
         self.display_type = display_type or DisplayType.BONE
         self.display_index = display_index or -1
@@ -1122,7 +1124,7 @@ class DisplaySlot(BaseIndexNameModel):
         枠名英, by default ""
     special_flg : Switch, optional
         特殊枠フラグ - 0:通常枠 1:特殊枠, by default Switch.OFF
-    references : List[DisplaySlotReference], optional
+    references : list[DisplaySlotReference], optional
         表示枠要素, by default []
     """
 
@@ -1137,7 +1139,7 @@ class DisplaySlot(BaseIndexNameModel):
     ):
         super().__init__(index=index, name=name, english_name=english_name)
         self.special_flg = special_flg
-        self.references: List[DisplaySlotReference] = []
+        self.references: list[DisplaySlotReference] = []
 
 
 class RigidBodyParam(BaseModel):
@@ -1295,10 +1297,10 @@ class RigidBody(BaseIndexNameModel):
         collision_group: int = 0,
         no_collision_group: RigidBodyCollisionGroup = RigidBodyCollisionGroup.NONE,
         shape_type: RigidBodyShape = RigidBodyShape.SPHERE,
-        shape_size: MVector3D = None,
-        shape_position: MVector3D = None,
-        shape_rotation: BaseRotationModel = None,
-        param: RigidBodyParam = None,
+        shape_size: Optional[MVector3D] = None,
+        shape_position: Optional[MVector3D] = None,
+        shape_rotation: Optional[BaseRotationModel] = None,
+        param: Optional[RigidBodyParam] = None,
         mode: RigidBodyMode = RigidBodyMode.STATIC,
     ) -> None:
         super().__init__(index=index, name=name, english_name=english_name)
@@ -1372,12 +1374,12 @@ class JointParam(BaseModel):
 
     def __init__(
         self,
-        translation_limit_min: MVector3D = None,
-        translation_limit_max: MVector3D = None,
-        rotation_limit_min_radians: MVector3D = None,
-        rotation_limit_max_radians: MVector3D = None,
-        spring_constant_translation: MVector3D = None,
-        spring_constant_rotation: MVector3D = None,
+        translation_limit_min: Optional[MVector3D] = None,
+        translation_limit_max: Optional[MVector3D] = None,
+        rotation_limit_min_radians: Optional[MVector3D] = None,
+        rotation_limit_max_radians: Optional[MVector3D] = None,
+        spring_constant_translation: Optional[MVector3D] = None,
+        spring_constant_rotation: Optional[MVector3D] = None,
     ) -> None:
         super().__init__()
         self.translation_limit_min = translation_limit_min or MVector3D()
@@ -1446,9 +1448,9 @@ class Joint(BaseIndexNameModel):
         joint_type: int = 0,
         rigidbody_index_a: int = -1,
         rigidbody_index_b: int = -1,
-        position: MVector3D = None,
-        rotation: BaseRotationModel = None,
-        param: JointParam = None,
+        position: Optional[MVector3D] = None,
+        rotation: Optional[BaseRotationModel] = None,
+        param: Optional[JointParam] = None,
     ) -> None:
         super().__init__(index=index, name=name, english_name=english_name)
         self.joint_type = joint_type

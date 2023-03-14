@@ -1,12 +1,31 @@
 # coding: utf-8
 # 20190825 rewrite
-import sys
-import array
 import ctypes
-import struct
-from typing import Any
-from OpenGL.GL import *
-from OpenGL.GLUT import *
+import sys
+from typing import Optional
+
+from OpenGL.GL import (GL_ARRAY_BUFFER, GL_COLOR_BUFFER_BIT, GL_COMPILE_STATUS,
+                       GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST,
+                       GL_ELEMENT_ARRAY_BUFFER, GL_FALSE, GL_FLOAT,
+                       GL_FRAGMENT_SHADER, GL_LESS, GL_LINK_STATUS,
+                       GL_MAJOR_VERSION, GL_MINOR_VERSION, GL_STATIC_DRAW,
+                       GL_TRIANGLES, GL_TRUE, GL_UNSIGNED_BYTE,
+                       GL_UNSIGNED_INT, GL_UNSIGNED_SHORT, GL_VERSION,
+                       GL_VERTEX_SHADER, any, glAttachShader, glBindBuffer,
+                       glBufferData, glClear, glClearColor, glClearDepth,
+                       glCompileShader, glCreateProgram, glCreateShader,
+                       glDeleteBuffers, glDeleteProgram, glDeleteShader,
+                       glDepthFunc, glDrawArrays, glDrawElements, glEnable,
+                       glEnableVertexAttribArray, glFlush, glGenBuffers,
+                       glGetInteger, glGetProgramiv, glGetShaderInfoLog,
+                       glGetShaderiv, glGetString, glLinkProgram,
+                       glShaderSource, glUseProgram, glVertexAttribPointer,
+                       glViewport)
+from OpenGL.GLUT import (GLUT_CORE_PROFILE, GLUT_DEBUG, GLUT_DEPTH,
+                         GLUT_DOUBLE, GLUT_RGBA, glutCreateWindow,
+                         glutDisplayFunc, glutInit, glutInitContextFlags,
+                         glutInitDisplayMode, glutInitWindowSize, glutMainLoop,
+                         glutReshapeFunc, glutSwapBuffers)
 
 VS = """
 #version 330
@@ -86,14 +105,14 @@ class VBO:
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
     def set_vertex_attribute(
-        self, component_count: int, bytelength: int, data: any
+        self, component_count: int, byte_length: int, data: any
     ) -> None:
         """float2, 3, 4"""
         self.component_count = component_count
         stride = 4 * self.component_count
-        self.vertex_count = bytelength // stride
+        self.vertex_count = byte_length // stride
         self.bind()
-        glBufferData(GL_ARRAY_BUFFER, bytelength, data, GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, byte_length, data, GL_STATIC_DRAW)
 
     def set_slot(self, slot: int) -> None:
         self.bind()
@@ -119,16 +138,16 @@ class IBO:
     def unbind(self) -> None:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
 
-    def set_indices(self, stride: int, bytelength: int, data: Any) -> None:
-        self.index_count = bytelength // stride
+    def set_indices(self, stride: int, byte_length: int, data: any) -> None:
+        self.index_count = byte_length // stride
         self.bind()
         if stride == 1:
-            self.index_type = GL_UNSIGNED_BYT
+            self.index_type = GL_UNSIGNED_BYTE
         elif stride == 2:
             self.index_type = GL_UNSIGNED_SHORT
         elif stride == 4:
             self.index_type = GL_UNSIGNED_INT
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, bytelength, data, GL_STATIC_DRAW)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, byte_length, data, GL_STATIC_DRAW)
 
     def draw(self) -> None:
         glDrawElements(GL_TRIANGLES, self.index_count, self.index_type, None)
@@ -136,9 +155,9 @@ class IBO:
 
 class Triangle:
     def __init__(self) -> None:
-        self.vbo: VBO = None
-        self.ibo: IBO = None
-        self.shader: Shader = None
+        self.vbo: Optional[VBO] = None
+        self.ibo: Optional[IBO] = None
+        self.shader: Optional[Shader] = None
         self.positions = (-1.0, -1.0, 1.0, -1.0, 0.0, 1.0)
         self.indices = (0, 1, 2)
 
@@ -147,43 +166,28 @@ class Triangle:
         self.shader.compile(VS, FS)
         self.vbo = VBO()
         self.ibo = IBO()
-        if False:
-            # Error
-            self.vbo.set_vertex_attribute(
-                2, 4 * 2 * 3, array.array("f", self.positions)
-            )
-            self.ibo.set_indices(4, 12, array.array("I", self.indices))
-        elif True:
-            # OK
-            self.vbo.set_vertex_attribute(
-                2, 4 * 2 * 3, (ctypes.c_float * 6)(*self.positions)
-            )
-            self.ibo.set_indices(4, 12, (ctypes.c_uint * 3)(*self.indices))
-        elif False:
-            # not work
-            self.vbo.set_vertex_attribute(
-                2, 4 * 2 * 3, memoryview(struct.pack("6f", *self.positions))
-            )
-            self.ibo.set_indices(4, 12, memoryview(struct.pack("3I", *self.indices)))
-
-        else:
-            # OK
-            self.vbo.set_vertex_attribute(
-                2, 4 * 2 * 3, struct.pack("6f", *self.positions)
-            )
-            self.ibo.set_indices(4, 12, struct.pack("3I", *self.indices))
+        self.vbo.set_vertex_attribute(
+            2, 4 * 2 * 3, (ctypes.c_float * 6)(*self.positions)
+        )
+        self.ibo.set_indices(4, 12, (ctypes.c_uint * 3)(*self.indices))
 
     def draw(self) -> None:
         if not self.vbo:
             self.initialize()
-        self.shader.use()
-        self.vbo.set_slot(0)
-        self.ibo.bind()
-        self.ibo.draw()
+        if self.shader:
+            self.shader.use()
+        if self.vbo:
+            self.vbo.set_slot(0)
+        if self.ibo:
+            self.ibo.bind()
+            self.ibo.draw()
 
-        self.ibo.unbind()
-        self.vbo.unbind()
-        self.shader.unuse()
+        if self.ibo:
+            self.ibo.unbind()
+        if self.vbo:
+            self.vbo.unbind()
+        if self.shader:
+            self.shader.unuse()
 
 
 def main():
@@ -199,15 +203,14 @@ def main():
 
     triangle = Triangle()
 
-    def disp_func():
+    def display_func():
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         triangle.draw()
         glFlush()
         glutSwapBuffers()
 
-    glutDisplayFunc(disp_func)
+    glutDisplayFunc(display_func)
 
-    # glutIdleFunc(disp_func)
     def reshape_func(w, h):
         glViewport(0, 0, w, h)
 

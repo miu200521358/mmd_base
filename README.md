@@ -12,11 +12,16 @@ Windows用MMDツールライブラリ
 
 ### Python3.11
 
- 1. `conda create -n mbase`
- 2. `conda activate mbase`
- 3. `conda install -c conda-forge python`
- 4. `pip install -r requirements.txt`
- 5. bezier, wxPython をソースコードからインストール
+ 1. `conda create -n mbase pip python=3.11`
+ 1. `conda activate mbase`
+ 1. `pip install -r requirements.txt`
+ 1. bezier のインストール
+     1. `set BEZIER_NO_EXTENSION=true`
+     1. `pip install bezier --no-binary=bezier`
+ 1. wxPython のインストール
+     1. `pip install attrdict3`
+     1. `pip install requests`
+     1. `pip install wxpython`
 
 
 ## profile

@@ -225,7 +225,7 @@ class MShader:
             )
             self.edge_size_uniform[edge] = gl.glGetUniformLocation(program, "edgeSize")
 
-    def update_camera(self, edge=False):
+    def update_camera(self, edge=False) -> None:
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
         gl.glClearColor(0.7, 0.7, 0.7, 1)
 

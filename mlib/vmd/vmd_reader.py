@@ -5,15 +5,9 @@ from mlib.base.base import Encoding
 from mlib.base.math import MVector3D
 from mlib.base.reader import BaseReader, StructUnpackType
 from mlib.vmd.vmd_collection import VmdMotion
-from mlib.vmd.vmd_part import (
-    VmdBoneFrame,
-    VmdCameraFrame,
-    VmdIkOnoff,
-    VmdLightFrame,
-    VmdMorphFrame,
-    VmdShadowFrame,
-    VmdShowIkFrame,
-)
+from mlib.vmd.vmd_part import (VmdBoneFrame, VmdCameraFrame, VmdIkOnOff,
+                               VmdLightFrame, VmdMorphFrame, VmdShadowFrame,
+                               VmdShowIkFrame)
 
 RE_TEXT_TRIM = re.compile(rb"\x00+$")
 
@@ -282,6 +276,6 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
             kf.show = bool(self.read_byte())
 
             for _i in range(self.read_uint()):
-                kf.iks.append(VmdIkOnoff(self.read_text(20), bool(self.read_byte())))
+                kf.iks.append(VmdIkOnOff(self.read_text(20), bool(self.read_byte())))
 
             motion.show_iks.append(kf)

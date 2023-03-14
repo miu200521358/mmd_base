@@ -1,3 +1,5 @@
+from typing import cast
+
 import pytest
 
 
@@ -62,7 +64,7 @@ def test_Bone_copy():
     assert b != b.copy()
 
 
-def test_DisplaySlots_init():
+def test_DisplaySlots_init() -> None:
     from mlib.pmx.pmx_collection import DisplaySlots
     from mlib.pmx.pmx_part import DisplaySlot, Switch
 
@@ -70,25 +72,25 @@ def test_DisplaySlots_init():
     dd.append(DisplaySlot(name="Root", english_name="Root", special_flg=Switch.ON))
     dd.append(DisplaySlot(name="表情", english_name="Exp", special_flg=Switch.ON))
 
-    d: DisplaySlot = dd[0]
-    assert 0 == d.index
-    assert "Root" == d.name
+    d1: DisplaySlot = dd[0]
+    assert 0 == d1.index
+    assert "Root" == d1.name
 
-    d: DisplaySlot = dd[1]
-    assert 1 == d.index
-    assert "表情" == d.name
+    d2: DisplaySlot = dd[1]
+    assert 1 == d2.index
+    assert "表情" == d2.name
 
-    d: DisplaySlot = dd.get_by_name("表情")
-    assert 1 == d.index
-    assert "表情" == d.name
-    assert Switch.ON == d.special_flg
+    d3: DisplaySlot = dd["表情"]
+    assert 1 == d3.index
+    assert "表情" == d3.name
+    assert Switch.ON == d3.special_flg
 
     with pytest.raises(KeyError) as e:
         dd[2]
         assert "Not Found 2" == e.value
 
     with pytest.raises(KeyError) as e:
-        dd.get_by_name("センター")
+        dd["センター"]
         assert "Not Found センター" == e.value
 
 
@@ -103,23 +105,16 @@ def test_read_by_filepath_error():
         reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション.vmd"))
 
 
-def test_read_by_filepath_ok():
+def test_read_by_filepath_ok() -> None:
     import os
 
     import numpy as np
 
     from mlib.pmx.pmx_collection import PmxModel
-    from mlib.pmx.pmx_part import (
-        BoneFlg,
-        DeformType,
-        DisplayType,
-        DrawFlg,
-        MorphPanel,
-        MorphType,
-        RigidBodyCollisionGroup,
-        RigidBodyMode,
-        RigidBodyShape,
-    )
+    from mlib.pmx.pmx_part import (BoneFlg, DeformType, DisplayType, DrawFlg,
+                                   MorphPanel, MorphType,
+                                   RigidBodyCollisionGroup, RigidBodyMode,
+                                   RigidBodyShape, VertexMorphOffset)
     from mlib.pmx.pmx_reader import PmxReader
 
     reader = PmxReader()
@@ -247,32 +242,34 @@ def test_read_by_filepath_ok():
         np.array([0, 0, 1]),
         left_leg_ik_bone.tail_position.vector,
     ).all()
-    assert 95 == left_leg_ik_bone.ik.bone_index
-    assert 40 == left_leg_ik_bone.ik.loop_count
-    assert np.isclose(
-        np.array([57.29578, 0, 0]),
-        left_leg_ik_bone.ik.unit_rotation.degrees.vector,
-    ).all()
-    assert 94 == left_leg_ik_bone.ik.links[0].bone_index
-    assert left_leg_ik_bone.ik.links[0].angle_limit
-    assert np.isclose(
-        np.array([-180, 0, 0]),
-        left_leg_ik_bone.ik.links[0].min_angle_limit.degrees.vector,
-    ).all()
-    assert np.isclose(
-        np.array([-0.5, 0, 0]),
-        left_leg_ik_bone.ik.links[0].max_angle_limit.degrees.vector,
-    ).all()
+    if left_leg_ik_bone.ik:
+        assert 95 == left_leg_ik_bone.ik.bone_index
+        assert 40 == left_leg_ik_bone.ik.loop_count
+        assert np.isclose(
+            np.array([57.29578, 0, 0]),
+            left_leg_ik_bone.ik.unit_rotation.degrees.vector,
+        ).all()
+        assert 94 == left_leg_ik_bone.ik.links[0].bone_index
+        assert left_leg_ik_bone.ik.links[0].angle_limit
+        assert np.isclose(
+            np.array([-180, 0, 0]),
+            left_leg_ik_bone.ik.links[0].min_angle_limit.degrees.vector,
+        ).all()
+        assert np.isclose(
+            np.array([-0.5, 0, 0]),
+            left_leg_ik_bone.ik.links[0].max_angle_limit.degrees.vector,
+        ).all()
     # 頂点モーフ
     surprised_morph = model.morphs[27]
     assert "びっくり" == surprised_morph.name
     assert "Fcl_EYE_Surprised" == surprised_morph.english_name
     assert MorphPanel.EYE_UPPER_LEFT == surprised_morph.panel
     assert MorphType.VERTEX == surprised_morph.morph_type
-    assert 8185 == surprised_morph.offsets[29].vertex_index
+    vertex_offset = cast(VertexMorphOffset, surprised_morph.offsets[29])
+    assert 8185 == vertex_offset.vertex_index
     assert np.isclose(
         np.array([-0.0001545548, 0.002120972, -4.768372e-07]),
-        surprised_morph.offsets[29].position_offset.vector,
+        vertex_offset.position_offset.vector,
     ).all()
     # 表示枠
     right_hand_display_slot = model.display_slots[9]
@@ -378,7 +375,7 @@ def test_read_by_filepath_ok():
     assert "左手首" == bone_tree[14].name
 
 
-def test_read_by_filepath_ok_tree():
+def test_read_by_filepath_ok_tree() -> None:
     import os
 
     from mlib.pmx.pmx_collection import PmxModel
@@ -419,7 +416,7 @@ def test_read_by_filepath_ok_tree():
     assert "右人指先" == new_bone_trees[1][-1].name
 
 
-def test_read_by_filepath_complicated():
+def test_read_by_filepath_complicated() -> None:
     from mlib.pmx.pmx_collection import PmxModel
     from mlib.pmx.pmx_reader import PmxReader
 

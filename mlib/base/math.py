@@ -1,15 +1,11 @@
 import operator
 from math import acos, atan2, cos, degrees, radians, sin, sqrt
-from typing import Any, Union
+from typing import Union
 
 import numpy as np
 from numpy.linalg import inv, norm
-from quaternion import (
-    as_rotation_matrix,
-    from_rotation_matrix,
-    quaternion,
-    slerp_evaluate,
-)
+from quaternion import (as_rotation_matrix, from_rotation_matrix, quaternion,
+                        slerp_evaluate)
 
 from .base import BaseModel
 
@@ -479,9 +475,9 @@ class MVectorDict:
 
     __slots__ = ["vectors"]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """初期化"""
-        self.vectors = {}
+        self.vectors: dict[int, np.ndarray] = {}
 
     def __iter__(self):
         return self.vectors.items()
@@ -492,7 +488,7 @@ class MVectorDict:
     def values(self) -> np.ndarray:
         return np.array(list(self.vectors.values()), dtype=np.float64)
 
-    def append(self, vkey: Any, v: MVector) -> None:
+    def append(self, vkey: int, v: MVector) -> None:
         self.vectors[vkey] = v.vector
 
     def distances(self, v: MVector):
@@ -530,7 +526,7 @@ class MVectorDict:
         """
         return v.__class__(np.array(self.values())[np.argmin(self.distances(v))])
 
-    def nearest_key(self, v: MVector):
+    def nearest_key(self, v: MVector) -> np.ndarray:
         """
         指定ベクトル直近キー
 
@@ -541,8 +537,7 @@ class MVectorDict:
 
         Returns
         -------
-        Any
-            直近キー
+        直近キー
         """
         return np.array(self.keys())[np.argmin(self.distances(v))]
 

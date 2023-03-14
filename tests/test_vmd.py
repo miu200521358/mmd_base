@@ -12,7 +12,7 @@ def test_read_by_filepath_error():
         reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
 
-def test_read_by_filepath_ok_calc():
+def test_read_by_filepath_ok_calc() -> None:
     import os
 
     import numpy as np
@@ -186,7 +186,7 @@ def test_read_by_filepath_ok_calc():
     ).all()
 
 
-def test_read_by_filepath_ok_matrix():
+def test_read_by_filepath_ok_matrix() -> None:
     import os
 
     import numpy as np
@@ -397,7 +397,7 @@ def test_read_by_filepath_ok_matrix():
     ).all()
 
 
-def test_read_by_filepath_ok_leg_ik1():
+def test_read_by_filepath_ok_leg_ik1() -> None:
     import os
 
     import numpy as np
@@ -456,7 +456,7 @@ def test_read_by_filepath_ok_leg_ik1():
     ).all()
 
 
-def test_read_by_filepath_ok_leg_ik2():
+def test_read_by_filepath_ok_leg_ik2() -> None:
     import os
 
     import numpy as np
@@ -515,7 +515,7 @@ def test_read_by_filepath_ok_leg_ik2():
     ).all()
 
 
-def test_read_by_filepath_ok_leg_ik3():
+def test_read_by_filepath_ok_leg_ik3() -> None:
     import os
 
     import numpy as np
@@ -586,7 +586,7 @@ def test_read_by_filepath_ok_leg_ik3():
     ).all()
 
 
-def test_read_by_filepath_ok_leg_ik4():
+def test_read_by_filepath_ok_leg_ik4() -> None:
     import os
 
     import numpy as np
@@ -646,7 +646,7 @@ def test_read_by_filepath_ok_leg_ik4():
     ).all()
 
 
-def test_read_by_filepath_ok_leg_ik5():
+def test_read_by_filepath_ok_leg_ik5() -> None:
     import os
 
     import numpy as np
@@ -705,7 +705,7 @@ def test_read_by_filepath_ok_leg_ik5():
     ).all()
 
 
-def test_read_by_filepath_ok_arm_ik():
+def test_read_by_filepath_ok_arm_ik() -> None:
     import os
 
     import numpy as np

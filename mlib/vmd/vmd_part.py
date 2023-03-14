@@ -3,7 +3,8 @@ from typing import Optional
 from mlib.base.base import BaseModel
 from mlib.base.bezier import Interpolation
 from mlib.base.math import MQuaternion, MVector3D
-from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel
+from mlib.base.part import (BaseIndexModel, BaseIndexNameModel,
+                            BaseRotationModel)
 
 
 class BaseVmdFrame(BaseIndexModel):
@@ -86,11 +87,11 @@ class BoneInterpolations(BaseModel):
 
     def __init__(
         self,
-        translation_x: Interpolation = None,
-        translation_y: Interpolation = None,
-        translation_z: Interpolation = None,
-        rotation: Interpolation = None,
-        vals: list[int] = None,
+        translation_x: Optional[Interpolation] = None,
+        translation_y: Optional[Interpolation] = None,
+        translation_z: Optional[Interpolation] = None,
+        rotation: Optional[Interpolation] = None,
+        vals: Optional[list[int]] = None,
     ):
         self.translation_x = translation_x or Interpolation()
         self.translation_y = translation_y or Interpolation()
@@ -271,9 +272,9 @@ class VmdBoneFrame(BaseVmdNameFrame):
         self,
         name: str = "",
         index: int = -1,
-        position: MVector3D = None,
-        rotation: MQuaternion = None,
-        interpolations: BoneInterpolations = None,
+        position: Optional[MVector3D] = None,
+        rotation: Optional[MQuaternion] = None,
+        interpolations: Optional[BoneInterpolations] = None,
         register: bool = False,
         read: bool = False,
     ):
@@ -355,12 +356,12 @@ class CameraInterpolations(BaseModel):
 
     def __init__(
         self,
-        translation_x: Interpolation = None,
-        translation_y: Interpolation = None,
-        translation_z: Interpolation = None,
-        rotation: Interpolation = None,
-        distance: Interpolation = None,
-        viewing_angle: Interpolation = None,
+        translation_x: Optional[Interpolation] = None,
+        translation_y: Optional[Interpolation] = None,
+        translation_z: Optional[Interpolation] = None,
+        rotation: Optional[Interpolation] = None,
+        distance: Optional[Interpolation] = None,
+        viewing_angle: Optional[Interpolation] = None,
     ):
         self.translation_x = translation_x or Interpolation()
         self.translation_y = translation_y or Interpolation()
@@ -411,12 +412,12 @@ class VmdCameraFrame(BaseVmdFrame):
     def __init__(
         self,
         index: int = -1,
-        position: MVector3D = None,
-        rotation: BaseRotationModel = None,
+        position: Optional[MVector3D] = None,
+        rotation: Optional[BaseRotationModel] = None,
         distance: float = 0.0,
         viewing_angle: int = 0,
         perspective: bool = False,
-        interpolations: CameraInterpolations = None,
+        interpolations: Optional[CameraInterpolations] = None,
         register: bool = False,
         read: bool = False,
     ):
@@ -458,8 +459,8 @@ class VmdLightFrame(BaseVmdFrame):
     def __init__(
         self,
         index: int = -1,
-        color: MVector3D = None,
-        position: MVector3D = None,
+        color: Optional[MVector3D] = None,
+        position: Optional[MVector3D] = None,
         register: bool = False,
         read: bool = False,
     ):
@@ -507,7 +508,7 @@ class VmdShadowFrame(BaseVmdFrame):
         self.distance = distance
 
 
-class VmdIkOnoff(BaseModel):
+class VmdIkOnOff(BaseModel):
     """
     IKのONOFF
 
@@ -516,7 +517,7 @@ class VmdIkOnoff(BaseModel):
     name : str, optional
         IK名, by default None
     onoff : bool, optional
-        ONOFF, by default None
+        ON,OFF, by default None
     """
 
     __slots__ = [
@@ -564,7 +565,7 @@ class VmdShowIkFrame(BaseVmdFrame):
         self,
         index: int = -1,
         show: bool = True,
-        iks: list[VmdIkOnoff] = None,
+        iks: Optional[list[VmdIkOnOff]] = None,
         register: bool = False,
         read: bool = False,
     ):

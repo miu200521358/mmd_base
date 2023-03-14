@@ -253,7 +253,7 @@ class MLogger:
                     self.module_name,
                 )
                 self.logger.handle(log_record)
-            except:  # nopep8
+            except:
                 # エラーしてたら無視
                 pass
 
@@ -382,7 +382,7 @@ def get_file_encoding(file_path):
         f = open(file_path, "rb")
         fbytes = f.read()
         f.close()
-    except:  # nopep8
+    except:
         raise MLibException("unknown encoding!")
 
     codes = ("utf-8", "shift-jis")

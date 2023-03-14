@@ -1,6 +1,6 @@
 import hashlib
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, TypeVar
+from typing import Generic, Optional, TypeVar
 
 import numpy as np
 
@@ -16,7 +16,7 @@ class BaseIndexListModel(Generic[TBaseIndexModel]):
 
     __slots__ = ["data", "__iter_index"]
 
-    def __init__(self, data: list[TBaseIndexModel] = None) -> None:
+    def __init__(self, data: Optional[list[TBaseIndexModel]] = None) -> None:
         """
         モデルリスト
 
@@ -83,7 +83,7 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
 
     __slots__ = ["data", "__names", "__iter_index"]
 
-    def __init__(self, data: list[TBaseIndexNameModel] = None) -> None:
+    def __init__(self, data: Optional[list[TBaseIndexNameModel]] = None) -> None:
         """
         モデルリスト
 
@@ -97,7 +97,7 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
         self.__names = self.names()
         self.__iter_index = 0
 
-    def __getitem__(self, key: Any) -> TBaseIndexNameModel:
+    def __getitem__(self, key: int | str) -> TBaseIndexNameModel:
         if isinstance(key, int):
             return self.get_by_index(key)
         else:
@@ -144,17 +144,17 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
         TBaseIndexNameModel
             要素
         """
-        if name not in self.names():
+        if name not in self.names().keys():
             raise KeyError(f"Not Found: {name}")
         return self.data[self.__names[name]]
 
     def append(self, v: TBaseIndexNameModel) -> None:
         if v.index < 0:
             v.index = len(self.data)
-        self.data.append(v)
-        if v.name not in self.names():
+        if v.name not in self.names().keys():
             # 名前は先勝ちで保持
             self.__names[v.name] = v.index
+        self.data.append(v)
 
     def __len__(self) -> int:
         return len(self.data)
@@ -178,7 +178,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel]):
 
     __slots__ = ["data", "__indices", "__iter_index"]
 
-    def __init__(self, data: Dict[int, TBaseIndexModel] = None) -> None:
+    def __init__(self, data: Optional[dict[int, TBaseIndexModel]] = None) -> None:
         """
         モデル辞書
 
@@ -188,7 +188,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel]):
             辞書, by default {}
         """
         super().__init__()
-        self.data: Dict[int, TBaseIndexModel] = data or {}
+        self.data: dict[int, TBaseIndexModel] = data or {}
         self.__indices: list[int] = self.indices()
         self.__iter_index: int = 0
 
@@ -254,7 +254,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
 
     __slots__ = ["data", "__indices", "__iter_index", "name"]
 
-    def __init__(self, name: str, data: Dict[int, TBaseIndexNameModel] = None) -> None:
+    def __init__(self, name: str, data: Optional[dict[int, TBaseIndexNameModel]] = None) -> None:
         """
         モデル辞書
 
@@ -264,7 +264,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
             辞書データ, by default {}
         """
         super().__init__()
-        self.data: Dict[int, TBaseIndexNameModel] = data or {}
+        self.data: dict[int, TBaseIndexNameModel] = data or {}
         self.__indices = self.indices()
         self.name = data[0].name if data else name if name else ""
 
@@ -374,7 +374,7 @@ class BaseIndexNameDictModel(
 
     __slots__ = ["data", "__iter_index", "__names"]
 
-    def __init__(self, data: Dict[str, TBaseIndexNameDictInnerModel] = None) -> None:
+    def __init__(self, data: Optional[dict[str, TBaseIndexNameDictInnerModel]] = None) -> None:
         """
         モデル辞書
 
@@ -384,7 +384,7 @@ class BaseIndexNameDictModel(
             辞書データ, by default {}
         """
         super().__init__()
-        self.data: Dict[str, TBaseIndexNameDictInnerModel] = data or {}
+        self.data: dict[str, TBaseIndexNameDictInnerModel] = data or {}
         self.__names = self.names()
         self.__iter_index: int = 0
 
@@ -394,14 +394,14 @@ class BaseIndexNameDictModel(
     def __getitem__(self, name: str) -> TBaseIndexNameDictInnerModel:
         return self.get(name)
 
-    def __delitem__(self, name: str, index: int = None):
+    def __delitem__(self, name: str, index: Optional[int] = None):
         if index is None:
             del self.data[name]
         else:
             del self.data[name][index]
 
     def create_inner(self, name: str) -> TBaseIndexNameDictInnerModel:
-        pass
+        raise NotImplementedError()
 
     def append(self, value: TBaseIndexNameModel):
         if value.name not in self.data:
