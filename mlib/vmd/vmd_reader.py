@@ -5,9 +5,15 @@ from mlib.base.base import Encoding
 from mlib.base.math import MVector3D
 from mlib.base.reader import BaseReader, StructUnpackType
 from mlib.vmd.vmd_collection import VmdMotion
-from mlib.vmd.vmd_part import (VmdBoneFrame, VmdCameraFrame, VmdIkOnOff,
-                               VmdLightFrame, VmdMorphFrame, VmdShadowFrame,
-                               VmdShowIkFrame)
+from mlib.vmd.vmd_part import (
+    VmdBoneFrame,
+    VmdCameraFrame,
+    VmdIkOnOff,
+    VmdLightFrame,
+    VmdMorphFrame,
+    VmdShadowFrame,
+    VmdShowIkFrame,
+)
 
 RE_TEXT_TRIM = re.compile(rb"\x00+$")
 
@@ -186,7 +192,10 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
             mf = VmdMorphFrame(register=True, read=True)
 
             mf.name = self.read_text(15)
-            (mf.index, mf.ratio,) = self.unpack(
+            (
+                mf.index,
+                mf.ratio,
+            ) = self.unpack(
                 self.read_by_format[VmdMorphFrame].unpack,
                 self.read_by_format[VmdMorphFrame].size,
             )
@@ -262,7 +271,11 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
         for _ in range(self.read_uint()):
             sf = VmdShadowFrame(register=True, read=True)
 
-            (sf.index, sf.type, sf.distance,) = self.unpack(
+            (
+                sf.index,
+                sf.type,
+                sf.distance,
+            ) = self.unpack(
                 self.read_by_format[VmdShadowFrame].unpack,
                 self.read_by_format[VmdShadowFrame].size,
             )

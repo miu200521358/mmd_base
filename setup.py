@@ -5,6 +5,7 @@ from glob import glob
 
 from Cython.Build import cythonize
 from Cython.Distutils import build_ext
+
 # fmt: off
 # cimport numpy を使うため
 from numpy import get_include  # type: ignore

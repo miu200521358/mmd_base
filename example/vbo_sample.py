@@ -4,28 +4,75 @@ import ctypes
 import sys
 from typing import Optional
 
-from OpenGL.GL import (GL_ARRAY_BUFFER, GL_COLOR_BUFFER_BIT, GL_COMPILE_STATUS,
-                       GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST,
-                       GL_ELEMENT_ARRAY_BUFFER, GL_FALSE, GL_FLOAT,
-                       GL_FRAGMENT_SHADER, GL_LESS, GL_LINK_STATUS,
-                       GL_MAJOR_VERSION, GL_MINOR_VERSION, GL_STATIC_DRAW,
-                       GL_TRIANGLES, GL_TRUE, GL_UNSIGNED_BYTE,
-                       GL_UNSIGNED_INT, GL_UNSIGNED_SHORT, GL_VERSION,
-                       GL_VERTEX_SHADER, any, glAttachShader, glBindBuffer,
-                       glBufferData, glClear, glClearColor, glClearDepth,
-                       glCompileShader, glCreateProgram, glCreateShader,
-                       glDeleteBuffers, glDeleteProgram, glDeleteShader,
-                       glDepthFunc, glDrawArrays, glDrawElements, glEnable,
-                       glEnableVertexAttribArray, glFlush, glGenBuffers,
-                       glGetInteger, glGetProgramiv, glGetShaderInfoLog,
-                       glGetShaderiv, glGetString, glLinkProgram,
-                       glShaderSource, glUseProgram, glVertexAttribPointer,
-                       glViewport)
-from OpenGL.GLUT import (GLUT_CORE_PROFILE, GLUT_DEBUG, GLUT_DEPTH,
-                         GLUT_DOUBLE, GLUT_RGBA, glutCreateWindow,
-                         glutDisplayFunc, glutInit, glutInitContextFlags,
-                         glutInitDisplayMode, glutInitWindowSize, glutMainLoop,
-                         glutReshapeFunc, glutSwapBuffers)
+from OpenGL.GL import (
+    GL_ARRAY_BUFFER,
+    GL_COLOR_BUFFER_BIT,
+    GL_COMPILE_STATUS,
+    GL_DEPTH_BUFFER_BIT,
+    GL_DEPTH_TEST,
+    GL_ELEMENT_ARRAY_BUFFER,
+    GL_FALSE,
+    GL_FLOAT,
+    GL_FRAGMENT_SHADER,
+    GL_LESS,
+    GL_LINK_STATUS,
+    GL_MAJOR_VERSION,
+    GL_MINOR_VERSION,
+    GL_STATIC_DRAW,
+    GL_TRIANGLES,
+    GL_TRUE,
+    GL_UNSIGNED_BYTE,
+    GL_UNSIGNED_INT,
+    GL_UNSIGNED_SHORT,
+    GL_VERSION,
+    GL_VERTEX_SHADER,
+    any,
+    glAttachShader,
+    glBindBuffer,
+    glBufferData,
+    glClear,
+    glClearColor,
+    glClearDepth,
+    glCompileShader,
+    glCreateProgram,
+    glCreateShader,
+    glDeleteBuffers,
+    glDeleteProgram,
+    glDeleteShader,
+    glDepthFunc,
+    glDrawArrays,
+    glDrawElements,
+    glEnable,
+    glEnableVertexAttribArray,
+    glFlush,
+    glGenBuffers,
+    glGetInteger,
+    glGetProgramiv,
+    glGetShaderInfoLog,
+    glGetShaderiv,
+    glGetString,
+    glLinkProgram,
+    glShaderSource,
+    glUseProgram,
+    glVertexAttribPointer,
+    glViewport,
+)
+from OpenGL.GLUT import (
+    GLUT_CORE_PROFILE,
+    GLUT_DEBUG,
+    GLUT_DEPTH,
+    GLUT_DOUBLE,
+    GLUT_RGBA,
+    glutCreateWindow,
+    glutDisplayFunc,
+    glutInit,
+    glutInitContextFlags,
+    glutInitDisplayMode,
+    glutInitWindowSize,
+    glutMainLoop,
+    glutReshapeFunc,
+    glutSwapBuffers,
+)
 
 VS = """
 #version 330
@@ -104,9 +151,7 @@ class VBO:
     def unbind(self) -> None:
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-    def set_vertex_attribute(
-        self, component_count: int, byte_length: int, data: any
-    ) -> None:
+    def set_vertex_attribute(self, component_count: int, byte_length: int, data: any) -> None:
         """float2, 3, 4"""
         self.component_count = component_count
         stride = 4 * self.component_count
@@ -166,9 +211,7 @@ class Triangle:
         self.shader.compile(VS, FS)
         self.vbo = VBO()
         self.ibo = IBO()
-        self.vbo.set_vertex_attribute(
-            2, 4 * 2 * 3, (ctypes.c_float * 6)(*self.positions)
-        )
+        self.vbo.set_vertex_attribute(2, 4 * 2 * 3, (ctypes.c_float * 6)(*self.positions))
         self.ibo.set_indices(4, 12, (ctypes.c_uint * 3)(*self.indices))
 
     def draw(self) -> None:

@@ -73,13 +73,7 @@ class IBO:
 
     def __init__(self, data: np.ndarray) -> None:
         self.ibo = gl.glGenBuffers(1)
-        self.dtype = (
-            gl.GL_UNSIGNED_BYTE
-            if data.dtype == np.uint8
-            else gl.GL_UNSIGNED_SHORT
-            if data.dtype == np.uint16
-            else gl.GL_UNSIGNED_INT
-        )
+        self.dtype = gl.GL_UNSIGNED_BYTE if data.dtype == np.uint8 else gl.GL_UNSIGNED_SHORT if data.dtype == np.uint16 else gl.GL_UNSIGNED_INT
         self.dsize = np.dtype(data.dtype).itemsize
 
         self.set_indices(data)
@@ -165,42 +159,27 @@ class Mesh(BaseIndexModel):
             ).vector
         )
         # TODO 材質モーフの色を入れる
-        gl.glUniform3f(
-            shader.ambient_uniform[False],
-            *(self.material.ambient_color * shader.light_ambient).vector
-        )
-        gl.glUniform4f(
-            shader.specular_uniform[False],
-            *(self.material.specular_color * shader.light_specular).vector,
-            self.material.specular_factor
-        )
+        gl.glUniform3f(shader.ambient_uniform[False], *(self.material.ambient_color * shader.light_ambient).vector)
+        gl.glUniform4f(shader.specular_uniform[False], *(self.material.specular_color * shader.light_specular).vector, self.material.specular_factor)
 
         # テクスチャ使用有無
         gl.glUniform1i(shader.use_texture_uniform[False], self.texture is not None)
         if self.texture:
             self.texture.bind()
-            gl.glUniform1i(
-                shader.texture_uniform[False], self.texture.texture_type.value
-            )
+            gl.glUniform1i(shader.texture_uniform[False], self.texture.texture_type.value)
 
         # Toon使用有無
         gl.glUniform1i(shader.use_toon_uniform[False], self.toon_texture is not None)
         if self.toon_texture:
             self.toon_texture.bind()
-            gl.glUniform1i(
-                shader.toon_uniform[False], self.toon_texture.texture_type.value
-            )
+            gl.glUniform1i(shader.toon_uniform[False], self.toon_texture.texture_type.value)
 
         # Sphere使用有無
-        gl.glUniform1i(
-            shader.use_sphere_uniform[False], self.sphere_texture is not None
-        )
+        gl.glUniform1i(shader.use_sphere_uniform[False], self.sphere_texture is not None)
         if self.sphere_texture:
             self.sphere_texture.bind()
             gl.glUniform1i(shader.sphere_mode_uniform[False], self.material.sphere_mode)
-            gl.glUniform1i(
-                shader.sphere_uniform[False], self.sphere_texture.texture_type.value
-            )
+            gl.glUniform1i(shader.sphere_uniform[False], self.sphere_texture.texture_type.value)
 
         gl.glDrawElements(
             gl.GL_TRIANGLES,
@@ -236,9 +215,7 @@ class Mesh(BaseIndexModel):
 
         # ------------------
         # エッジ設定
-        gl.glUniform4f(
-            shader.edge_color_uniform[True], *self.material.edge_color.vector
-        )
+        gl.glUniform4f(shader.edge_color_uniform[True], *self.material.edge_color.vector)
         gl.glUniform1f(shader.edge_size_uniform[True], self.material.edge_size)
 
         gl.glDrawElements(

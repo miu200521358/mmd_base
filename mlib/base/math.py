@@ -4,8 +4,12 @@ from typing import Union
 
 import numpy as np
 from numpy.linalg import inv, norm
-from quaternion import (as_rotation_matrix, from_rotation_matrix, quaternion,
-                        slerp_evaluate)
+from quaternion import (
+    as_rotation_matrix,
+    from_rotation_matrix,
+    quaternion,
+    slerp_evaluate,
+)
 
 from .base import BaseModel
 
@@ -218,12 +222,7 @@ class MVector(BaseModel):
             return bool(np.all(np.greater_equal(self.vector, other)))
 
     def __bool__(self) -> bool:
-        return (
-            self is not None
-            and self.vector is not None
-            and type(self) is not None.__class__
-            and not np.all(self.vector == 0)
-        )
+        return self is not None and self.vector is not None and type(self) is not None.__class__ and not np.all(self.vector == 0)
 
     def __add__(self, other):
         return operate_vector(self, other, operator.add)
@@ -339,9 +338,7 @@ class MVector3D(MVector):
     3次元ベクトルクラス
     """
 
-    def __init__(
-        self, x: Union[float, np.ndarray] = 0.0, y: float = 0.0, z: float = 0.0
-    ):
+    def __init__(self, x: Union[float, np.ndarray] = 0.0, y: float = 0.0, z: float = 0.0):
         """
         初期化
 
@@ -440,10 +437,7 @@ class MVector4D(MVector):
             self.vector = x.copy()
 
     def to_log(self) -> str:
-        return (
-            f"[x={round(self.vector[0], 3)}, y={round(self.vector[1], 3)}, "
-            + f"z={round(self.vector[2], 3)}], w={round(self.vector[2], 3)}]"
-        )
+        return f"[x={round(self.vector[0], 3)}, y={round(self.vector[1], 3)}, " + f"z={round(self.vector[2], 3)}], w={round(self.vector[2], 3)}]"
 
     @property
     def y(self):
@@ -605,18 +599,10 @@ class MQuaternion(MVector):
         return 2 * acos(min(1, max(-1, self.scalar)))
 
     def __bool__(self) -> bool:
-        return (
-            self is not None
-            and self.vector is not None
-            and type(self) is not None.__class__
-            and not np.all(self.vector.components == 0)  # type: ignore
-        )
+        return self is not None and self.vector is not None and type(self) is not None.__class__ and not np.all(self.vector.components == 0)  # type: ignore
 
     def to_log(self) -> str:
-        return (
-            f"[x={round(self.x, 5)}, y={round(self.y, 5)}, "
-            + f"z={round(self.z, 5)}, scalar={round(self.scalar, 5)}]"
-        )
+        return f"[x={round(self.x, 5)}, y={round(self.y, 5)}, " + f"z={round(self.z, 5)}, scalar={round(self.scalar, 5)}]"
 
     def effective(self):
         self.vector.components[np.isnan(self.vector.components)] = 0
@@ -684,12 +670,7 @@ class MQuaternion(MVector):
         lengthSquared = xx + yy + zz + self.scalar**2
 
         if not np.isclose([lengthSquared, lengthSquared - 1.0], 0).any():
-            xx, xy, xz, xw, yy, yz, yw, zz, zw = (
-                np.fromiter(
-                    [xx, xy, xz, xw, yy, yz, yw, zz, zw], dtype=np.float64, count=9
-                )
-                / lengthSquared
-            )
+            xx, xy, xz, xw, yy, yz, yw, zz, zw = np.fromiter([xx, xy, xz, xw, yy, yz, yw, zz, zw], dtype=np.float64, count=9) / lengthSquared
 
         pitch = np.arcsin(max(-1, min(1, -2.0 * (yz - xw))))
         yaw = 0
@@ -1330,9 +1311,7 @@ class MMatrix4x4List:
         vs : list[list[np.ndarray]]
             ベクトル(v.vector)
         """
-        vmat = self.vector[..., :3] * np.array(
-            [v2 for v1 in vs for v2 in v1], dtype=np.float64
-        ).reshape(self.row, self.col, 1, 3)
+        vmat = self.vector[..., :3] * np.array([v2 for v1 in vs for v2 in v1], dtype=np.float64).reshape(self.row, self.col, 1, 3)
         self.vector[..., 3] += np.sum(vmat, axis=-1)
 
     def rotate(self, qs: list[list[np.ndarray]]):
@@ -1345,9 +1324,7 @@ class MMatrix4x4List:
             クォータニオンの回転行列(qq.to_matrix4x4().vector)
         """
 
-        self.vector = self.vector @ np.array(
-            [q2 for q1 in qs for q2 in q1], dtype=np.float64
-        ).reshape(self.row, self.col, 4, 4)
+        self.vector = self.vector @ np.array([q2 for q1 in qs for q2 in q1], dtype=np.float64).reshape(self.row, self.col, 4, 4)
 
     def scale(self, vs: list[list[np.ndarray]]):
         """
@@ -1358,9 +1335,7 @@ class MMatrix4x4List:
         vs : list[list[np.ndarray]]
             ベクトル(v.vector)
         """
-        self.vector[..., :3] *= np.array(
-            [v2 for v1 in vs for v2 in v1], dtype=np.float64
-        ).reshape(self.row, self.col, 1, 3)
+        self.vector[..., :3] *= np.array([v2 for v1 in vs for v2 in v1], dtype=np.float64).reshape(self.row, self.col, 1, 3)
 
     def inverse(self):
         """
@@ -1384,19 +1359,13 @@ class MMatrix4x4List:
 
     def matmul_cols(self):
         # colを 行列積 するため、ひとつ次元を増やす
-        tile_mats = np.tile(
-            np.eye(4, dtype=np.float64), (self.row, self.col, self.col, 1, 1)
-        )
+        tile_mats = np.tile(np.eye(4, dtype=np.float64), (self.row, self.col, self.col, 1, 1))
         # 斜めにセルを埋めていく
         for c in range(self.col):
-            tile_mats[:, c:, c, :, :] = np.tile(
-                self.vector[:, c], (self.col - c, 1)
-            ).reshape(self.row, self.col - c, 4, 4)
+            tile_mats[:, c:, c, :, :] = np.tile(self.vector[:, c], (self.col - c, 1)).reshape(self.row, self.col - c, 4, 4)
         # 行列積を求める
         result_mats = MMatrix4x4List(self.row, self.col)
-        result_mats.vector = np.tile(
-            np.eye(4, dtype=np.float64), (self.row, self.col, 1, 1)
-        )
+        result_mats.vector = np.tile(np.eye(4, dtype=np.float64), (self.row, self.col, 1, 1))
         result_mats.vector = tile_mats[:, :, 0]
         for c in range(1, self.col):
             result_mats.vector = result_mats.vector @ tile_mats[:, :, c]

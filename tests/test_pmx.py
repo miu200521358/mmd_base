@@ -111,16 +111,22 @@ def test_read_by_filepath_ok() -> None:
     import numpy as np
 
     from mlib.pmx.pmx_collection import PmxModel
-    from mlib.pmx.pmx_part import (BoneFlg, DeformType, DisplayType, DrawFlg,
-                                   MorphPanel, MorphType,
-                                   RigidBodyCollisionGroup, RigidBodyMode,
-                                   RigidBodyShape, VertexMorphOffset)
+    from mlib.pmx.pmx_part import (
+        BoneFlg,
+        DeformType,
+        DisplayType,
+        DrawFlg,
+        MorphPanel,
+        MorphType,
+        RigidBodyCollisionGroup,
+        RigidBodyMode,
+        RigidBodyShape,
+        VertexMorphOffset,
+    )
     from mlib.pmx.pmx_reader import PmxReader
 
     reader = PmxReader()
-    model: PmxModel = reader.read_by_filepath(
-        os.path.join("tests", "resources", "サンプルモデル.pmx")
-    )
+    model: PmxModel = reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
     assert b"PMX " == model.signature
     assert 2.0 == model.version
     assert 2 == model.vertex_count
@@ -161,9 +167,7 @@ def test_read_by_filepath_ok() -> None:
     assert "tex\\MatcapWarp_01.png" == model.textures[1].texture_path
     # 材質
     assert "00_FaceEyeline" == model.materials[7].name
-    assert (
-        "N00_000_00_FaceEyeline_00_FACE (Instance)" == model.materials[7].english_name
-    )
+    assert "N00_000_00_FaceEyeline_00_FACE (Instance)" == model.materials[7].english_name
     # cSpell:enable
     assert np.isclose(
         np.array([1, 1, 1, 1]),
@@ -382,9 +386,7 @@ def test_read_by_filepath_ok_tree() -> None:
     from mlib.pmx.pmx_reader import PmxReader
 
     reader = PmxReader()
-    model: PmxModel = reader.read_by_filepath(
-        os.path.join("tests", "resources", "ボーンツリーテストモデル.pmx")
-    )
+    model: PmxModel = reader.read_by_filepath(os.path.join("tests", "resources", "ボーンツリーテストモデル.pmx"))
     # ボーンツリー
     bone_tree = model.bone_trees["左人指先"]
     assert "全ての親" == bone_tree[0].name
@@ -423,8 +425,7 @@ def test_read_by_filepath_complicated() -> None:
     reader = PmxReader()
     # cSpell:disable
     model: PmxModel = reader.read_by_filepath(
-        "D:\\MMD\\MikuMikuDance_v926x64\\UserFile\\Model\\刀剣乱舞\\"
-        + "025_一期一振\\一期一振 ちゃむ式 20211211\\01_10_極_一期_ちゃむ20211211.pmx",
+        "D:\\MMD\\MikuMikuDance_v926x64\\UserFile\\Model\\刀剣乱舞\\" + "025_一期一振\\一期一振 ちゃむ式 20211211\\01_10_極_一期_ちゃむ20211211.pmx",
     )
     assert "極 一期 ちゃむ" == model.name
     # cSpell:enable

@@ -4,13 +4,28 @@ from typing import Optional
 
 import numpy as np
 
-from mlib.base.collection import (BaseHashModel, BaseIndexDictModel,
-                                  BaseIndexListModel, BaseIndexNameListModel)
+from mlib.base.collection import (
+    BaseHashModel,
+    BaseIndexDictModel,
+    BaseIndexListModel,
+    BaseIndexNameListModel,
+)
 from mlib.base.math import MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
-from mlib.pmx.pmx_part import (Bone, DisplaySlot, DrawFlg, Face, Joint,
-                               Material, Morph, RigidBody, Texture,
-                               TextureType, ToonSharing, Vertex)
+from mlib.pmx.pmx_part import (
+    Bone,
+    DisplaySlot,
+    DrawFlg,
+    Face,
+    Joint,
+    Material,
+    Morph,
+    RigidBody,
+    Texture,
+    TextureType,
+    ToonSharing,
+    Vertex,
+)
 from mlib.pmx.shader import MShader, VsLayout
 
 
@@ -127,12 +142,7 @@ class BoneTrees:
             self.__names[bt.data[bt.last_index()].name] = bt.data[bt.last_index()].index
 
     def names(self) -> dict[str, int]:
-        return dict(
-            [
-                (bt.data[bt.last_index()].name, bt.data[bt.last_index()].index)
-                for bt in self.data.values()
-            ]
-        )
+        return dict([(bt.data[bt.last_index()].name, bt.data[bt.last_index()].index) for bt in self.data.values()])
 
     def gets(self, bone_names: list[str]) -> list[BoneTree]:
         """
@@ -242,18 +252,14 @@ class Bones(BaseIndexNameListModel[Bone]):
         for end_bone in self:
             # レイヤー込みのINDEXリスト取得を末端ボーンをキーとして保持
             bone_tree = BoneTree()
-            for ti, (_, bidx) in enumerate(
-                sorted(self.create_bone_link_indexes(end_bone.index))
-            ):
+            for ti, (_, bidx) in enumerate(sorted(self.create_bone_link_indexes(end_bone.index))):
                 bone_tree[ti] = self[bidx].copy()
             bone_tree[len(bone_tree)] = end_bone.copy()
             bone_trees[end_bone.index] = bone_tree
 
         return bone_trees
 
-    def create_bone_link_indexes(
-        self, child_idx: int, bone_link_indexes=None
-    ) -> list[tuple[int, int]]:
+    def create_bone_link_indexes(self, child_idx: int, bone_link_indexes=None) -> list[tuple[int, int]]:
         """
         指定ボーンの親ボーンを繋げてく
 
@@ -512,11 +518,7 @@ class Meshes(BaseIndexListModel[Mesh]):
                         *v.normal.vector,
                         v.uv.x,
                         1 - v.uv.y,
-                        *(
-                            v.extended_uvs[0].vector
-                            if len(v.extended_uvs) > 0
-                            else [0, 0]
-                        ),
+                        *(v.extended_uvs[0].vector if len(v.extended_uvs) > 0 else [0, 0]),
                         v.edge_factor,
                     ],
                     dtype=np.float32,
@@ -526,13 +528,7 @@ class Meshes(BaseIndexListModel[Mesh]):
             dtype=np.float32,
         )
 
-        face_dtype: type = (
-            np.uint8
-            if model.vertex_count == 1
-            else np.uint16
-            if model.vertex_count == 2
-            else np.uint32
-        )
+        face_dtype: type = np.uint8 if model.vertex_count == 1 else np.uint16 if model.vertex_count == 2 else np.uint32
 
         # 面情報
         self.faces: np.ndarray = np.array(
@@ -557,13 +553,8 @@ class Meshes(BaseIndexListModel[Mesh]):
             if ToonSharing.SHARING == material.toon_sharing_flg:
                 # 共有Toon
                 toon_texture = model.toon_textures[material.toon_texture_index]
-                toon_texture.init_draw(
-                    model.path, TextureType.TOON, is_individual=False
-                )
-            elif (
-                ToonSharing.INDIVIDUAL == material.toon_sharing_flg
-                and material.toon_texture_index >= 0
-            ):
+                toon_texture.init_draw(model.path, TextureType.TOON, is_individual=False)
+            elif ToonSharing.INDIVIDUAL == material.toon_sharing_flg and material.toon_texture_index >= 0:
                 # 個別Toon
                 toon_texture = model.textures[material.toon_texture_index]
                 toon_texture.init_draw(model.path, TextureType.TOON)
@@ -622,10 +613,7 @@ class Meshes(BaseIndexListModel[Mesh]):
             mesh.draw_model(self.shader, self.ibo_faces)
             self.shader.unuse()
 
-            if (
-                DrawFlg.DRAWING_EDGE in mesh.material.draw_flg
-                and mesh.material.diffuse_color.w > 0
-            ):
+            if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and mesh.material.diffuse_color.w > 0:
                 # エッジ描画
                 self.shader.use(edge=True)
                 mesh.draw_edge(self.shader, self.ibo_faces)

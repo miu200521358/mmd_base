@@ -10,23 +10,17 @@ from mlib.vmd.vmd_collection import VmdMotion
 from mlib.vmd.vmd_reader import VmdReader
 
 vmd_reader = VmdReader()
-motion: VmdMotion = vmd_reader.read_by_filepath(
-    os.path.join("tests", "resources", "サンプルモーション.vmd")
-)
+motion: VmdMotion = vmd_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション.vmd"))
 
 pmx_reader = PmxReader()
-model: PmxModel = pmx_reader.read_by_filepath(
-    os.path.join("tests", "resources", "サンプルモデル.pmx")
-)
+model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
 # 時間計測開始
 start_time = time.perf_counter()
 
 # キーフレ
 bone_trees = model.bone_trees.gets(["左手首", "右手首"])
-bone_matrixes = motion.bones.get_matrix_by_indexes(
-    list(range(0, 300)), bone_trees, model
-)
+bone_matrixes = motion.bones.get_matrix_by_indexes(list(range(0, 300)), bone_trees, model)
 
 # 時間計測終了
 end_time = time.perf_counter()

@@ -19,7 +19,6 @@ class VsLayout(IntEnum):
 
 
 class MShader:
-
     INITIAL_VERTICAL_DEGREES = 45.0
     INITIAL_CAMERA_POSITION_Y = 15.0
     INITIAL_CAMERA_POSITION_Z = -40.0
@@ -46,12 +45,8 @@ class MShader:
         self.camera_rotation = MQuaternion()
 
         # light position
-        self.light_position = MVector3D(
-            -20, self.INITIAL_CAMERA_POSITION_Y * 2, self.INITIAL_CAMERA_POSITION_Z * 2
-        )
-        self.light_direction = (
-            self.light_position * MVector3D(-1, -1, -1)
-        ).normalized()
+        self.light_position = MVector3D(-20, self.INITIAL_CAMERA_POSITION_Y * 2, self.INITIAL_CAMERA_POSITION_Z * 2)
+        self.light_direction = (self.light_position * MVector3D(-1, -1, -1)).normalized()
 
         self.bone_matrix_uniform: dict[bool, Any] = {}
         self.model_view_matrix_uniform: dict[bool, Any] = {}
@@ -106,12 +101,8 @@ class MShader:
             raise Exception(info)
         return shader
 
-    def compile(
-        self, program: Any, vertex_shader_name: str, fragments_shader_name: str
-    ) -> None:
-        vertex_shader_src = Path(
-            os.path.join(os.path.dirname(__file__), "glsl", vertex_shader_name)
-        ).read_text(encoding="utf-8")
+    def compile(self, program: Any, vertex_shader_name: str, fragments_shader_name: str) -> None:
+        vertex_shader_src = Path(os.path.join(os.path.dirname(__file__), "glsl", vertex_shader_name)).read_text(encoding="utf-8")
         vertex_shader_src = vertex_shader_src % (
             VsLayout.POSITION_ID.value,
             VsLayout.NORMAL_ID.value,
@@ -120,9 +111,7 @@ class MShader:
             VsLayout.EDGE_ID.value,
         )
 
-        fragments_shader_src = Path(
-            os.path.join(os.path.dirname(__file__), "glsl", fragments_shader_name)
-        ).read_text(encoding="utf-8")
+        fragments_shader_src = Path(os.path.join(os.path.dirname(__file__), "glsl", fragments_shader_name)).read_text(encoding="utf-8")
 
         vs = self.load_shader(vertex_shader_src, gl.GL_VERTEX_SHADER)
         if not vs:
@@ -159,29 +148,19 @@ class MShader:
         self.bone_matrix_uniform[edge] = gl.glGetUniformLocation(program, "modelMatrix")
 
         # モデルビュー行列
-        self.model_view_matrix_uniform[edge] = gl.glGetUniformLocation(
-            program, "modelViewMatrix"
-        )
+        self.model_view_matrix_uniform[edge] = gl.glGetUniformLocation(program, "modelViewMatrix")
 
         # MVP行列
-        self.model_view_projection_matrix_uniform[edge] = gl.glGetUniformLocation(
-            program, "modelViewProjectionMatrix"
-        )
+        self.model_view_projection_matrix_uniform[edge] = gl.glGetUniformLocation(program, "modelViewProjectionMatrix")
 
         if not edge:
             # モデルシェーダーへの割り当て
 
-            self.light_direction_uniform[edge] = gl.glGetUniformLocation(
-                program, "lightDirection"
-            )
-            gl.glUniform3f(
-                self.light_direction_uniform[edge], *self.light_direction.vector
-            )
+            self.light_direction_uniform[edge] = gl.glGetUniformLocation(program, "lightDirection")
+            gl.glUniform3f(self.light_direction_uniform[edge], *self.light_direction.vector)
 
             # カメラの位置
-            self.camera_vec_uniform[edge] = gl.glGetUniformLocation(
-                program, "cameraPos"
-            )
+            self.camera_vec_uniform[edge] = gl.glGetUniformLocation(program, "cameraPos")
 
             # --------
 
@@ -193,36 +172,24 @@ class MShader:
             # --------
 
             # テクスチャの設定
-            self.use_texture_uniform[edge] = gl.glGetUniformLocation(
-                program, "useTexture"
-            )
-            self.texture_uniform[edge] = gl.glGetUniformLocation(
-                program, "textureSampler"
-            )
+            self.use_texture_uniform[edge] = gl.glGetUniformLocation(program, "useTexture")
+            self.texture_uniform[edge] = gl.glGetUniformLocation(program, "textureSampler")
 
             # Toonの設定
             self.use_toon_uniform[edge] = gl.glGetUniformLocation(program, "useToon")
             self.toon_uniform[edge] = gl.glGetUniformLocation(program, "toonSampler")
 
             # Sphereの設定
-            self.use_sphere_uniform[edge] = gl.glGetUniformLocation(
-                program, "useSphere"
-            )
-            self.sphere_mode_uniform[edge] = gl.glGetUniformLocation(
-                program, "sphereMode"
-            )
-            self.sphere_uniform[edge] = gl.glGetUniformLocation(
-                program, "sphereSampler"
-            )
+            self.use_sphere_uniform[edge] = gl.glGetUniformLocation(program, "useSphere")
+            self.sphere_mode_uniform[edge] = gl.glGetUniformLocation(program, "sphereMode")
+            self.sphere_uniform[edge] = gl.glGetUniformLocation(program, "sphereSampler")
 
             # --------
         else:
             # エッジシェーダーへの割り当て
 
             # エッジ設定
-            self.edge_color_uniform[edge] = gl.glGetUniformLocation(
-                program, "edgeColor"
-            )
+            self.edge_color_uniform[edge] = gl.glGetUniformLocation(program, "edgeColor")
             self.edge_size_uniform[edge] = gl.glGetUniformLocation(program, "edgeSize")
 
     def update_camera(self, edge=False) -> None:
@@ -239,9 +206,7 @@ class MShader:
             self.far_plane,
         )
 
-        self.projection_matrix = np.array(
-            gl.glGetFloatv(gl.GL_PROJECTION_MATRIX), dtype=np.float32
-        )
+        self.projection_matrix = np.array(gl.glGetFloatv(gl.GL_PROJECTION_MATRIX), dtype=np.float32)
 
         # カメラ位置
         camera_mat = MMatrix4x4()
@@ -255,13 +220,9 @@ class MShader:
         # 視点位置の決定
         gl.glMatrixMode(gl.GL_MODELVIEW)
         gl.glLoadIdentity()
-        glu.gluLookAt(
-            *camera_pos.vector, *self.look_at_center.vector, *self.look_at_up.vector
-        )
+        glu.gluLookAt(*camera_pos.vector, *self.look_at_center.vector, *self.look_at_up.vector)
 
-        model_view_matrix = np.array(
-            gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX), dtype=np.float32
-        )
+        model_view_matrix = np.array(gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX), dtype=np.float32)
         gl.glUniformMatrix4fv(
             self.model_view_matrix_uniform[edge],
             1,
