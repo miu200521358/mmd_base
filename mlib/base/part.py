@@ -109,6 +109,6 @@ class BaseIndexNameModel(BaseIndexModel):
             英語名, by default ""
         """
         super().__init__()
-        self.index = index
-        self.name = name
-        self.english_name = english_name
+        self.index: int = index
+        self.name: str = name
+        self.english_name: str = english_name

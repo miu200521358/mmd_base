@@ -443,7 +443,7 @@ class PmxModel(BaseHashModel):
         self.bone_count: int = 0
         self.morph_count: int = 0
         self.rigidbody_count: int = 0
-        self.name: str = ""
+        self.model_name: str = ""
         self.english_name: str = ""
         self.comment: str = ""
         self.english_comment: str = ""
@@ -462,8 +462,9 @@ class PmxModel(BaseHashModel):
         self.for_draw = False
         self.meshes = None
 
-    def get_name(self) -> str:
-        return self.name
+    @property
+    def name(self) -> str:
+        return self.model_name
 
     def init_draw(self, shader):
         if self.for_draw:

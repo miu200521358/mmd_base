@@ -90,7 +90,7 @@ class PmxReader(BaseReader[PmxModel]):
         ) = self.unpack(Struct("<BBBBBBB").unpack_from, 7)
 
         # モデル名（日本語）
-        model.name = self.read_text()
+        model.model_name = self.read_text()
 
     def read_by_buffer(self, model: PmxModel):
         # モデルの各要素サイズから読み取り処理を設定

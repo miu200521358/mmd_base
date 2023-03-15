@@ -822,5 +822,21 @@ def test_read_by_filepath_ok_arm_ik() -> None:
     ).all()
 
 
+def test_vmd_save_01():
+    import os
+    from mlib.vmd.vmd_reader import VmdReader
+    from mlib.vmd.vmd_writer import VmdWriter
+
+    input_path = os.path.join("tests", "resources", "サンプルモーション.vmd")
+    motion = VmdReader().read_by_filepath(input_path)
+    output_path = os.path.join("tests", "resources", "result.vmd")
+    VmdWriter(motion, output_path, motion.name).save()
+
+    with open(output_path, "rb") as f:
+        output_motion = f.read()
+
+    assert output_motion
+
+
 if __name__ == "__main__":
     pytest.main()

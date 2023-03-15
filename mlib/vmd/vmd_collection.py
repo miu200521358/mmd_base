@@ -1,4 +1,5 @@
 from math import acos, degrees, pi
+from typing import Optional
 
 import numpy as np
 
@@ -721,7 +722,7 @@ class VmdMotion(BaseHashModel):
 
     def __init__(
         self,
-        path: str = None,
+        path: Optional[str] = None,
     ):
         super().__init__(path=path or "")
         self.signature: str = ""
@@ -733,8 +734,10 @@ class VmdMotion(BaseHashModel):
         self.shadows: VmdShadowFrames = VmdShadowFrames()
         self.show_iks: VmdShowIkFrames = VmdShowIkFrames()
 
-    def get_bone_count(self) -> int:
+    @property
+    def bone_count(self) -> int:
         return int(np.sum([len(bfs) for bfs in self.bones]))
 
-    def get_name(self) -> str:
+    @property
+    def name(self) -> str:
         return self.model_name

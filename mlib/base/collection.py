@@ -1,5 +1,4 @@
 import hashlib
-from abc import ABC, abstractmethod
 from typing import Generic, Optional, TypeVar
 
 import numpy as np
@@ -444,7 +443,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel, TBaseIndexNameDictInne
 TBaseIndexNameDictModel = TypeVar("TBaseIndexNameDictModel", bound=BaseIndexNameDictModel)
 
 
-class BaseHashModel(BaseModel, ABC):
+class BaseHashModel(BaseModel):
     """
     ハッシュ機能付きモデル
 
@@ -459,11 +458,12 @@ class BaseHashModel(BaseModel, ABC):
         self.path = path
         self.digest = ""
 
-    @abstractmethod
-    def get_name(self) -> str:
+    @property
+    def name(self) -> str:
         """モデル内の名前に相当する値を返す"""
-        pass
+        raise NotImplementedError()
 
+    @property
     def hexdigest(self) -> str:
         """モデルデータのハッシュ値を取得する"""
         sha1 = hashlib.sha1()

@@ -59,17 +59,17 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             読み込み結果文字列
         """
         # モデルを新規作成
-        model: TBaseHashModel = self.create_model(path)
+        hash_data: TBaseHashModel = self.create_model(path)
 
         # バイナリを解凍してモデルに展開
         try:
             with open(path, "rb") as f:
                 self.buffer = f.read()
-                self.read_by_buffer_header(model)
+                self.read_by_buffer_header(hash_data)
         except Exception:
             return ""
 
-        return model.get_name()
+        return hash_data.name
 
     def read_by_filepath(self, path: str) -> TBaseHashModel:
         """
@@ -101,7 +101,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             raise MParseException("予期せぬエラー", exception=e)
 
         # ハッシュを保持
-        model.digest = model.hexdigest()
+        model.digest = model.hexdigest
 
         return model
 

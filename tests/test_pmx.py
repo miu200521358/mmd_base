@@ -431,7 +431,7 @@ def test_read_by_filepath_complicated() -> None:
     # cSpell:enable
 
 
-def test_write_pmx01() -> None:
+def test_save_pmx01() -> None:
     from mlib.pmx.pmx_collection import PmxModel
     from mlib.pmx.pmx_reader import PmxReader
     from mlib.pmx.pmx_writer import PmxWriter
@@ -451,7 +451,7 @@ def test_write_pmx01() -> None:
     assert input_model == output_model
 
 
-def test_write_pmx02() -> None:
+def test_save_pmx02() -> None:
     from mlib.pmx.pmx_collection import PmxModel
     from mlib.pmx.pmx_reader import PmxReader
     from mlib.pmx.pmx_writer import PmxWriter
@@ -471,7 +471,7 @@ def test_write_pmx02() -> None:
     assert input_model == output_model
 
 
-def test_write_pmx03() -> None:
+def test_save_pmx03() -> None:
     from mlib.pmx.pmx_collection import PmxModel
     from mlib.pmx.pmx_reader import PmxReader
     from mlib.pmx.pmx_writer import PmxWriter
