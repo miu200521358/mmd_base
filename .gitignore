@@ -127,3 +127,6 @@ memo/
 *.lprof
 *.csv
 wheel
+
+# テスト結果
+*result*
