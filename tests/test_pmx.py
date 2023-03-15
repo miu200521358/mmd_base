@@ -425,10 +425,70 @@ def test_read_by_filepath_complicated() -> None:
     reader = PmxReader()
     # cSpell:disable
     model: PmxModel = reader.read_by_filepath(
-        "D:\\MMD\\MikuMikuDance_v926x64\\UserFile\\Model\\刀剣乱舞\\" + "025_一期一振\\一期一振 ちゃむ式 20211211\\01_10_極_一期_ちゃむ20211211.pmx",
+        "D:\\MMD\\MikuMikuDance_v926x64\\UserFile\\Model\\刀剣乱舞\\025_一期一振\\一期一振 ちゃむ式 20211211\\01_10_極_一期_ちゃむ20211211.pmx",
     )
     assert "極 一期 ちゃむ" == model.name
     # cSpell:enable
+
+
+def test_write_pmx01() -> None:
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.pmx.pmx_writer import PmxWriter
+    import os
+
+    input_path = os.path.join("tests", "resources", "柱.pmx")
+    model: PmxModel = PmxReader().read_by_filepath(input_path)
+    output_path = os.path.join("tests", "resources", "result.pmx")
+    PmxWriter(model, output_path).save()
+
+    with open(input_path, "rb") as f:
+        input_model = f.read()
+
+    with open(output_path, "rb") as f:
+        output_model = f.read()
+
+    assert input_model == output_model
+
+
+def test_write_pmx02() -> None:
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.pmx.pmx_writer import PmxWriter
+    import os
+
+    input_path = os.path.join("tests", "resources", "曲げ柱tex.pmx")
+    model: PmxModel = PmxReader().read_by_filepath(input_path)
+    output_path = os.path.join("tests", "resources", "result.pmx")
+    PmxWriter(model, output_path).save()
+
+    with open(input_path, "rb") as f:
+        input_model = f.read()
+
+    with open(output_path, "rb") as f:
+        output_model = f.read()
+
+    assert input_model == output_model
+
+
+def test_write_pmx03() -> None:
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.pmx.pmx_writer import PmxWriter
+    import os
+
+    input_path = os.path.join("tests", "resources", "サンプルモデル.pmx")
+    model: PmxModel = PmxReader().read_by_filepath(input_path)
+    output_path = os.path.join("tests", "resources", "result.pmx")
+    PmxWriter(model, output_path).save()
+
+    with open(input_path, "rb") as f:
+        input_model = f.read()
+
+    with open(output_path, "rb") as f:
+        output_model = f.read()
+
+    assert input_model == output_model
 
 
 if __name__ == "__main__":
