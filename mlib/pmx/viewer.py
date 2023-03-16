@@ -1,6 +1,9 @@
 import OpenGL.GL as gl
+from OpenGL.GL import glReadPixels, GL_RGBA, GL_UNSIGNED_BYTE
 import wx
 from wx import glcanvas
+from PIL import Image
+import os
 
 from mlib.base.math import MQuaternion, MVector3D
 from mlib.pmx.pmx_reader import PmxReader
@@ -18,16 +21,16 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.SetCurrent(self.context)
         gl.glClearColor(0.7, 0.7, 0.7, 1)
 
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.Bind(wx.EVT_SIZE, self.OnResize)
-        self.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
-        self.Bind(wx.EVT_MIDDLE_DOWN, self.OnMouseDown)
-        self.Bind(wx.EVT_RIGHT_DOWN, self.OnMouseDown)
-        self.Bind(wx.EVT_MOTION, self.OnMouseMotion)
-        self.Bind(wx.EVT_MIDDLE_UP, self.OnMouseUp)
-        self.Bind(wx.EVT_RIGHT_UP, self.OnMouseUp)
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
-        self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+        self.Bind(wx.EVT_SIZE, self.on_resize)
+        self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
+        self.Bind(wx.EVT_MIDDLE_DOWN, self.on_mouse_down)
+        self.Bind(wx.EVT_RIGHT_DOWN, self.on_mouse_down)
+        self.Bind(wx.EVT_MOTION, self.on_mouse_motion)
+        self.Bind(wx.EVT_MIDDLE_UP, self.on_mouse_up)
+        self.Bind(wx.EVT_RIGHT_UP, self.on_mouse_up)
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.on_erase_background)
+        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
 
         self.shader = MShader(width, height)
 
@@ -38,23 +41,23 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         self.is_drag = False
 
-    def OnEraseBackground(self, event: wx.Event):
+    def on_erase_background(self, event: wx.Event):
         # Do nothing, to avoid flashing on MSW (これがないとチラつくらしい）
         pass
 
-    def OnResize(self, event: wx.Event):
+    def on_resize(self, event: wx.Event):
         self.size = self.GetClientSize()
         self.shader.fit(self.size.width, self.size.height)
         event.Skip()
 
-    def OnPaint(self, event: wx.Event):
+    def on_paint(self, event: wx.Event):
         wx.PaintDC(self)
-        self.OnDraw(event)
+        self.on_draw(event)
 
     def reset(self):
         pass
 
-    def OnDraw(self, event: wx.Event):
+    def on_draw(self, event: wx.Event):
         if self.model:
             self.model.update()
 
@@ -69,7 +72,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.SwapBuffers()
         self.Refresh(False)
 
-    def OnKeyDown(self, event: wx.Event):
+    def on_key_down(self, event: wx.Event):
         keycode = event.GetKeyCode()
         if keycode == wx.WXK_NUMPAD0:
             # 真下から
@@ -131,17 +134,35 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.shader.INITIAL_CAMERA_POSITION_Y * 3,
                 -0.1,
             )
+        elif keycode == wx.WXK_NUMPAD7:
+            # キャプチャ
+            self.on_capture(event)
 
-    def OnMouseDown(self, event: wx.Event):
+    def on_capture(self, event: wx.Event):
+        # キャプチャ
+        # OpenGLの描画バッファを読み込む
+        buffer = glReadPixels(0, 0, self.size.width, self.size.height, GL_RGBA, GL_UNSIGNED_BYTE)
+
+        # バッファをPILのImageオブジェクトに変換する
+        image = Image.frombytes("RGBA", (self.size.width, self.size.height), buffer)
+
+        # 画像を反転させる
+        image = image.transpose(method=Image.FLIP_TOP_BOTTOM)
+
+        # ImageをPNGファイルとして保存する
+        file_path = os.path.join(os.path.dirname(self.model.path), "capture.png")
+        image.save(file_path)
+
+    def on_mouse_down(self, event: wx.Event):
         self.now_pos = self.last_pos = event.GetPosition()
         self.is_drag = True
         self.CaptureMouse()
 
-    def OnMouseUp(self, event: wx.Event):
+    def on_mouse_up(self, event: wx.Event):
         self.is_drag = False
         self.ReleaseMouse()
 
-    def OnMouseMotion(self, event: wx.Event):
+    def on_mouse_motion(self, event: wx.Event):
         if self.is_drag and event.Dragging():
             self.now_pos = event.GetPosition()
             x = (self.now_pos.x - self.last_pos.x) * 0.02
@@ -156,7 +177,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.shader.camera_rotation *= MQuaternion.from_euler_degrees(y * 10, -x * 10, 0)
             self.last_pos = self.now_pos
 
-    def OnMouseWheel(self, event: wx.Event):
+    def on_mouse_wheel(self, event: wx.Event):
         if event.GetWheelRotation() < 0:
             self.shader.vertical_degrees += 1.0
         else:

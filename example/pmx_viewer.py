@@ -24,12 +24,18 @@ class PmxPanel(wx.Panel):
         self.canvas = PmxCanvas(self, args.pmx, args.motion, 800, 800)
         self.sizer.Add(self.canvas, 0, wx.ALL | wx.EXPAND, 0)
 
-        self.reset_btn = wx.Button(self, -1, label="Reset", pos=(1130, 10), size=(100, 50))
-        self.reset_btn.BackgroundColour = (125, 125, 125)
-        self.reset_btn.ForegroundColour = (0, 0, 0)
-        self.sizer.Add(self.reset_btn, 0, wx.ALIGN_LEFT | wx.SHAPED, 5)
-
+        self.btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        # リセット
+        self.reset_btn = wx.Button(self, wx.ID_ANY, "Reset", wx.DefaultPosition, wx.Size(100, 50))
         self.reset_btn.Bind(wx.EVT_BUTTON, self.reset)
+        self.btn_sizer.Add(self.reset_btn, 0, wx.ALL, 5)
+
+        # キャプチャー
+        self.capture_btn = wx.Button(self, wx.ID_ANY, "Capture", wx.DefaultPosition, wx.Size(100, 50))
+        self.capture_btn.Bind(wx.EVT_BUTTON, self.capture)
+        self.btn_sizer.Add(self.capture_btn, 0, wx.ALL, 5)
+
+        self.sizer.Add(self.btn_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
         self.Layout()
         self.fit()
@@ -41,7 +47,10 @@ class PmxPanel(wx.Panel):
 
     def reset(self, event: wx.Event):
         self.canvas.reset()
-        self.canvas.OnDraw(event)
+        self.canvas.on_draw(event)
+
+    def capture(self, event: wx.Event):
+        self.canvas.on_capture(event)
 
 
 class PmxFrame(wx.Frame):
