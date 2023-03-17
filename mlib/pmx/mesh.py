@@ -3,7 +3,7 @@ from typing import Optional
 import numpy as np
 import OpenGL.GL as gl
 
-from mlib.base.math import MMatrix4x4List, MVector4D
+from mlib.base.math import MMatrix4x4, MVector4D
 from mlib.base.part import BaseIndexModel
 from mlib.pmx.pmx_part import DrawFlg, Material, Texture
 from mlib.pmx.shader import MShader, VsLayout
@@ -122,7 +122,7 @@ class Mesh(BaseIndexModel):
 
     def draw_model(
         self,
-        mats: MMatrix4x4List,
+        mats: list[MMatrix4x4],
         shader: MShader,
         ibo: IBO,
     ):
@@ -137,12 +137,12 @@ class Mesh(BaseIndexModel):
             gl.glCullFace(gl.GL_BACK)
 
         # ボーンデフォーム設定
-        for n, mat in enumerate(mats.vector):
+        for n, mat in enumerate(mats):
             gl.glUniformMatrix4fv(
                 shader.bone_matrix_uniform[False][n],
                 1,
                 gl.GL_FALSE,
-                mat,
+                mat.vector,
             )
 
         # ------------------
@@ -201,7 +201,7 @@ class Mesh(BaseIndexModel):
 
     def draw_edge(
         self,
-        mats: MMatrix4x4List,
+        mats: list[MMatrix4x4],
         shader: MShader,
         ibo: IBO,
     ):
@@ -209,12 +209,12 @@ class Mesh(BaseIndexModel):
         gl.glCullFace(gl.GL_FRONT)
 
         # ボーンデフォーム設定
-        for n, mat in enumerate(mats.vector):
+        for n, mat in enumerate(mats):
             gl.glUniformMatrix4fv(
-                shader.bone_matrix_uniform[True][n],
+                shader.bone_matrix_uniform[False][n],
                 1,
                 gl.GL_FALSE,
-                mat,
+                mat.vector,
             )
 
         # ------------------

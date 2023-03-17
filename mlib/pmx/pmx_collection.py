@@ -11,7 +11,7 @@ from mlib.base.collection import (
     BaseIndexListModel,
     BaseIndexNameListModel,
 )
-from mlib.base.math import MVector3D, MMatrix4x4List
+from mlib.base.math import MVector3D, MMatrix4x4
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
     Bone,
@@ -260,6 +260,21 @@ class Bones(BaseIndexNameListModel[Bone]):
 
         return bone_trees
 
+    def get_tail_bone_names(self) -> list[str]:
+        """
+        親ボーンとして登録されていないボーン名リストを取得する
+        """
+        tail_bone_names = []
+        parent_bone_indexes = []
+        for end_bone in self:
+            parent_bone_indexes.append(end_bone.parent_index)
+
+        for end_bone in self:
+            if end_bone.index not in parent_bone_indexes:
+                tail_bone_names.append(end_bone.name)
+
+        return tail_bone_names
+
     def create_bone_link_indexes(self, child_idx: int, bone_link_indexes=None) -> list[tuple[int, int]]:
         """
         指定ボーンの親ボーンを繋げてく
@@ -460,6 +475,7 @@ class PmxModel(BaseHashModel):
         self.display_slots = DisplaySlots()
         self.rigidbodies = RigidBodies()
         self.joints = Joints()
+        self.tail_bone_names: list[str] = []
         self.for_draw = False
         self.meshes = None
 
@@ -495,7 +511,7 @@ class PmxModel(BaseHashModel):
             return
         self.meshes.update()
 
-    def draw(self, mats: MMatrix4x4List):
+    def draw(self, mats: list[MMatrix4x4]):
         if not self.for_draw or not self.meshes:
             return
         self.meshes.draw(mats)
@@ -606,7 +622,7 @@ class Meshes(BaseIndexListModel[Mesh]):
     def update(self):
         pass
 
-    def draw(self, mats: MMatrix4x4List):
+    def draw(self, mats: list[MMatrix4x4]):
         for mesh in self.data:
             self.vao.bind()
             self.vbo_vertices.set_slot(VsLayout.POSITION_ID)

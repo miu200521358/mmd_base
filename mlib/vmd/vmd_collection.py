@@ -152,7 +152,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         fnos: list[int],
         bone_trees: list[BoneTree],
         model: PmxModel,
-    ) -> dict[str, dict[int, dict[str, VmdBoneFrameTree]]]:
+    ) -> dict[int, dict[str, VmdBoneFrameTree]]:
         """
         指定されたキーフレ番号の行列計算結果を返す
 
@@ -165,9 +165,9 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
 
         Returns
         -------
-        行列辞書（キー：ボーンツリーリストの最後のボーン名、値：行列リスト）
+        行列辞書（キー：fno,ボーン名、値：行列リスト）
         """
-        bone_matrixes: dict[str, dict[int, dict[str, VmdBoneFrameTree]]] = {}
+        bone_matrixes: dict[int, dict[str, VmdBoneFrameTree]] = {}
         for bone_tree in bone_trees:
             row = len(fnos)
             col = len(bone_tree)
@@ -184,12 +184,12 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             matrixes.rotate(qqs.tolist())
             result_mats = matrixes.matmul_cols()
             positions = result_mats.to_positions()
-            bone_matrixes[bone_tree.last_name()] = {}
 
             for n, fno in enumerate(fnos):
-                bone_matrixes[bone_tree.last_name()][fno] = {}
+                if fno not in bone_matrixes:
+                    bone_matrixes[fno] = {}
                 for m, bone in enumerate(bone_tree.data.values()):
-                    bone_matrixes[bone_tree.last_name()][fno][bone.name] = VmdBoneFrameTree(matrix=result_mats.vector[n, m], position=positions[n, m])
+                    bone_matrixes[fno][bone.name] = VmdBoneFrameTree(matrix=result_mats.vector[n, m], position=positions[n, m])
 
         return bone_matrixes
 
@@ -387,7 +387,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                 continue
 
             ik_matrixes = self.get_matrix_by_indexes([fno], [model.bone_trees[ik_bone.index]], model)
-            global_target_pos = ik_matrixes[ik_bone.name][fno][ik_bone.name].position
+            global_target_pos = ik_matrixes[fno][ik_bone.name].position
 
             # IKターゲットボーンツリー
             effector_bone = model.bones[ik_bone.ik.bone_index]
