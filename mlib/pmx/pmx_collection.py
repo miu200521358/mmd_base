@@ -582,8 +582,8 @@ class Meshes(BaseIndexListModel[Mesh]):
             prev_vertices_count += material.vertices_count
 
         # ボーンデフォーム行列(ボーン個数分用意)
-        shader.bone_matrix_uniform[True] = [gl.glGetUniformLocation(shader.edge_program, f"boneMatrix[{n}]") for n in range(len(model.bones))]
-        shader.bone_matrix_uniform[False] = [gl.glGetUniformLocation(shader.model_program, f"boneMatrix[{n}]") for n in range(len(model.bones))]
+        shader.bone_matrix_uniform[True] = [gl.glGetUniformLocation(shader.edge_program, f"boneMatrixes[{n}]") for n in range(len(model.bones))]
+        shader.bone_matrix_uniform[False] = [gl.glGetUniformLocation(shader.model_program, f"boneMatrixes[{n}]") for n in range(len(model.bones))]
 
         # ---------------------
 

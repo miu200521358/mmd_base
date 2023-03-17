@@ -27,7 +27,7 @@ class MShader:
     INITIAL_LOOK_AT_CENTER_Y = INITIAL_CAMERA_POSITION_Y * 0.8
     INITIAL_CAMERA_POSITION_X = 40.0
 
-    def __init__(self, width: int, height: int) -> None:
+    def __init__(self, width: int, height: int, bone_num: int) -> None:
         self.width = width
         self.height = height
         self.vertical_degrees = self.INITIAL_VERTICAL_DEGREES
@@ -50,6 +50,7 @@ class MShader:
         self.light_position = MVector3D(-20, self.INITIAL_CAMERA_POSITION_Y * 2, self.INITIAL_CAMERA_POSITION_Z * 2)
         self.light_direction = (self.light_position * MVector3D(-1, -1, -1)).normalized()
 
+        self.bone_num_uniform: dict[bool, Any] = {}
         self.bone_matrix_uniform: dict[bool, Any] = {}
         self.model_view_matrix_uniform: dict[bool, Any] = {}
         self.model_view_projection_matrix_uniform: dict[bool, Any] = {}
@@ -70,7 +71,7 @@ class MShader:
 
         # モデル描画シェーダー ------------------
         self.model_program = gl.glCreateProgram()
-        self.compile(self.model_program, "model.vert", "model.frag")
+        self.compile(self.model_program, bone_num, "model.vert", "model.frag")
 
         # 初期化
         self.use()
@@ -79,7 +80,7 @@ class MShader:
 
         # エッジ描画シェーダー ------------------
         self.edge_program = gl.glCreateProgram()
-        self.compile(self.edge_program, "edge.vert", "edge.frag")
+        self.compile(self.edge_program, bone_num, "edge.vert", "edge.frag")
 
         # 初期化
         self.use(edge=True)
@@ -103,7 +104,7 @@ class MShader:
             raise Exception(info)
         return shader
 
-    def compile(self, program: Any, vertex_shader_name: str, fragments_shader_name: str) -> None:
+    def compile(self, program: Any, bone_num: int, vertex_shader_name: str, fragments_shader_name: str) -> None:
         vertex_shader_src = Path(os.path.join(os.path.dirname(__file__), "glsl", vertex_shader_name)).read_text(encoding="utf-8")
         vertex_shader_src = vertex_shader_src % (
             VsLayout.POSITION_ID.value,
@@ -113,6 +114,7 @@ class MShader:
             VsLayout.EDGE_ID.value,
             VsLayout.BONE_ID.value,
             VsLayout.WEIGHT_ID.value,
+            bone_num,
         )
 
         fragments_shader_src = Path(os.path.join(os.path.dirname(__file__), "glsl", fragments_shader_name)).read_text(encoding="utf-8")
@@ -147,6 +149,9 @@ class MShader:
             self.light_ambient.z,
             1,
         )
+
+        # ボーンの数
+        self.bone_num_uniform[edge] = gl.glGetUniformLocation(program, "boneNum")
 
         # モデルビュー行列
         self.model_view_matrix_uniform[edge] = gl.glGetUniformLocation(program, "modelViewMatrix")

@@ -6,10 +6,10 @@ in layout(location = %d) vec2 uv;
 in layout(location = %d) vec2 extendUv;
 in layout(location = %d) float vertexEdge;
 in layout(location = %d) vec4 boneIdxs;
-in layout(location = %d) vec4 weights;
+in layout(location = %d) vec4 boneWeights;
 
 uniform vec3 cameraPos;
-uniform mat4 boneMatrix;
+uniform mat4 boneMatrixes[%d];
 uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;
 
@@ -34,11 +34,17 @@ void main() {
     vec4 vertexGLPosition = vec4(-position.x, position.y, position.z, 1.0);
     vec4 vertexGLNormal = vec4(-normal.x, normal.y, normal.z, 1.0);
 
+    // // 各頂点で使用されるボーン変形行列を計算する
+    // mat4 boneTransformMatrix = mat4(0.0);
+    // for(int i = 0; i < 4; i++) {
+    //     boneTransformMatrix = boneMatrixes[int(boneIdxs[i])];
+    // }
+
     // 頂点位置
     gl_Position = modelViewProjectionMatrix * vertexGLPosition;
 
     // 頂点法線
-    // vetexNormal = (boneMatrix * normalize(vertexGLNormal)).xyz;
+    // vetexNormal = (boneMatrixes * normalize(vertexGLNormal)).xyz;
     vetexNormal = (normalize(vertexGLNormal)).xyz;
 
     // 頂点色設定
@@ -68,7 +74,8 @@ void main() {
     }
 
     // カメラとの相対位置
-    vec3 eye = cameraPos - (boneMatrix * vertexGLPosition).xyz;
+//    vec3 eye = cameraPos - (boneMatrixes * vertexGLPosition).xyz;
+    vec3 eye = cameraPos - (vertexGLPosition).xyz;
 
     // スペキュラ色計算
     vec3 HalfVector = normalize( normalize(eye) + -lightDirection );

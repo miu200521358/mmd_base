@@ -32,9 +32,9 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.on_erase_background)
         self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
 
-        self.shader = MShader(width, height)
-
         self.model = PmxReader().read_by_filepath(pmx_path)
+
+        self.shader = MShader(width, height, len(self.model.bones))
         self.model.init_draw(self.shader)
 
         self.motion = VmdReader().read_by_filepath(vmd_path) if vmd_path else None
