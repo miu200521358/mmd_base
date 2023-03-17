@@ -5,10 +5,12 @@ in layout(location = %d) vec3 normal;
 in layout(location = %d) vec2 uv;
 in layout(location = %d) vec2 extendUv;
 in layout(location = %d) float vertexEdge;
+in layout(location = %d) vec4 boneIdxs;
+in layout(location = %d) vec4 weights;
 
 uniform vec3 lightPos;
 uniform vec3 cameraPos;
-uniform mat4 modelMatrix;
+uniform mat4 boneMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;
 
@@ -22,7 +24,7 @@ void main() {
     float edgeWight = edgeSize * vertexEdge;
 
     // 頂点法線
-    vec3 vetexNormal = (modelMatrix * normalize(vertexGLNormal)).xyz;
+    vec3 vetexNormal = (boneMatrix * normalize(vertexGLNormal)).xyz;
 
     // 頂点位置
     gl_Position = modelViewProjectionMatrix * (vec4(vertexGLPosition.xyz + vertexGLNormal.xyz * edgeWight * 0.01, 1.0));

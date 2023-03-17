@@ -1,6 +1,7 @@
 import os
 from glob import glob
 from typing import Optional
+import OpenGL.GL as gl
 
 import numpy as np
 
@@ -10,7 +11,7 @@ from mlib.base.collection import (
     BaseIndexListModel,
     BaseIndexNameListModel,
 )
-from mlib.base.math import MVector3D
+from mlib.base.math import MVector3D, MMatrix4x4List
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
     Bone,
@@ -494,10 +495,10 @@ class PmxModel(BaseHashModel):
             return
         self.meshes.update()
 
-    def draw(self):
-        if not self.for_draw:
+    def draw(self, mats: MMatrix4x4List):
+        if not self.for_draw or not self.meshes:
             return
-        self.meshes.draw()
+        self.meshes.draw(mats)
 
 
 class Meshes(BaseIndexListModel[Mesh]):
@@ -509,6 +510,7 @@ class Meshes(BaseIndexListModel[Mesh]):
         super().__init__()
 
         self.shader = shader
+        self.model = model
 
         # 頂点情報
         self.vertices = np.array(
@@ -521,6 +523,7 @@ class Meshes(BaseIndexListModel[Mesh]):
                         1 - v.uv.y,
                         *(v.extended_uvs[0].vector if len(v.extended_uvs) > 0 else [0, 0]),
                         v.edge_factor,
+                        *v.deform.normalized_deform(),
                     ],
                     dtype=np.float32,
                 )
@@ -578,6 +581,10 @@ class Meshes(BaseIndexListModel[Mesh]):
 
             prev_vertices_count += material.vertices_count
 
+        # ボーンデフォーム行列(ボーン個数分用意)
+        shader.bone_matrix_uniform[True] = [gl.glGetUniformLocation(shader.edge_program, f"boneMatrix[{n}]") for n in range(len(model.bones))]
+        shader.bone_matrix_uniform[False] = [gl.glGetUniformLocation(shader.model_program, f"boneMatrix[{n}]") for n in range(len(model.bones))]
+
         # ---------------------
 
         self.vao = VAO()
@@ -589,6 +596,8 @@ class Meshes(BaseIndexListModel[Mesh]):
                 VsLayout.UV_ID.value: {"size": 2, "offset": 6},
                 VsLayout.EXTEND_UV_ID.value: {"size": 2, "offset": 8},
                 VsLayout.EDGE_ID.value: {"size": 1, "offset": 10},
+                VsLayout.BONE_ID.value: {"size": 4, "offset": 11},
+                VsLayout.WEIGHT_ID.value: {"size": 4, "offset": 15},
             },
         )
 
@@ -597,7 +606,7 @@ class Meshes(BaseIndexListModel[Mesh]):
     def update(self):
         pass
 
-    def draw(self):
+    def draw(self, mats: MMatrix4x4List):
         for mesh in self.data:
             self.vao.bind()
             self.vbo_vertices.set_slot(VsLayout.POSITION_ID)
@@ -605,19 +614,21 @@ class Meshes(BaseIndexListModel[Mesh]):
             self.vbo_vertices.set_slot(VsLayout.UV_ID)
             self.vbo_vertices.set_slot(VsLayout.EXTEND_UV_ID)
             self.vbo_vertices.set_slot(VsLayout.EDGE_ID)
+            self.vbo_vertices.set_slot(VsLayout.BONE_ID)
+            self.vbo_vertices.set_slot(VsLayout.WEIGHT_ID)
             self.ibo_faces.bind()
 
             # FIXME MSAA https://blog.techlab-xe.net/opengl%E3%81%A7msaa/
 
             # モデル描画
             self.shader.use()
-            mesh.draw_model(self.shader, self.ibo_faces)
+            mesh.draw_model(mats, self.shader, self.ibo_faces)
             self.shader.unuse()
 
             if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and mesh.material.diffuse_color.w > 0:
                 # エッジ描画
                 self.shader.use(edge=True)
-                mesh.draw_edge(self.shader, self.ibo_faces)
+                mesh.draw_edge(mats, self.shader, self.ibo_faces)
                 self.shader.unuse()
 
             self.ibo_faces.unbind()

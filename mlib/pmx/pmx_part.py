@@ -95,14 +95,38 @@ class Deform(BaseModel, ABC):
             ilist = np.fromiter(self.indices.tolist() + [0, 0, 0, 0], count=(len(self.indices) + 4))
             wlist = np.fromiter(self.weights.tolist() + [0, 0, 0, 0], count=(len(self.weights) + 4))
             # 正規化
-            wlist /= wlist.sum(axis=0, keepdims=1)
+            wlist /= wlist.sum(axis=0, keepdims=True)
 
             # ウェイトの大きい順に指定個数までを対象とする
             self.indices = ilist[np.argsort(-wlist)][: self.count]
             self.weights = wlist[np.argsort(-wlist)][: self.count]
 
         # ウェイト正規化
-        self.weights /= self.weights.sum(axis=0, keepdims=1)
+        self.weights /= self.weights.sum(axis=0, keepdims=True)
+
+    def normalized_deform(self) -> list:
+        """
+        ウェイト正規化して4つのボーンINDEXとウェイトを返す（合計8個）
+        """
+        # 揃える必要がある場合
+        # 数が足りるよう、かさ増しする
+        ilist = np.fromiter(np.array(self.indices.tolist() + [0, 0, 0, 0]), dtype=np.int32, count=len(self.indices) + 4)
+        wlist = np.fromiter(np.array(self.weights.tolist() + [0, 0, 0, 0]), dtype=np.float64, count=len(self.weights) + 4)
+        # 正規化
+        wlist /= wlist.sum(axis=0, keepdims=True)
+
+        # ウェイトの大きい順に指定個数までを対象とする
+        indices = ilist[np.argsort(-wlist)][:4]
+        weights = wlist[np.argsort(-wlist)][:4]
+
+        # ウェイト正規化
+        weights /= weights.sum(axis=0, keepdims=True)
+
+        normalized_deform = []
+        normalized_deform.extend(indices.tolist())
+        normalized_deform.extend(weights.tolist())
+
+        return normalized_deform
 
     @abstractmethod
     def type(self) -> int:

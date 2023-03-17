@@ -1,6 +1,6 @@
 # version 440
 
-uniform mat4 modelMatrix;
+uniform mat4 boneMatrix;
 
 uniform int useTexture;
 uniform sampler2D textureSampler;

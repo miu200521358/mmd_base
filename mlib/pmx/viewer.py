@@ -5,7 +5,7 @@ from wx import glcanvas
 from PIL import Image
 import os
 
-from mlib.base.math import MQuaternion, MVector3D
+from mlib.base.math import MQuaternion, MVector3D, MMatrix4x4List
 from mlib.pmx.pmx_reader import PmxReader
 from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_reader import VmdReader
@@ -66,8 +66,13 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.shader.update_camera(is_edge)
             self.shader.unuse()
 
+        if self.motion and False:
+            bone_matrixes = self.motion.bones.get_matrix_by_indexes([0], self.model.bone_trees, self.model)
+        else:
+            mats = MMatrix4x4List(1, len(self.model.bones))
+
         if self.model:
-            self.model.draw()
+            self.model.draw(mats)
 
         self.SwapBuffers()
         self.Refresh(False)

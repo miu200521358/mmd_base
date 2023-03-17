@@ -5,9 +5,11 @@ in layout(location = %d) vec3 normal;
 in layout(location = %d) vec2 uv;
 in layout(location = %d) vec2 extendUv;
 in layout(location = %d) float vertexEdge;
+in layout(location = %d) vec4 boneIdxs;
+in layout(location = %d) vec4 weights;
 
 uniform vec3 cameraPos;
-uniform mat4 modelMatrix;
+uniform mat4 boneMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;
 
@@ -36,7 +38,8 @@ void main() {
     gl_Position = modelViewProjectionMatrix * vertexGLPosition;
 
     // 頂点法線
-    vetexNormal = (modelMatrix * normalize(vertexGLNormal)).xyz;
+    // vetexNormal = (boneMatrix * normalize(vertexGLNormal)).xyz;
+    vetexNormal = (normalize(vertexGLNormal)).xyz;
 
     // 頂点色設定
     vertexColor = clamp(diffuse, 0.0, 1.0);
@@ -65,7 +68,7 @@ void main() {
     }
 
     // カメラとの相対位置
-    vec3 eye = cameraPos - (modelMatrix * vertexGLPosition).xyz;
+    vec3 eye = cameraPos - (boneMatrix * vertexGLPosition).xyz;
 
     // スペキュラ色計算
     vec3 HalfVector = normalize( normalize(eye) + -lightDirection );

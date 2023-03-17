@@ -16,6 +16,8 @@ class VsLayout(IntEnum):
     UV_ID = 2
     EXTEND_UV_ID = 3
     EDGE_ID = 4
+    BONE_ID = 5
+    WEIGHT_ID = 6
 
 
 class MShader:
@@ -109,6 +111,8 @@ class MShader:
             VsLayout.UV_ID.value,
             VsLayout.EXTEND_UV_ID.value,
             VsLayout.EDGE_ID.value,
+            VsLayout.BONE_ID.value,
+            VsLayout.WEIGHT_ID.value,
         )
 
         fragments_shader_src = Path(os.path.join(os.path.dirname(__file__), "glsl", fragments_shader_name)).read_text(encoding="utf-8")
@@ -143,9 +147,6 @@ class MShader:
             self.light_ambient.z,
             1,
         )
-
-        # ボーンデフォーム行列
-        self.bone_matrix_uniform[edge] = gl.glGetUniformLocation(program, "modelMatrix")
 
         # モデルビュー行列
         self.model_view_matrix_uniform[edge] = gl.glGetUniformLocation(program, "modelViewMatrix")
