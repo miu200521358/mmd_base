@@ -357,15 +357,15 @@ class Bones(BaseIndexNameListModel[Bone]):
         """
         bone = self[bone_index]
 
-        # 自身の姿勢をかける
-        # 逆BOf行列(初期姿勢行列)
-        matrix = bone.init_matrix.vector @ matrix
-        # 座標変換行列
-        matrix = matrixes.vector[0, bone_index] @ matrix
-
         if bone.index >= 0 and bone.parent_index in self:
             # 親ボーンがある場合、遡る
-            return self.get_mesh_matrix(matrixes, bone.parent_index, matrix)
+            matrix = self.get_mesh_matrix(matrixes, bone.parent_index, matrix)
+
+        # 自身の姿勢をかける
+        # 逆BOf行列(初期姿勢行列)
+        matrix = matrix @ bone.init_matrix.vector
+        # 座標変換行列
+        matrix = matrix @ matrixes.vector[0, bone_index]
 
         return matrix
 

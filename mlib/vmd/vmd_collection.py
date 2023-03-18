@@ -226,7 +226,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             # ボーン変形行列を求める
             # BOf行列: 自身のボーンのボーンオフセット行列
             matrix = model.bones.get_mesh_matrix(matrixes, m, np.eye(4))
-            matrix = bone.offset_matrix.copy().vector @ matrix
+            matrix = matrix @ bone.offset_matrix.copy().vector
             mesh_matrixes.append(matrix)
 
         return mesh_matrixes
