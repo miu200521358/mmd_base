@@ -41,9 +41,10 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         self.motion = VmdReader().read_by_filepath(vmd_path) if vmd_path else VmdMotion()
         self.bone_matrixes = [np.eye(4) for _ in range(len(self.model.bones))]
+        self.frame = 0
 
         if self.motion:
-            self.bone_matrixes = self.motion.bones.get_mesh_matrixes(0, self.model)
+            self.bone_matrixes = self.motion.bones.get_mesh_matrixes(self.frame, self.model)
 
         self.is_drag = False
 
@@ -140,9 +141,25 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.shader.INITIAL_CAMERA_POSITION_Y * 3,
                 -0.1,
             )
+        elif keycode == wx.WXK_NUMPAD3:
+            # キーフレを進める
+            self.on_frame_forward(event)
+        elif keycode == wx.WXK_NUMPAD1:
+            # キーフレを戻す
+            self.on_frame_back(event)
         elif keycode == wx.WXK_NUMPAD7:
             # キャプチャ
             self.on_capture(event)
+
+    def on_frame_forward(self, event: wx.Event):
+        self.frame += 1
+        if self.motion:
+            self.bone_matrixes = self.motion.bones.get_mesh_matrixes(self.frame, self.model)
+
+    def on_frame_back(self, event: wx.Event):
+        self.frame = max(0, self.frame - 1)
+        if self.motion:
+            self.bone_matrixes = self.motion.bones.get_mesh_matrixes(self.frame, self.model)
 
     def on_capture(self, event: wx.Event):
         # キャプチャ

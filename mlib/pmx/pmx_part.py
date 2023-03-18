@@ -846,9 +846,7 @@ class Bone(BaseIndexNameModel):
         if self.bone_offset_matrix != MMatrix4x4():
             return self.bone_offset_matrix
 
-        mat = MMatrix4x4()
-        mat.translate(self.position)
-        self.bone_offset_matrix = mat.inverse()
+        self.bone_offset_matrix = self.init_matrix.inverse()
 
         return self.bone_offset_matrix
 
