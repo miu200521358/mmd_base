@@ -20,6 +20,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.size = wx.Size(width, height)
         self.last_pos = wx.Point(0, 0)
         self.now_pos = wx.Point(0, 0)
+
         self.SetCurrent(self.context)
         gl.glClearColor(0.7, 0.7, 0.7, 1)
 
@@ -58,15 +59,22 @@ class PmxCanvas(glcanvas.GLCanvas):
         event.Skip()
 
     def on_paint(self, event: wx.Event):
-        wx.PaintDC(self)
-        self.on_draw(event)
+        self.draw(event)
 
-    def reset(self):
-        pass
+    def reset(self, event: wx.Event):
+        self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
+        self.shader.look_at_center = MVector3D(0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0)
+        self.shader.camera_rotation = MQuaternion()
+        self.shader.camera_position = MVector3D(
+            0,
+            self.shader.INITIAL_CAMERA_POSITION_Y,
+            self.shader.INITIAL_CAMERA_POSITION_Z,
+        )
+        self.draw(event)
 
-    def on_draw(self, event: wx.Event):
-        if self.model:
-            self.model.update()
+    def draw(self, event: wx.Event):
+        self.SetCurrent(self.context)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
         for is_edge in [False, True]:
             self.shader.use(is_edge)
@@ -74,10 +82,11 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.shader.unuse()
 
         if self.model:
+            self.shader.msaa.bind()
             self.model.draw(self.bone_matrixes)
+            self.shader.msaa.unbind()
 
         self.SwapBuffers()
-        self.Refresh(False)
 
     def on_key_down(self, event: wx.Event):
         keycode = event.GetKeyCode()
@@ -150,18 +159,22 @@ class PmxCanvas(glcanvas.GLCanvas):
         elif keycode == wx.WXK_NUMPAD7:
             # キャプチャ
             self.on_capture(event)
+        else:
+            event.Skip()
+        self.draw(event)
 
     def on_frame_forward(self, event: wx.Event):
         self.frame += 1
-        self.change_motion()
+        self.change_motion(event)
 
     def on_frame_back(self, event: wx.Event):
         self.frame = max(0, self.frame - 1)
-        self.change_motion()
+        self.change_motion(event)
 
-    def change_motion(self):
+    def change_motion(self, event: wx.Event):
         if self.motion:
             self.bone_matrixes = self.motion.bones.get_mesh_matrixes(self.frame, self.model)
+            self.draw(event)
 
     def on_capture(self, event: wx.Event):
         # キャプチャ
@@ -201,9 +214,11 @@ class PmxCanvas(glcanvas.GLCanvas):
             elif event.RightIsDown():
                 self.shader.camera_rotation *= MQuaternion.from_euler_degrees(y * 10, -x * 10, 0)
             self.last_pos = self.now_pos
+            self.draw(event)
 
     def on_mouse_wheel(self, event: wx.Event):
         if event.GetWheelRotation() < 0:
             self.shader.vertical_degrees += 1.0
         else:
             self.shader.vertical_degrees = max(1.0, self.shader.vertical_degrees - 1.0)
+        self.draw(event)

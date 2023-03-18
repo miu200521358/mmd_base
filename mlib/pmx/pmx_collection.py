@@ -545,11 +545,6 @@ class PmxModel(BaseHashModel):
 
         self.meshes = Meshes(shader, self)
 
-    def update(self):
-        if not self.for_draw:
-            return
-        self.meshes.update()
-
     def draw(self, mats: list[np.ndarray]):
         if not self.for_draw or not self.meshes:
             return
@@ -679,9 +674,6 @@ class Meshes(BaseIndexListModel[Mesh]):
 
         self.ibo_faces = IBO(self.faces)
 
-    def update(self):
-        pass
-
     def draw(self, mats: list[np.ndarray]):
         for mesh in self.data:
             self.vao.bind()
@@ -694,7 +686,6 @@ class Meshes(BaseIndexListModel[Mesh]):
             self.vbo_vertices.set_slot(VsLayout.WEIGHT_ID)
             self.ibo_faces.bind()
 
-            # FIXME MSAA https://blog.techlab-xe.net/opengl%E3%81%A7msaa/
             # モデル描画
             self.shader.use()
             mesh.draw_model(mats, self.shader, self.ibo_faces)
@@ -705,6 +696,8 @@ class Meshes(BaseIndexListModel[Mesh]):
                 self.shader.use(edge=True)
                 mesh.draw_edge(mats, self.shader, self.ibo_faces)
                 self.shader.unuse()
+
+            # ---------------
 
             self.ibo_faces.unbind()
             self.vbo_vertices.unbind()

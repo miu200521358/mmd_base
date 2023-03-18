@@ -47,7 +47,7 @@ class PmxPanel(wx.Panel):
 
     def on_change_frame(self, event: wx.Event):
         self.canvas.frame = self.frame_slider.GetValue()
-        self.canvas.change_motion()
+        self.canvas.change_motion(event)
 
     def fit(self):
         self.SetSizer(self.sizer)
@@ -55,8 +55,7 @@ class PmxPanel(wx.Panel):
         self.sizer.Fit(self.parent)
 
     def reset(self, event: wx.Event):
-        self.canvas.reset()
-        self.canvas.on_draw(event)
+        self.canvas.reset(event)
 
     def capture(self, event: wx.Event):
         self.canvas.on_capture(event)

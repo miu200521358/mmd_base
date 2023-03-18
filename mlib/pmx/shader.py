@@ -20,6 +20,57 @@ class VsLayout(IntEnum):
     WEIGHT_ID = 6
 
 
+class Msaa:
+    """
+    MSAA(アンチエイリアス)
+    https://blog.techlab-xe.net/opengl%E3%81%A7msaa/
+    """
+
+    def __init__(self, width: int, height: int) -> None:
+        # マルチサンプルのテクスチャを生成する
+        self.width = width
+        self.height = height
+        self.msaa_samples = 4
+
+        # MSAA用のフレームバッファオブジェクトを作成する
+        self.fbo_msaa = gl.glGenFramebuffers(1)
+        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.fbo_msaa)
+
+        # カラーバッファと深度バッファをMSAAで使うテクスチャに割り当てる
+        self.texture_msaa = gl.glGenTextures(1)
+        gl.glBindTexture(gl.GL_TEXTURE_2D_MULTISAMPLE, self.texture_msaa)
+        gl.glTexImage2DMultisample(gl.GL_TEXTURE_2D_MULTISAMPLE, self.msaa_samples, gl.GL_RGBA8, self.width, self.height, True)
+        gl.glFramebufferTexture2D(gl.GL_FRAMEBUFFER, gl.GL_COLOR_ATTACHMENT0, gl.GL_TEXTURE_2D_MULTISAMPLE, self.texture_msaa, 0)
+
+        self.rbo_msaa_depth = gl.glGenRenderbuffers(1)
+        gl.glBindRenderbuffer(gl.GL_RENDERBUFFER, self.rbo_msaa_depth)
+        gl.glRenderbufferStorageMultisample(gl.GL_RENDERBUFFER, self.msaa_samples, gl.GL_DEPTH_COMPONENT, self.width, self.height)
+        gl.glFramebufferRenderbuffer(gl.GL_FRAMEBUFFER, gl.GL_DEPTH_ATTACHMENT, gl.GL_RENDERBUFFER, self.rbo_msaa_depth)
+
+    def bind(self):
+        # フレームバッファオブジェクトをバインドする
+        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.fbo_msaa)
+
+        # サンプル数を設定する
+        gl.glEnable(gl.GL_MULTISAMPLE)
+
+    def unbind(self):
+        # MSAAのフレームバッファオブジェクトの内容を画面に描画する
+        gl.glBindFramebuffer(gl.GL_READ_FRAMEBUFFER, self.fbo_msaa)
+        gl.glBindFramebuffer(gl.GL_DRAW_FRAMEBUFFER, 0)
+
+        # 画面をクリアする
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+
+        # フレームバッファオブジェクトの内容を画面に描画する
+        gl.glBlitFramebuffer(0, 0, self.width, self.height, 0, 0, self.width, self.height, gl.GL_COLOR_BUFFER_BIT, gl.GL_NEAREST)
+
+        # フレームバッファオブジェクトのバインドを解除する
+        # gl.glBindRenderbuffer(gl.GL_RENDERBUFFER, 0)
+        # gl.glBindTexture(gl.GL_TEXTURE_2D_MULTISAMPLE, 0)
+        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
+
+
 class MShader:
     INITIAL_VERTICAL_DEGREES = 45.0
     INITIAL_CAMERA_POSITION_Y = 15.0
@@ -91,6 +142,12 @@ class MShader:
 
     def __del__(self) -> None:
         gl.glDeleteProgram(self.model_program)
+        gl.glDeleteProgram(self.edge_program)
+
+        # # フレームバッファオブジェクトとテクスチャを削除する
+        # gl.glDeleteTextures(self.texture_msaa)
+        # gl.glDeleteRenderbuffers(self.rbo_msaa_depth)
+        # gl.glDeleteFramebuffers(1, [self.fbo_msaa])
 
     def load_shader(self, src: str, shader_type: int) -> int:
         shader = gl.glCreateShader(shader_type)
@@ -155,6 +212,8 @@ class MShader:
         # MVP行列
         self.model_view_projection_matrix_uniform[edge] = gl.glGetUniformLocation(program, "modelViewProjectionMatrix")
 
+        self.msaa = Msaa(self.width, self.height)
+
         if not edge:
             # モデルシェーダーへの割り当て
 
@@ -195,9 +254,6 @@ class MShader:
             self.edge_size_uniform[edge] = gl.glGetUniformLocation(program, "edgeSize")
 
     def update_camera(self, edge=False) -> None:
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
-        gl.glClearColor(0.7, 0.7, 0.7, 1)
-
         # 視野領域の決定
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
