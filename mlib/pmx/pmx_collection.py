@@ -564,11 +564,11 @@ class PmxModel(BaseHashModel):
 
             # 逆オフセット行列は親ボーンからの相対位置分を戻す
             bone.init_matrix = MMatrix4x4()
-            bone.init_matrix.translate(self.bones.get_parent_relative_position(bone.index))
+            bone.init_matrix.translate(self.bones.get_parent_relative_position(bone.index) * np.array([-1, 1, 1]))
 
             # オフセット行列は自身の位置を原点に戻す行列
             offset_mat = MMatrix4x4()
-            offset_mat.translate(bone.position)
+            offset_mat.translate(bone.position * np.array([-1, 1, 1]))
             bone.offset_matrix = offset_mat.inverse()
 
 
