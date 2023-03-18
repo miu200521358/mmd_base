@@ -35,10 +35,19 @@ class PmxPanel(wx.Panel):
         self.capture_btn.Bind(wx.EVT_BUTTON, self.capture)
         self.btn_sizer.Add(self.capture_btn, 0, wx.ALL, 5)
 
+        # キーフレ
+        self.frame_slider = wx.Slider(self, wx.ID_ANY, value=0, minValue=0, maxValue=7000, pos=wx.DefaultPosition, size=wx.Size(300, 50))
+        self.frame_slider.Bind(wx.EVT_SLIDER, self.on_change_frame)
+        self.btn_sizer.Add(self.frame_slider, 0, wx.EXPAND | wx.ALL, 5)
+
         self.sizer.Add(self.btn_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
         self.Layout()
         self.fit()
+
+    def on_change_frame(self, event: wx.Event):
+        self.canvas.frame = self.frame_slider.GetValue()
+        self.canvas.change_motion()
 
     def fit(self):
         self.SetSizer(self.sizer)

@@ -153,11 +153,13 @@ class PmxCanvas(glcanvas.GLCanvas):
 
     def on_frame_forward(self, event: wx.Event):
         self.frame += 1
-        if self.motion:
-            self.bone_matrixes = self.motion.bones.get_mesh_matrixes(self.frame, self.model)
+        self.change_motion()
 
     def on_frame_back(self, event: wx.Event):
         self.frame = max(0, self.frame - 1)
+        self.change_motion()
+
+    def change_motion(self):
         if self.motion:
             self.bone_matrixes = self.motion.bones.get_mesh_matrixes(self.frame, self.model)
 

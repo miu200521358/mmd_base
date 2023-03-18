@@ -30,7 +30,6 @@ out vec2 sphereUv;
 out vec3 eye;
 
 void main() {
-    vec4 vertexGLNormal = vec4(-normal.x, normal.y, normal.z, 1.0);
 
     // 各頂点で使用されるボーン変形行列を計算する
     mat4 boneTransformMatrix = mat4(0.0);
@@ -47,7 +46,10 @@ void main() {
     gl_Position = modelViewProjectionMatrix * transformPosition;
 
     // 頂点法線
-    vetexNormal = normalize(boneTransformMatrix * normalize(vertexGLNormal)).xyz;
+    vec4 vertexGLNormal = vec4(normal.x, normal.y, normal.z, 1.0);
+    vec4 transformNormal = boneTransformMatrix * normalize(vertexGLNormal);
+    transformNormal.x *= -1;
+    vetexNormal = normalize(transformNormal).xyz;
 
     // 頂点色設定
     vertexColor = clamp(diffuse, 0.0, 1.0);
@@ -76,7 +78,7 @@ void main() {
     }
 
     // カメラとの相対位置
-    vec3 eye = cameraPos - (boneTransformMatrix * vertexGLPosition).xyz;
+    vec3 eye = cameraPos - transformPosition.xyz;
 
     // スペキュラ色計算
     vec3 HalfVector = normalize( normalize(eye) + -lightDirection );
