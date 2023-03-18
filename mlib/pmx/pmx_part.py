@@ -7,6 +7,7 @@ import numpy as np
 import OpenGL.GL as gl
 from PIL import Image, ImageOps
 
+from mlib.base.math import MMatrix4x4
 from mlib.base.base import BaseModel
 from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
@@ -760,57 +761,96 @@ class Bone(BaseIndexNameModel):
         self.correct_local_z_vector = self.local_x_vector.cross(self.local_y_vector)
         self.local_axis = MVector3D()
 
+        self.bone_offset_matrix = MMatrix4x4()
+        self.bone_init_matrix = MMatrix4x4()
+
+    @property
     def is_tail_bone(self) -> bool:
         """表示先がボーンであるか"""
         return BoneFlg.TAIL_IS_BONE in self.bone_flg
 
+    @property
     def can_rotate(self) -> bool:
         """回転可能であるか"""
         return BoneFlg.CAN_ROTATE in self.bone_flg
 
+    @property
     def can_translate(self) -> bool:
         """移動可能であるか"""
         return BoneFlg.CAN_TRANSLATE in self.bone_flg
 
+    @property
     def is_visible(self) -> bool:
         """表示であるか"""
         return BoneFlg.IS_VISIBLE in self.bone_flg
 
+    @property
     def can_manipulate(self) -> bool:
         """操作可であるか"""
         return BoneFlg.CAN_MANIPULATE in self.bone_flg
 
+    @property
     def is_ik(self) -> bool:
         """IKであるか"""
         return BoneFlg.IS_IK in self.bone_flg
 
+    @property
     def is_external_local(self) -> bool:
         """ローカル付与であるか"""
         return BoneFlg.IS_EXTERNAL_LOCAL in self.bone_flg
 
+    @property
     def is_external_rotation(self) -> bool:
         """回転付与であるか"""
         return BoneFlg.IS_EXTERNAL_ROTATION in self.bone_flg
 
+    @property
     def is_external_translation(self) -> bool:
         """移動付与であるか"""
         return BoneFlg.IS_EXTERNAL_TRANSLATION in self.bone_flg
 
+    @property
     def has_fixed_axis(self) -> bool:
         """軸固定であるか"""
         return BoneFlg.HAS_FIXED_AXIS in self.bone_flg
 
+    @property
     def has_local_coordinate(self) -> bool:
         """ローカル軸を持つか"""
         return BoneFlg.HAS_LOCAL_COORDINATE in self.bone_flg
 
+    @property
     def is_after_physics_deform(self) -> bool:
         """物理後変形であるか"""
         return BoneFlg.IS_AFTER_PHYSICS_DEFORM in self.bone_flg
 
+    @property
     def is_external_parent_deform(self) -> bool:
         """外部親変形であるか"""
         return BoneFlg.IS_EXTERNAL_PARENT_DEFORM in self.bone_flg
+
+    @property
+    def init_matrix(self) -> MMatrix4x4:
+        """ボーン初期姿勢行列"""
+        if self.bone_init_matrix != MMatrix4x4():
+            return self.bone_init_matrix
+
+        self.bone_init_matrix = MMatrix4x4()
+        self.bone_init_matrix.translate(self.position)
+
+        return self.bone_init_matrix
+
+    @property
+    def offset_matrix(self) -> MMatrix4x4:
+        """ボーンオフセット行列"""
+        if self.bone_offset_matrix != MMatrix4x4():
+            return self.bone_offset_matrix
+
+        mat = MMatrix4x4()
+        mat.translate(self.position)
+        self.bone_offset_matrix = mat.inverse()
+
+        return self.bone_offset_matrix
 
 
 class MorphOffset(BaseModel):

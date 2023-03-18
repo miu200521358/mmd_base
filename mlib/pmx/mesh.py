@@ -211,7 +211,7 @@ class Mesh(BaseIndexModel):
         # ボーンデフォーム設定
         for n, mat in enumerate(mats):
             gl.glUniformMatrix4fv(
-                shader.bone_matrix_uniform[False][n],
+                shader.bone_matrix_uniform[True][n],
                 1,
                 gl.GL_FALSE,
                 mat.vector,

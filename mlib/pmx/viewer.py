@@ -9,6 +9,7 @@ from mlib.base.math import MQuaternion, MVector3D, MMatrix4x4
 from mlib.pmx.pmx_reader import PmxReader
 from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_reader import VmdReader
+from mlib.vmd.vmd_collection import VmdMotion
 
 
 class PmxCanvas(glcanvas.GLCanvas):
@@ -37,7 +38,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.shader = MShader(width, height, len(self.model.bones))
         self.model.init_draw(self.shader)
 
-        self.motion = VmdReader().read_by_filepath(vmd_path) if vmd_path else None
+        self.motion = VmdReader().read_by_filepath(vmd_path) if vmd_path else VmdMotion()
 
         self.is_drag = False
 
@@ -70,7 +71,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         if self.motion:
             bone_matrixes = self.motion.bones.get_matrix_by_indexes([0], self.model.bone_trees.gets(self.model.tail_bone_names), self.model)
             for bone in self.model.bones:
-                mats[bone.index] = bone_matrixes[0][bone.name].matrix
+                mats[bone.index] = bone_matrixes[0][bone.name].bone_matrix
 
         if self.model:
             self.model.draw(mats)

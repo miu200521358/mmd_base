@@ -332,7 +332,7 @@ class PmxWriter(BaseModel):
             # ボーンフラグ
             fout.write(struct.pack(PmxBinaryType.SHORT.value, bone.bone_flg.value))
 
-            if bone.is_tail_bone():
+            if bone.is_tail_bone:
                 # 接続先ボーンのボーンIndex
                 self.write_number(fout, bone_idx_type, bone.tail_index)
             else:
@@ -341,18 +341,18 @@ class PmxWriter(BaseModel):
                 self.write_number(fout, PmxBinaryType.FLOAT, float(bone.tail_position.y))
                 self.write_number(fout, PmxBinaryType.FLOAT, float(bone.tail_position.z))
 
-            if bone.is_external_translation() or bone.is_external_rotation():
+            if bone.is_external_translation or bone.is_external_rotation:
                 # 付与親指定ありの場合
                 self.write_number(fout, bone_idx_type, bone.effect_index)
                 self.write_number(fout, PmxBinaryType.FLOAT, bone.effect_factor)
 
-            if bone.has_fixed_axis():
+            if bone.has_fixed_axis:
                 # 軸制限先
                 self.write_number(fout, PmxBinaryType.FLOAT, float(bone.fixed_axis.x))
                 self.write_number(fout, PmxBinaryType.FLOAT, float(bone.fixed_axis.y))
                 self.write_number(fout, PmxBinaryType.FLOAT, float(bone.fixed_axis.z))
 
-            if bone.has_local_coordinate():
+            if bone.has_local_coordinate:
                 # ローカルX
                 self.write_number(fout, PmxBinaryType.FLOAT, float(bone.local_x_vector.x))
                 self.write_number(fout, PmxBinaryType.FLOAT, float(bone.local_x_vector.y))
@@ -362,10 +362,10 @@ class PmxWriter(BaseModel):
                 self.write_number(fout, PmxBinaryType.FLOAT, float(bone.local_z_vector.y))
                 self.write_number(fout, PmxBinaryType.FLOAT, float(bone.local_z_vector.z))
 
-            if bone.is_external_parent_deform():
+            if bone.is_external_parent_deform:
                 self.write_number(fout, PmxBinaryType.INT, bone.external_key)
 
-            if bone.is_ik():
+            if bone.is_ik:
                 # IKボーン
                 # n  : ボーンIndexサイズ  | IKターゲットボーンのボーンIndex
                 self.write_number(fout, bone_idx_type, bone.ik.bone_index)

@@ -131,8 +131,20 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
 
 
 class VmdBoneFrameTree:
-    def __init__(self, matrix: np.ndarray, position: np.ndarray) -> None:
-        self.matrix = MMatrix4x4(matrix)
+    def __init__(self, global_matrix: np.ndarray, local_matrix: np.ndarray, bone_matrix: np.ndarray, position: np.ndarray) -> None:
+        """
+        ボーン変形結果
+
+        Parameters
+        ----------
+        global_matrix : ワールド座標行列
+        local_matrix : 親ボーンから見たローカル座標行列
+        bone_matrix : ボーン変形行列
+        position : ボーン変形後のグローバル位置
+        """
+        self.global_matrix = MMatrix4x4(global_matrix)
+        self.local_matrix = MMatrix4x4(local_matrix)
+        self.bone_matrix = MMatrix4x4(bone_matrix)
         self.position = MVector3D(*position)
 
 
@@ -147,12 +159,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
     def create_inner(self, name: str):
         return VmdBoneNameFrames(name=name)
 
-    def get_matrix_by_indexes(
-        self,
-        fnos: list[int],
-        bone_trees: list[BoneTree],
-        model: PmxModel,
-    ) -> dict[int, dict[str, VmdBoneFrameTree]]:
+    def get_matrix_by_indexes(self, fnos: list[int], bone_trees: list[BoneTree], model: PmxModel) -> dict[int, dict[str, VmdBoneFrameTree]]:
         """
         指定されたキーフレ番号の行列計算結果を返す
 
@@ -162,10 +169,12 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             キーフレ番号のリスト
         bone_trees: list[BoneTree]
             ボーンツリーリスト
+        model: PmxModel
+            モデルデータ
 
         Returns
         -------
-        行列辞書（キー：fno,ボーン名、値：行列リスト）
+        行列辞書（キー: fno,ボーン名、値：行列リスト）
         """
         bone_matrixes: dict[int, dict[str, VmdBoneFrameTree]] = {}
         for bone_tree in bone_trees:
@@ -175,21 +184,29 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             qqs = np.full((row, col), MQuaternion())
             for n, fno in enumerate(fnos):
                 for m, bone in enumerate(bone_tree.data.values()):
-                    # ボーンの親から見た相対位置を求める
-                    poses[n, m] = self.get_relative_position(bone, fno, model).vector
+                    # ボーンの親から見た相対位置
+                    poses[n, m] = model.bones.get_parent_relative_position(bone.index).vector
+                    poses[n, m] += self.get_position(bone, fno, model).vector
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
                     qqs[n, m] = self.get_rotation(bone, fno, model, append_ik=True).to_matrix4x4().vector
+            # 親ボーンから見たローカル座標行列
             matrixes = MMatrix4x4List(row, col)
             matrixes.translate(poses.tolist())
             matrixes.rotate(qqs.tolist())
-            result_mats = matrixes.matmul_cols()
-            positions = result_mats.to_positions()
+            # グローバル座標行列
+            global_mats = matrixes.matmul_cols()
+            # グローバル位置
+            positions = global_mats.to_positions()
+            # ボーン変形行列
+            bone_mats = matrixes.vector @ global_mats.inverse().vector
 
             for n, fno in enumerate(fnos):
                 if fno not in bone_matrixes:
                     bone_matrixes[fno] = {}
                 for m, bone in enumerate(bone_tree.data.values()):
-                    bone_matrixes[fno][bone.name] = VmdBoneFrameTree(matrix=result_mats.vector[n, m], position=positions[n, m])
+                    bone_matrixes[fno][bone.name] = VmdBoneFrameTree(
+                        global_matrix=global_mats.vector[n, m], local_matrix=matrixes.vector[n, m], bone_matrix=bone_mats[n, m], position=positions[n, m]
+                    )
 
         return bone_matrixes
 
@@ -199,9 +216,9 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
 
         return self.data[name]
 
-    def get_relative_position(self, bone: Bone, fno: int, model: PmxModel) -> MVector3D:
+    def get_position(self, bone: Bone, fno: int, model: PmxModel) -> MVector3D:
         """
-        該当キーフレにおけるボーンの相対位置
+        該当キーフレにおけるボーンの移動位置
 
         Parameters
         ----------
@@ -217,12 +234,8 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         MVector3D
             相対位置
         """
-        # 自身の相対位置
-        pos = (
-            self[bone.name][fno].position
-            + bone.position
-            - (MVector3D() if bone.index < 0 or bone.parent_index not in model.bones else model.bones[bone.parent_index].position)
-        )
+        # 自身の位置
+        pos = self[bone.name][fno].position
 
         # 付与親を加味して返す
         return self.get_effect_position(bone, fno, pos, model)
@@ -253,14 +266,15 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         MVector3D
             計算結果
         """
-        if bone.is_external_translation() and bone.effect_index in model.bones:
+        if bone.is_external_translation and bone.effect_index in model.bones:
             if bone.effect_factor == 0:
                 # 付与率が0の場合、常に0になる
                 return MVector3D()
             else:
                 # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
                 effect_bone = model.bones[bone.effect_index]
-                effect_pos = self.get_relative_position(effect_bone, fno, model)
+                effect_pos = model.bones.get_parent_relative_position(bone.effect_index)
+                effect_pos += self.get_position(effect_bone, fno, model)
                 pos *= effect_pos
 
         return pos
@@ -328,7 +342,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         MQuaternion
             計算結果
         """
-        if bone.is_external_rotation() and bone.effect_index in model.bones:
+        if bone.is_external_rotation and bone.effect_index in model.bones:
             if bone.effect_factor == 0:
                 # 付与率が0の場合、常に0になる
                 return MQuaternion()
@@ -425,7 +439,8 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     for m, it_bone in enumerate(effector_bone_tree):
                         # ボーンの親から見た相対位置を求める
                         if it_bone.index not in bone_positions:
-                            bone_positions[it_bone.index] = self.get_relative_position(it_bone, fno, model)
+                            bone_positions[it_bone.index] = model.bones.get_parent_relative_position(it_bone.index)
+                            bone_positions[it_bone.index] += self.get_position(it_bone, fno, model)
                         poses[0, m] = bone_positions[it_bone.index].vector
                         # ボーンの回転
                         qqs[0, m] = self.get_rotation(it_bone, fno, model, append_ik=False).to_matrix4x4().vector
@@ -446,7 +461,8 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     for m, it_bone in enumerate(link_bone_tree):
                         # ボーンの親から見た相対位置を求める
                         if it_bone.index not in bone_positions:
-                            bone_positions[it_bone.index] = self.get_relative_position(it_bone, fno, model)
+                            bone_positions[it_bone.index] = model.bones.get_parent_relative_position(it_bone.index)
+                            bone_positions[it_bone.index] += self.get_position(it_bone, fno, model)
                         poses[0, m] = bone_positions[it_bone.index].vector
                         # ボーンの回転
                         qqs[0, m] = self.get_rotation(it_bone, fno, model, append_ik=False).to_matrix4x4().vector
@@ -505,7 +521,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     mat = MMatrix4x4()
                     mat.rotate(link_bf.ik_rotation or MQuaternion())
 
-                    if link_bone.has_local_coordinate():
+                    if link_bone.has_local_coordinate:
                         # ローカル軸を向く
                         mat.rotate(
                             MQuaternion.from_axes(
@@ -569,7 +585,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         MQuaternion
             軸制限された回転
         """
-        if bone.has_fixed_axis():
+        if bone.has_fixed_axis:
             qq_axis = MVector3D(qq.x, qq.y, qq.z)
             theta = acos(max(-1, min(1, bone.fixed_axis.dot(qq_axis))))
 

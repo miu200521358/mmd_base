@@ -16,7 +16,6 @@ from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
     Bone,
     DisplaySlot,
-    DrawFlg,
     Face,
     Joint,
     Material,
@@ -228,7 +227,7 @@ class Bones(BaseIndexNameListModel[Bone]):
 
     def append(self, v: Bone) -> None:
         super().append(v)
-        if v.is_ik() and v.ik:
+        if v.is_ik and v.ik:
             # IKボーンの場合
             for link in v.ik.links:
                 if link.bone_index in self:
@@ -321,10 +320,10 @@ class Bones(BaseIndexNameListModel[Bone]):
         to_pos = MVector3D()
 
         from_pos = bone.position
-        if bone.is_tail_bone() and bone.tail_position != MVector3D():
+        if bone.is_tail_bone and bone.tail_position != MVector3D():
             # 表示先が相対パスの場合、保持
             to_pos = from_pos + bone.tail_position
-        elif bone.is_tail_bone() and bone.tail_index >= 0 and bone.tail_index in self:
+        elif bone.is_tail_bone and bone.tail_index >= 0 and bone.tail_index in self:
             # 表示先が指定されているの場合、保持
             to_pos = self[bone.tail_index].position
         else:
@@ -333,6 +332,11 @@ class Bones(BaseIndexNameListModel[Bone]):
             to_pos = self[bone_index].position
 
         return to_pos
+
+    def get_parent_relative_position(self, bone_index: int) -> MVector3D:
+        """親ボーンから見た相対位置"""
+        bone = self[bone_index]
+        return bone.position - (MVector3D() if bone.index < 0 or bone.parent_index not in self else self[bone.parent_index].position)
 
     def get_local_x_axis(self, bone_index: int) -> MVector3D:
         """
@@ -352,11 +356,11 @@ class Bones(BaseIndexNameListModel[Bone]):
 
         bone = self[bone_index]
 
-        if bone.is_ik() and ("足ＩＫ" in bone.name or "つま先ＩＫ" in bone.name):
+        if bone.is_ik and ("足ＩＫ" in bone.name or "つま先ＩＫ" in bone.name):
             # 足IK系は固定
             return MVector3D(0, 1, 0)
 
-        if bone.has_fixed_axis() and bone.fixed_axis:
+        if bone.has_fixed_axis and bone.fixed_axis:
             # 軸制限がある場合、親からの向きを保持
             return bone.fixed_axis.normalized()
 
@@ -641,11 +645,11 @@ class Meshes(BaseIndexListModel[Mesh]):
             mesh.draw_model(mats, self.shader, self.ibo_faces)
             self.shader.unuse()
 
-            if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and mesh.material.diffuse_color.w > 0:
-                # エッジ描画
-                self.shader.use(edge=True)
-                mesh.draw_edge(mats, self.shader, self.ibo_faces)
-                self.shader.unuse()
+            # if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and mesh.material.diffuse_color.w > 0:
+            #     # エッジ描画
+            #     self.shader.use(edge=True)
+            #     mesh.draw_edge(mats, self.shader, self.ibo_faces)
+            #     self.shader.unuse()
 
             self.ibo_faces.unbind()
             self.vbo_vertices.unbind()
