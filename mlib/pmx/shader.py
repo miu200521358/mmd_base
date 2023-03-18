@@ -50,7 +50,6 @@ class MShader:
         self.light_position = MVector3D(-20, self.INITIAL_CAMERA_POSITION_Y * 2, self.INITIAL_CAMERA_POSITION_Z * 2)
         self.light_direction = (self.light_position * MVector3D(-1, -1, -1)).normalized()
 
-        self.bone_num_uniform: dict[bool, Any] = {}
         self.bone_matrix_uniform: dict[bool, Any] = {}
         self.model_view_matrix_uniform: dict[bool, Any] = {}
         self.model_view_projection_matrix_uniform: dict[bool, Any] = {}

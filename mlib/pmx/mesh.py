@@ -214,7 +214,7 @@ class Mesh(BaseIndexModel):
                 shader.bone_matrix_uniform[True][n],
                 1,
                 gl.GL_FALSE,
-                mat,
+                mat.T,
             )
 
         # ------------------

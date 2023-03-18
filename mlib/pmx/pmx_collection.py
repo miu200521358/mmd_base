@@ -695,18 +695,16 @@ class Meshes(BaseIndexListModel[Mesh]):
             self.ibo_faces.bind()
 
             # FIXME MSAA https://blog.techlab-xe.net/opengl%E3%81%A7msaa/
-
             # モデル描画
             self.shader.use()
             mesh.draw_model(mats, self.shader, self.ibo_faces)
             self.shader.unuse()
 
-            # FIXME
-            # if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and mesh.material.diffuse_color.w > 0:
-            #     # エッジ描画
-            #     self.shader.use(edge=True)
-            #     mesh.draw_edge(mats, self.shader, self.ibo_faces)
-            #     self.shader.unuse()
+            if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and mesh.material.diffuse_color.w > 0:
+                # エッジ描画
+                self.shader.use(edge=True)
+                mesh.draw_edge(mats, self.shader, self.ibo_faces)
+                self.shader.unuse()
 
             self.ibo_faces.unbind()
             self.vbo_vertices.unbind()

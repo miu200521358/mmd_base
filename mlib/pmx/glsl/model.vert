@@ -39,11 +39,14 @@ void main() {
         boneTransformMatrix += boneMatrixes[int(boneIdxs[i])] * boneWeights[i];
     }
 
+    // 各頂点で使用される法線変形行列をボーン変形行列から回転情報のみ抽出して生成する
+    mat4 normalTransformMatrix = mat4(mat3(boneTransformMatrix));
+
     // 頂点位置
     gl_Position = modelViewProjectionMatrix * boneTransformMatrix * position4;
 
     // 頂点法線
-    vetexNormal = normalize(boneTransformMatrix * normalize(normal4)).xyz;
+    vetexNormal = normalize(normalTransformMatrix * normalize(normal4)).xyz;
 
     // 頂点色設定
     vertexColor = clamp(diffuse, 0.0, 1.0);
