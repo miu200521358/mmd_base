@@ -3,7 +3,7 @@ from typing import Optional
 import numpy as np
 import OpenGL.GL as gl
 
-from mlib.base.math import MMatrix4x4, MVector4D
+from mlib.base.math import MVector4D
 from mlib.base.part import BaseIndexModel
 from mlib.pmx.pmx_part import DrawFlg, Material, Texture
 from mlib.pmx.shader import MShader, VsLayout
@@ -122,7 +122,7 @@ class Mesh(BaseIndexModel):
 
     def draw_model(
         self,
-        mats: list[MMatrix4x4],
+        mats: list[np.ndarray],
         shader: MShader,
         ibo: IBO,
     ):
@@ -142,7 +142,7 @@ class Mesh(BaseIndexModel):
                 shader.bone_matrix_uniform[False][n],
                 1,
                 gl.GL_FALSE,
-                mat.vector,
+                mat.T,
             )
 
         # ------------------
@@ -201,7 +201,7 @@ class Mesh(BaseIndexModel):
 
     def draw_edge(
         self,
-        mats: list[MMatrix4x4],
+        mats: list[np.ndarray],
         shader: MShader,
         ibo: IBO,
     ):
@@ -214,7 +214,7 @@ class Mesh(BaseIndexModel):
                 shader.bone_matrix_uniform[True][n],
                 1,
                 gl.GL_FALSE,
-                mat.vector,
+                mat,
             )
 
         # ------------------

@@ -11,7 +11,7 @@ from mlib.base.collection import (
     BaseIndexListModel,
     BaseIndexNameListModel,
 )
-from mlib.base.math import MVector3D, MMatrix4x4
+from mlib.base.math import MMatrix4x4List, MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
     Bone,
@@ -338,6 +338,36 @@ class Bones(BaseIndexNameListModel[Bone]):
         bone = self[bone_index]
         return bone.position - (MVector3D() if bone.index < 0 or bone.parent_index not in self else self[bone.parent_index].position)
 
+    def get_mesh_matrix(self, matrixes: MMatrix4x4List, bone_index: int, matrix: np.ndarray) -> np.ndarray:
+        """
+        スキンメッシュアニメーション用ボーン変形行列を作成する
+
+        Parameters
+        ----------
+        matrixes : MMatrix4x4List
+            座標変換行列
+        bone_index : int
+            処理対象ボーンINDEX
+        matrix : Optional[MMatrix4x4], optional
+            計算元行列, by default None
+
+        Returns
+        -------
+        ボーン変形行列
+        """
+        bone = self[bone_index]
+        # 座標変換行列
+        matrix = matrix @ matrixes.vector[0, bone_index]
+        # 逆BOf行列(初期姿勢行列)
+        matrix = matrix @ bone.init_matrix.vector
+
+        if bone.index < 0 or bone.parent_index not in self:
+            # 親ボーンがない場合、終了
+            return matrix
+
+        # 親ボーンがある場合、遡る
+        return self.get_mesh_matrix(matrixes, bone.parent_index, matrix)
+
     def get_local_x_axis(self, bone_index: int) -> MVector3D:
         """
         ローカルX軸の取得
@@ -479,9 +509,12 @@ class PmxModel(BaseHashModel):
         self.display_slots = DisplaySlots()
         self.rigidbodies = RigidBodies()
         self.joints = Joints()
-        self.tail_bone_names: list[str] = []
         self.for_draw = False
         self.meshes = None
+
+    @property
+    def tail_bone_names(self) -> list[str]:
+        return self.bones.get_tail_bone_names()
 
     @property
     def name(self) -> str:
@@ -515,7 +548,7 @@ class PmxModel(BaseHashModel):
             return
         self.meshes.update()
 
-    def draw(self, mats: list[MMatrix4x4]):
+    def draw(self, mats: list[np.ndarray]):
         if not self.for_draw or not self.meshes:
             return
         self.meshes.draw(mats)
@@ -626,7 +659,7 @@ class Meshes(BaseIndexListModel[Mesh]):
     def update(self):
         pass
 
-    def draw(self, mats: list[MMatrix4x4]):
+    def draw(self, mats: list[np.ndarray]):
         for mesh in self.data:
             self.vao.bind()
             self.vbo_vertices.set_slot(VsLayout.POSITION_ID)

@@ -4,8 +4,9 @@ import wx
 from wx import glcanvas
 from PIL import Image
 import os
+import numpy as np
 
-from mlib.base.math import MQuaternion, MVector3D, MMatrix4x4
+from mlib.base.math import MQuaternion, MVector3D
 from mlib.pmx.pmx_reader import PmxReader
 from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_reader import VmdReader
@@ -39,6 +40,10 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.model.init_draw(self.shader)
 
         self.motion = VmdReader().read_by_filepath(vmd_path) if vmd_path else VmdMotion()
+        self.bone_matrixes = [np.eye(4) for _ in range(len(self.model.bones))]
+
+        if self.motion:
+            self.bone_matrixes = self.motion.bones.get_mesh_matrixes(0, self.model)
 
         self.is_drag = False
 
@@ -67,14 +72,8 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.shader.update_camera(is_edge)
             self.shader.unuse()
 
-        mats = [MMatrix4x4() for _ in range(len(self.model.bones))]
-        if self.motion:
-            bone_matrixes = self.motion.bones.get_matrix_by_indexes([0], self.model.bone_trees.gets(self.model.tail_bone_names), self.model)
-            for bone in self.model.bones:
-                mats[bone.index] = bone_matrixes[0][bone.name].bone_matrix
-
         if self.model:
-            self.model.draw(mats)
+            self.model.draw(self.bone_matrixes)
 
         self.SwapBuffers()
         self.Refresh(False)

@@ -131,7 +131,7 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
 
 
 class VmdBoneFrameTree:
-    def __init__(self, global_matrix: np.ndarray, local_matrix: np.ndarray, bone_matrix: np.ndarray, position: np.ndarray) -> None:
+    def __init__(self, global_matrix: np.ndarray, local_matrix: np.ndarray, position: np.ndarray) -> None:
         """
         ボーン変形結果
 
@@ -139,12 +139,10 @@ class VmdBoneFrameTree:
         ----------
         global_matrix : ワールド座標行列
         local_matrix : 親ボーンから見たローカル座標行列
-        bone_matrix : ボーン変形行列
         position : ボーン変形後のグローバル位置
         """
         self.global_matrix = MMatrix4x4(global_matrix)
         self.local_matrix = MMatrix4x4(local_matrix)
-        self.bone_matrix = MMatrix4x4(bone_matrix)
         self.position = MVector3D(*position)
 
 
@@ -197,18 +195,38 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             global_mats = matrixes.matmul_cols()
             # グローバル位置
             positions = global_mats.to_positions()
-            # ボーン変形行列
-            bone_mats = matrixes.vector @ global_mats.inverse().vector
 
             for n, fno in enumerate(fnos):
                 if fno not in bone_matrixes:
                     bone_matrixes[fno] = {}
                 for m, bone in enumerate(bone_tree.data.values()):
                     bone_matrixes[fno][bone.name] = VmdBoneFrameTree(
-                        global_matrix=global_mats.vector[n, m], local_matrix=matrixes.vector[n, m], bone_matrix=bone_mats[n, m], position=positions[n, m]
+                        global_matrix=global_mats.vector[n, m], local_matrix=matrixes.vector[n, m], position=positions[n, m]
                     )
 
         return bone_matrixes
+
+    def get_mesh_matrixes(self, fno: int, model: PmxModel) -> list[np.ndarray]:
+        row = 1
+        col = len(model.bones)
+        poses = np.full((row, col), MVector3D())
+        qqs = np.full((row, col), MQuaternion())
+        for m, bone in enumerate(model.bones):
+            # モーションによる移動量
+            poses[0, m] = self.get_position(bone, fno, model).vector * np.array([-1, 1, 1])
+            # FK(捩り) > IK(捩り) > 付与親(捩り)
+            qqs[0, m] = self.get_rotation(bone, fno, model, append_ik=True).inverse().to_matrix4x4().vector
+        # 座標変換行列
+        matrixes = MMatrix4x4List(row, col)
+        matrixes.translate(poses.tolist())
+        matrixes.rotate(qqs.tolist())
+
+        mesh_matrixes: list[np.ndarray] = []
+        for m, bone in enumerate(model.bones):
+            # BOf行列: 初期値として自身のボーンのボーンオフセット行列を初期値とする
+            mesh_matrixes.append(model.bones.get_mesh_matrix(matrixes, m, bone.offset_matrix.copy().vector))
+
+        return mesh_matrixes
 
     def get(self, name: str) -> VmdBoneNameFrames:
         if name not in self.data:
@@ -273,8 +291,8 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             else:
                 # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
                 effect_bone = model.bones[bone.effect_index]
-                effect_pos = model.bones.get_parent_relative_position(bone.effect_index)
-                effect_pos += self.get_position(effect_bone, fno, model)
+                # effect_pos = model.bones.get_parent_relative_position(bone.effect_index)
+                effect_pos = self.get_position(effect_bone, fno, model)
                 pos *= effect_pos
 
         return pos

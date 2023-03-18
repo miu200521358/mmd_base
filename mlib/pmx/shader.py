@@ -150,9 +150,6 @@ class MShader:
             1,
         )
 
-        # ボーンの数
-        self.bone_num_uniform[edge] = gl.glGetUniformLocation(program, "boneNum")
-
         # モデルビュー行列
         self.model_view_matrix_uniform[edge] = gl.glGetUniformLocation(program, "modelViewMatrix")
 

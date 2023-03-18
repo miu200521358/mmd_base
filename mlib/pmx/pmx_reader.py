@@ -172,9 +172,6 @@ class PmxReader(BaseReader[PmxModel]):
         # ボーンツリー生成
         model.bone_trees = model.bones.create_bone_links()
 
-        # 末端ボーンリスト
-        model.tail_bone_names = model.bones.get_tail_bone_names()
-
         # 各ボーンのローカル軸
         for bone in model.bones:
             bone.local_axis = model.bones.get_local_x_axis(bone.index)
