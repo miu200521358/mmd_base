@@ -25,6 +25,12 @@ class PmxPanel(wx.Panel):
         self.sizer.Add(self.canvas, 0, wx.ALL | wx.EXPAND, 0)
 
         self.btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        # 再生
+        self.play_btn = wx.Button(self, wx.ID_ANY, "Play/Stop", wx.DefaultPosition, wx.Size(100, 50))
+        self.play_btn.Bind(wx.EVT_BUTTON, self.play)
+        self.btn_sizer.Add(self.play_btn, 0, wx.ALL, 5)
+
         # リセット
         self.reset_btn = wx.Button(self, wx.ID_ANY, "Reset", wx.DefaultPosition, wx.Size(100, 50))
         self.reset_btn.Bind(wx.EVT_BUTTON, self.reset)
@@ -59,6 +65,9 @@ class PmxPanel(wx.Panel):
 
     def capture(self, event: wx.Event):
         self.canvas.on_capture(event)
+
+    def play(self, event: wx.Event):
+        self.canvas.on_play(event)
 
 
 class PmxFrame(wx.Frame):

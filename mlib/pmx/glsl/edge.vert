@@ -27,5 +27,5 @@ void main() {
     float edgeWight = edgeSize * vertexEdge;
 
     // 頂点位置
-    gl_Position = modelViewProjectionMatrix * boneTransformMatrix * (vec4(position + (normal * edgeWight * 0.01), 1.0));
+    gl_Position = modelViewProjectionMatrix * boneTransformMatrix * (vec4(position + (normal * edgeWight * 0.02), 1.0));
 }

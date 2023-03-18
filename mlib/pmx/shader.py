@@ -27,48 +27,40 @@ class Msaa:
     """
 
     def __init__(self, width: int, height: int) -> None:
-        # マルチサンプルのテクスチャを生成する
         self.width = width
         self.height = height
         self.msaa_samples = 4
 
         # MSAA用のフレームバッファオブジェクトを作成する
-        self.fbo_msaa = gl.glGenFramebuffers(1)
-        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.fbo_msaa)
+        self.msaa_buffer = gl.glGenFramebuffers(1)
+        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.msaa_buffer)
 
         # カラーバッファと深度バッファをMSAAで使うテクスチャに割り当てる
-        self.texture_msaa = gl.glGenTextures(1)
-        gl.glBindTexture(gl.GL_TEXTURE_2D_MULTISAMPLE, self.texture_msaa)
-        gl.glTexImage2DMultisample(gl.GL_TEXTURE_2D_MULTISAMPLE, self.msaa_samples, gl.GL_RGBA8, self.width, self.height, True)
-        gl.glFramebufferTexture2D(gl.GL_FRAMEBUFFER, gl.GL_COLOR_ATTACHMENT0, gl.GL_TEXTURE_2D_MULTISAMPLE, self.texture_msaa, 0)
+        self.msaa_color_buffer = gl.glGenRenderbuffers(1)
+        gl.glBindRenderbuffer(gl.GL_RENDERBUFFER, self.msaa_color_buffer)
+        gl.glRenderbufferStorageMultisample(gl.GL_RENDERBUFFER, self.msaa_samples, gl.GL_RGBA, self.width, self.height)
+        gl.glFramebufferRenderbuffer(gl.GL_FRAMEBUFFER, gl.GL_COLOR_ATTACHMENT0, gl.GL_RENDERBUFFER, self.msaa_color_buffer)
 
-        self.rbo_msaa_depth = gl.glGenRenderbuffers(1)
-        gl.glBindRenderbuffer(gl.GL_RENDERBUFFER, self.rbo_msaa_depth)
+        self.msaa_depth_buffer = gl.glGenRenderbuffers(1)
+        gl.glBindRenderbuffer(gl.GL_RENDERBUFFER, self.msaa_depth_buffer)
         gl.glRenderbufferStorageMultisample(gl.GL_RENDERBUFFER, self.msaa_samples, gl.GL_DEPTH_COMPONENT, self.width, self.height)
-        gl.glFramebufferRenderbuffer(gl.GL_FRAMEBUFFER, gl.GL_DEPTH_ATTACHMENT, gl.GL_RENDERBUFFER, self.rbo_msaa_depth)
+        gl.glFramebufferRenderbuffer(gl.GL_FRAMEBUFFER, gl.GL_DEPTH_ATTACHMENT, gl.GL_RENDERBUFFER, self.msaa_depth_buffer)
+
+        # 描画先テクスチャのバインドを解除しておく
+        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
 
     def bind(self):
-        # フレームバッファオブジェクトをバインドする
-        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.fbo_msaa)
-
-        # サンプル数を設定する
-        gl.glEnable(gl.GL_MULTISAMPLE)
-
-    def unbind(self):
-        # MSAAのフレームバッファオブジェクトの内容を画面に描画する
-        gl.glBindFramebuffer(gl.GL_READ_FRAMEBUFFER, self.fbo_msaa)
-        gl.glBindFramebuffer(gl.GL_DRAW_FRAMEBUFFER, 0)
-
-        # 画面をクリアする
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
-        # フレームバッファオブジェクトの内容を画面に描画する
-        gl.glBlitFramebuffer(0, 0, self.width, self.height, 0, 0, self.width, self.height, gl.GL_COLOR_BUFFER_BIT, gl.GL_NEAREST)
+        # フレームバッファオブジェクトをバインドする
+        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.msaa_buffer)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
-        # フレームバッファオブジェクトのバインドを解除する
-        # gl.glBindRenderbuffer(gl.GL_RENDERBUFFER, 0)
-        # gl.glBindTexture(gl.GL_TEXTURE_2D_MULTISAMPLE, 0)
-        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
+    def unbind(self):
+        # フレームバッファオブジェクトの内容を画面に描画する
+        gl.glBindFramebuffer(gl.GL_READ_FRAMEBUFFER, self.msaa_buffer)
+        gl.glBindFramebuffer(gl.GL_DRAW_FRAMEBUFFER, 0)
+        gl.glBlitFramebuffer(0, 0, self.width, self.height, 0, 0, self.width, self.height, gl.GL_COLOR_BUFFER_BIT, gl.GL_NEAREST)
 
 
 class MShader:
@@ -143,11 +135,6 @@ class MShader:
     def __del__(self) -> None:
         gl.glDeleteProgram(self.model_program)
         gl.glDeleteProgram(self.edge_program)
-
-        # # フレームバッファオブジェクトとテクスチャを削除する
-        # gl.glDeleteTextures(self.texture_msaa)
-        # gl.glDeleteRenderbuffers(self.rbo_msaa_depth)
-        # gl.glDeleteFramebuffers(1, [self.fbo_msaa])
 
     def load_shader(self, src: str, shader_type: int) -> int:
         shader = gl.glCreateShader(shader_type)

@@ -49,6 +49,11 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         self.is_drag = False
 
+        self.playing = False  # 再生中かどうかを示すフラグ
+        self.play_timer = wx.Timer(self)  # 再生タイマー
+        self.play_timer.Start(int(1000 / 30))  # 30fpsで設定
+        self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)  # タイマーイベントをバインド
+
     def on_erase_background(self, event: wx.Event):
         # Do nothing, to avoid flashing on MSW (これがないとチラつくらしい）
         pass
@@ -190,6 +195,17 @@ class PmxCanvas(glcanvas.GLCanvas):
         # ImageをPNGファイルとして保存する
         file_path = os.path.join(os.path.dirname(self.model.path), "capture.png")
         image.save(file_path)
+
+    def on_play(self, event: wx.Event):
+        self.playing = not self.playing  # フラグを反転
+        if not self.playing:
+            self.play_timer.Stop()  # タイマーを停止
+        else:
+            self.play_timer.Start(int(1000 / 30))  # タイマーを再開
+
+    def on_play_timer(self, event: wx.Event):
+        if self.playing:
+            self.on_frame_forward(event)
 
     def on_mouse_down(self, event: wx.Event):
         self.now_pos = self.last_pos = event.GetPosition()
