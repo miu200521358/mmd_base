@@ -402,6 +402,10 @@ class MVector3D(MVector):
     def z(self, v):
         self.vector[2] = v
 
+    @property
+    def gl(self) -> "MVector3D":
+        return MVector3D(-self.x, self.y, self.z)
+
 
 class MVector4D(MVector):
     """
@@ -597,6 +601,10 @@ class MQuaternion(MVector):
     @property
     def theta(self) -> float:
         return 2 * acos(min(1, max(-1, self.scalar)))
+
+    @property
+    def gl(self) -> "MQuaternion":
+        return MQuaternion(self.scalar, -self.x, self.y, self.z)
 
     def __bool__(self) -> bool:
         return self is not None and self.vector is not None and type(self) is not None.__class__ and not np.all(self.vector.components == 0)  # type: ignore

@@ -213,9 +213,9 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         qqs = np.full((row, col), MQuaternion())
         for m, bone in enumerate(model.bones):
             # モーションによる移動量
-            poses[0, m] = self.get_position(bone, fno, model).vector * np.array([-1, 1, 1])
+            poses[0, m] = self.get_position(bone, fno, model).vector
             # FK(捩り) > IK(捩り) > 付与親(捩り)
-            qqs[0, m] = self.get_rotation(bone, fno, model, append_ik=True).inverse().to_matrix4x4().vector
+            qqs[0, m] = self.get_rotation(bone, fno, model, append_ik=True).to_matrix4x4().vector
         # 座標変換行列
         matrixes = MMatrix4x4List(row, col)
         matrixes.translate(poses.tolist())
@@ -225,7 +225,8 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         for m, bone in enumerate(model.bones):
             # ボーン変形行列を求める
             # BOf行列: 自身のボーンのボーンオフセット行列
-            matrix = model.bones.get_mesh_matrix(matrixes, m, np.eye(4))
+            matrix = np.eye(4)
+            matrix = model.bones.get_mesh_matrix(matrixes, m, matrix)
             matrix = matrix @ bone.offset_matrix.copy().vector
             mesh_matrixes.append(matrix)
 

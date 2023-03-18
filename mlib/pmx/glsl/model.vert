@@ -30,8 +30,6 @@ out vec2 sphereUv;
 out vec3 eye;
 
 void main() {
-    // OpenGL的座標
-    vec4 vertexGLPosition = vec4(-position.x, position.y, position.z, 1.0);
     vec4 vertexGLNormal = vec4(-normal.x, normal.y, normal.z, 1.0);
 
     // 各頂点で使用されるボーン変形行列を計算する
@@ -40,8 +38,13 @@ void main() {
         boneTransformMatrix += boneMatrixes[int(boneIdxs[i])] * boneWeights[i];
     }
 
+    // OpenGL的座標
+    vec4 vertexGLPosition = vec4(position.x, position.y, position.z, 1.0);
+    vec4 transformPosition = boneTransformMatrix * vertexGLPosition;
+    transformPosition.x *= -1;
+
     // 頂点位置
-    gl_Position = modelViewProjectionMatrix * boneTransformMatrix * vertexGLPosition;
+    gl_Position = modelViewProjectionMatrix * transformPosition;
 
     // 頂点法線
     vetexNormal = normalize(boneTransformMatrix * normalize(vertexGLNormal)).xyz;
