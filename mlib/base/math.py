@@ -604,7 +604,7 @@ class MQuaternion(MVector):
 
     @property
     def gl(self) -> "MQuaternion":
-        return MQuaternion(self.scalar, -self.x, self.y, self.z)
+        return MQuaternion(-self.scalar, -self.x, self.y, self.z)
 
     def __bool__(self) -> bool:
         return self is not None and self.vector is not None and type(self) is not None.__class__ and not np.all(self.vector.components == 0)  # type: ignore

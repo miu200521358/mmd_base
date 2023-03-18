@@ -16,6 +16,7 @@ from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
     Bone,
     DisplaySlot,
+    DrawFlg,
     Face,
     Joint,
     Material,
@@ -564,11 +565,11 @@ class PmxModel(BaseHashModel):
 
             # 逆オフセット行列は親ボーンからの相対位置分を戻す
             bone.init_matrix = MMatrix4x4()
-            bone.init_matrix.translate(self.bones.get_parent_relative_position(bone.index))
+            bone.init_matrix.translate(self.bones.get_parent_relative_position(bone.index).gl)
 
             # オフセット行列は自身の位置を原点に戻す行列
             offset_mat = MMatrix4x4()
-            offset_mat.translate(bone.position)
+            offset_mat.translate(bone.position.gl)
             bone.offset_matrix = offset_mat.inverse()
 
 
@@ -588,8 +589,12 @@ class Meshes(BaseIndexListModel[Mesh]):
             [
                 np.array(
                     [
-                        *v.position.vector,
-                        *v.normal.vector,
+                        -v.position.x,
+                        v.position.y,
+                        v.position.z,
+                        -v.normal.x,
+                        v.normal.y,
+                        v.normal.z,
                         v.uv.x,
                         1 - v.uv.y,
                         *(v.extended_uvs[0].vector if len(v.extended_uvs) > 0 else [0, 0]),
@@ -696,6 +701,7 @@ class Meshes(BaseIndexListModel[Mesh]):
             mesh.draw_model(mats, self.shader, self.ibo_faces)
             self.shader.unuse()
 
+            # FIXME
             # if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and mesh.material.diffuse_color.w > 0:
             #     # エッジ描画
             #     self.shader.use(edge=True)
