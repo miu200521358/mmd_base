@@ -761,8 +761,8 @@ class Bone(BaseIndexNameModel):
         self.correct_local_z_vector = self.local_x_vector.cross(self.local_y_vector)
         self.local_axis = MVector3D()
 
-        self.bone_offset_matrix = MMatrix4x4()
-        self.bone_init_matrix = MMatrix4x4()
+        self.offset_matrix = MMatrix4x4()
+        self.init_matrix = MMatrix4x4()
 
     @property
     def is_tail_bone(self) -> bool:
@@ -828,27 +828,6 @@ class Bone(BaseIndexNameModel):
     def is_external_parent_deform(self) -> bool:
         """外部親変形であるか"""
         return BoneFlg.IS_EXTERNAL_PARENT_DEFORM in self.bone_flg
-
-    @property
-    def init_matrix(self) -> MMatrix4x4:
-        """ボーン初期姿勢行列"""
-        if self.bone_init_matrix != MMatrix4x4():
-            return self.bone_init_matrix
-
-        self.bone_init_matrix = MMatrix4x4()
-        self.bone_init_matrix.translate(self.position)
-
-        return self.bone_init_matrix
-
-    @property
-    def offset_matrix(self) -> MMatrix4x4:
-        """ボーンオフセット行列"""
-        if self.bone_offset_matrix != MMatrix4x4():
-            return self.bone_offset_matrix
-
-        self.bone_offset_matrix = self.init_matrix.inverse()
-
-        return self.bone_offset_matrix
 
 
 class MorphOffset(BaseModel):

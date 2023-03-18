@@ -223,8 +223,11 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
 
         mesh_matrixes: list[np.ndarray] = []
         for m, bone in enumerate(model.bones):
-            # BOf行列: 初期値として自身のボーンのボーンオフセット行列を初期値とする
-            mesh_matrixes.append(model.bones.get_mesh_matrix(matrixes, m, bone.offset_matrix.copy().vector))
+            # ボーン変形行列を求める
+            # BOf行列: 自身のボーンのボーンオフセット行列
+            matrix = model.bones.get_mesh_matrix(matrixes, m, np.eye(4))
+            matrix = bone.offset_matrix.copy().vector @ matrix
+            mesh_matrixes.append(matrix)
 
         return mesh_matrixes
 

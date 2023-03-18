@@ -11,7 +11,7 @@ from mlib.base.collection import (
     BaseIndexListModel,
     BaseIndexNameListModel,
 )
-from mlib.base.math import MMatrix4x4List, MVector3D
+from mlib.base.math import MMatrix4x4List, MVector3D, MMatrix4x4
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
     Bone,
@@ -356,17 +356,18 @@ class Bones(BaseIndexNameListModel[Bone]):
         ボーン変形行列
         """
         bone = self[bone_index]
-        # 座標変換行列
-        matrix = matrix @ matrixes.vector[0, bone_index]
+
+        # 自身の姿勢をかける
         # 逆BOf行列(初期姿勢行列)
-        matrix = matrix @ bone.init_matrix.vector
+        matrix = bone.init_matrix.vector @ matrix
+        # 座標変換行列
+        matrix = matrixes.vector[0, bone_index] @ matrix
 
-        if bone.index < 0 or bone.parent_index not in self:
-            # 親ボーンがない場合、終了
-            return matrix
+        if bone.index >= 0 and bone.parent_index in self:
+            # 親ボーンがある場合、遡る
+            return self.get_mesh_matrix(matrixes, bone.parent_index, matrix)
 
-        # 親ボーンがある場合、遡る
-        return self.get_mesh_matrix(matrixes, bone.parent_index, matrix)
+        return matrix
 
     def get_local_x_axis(self, bone_index: int) -> MVector3D:
         """
@@ -552,6 +553,23 @@ class PmxModel(BaseHashModel):
         if not self.for_draw or not self.meshes:
             return
         self.meshes.draw(mats)
+
+    def setup(self) -> None:
+        # ボーンツリー生成
+        self.bone_trees = self.bones.create_bone_links()
+
+        # 各ボーンのローカル軸
+        for bone in self.bones:
+            bone.local_axis = self.bones.get_local_x_axis(bone.index)
+
+            # 逆オフセット行列は親ボーンからの相対位置分を戻す
+            bone.init_matrix = MMatrix4x4()
+            bone.init_matrix.translate(self.bones.get_parent_relative_position(bone.index))
+
+            # オフセット行列は自身の位置を原点に戻す行列
+            offset_mat = MMatrix4x4()
+            offset_mat.translate(bone.position)
+            bone.offset_matrix = offset_mat.inverse()
 
 
 class Meshes(BaseIndexListModel[Mesh]):

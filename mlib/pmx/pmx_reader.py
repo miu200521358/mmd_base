@@ -169,12 +169,8 @@ class PmxReader(BaseReader[PmxModel]):
         # ジョイント
         self.read_joints(model)
 
-        # ボーンツリー生成
-        model.bone_trees = model.bones.create_bone_links()
-
-        # 各ボーンのローカル軸
-        for bone in model.bones:
-            bone.local_axis = model.bones.get_local_x_axis(bone.index)
+        # セットアップ
+        model.setup()
 
     def read_vertices(self, model: PmxModel):
         """頂点データ読み込み"""
