@@ -779,5 +779,9 @@ class VmdMotion(BaseHashModel):
         return int(np.sum([len(bfs) for bfs in self.bones]))
 
     @property
+    def max_frame(self) -> int:
+        return int(np.max([max(bfs.indices()) for bfs in self.bones] + [max(mfs.indices()) for mfs in self.morphs]))
+
+    @property
     def name(self) -> str:
         return self.model_name
