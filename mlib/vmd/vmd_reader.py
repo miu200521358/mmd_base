@@ -15,7 +15,10 @@ from mlib.vmd.vmd_part import (
     VmdShowIkFrame,
 )
 
-RE_TEXT_TRIM = re.compile(rb"\x00+$")
+TRIM_TEXT_REGEXP = [
+    re.compile(rb"\x00+$"),
+    re.compile(rb"\x00\xfd+$"),
+]
 
 
 class VmdReader(BaseReader[VmdMotion]):  # type: ignore
@@ -96,7 +99,8 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
         def read_text(format_size: int) -> str:
             btext = self.unpack_text(format_size)
             # VMDは空白込みで入っているので、空白以降は削除する
-            btext = RE_TEXT_TRIM.sub(b"", btext)
+            for exp in TRIM_TEXT_REGEXP:
+                btext = exp.sub(b"", btext)
 
             return self.decode_text(encoding, btext)
 
