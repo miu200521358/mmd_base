@@ -96,11 +96,11 @@ def test_MVector3D_distance():
         MVector3D(-1, -0.3, 3).distance(MVector2D(-2.3, 0.2))
 
 
-def test_MVector3D_to_log():
+def test_MVector3D_str():
     from mlib.base.math import MVector3D
 
-    assert "[x=1.0, y=2.0, z=3.0]" == MVector3D(1, 2, 3).to_log()
-    assert "[x=1.23, y=2.56, z=3.568]" == MVector3D(1.23, 2.56, 3.56789).to_log()
+    assert "[x=1.0, y=2.0, z=3.0]" == str(MVector3D(1, 2, 3))
+    assert "[x=1.23, y=2.56, z=3.568]" == str(MVector3D(1.23, 2.56, 3.56789))
 
 
 def test_MVector3D_element():

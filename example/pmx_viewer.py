@@ -7,6 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import wx
 
 from mlib.pmx.viewer import PmxCanvas
+from mlib.base.logger import MLogger
 
 
 class PmxPanel(wx.Panel):
@@ -14,7 +15,10 @@ class PmxPanel(wx.Panel):
         parser = argparse.ArgumentParser(description="MMD model viewer sample.")
         parser.add_argument("--pmx", type=str, help="MMD model file name.")
         parser.add_argument("--motion", type=str, help="MMD motion file name.")
+        parser.add_argument("--level", type=int, help="MMD motion file name.")
         args = parser.parse_args()
+
+        MLogger.initialize(lang="ja_JP", root_dir="C:/MMD/mmd_base/mlib", level=args.level)
 
         self.parent = parent
         wx.Panel.__init__(self, parent)

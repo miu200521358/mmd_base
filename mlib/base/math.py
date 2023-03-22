@@ -4,12 +4,7 @@ from typing import Union
 
 import numpy as np
 from numpy.linalg import inv, norm
-from quaternion import (
-    as_rotation_matrix,
-    from_rotation_matrix,
-    quaternion,
-    slerp_evaluate,
-)
+from quaternion import as_rotation_matrix, from_rotation_matrix, quaternion, slerp_evaluate
 
 from .base import BaseModel
 
@@ -321,8 +316,11 @@ class MVector2D(MVector):
         else:
             self.vector = x.copy()
 
-    def to_log(self) -> str:
+    def __str__(self) -> str:
         return f"[x={round(self.vector[0], 3)}, y={round(self.vector[1], 3)}]"
+
+    def copy(self) -> "MVector2D":
+        return self.__class__(np.copy(self.vector))
 
     @property
     def y(self):
@@ -360,11 +358,14 @@ class MVector3D(MVector):
         else:
             self.vector = x.copy()
 
-    def to_log(self) -> str:
+    def __str__(self) -> str:
         """
         ログ用文字列に変換
         """
         return f"[x={round(self.vector[0], 3)}, y={round(self.vector[1], 3)}, z={round(self.vector[2], 3)}]"
+
+    def copy(self) -> "MVector3D":
+        return self.__class__(np.copy(self.vector))
 
     def to_key(self, threshold=0.1) -> tuple:
         """
@@ -440,8 +441,11 @@ class MVector4D(MVector):
         else:
             self.vector = x.copy()
 
-    def to_log(self) -> str:
+    def __str__(self) -> str:
         return f"[x={round(self.vector[0], 3)}, y={round(self.vector[1], 3)}, " + f"z={round(self.vector[2], 3)}], w={round(self.vector[2], 3)}]"
+
+    def copy(self) -> "MVector4D":
+        return self.__class__(np.copy(self.vector))
 
     @property
     def y(self):
@@ -609,7 +613,7 @@ class MQuaternion(MVector):
     def __bool__(self) -> bool:
         return self is not None and self.vector is not None and type(self) is not None.__class__ and not np.all(self.vector.components == 0)  # type: ignore
 
-    def to_log(self) -> str:
+    def __str__(self) -> str:
         return f"[x={round(self.x, 5)}, y={round(self.y, 5)}, " + f"z={round(self.z, 5)}, scalar={round(self.scalar, 5)}]"
 
     def effective(self):
@@ -656,8 +660,8 @@ class MQuaternion(MVector):
     def to_vector4(self) -> MVector4D:
         return MVector4D(self.x, self.y, self.z, self.scalar)
 
-    def copy(self):
-        return MQuaternion(np.copy(self.vector.components))
+    def copy(self) -> "MQuaternion":
+        return MQuaternion(self.scalar, self.x, self.y, self.z)
 
     def dot(self, v):
         return np.sum(self.vector.components * v.vector.components)
@@ -765,7 +769,10 @@ class MQuaternion(MVector):
             # quaternion と vec3 のかけ算は vec3 を返す
             return self.to_matrix4x4() * other
         elif isinstance(other, MQuaternion):
-            return MQuaternion(self.vector * other.vector).normalized()
+            mat = self.to_matrix4x4().copy()
+            mat.rotate(other)
+
+            return mat.to_quaternion().normalized()
 
         return MQuaternion(self.vector * other)
 
@@ -1286,6 +1293,9 @@ class MMatrix4x4(MVector):
     def __setitem__(self, index, v: float):
         y, x = index
         self.vector[y, x] = v
+
+    def copy(self) -> "MMatrix4x4":
+        return self.__class__(np.copy(self.vector))
 
 
 class MMatrix4x4List:

@@ -2,6 +2,8 @@ from math import acos, degrees, pi
 from typing import Optional
 
 import numpy as np
+from mlib.base.logger import MLogger
+import logging
 
 from mlib.base.bezier import evaluate
 from mlib.base.collection import (
@@ -21,6 +23,8 @@ from mlib.vmd.vmd_part import (
     VmdShadowFrame,
     VmdShowIkFrame,
 )
+
+log = MLogger(__name__, logging.INFO)
 
 
 class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
@@ -43,23 +47,23 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         # キーフレがない場合、生成したのを返す（保持はしない）
         prev_index, middle_index, next_index = self.range_indexes(index)
 
-        # # IK用キーはIK回転情報があるキーフレのみ対象とする
-        # if self.__ik_indices:
-        #     ik_prev_index, ik_middle_index, ik_next_index = self.range_indexes(
-        #         index,
-        #         indices=self.__ik_indices,
-        #     )
-        # else:
-        #     ik_prev_index = ik_middle_index = ik_next_index = 0
+        # IK用キーはIK回転情報があるキーフレのみ対象とする
+        if self.__ik_indices:
+            ik_prev_index, ik_middle_index, ik_next_index = self.range_indexes(
+                index,
+                indices=self.__ik_indices,
+            )
+        else:
+            ik_prev_index = ik_middle_index = ik_next_index = 0
 
         # prevとnextの範囲内である場合、補間曲線ベースで求め直す
         return self.calc(
             prev_index,
             middle_index,
             next_index,
-            # ik_prev_index,
-            # ik_middle_index,
-            # ik_next_index,
+            ik_prev_index,
+            ik_middle_index,
+            ik_next_index,
             index,
         )
 
@@ -73,9 +77,9 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         prev_index: int,
         middle_index: int,
         next_index: int,
-        # ik_prev_index: int,
-        # ik_middle_index: int,
-        # ik_next_index: int,
+        ik_prev_index: int,
+        ik_middle_index: int,
+        ik_next_index: int,
         index: int,
     ) -> VmdBoneFrame:
         if index in self.data:
@@ -90,31 +94,33 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
             # FKのprevと等しい場合、指定INDEX以前がないので、その次のをコピーして返す
             bf.position = self[next_index].position.copy()
             bf.rotation = self[next_index].rotation.copy()
-            # bf.ik_rotation = (self[ik_next_index].ik_rotation or MQuaternion()).copy()
+            bf.ik_rotation = (self[ik_next_index].ik_rotation or MQuaternion()).copy()
             bf.interpolations = self[next_index].interpolations.copy()
             return bf
         elif prev_index != middle_index and next_index == middle_index:
             # FKのnextと等しい場合は、その前のをコピーして返す
             bf.position = self[prev_index].position.copy()
             bf.rotation = self[prev_index].rotation.copy()
-            # bf.ik_rotation = (self[ik_prev_index].ik_rotation or MQuaternion()).copy()
+            bf.ik_rotation = (self[ik_prev_index].ik_rotation or MQuaternion()).copy()
             bf.interpolations = self[prev_index].interpolations.copy()
             return bf
+
+        ik_prev_bf = self[ik_prev_index] if ik_prev_index in self else VmdBoneFrame(name=self.name, index=ik_prev_index)
+        ik_next_bf = self[ik_next_index] if ik_next_index in self else VmdBoneFrame(name=self.name, index=ik_next_index)
+
+        _, ik_ry, _ = evaluate(ik_next_bf.interpolations.rotation, ik_prev_index, index, ik_next_index)
+        # IK用回転
+        bf.ik_rotation = MQuaternion.slerp(
+            (ik_prev_bf.ik_rotation or MQuaternion()),
+            (ik_next_bf.ik_rotation or MQuaternion()),
+            ik_ry,
+        )
 
         prev_bf = self[prev_index] if prev_index in self else VmdBoneFrame(name=self.name, index=prev_index)
         next_bf = self[next_index] if next_index in self else VmdBoneFrame(name=self.name, index=next_index)
 
-        # ik_prev_bf = self[ik_prev_index] if ik_prev_index in self else VmdBoneFrame(name=self.name, index=ik_prev_index)
-        # ik_next_bf = self[ik_next_index] if ik_next_index in self else VmdBoneFrame(name=self.name, index=ik_next_index)
-
         # 補間結果Yは、FKキーフレ内で計算する
         _, ry, _ = evaluate(next_bf.interpolations.rotation, prev_index, index, next_index)
-        # # IK用回転
-        # bf.ik_rotation = MQuaternion.slerp(
-        #     (ik_prev_bf.ik_rotation or MQuaternion()),
-        #     (ik_next_bf.ik_rotation or MQuaternion()),
-        #     ry,
-        # )
         # FK用回転
         bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
 
@@ -432,7 +438,6 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
 
             # IKの角度をターゲットのIK角度に設定する
             ik_bf = self[ik_bone.name][fno]
-            ik_bf.ik_rotation = None
 
             effector_bf = (
                 self.data[effector_bone.name].data[fno]
@@ -449,7 +454,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     continue
                 ik_link_bone_trees[ik_link.bone_index] = model.bone_trees[ik_link.bone_index]
 
-            for _ in range(ik_bone.ik.loop_count):
+            for loop in range(ik_bone.ik.loop_count):
                 is_break = False
                 for ik_link in ik_bone.ik.links:
                     # ikLink は末端から並んでる
@@ -506,7 +511,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     # 注目ノードを起点とした、IK目標のローカル位置
                     local_target_pos = link_inverse_matrix * global_target_pos
 
-                    if (local_effector_pos - local_target_pos).length_squared() < 0.00001:
+                    if (local_effector_pos - local_target_pos).length_squared() < 1e-5:
                         # 位置の差がほとんどない場合、スルー
                         is_break = True
                         break
@@ -522,10 +527,9 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     # 回転角度
                     rotation_radian = acos(max(-1, min(1, rotation_dot)))
 
-                    if abs(1 - rotation_dot) < 0.00001:
+                    if abs(1 - rotation_dot) < 1e-6:
                         # ほとんど回らない場合、スルー
-                        is_break = True
-                        break
+                        continue
 
                     # 回転軸
                     rotation_axis = norm_effector_pos.cross(norm_target_pos).normalized()
@@ -540,6 +544,11 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
 
                     # リンクボーンの角度を保持
                     link_bf = self[link_bone.name][fno]
+                    if "左" in link_bf.name:
+                        log.debug(
+                            f"- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}] "
+                            + f"rot[{link_bf.ik_rotation.to_euler_degrees_mmd() if link_bf.ik_rotation else '-'}]"
+                        )
 
                     # 軸制限をかけた回転
                     mat = MMatrix4x4()
@@ -554,11 +563,13 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                                 link_bone.correct_local_z_vector,
                             )
                         )
+                    mat.rotate(correct_qq)
+                    ik_qq = mat.to_quaternion()
 
-                    # 補正角度を軸に沿ったオイラー角度に分解する
-                    euler_degrees = correct_qq.separate_euler_degrees()
                     if ik_link.angle_limit:
-                        # 角度制限が入ってる場合
+                        # 角度制限が入ってる場合、オイラー角度に分解する
+                        euler_degrees = ik_qq.separate_euler_degrees()
+
                         euler_degrees.x = max(
                             min(
                                 euler_degrees.x,
@@ -580,10 +591,14 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                             ),
                             ik_link.min_angle_limit.degrees.z,
                         )
-                        correct_qq = MQuaternion.from_euler_degrees(euler_degrees)
-                    mat.rotate(correct_qq)
+                        ik_qq = MQuaternion.from_euler_degrees(euler_degrees)
 
-                    link_bf.ik_rotation = mat.to_quaternion()
+                    link_bf.ik_rotation = ik_qq
+                    if "左" in link_bf.name:
+                        log.debug(
+                            f"-- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}] "
+                            + f"rot[{link_bf.ik_rotation.to_euler_degrees_mmd() if link_bf.ik_rotation else '-'}]"
+                        )
                     self.append(link_bf)
 
                 if is_break:

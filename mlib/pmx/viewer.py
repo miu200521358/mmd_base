@@ -50,10 +50,14 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         self.is_drag = False
 
-        self.playing = False  # 再生中かどうかを示すフラグ
-        self.play_timer = wx.Timer(self)  # 再生タイマー
-        self.play_timer.Start(int(1000 / 30))  # 30fpsで設定
-        self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)  # タイマーイベントをバインド
+        # 再生中かどうかを示すフラグ
+        self.playing = False
+        # 再生タイマー
+        self.play_timer = wx.Timer(self)
+        # 30fpsで設定
+        self.play_timer.Start(int(1000 / 30))
+        # タイマーイベントをバインド
+        self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)
 
         self.change_motion(wx.wxEVT_NULL)
 
