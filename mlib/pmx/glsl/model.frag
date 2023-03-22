@@ -27,7 +27,7 @@ out vec4  outColor;
 
 void main() {
     outColor = vertexColor;
-    
+
     if (useTexture == 1) {
         // テクスチャ適用
         outColor *= texture(textureSampler, vertexUv);

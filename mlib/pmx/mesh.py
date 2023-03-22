@@ -156,12 +156,12 @@ class Mesh(BaseIndexModel):
                     self.material.ambient_color.x,
                     self.material.ambient_color.y,
                     self.material.ambient_color.z,
-                    0,
+                    self.material.diffuse_color.w,
                 )
             ).vector
         )
         # TODO 材質モーフの色を入れる
-        gl.glUniform3f(shader.ambient_uniform[False], *(self.material.ambient_color * shader.light_ambient).vector)
+        gl.glUniform3f(shader.ambient_uniform[False], *(self.material.diffuse_color.xyz * shader.light_ambient).vector)
         gl.glUniform4f(shader.specular_uniform[False], *(self.material.specular_color * shader.light_specular).vector, self.material.specular_factor)
 
         # テクスチャ使用有無

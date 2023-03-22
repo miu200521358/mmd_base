@@ -31,7 +31,6 @@ out vec3 eye;
 
 void main() {
     vec4 position4 = vec4(position, 1.0);
-    vec4 normal4 = vec4(normal, 1.0);
 
     // 各頂点で使用されるボーン変形行列を計算する
     mat4 boneTransformMatrix = mat4(0.0);
@@ -40,13 +39,13 @@ void main() {
     }
 
     // 各頂点で使用される法線変形行列をボーン変形行列から回転情報のみ抽出して生成する
-    mat4 normalTransformMatrix = mat4(mat3(boneTransformMatrix));
+    mat3 normalTransformMatrix = mat3(boneTransformMatrix);
 
     // 頂点位置
     gl_Position = modelViewProjectionMatrix * boneTransformMatrix * position4;
 
     // 頂点法線
-    vetexNormal = normalize(normalTransformMatrix * normalize(normal4)).xyz;
+    vetexNormal = normalize(normalTransformMatrix * normalize(normal)).xyz;
 
     // 頂点色設定
     vertexColor = clamp(diffuse, 0.0, 1.0);
@@ -79,5 +78,5 @@ void main() {
 
     // スペキュラ色計算
     vec3 HalfVector = normalize( normalize(eye) + -lightDirection );
-    vertexSpecular = pow( max(0, dot( HalfVector, vetexNormal )), specular.w ) * specular.rgb;
+    vertexSpecular = pow( max(0, dot( HalfVector, vetexNormal )), max(0.000001, specular.w) ) * specular.rgb;
 }

@@ -471,6 +471,10 @@ class MVector4D(MVector):
     def w(self, v):
         self.vector[3] = v
 
+    @property
+    def xyz(self) -> "MVector4D":
+        return MVector4D(self.vector[:3])  # type: ignore
+
 
 class MVectorDict:
     """ベクトル辞書基底クラス"""

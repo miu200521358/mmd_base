@@ -457,13 +457,13 @@ class Material(BaseIndexNameModel):
     english_name : str, optional
         材質名英, by default ""
     diffuse_color : MVector4D, optional
-        Diffuse (R,G,B,A), by default MVector4D()
+        Diffuse (R,G,B,A)(拡散色＋非透過度), by default MVector4D()
     specular_color : MVector3D, optional
-        Specular (R,G,B), by default MVector3D()
+        Specular (R,G,B)(反射色), by default MVector3D()
     specular_factor : float, optional
-        Specular係数, by default 0
+        Specular係数(反射強度), by default 0
     ambient_color : MVector3D, optional
-        Ambient (R,G,B), by default MVector3D()
+        Ambient (R,G,B)(環境色), by default MVector3D()
     draw_flg : DrawFlg, optional
         描画フラグ(8bit) - 各bit 0:OFF 1:ON
         0x01:両面描画, 0x02:地面影, 0x04:セルフシャドウマップへの描画, 0x08:セルフシャドウの描画, 0x10:エッジ描画, by default DrawFlg.NONE
