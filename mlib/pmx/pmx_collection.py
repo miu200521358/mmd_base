@@ -228,15 +228,6 @@ class Bones(BaseIndexNameListModel[Bone]):
 
     def append(self, v: Bone) -> None:
         super().append(v)
-        if v.is_ik and v.ik:
-            # IKボーンの場合
-            for link in v.ik.links:
-                if link.bone_index in self:
-                    # リンクボーンにフラグを立てる
-                    self[link.bone_index].ik_link_indices.append(v.index)
-            if v.ik.bone_index in self:
-                # ターゲットボーンにもフラグを立てる
-                self[v.ik.bone_index].ik_target_indices.append(v.index)
 
     def create_bone_links(self) -> BoneTrees:
         """
@@ -554,8 +545,19 @@ class PmxModel(BaseHashModel):
         # ボーンツリー生成
         self.bone_trees = self.bones.create_bone_links()
 
-        # 各ボーンのローカル軸
         for bone in self.bones:
+            # IKのリンクとターゲット
+            if bone.is_ik and bone.ik:
+                # IKボーンの場合
+                for link in bone.ik.links:
+                    if link.bone_index in self.bones:
+                        # リンクボーンにフラグを立てる
+                        self.bones[link.bone_index].ik_link_indices.append(bone.index)
+                if bone.ik.bone_index in self.bones:
+                    # ターゲットボーンにもフラグを立てる
+                    self.bones[bone.ik.bone_index].ik_target_indices.append(bone.index)
+
+            # 各ボーンのローカル軸
             bone.local_axis = self.bones.get_local_x_axis(bone.index)
 
             # 逆オフセット行列は親ボーンからの相対位置分を戻す
