@@ -42,7 +42,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.model.init_draw(self.shader)
 
         self.motion = VmdReader().read_by_filepath(vmd_path) if vmd_path else VmdMotion()
-        max_frame = self.motion.max_frame if self.motion else 100
+        max_frame = self.motion.max_fno if self.motion else 100
 
         self.bone_matrixes = [np.eye(4) for _ in range(len(self.model.bones))]
         self.frame_ctrl = wx.SpinCtrl(parent, value="0", min=0, max=max_frame, size=wx.Size(80, 30))
@@ -58,6 +58,15 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.play_timer.Start(int(1000 / 30))
         # タイマーイベントをバインド
         self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)
+
+        # # IK計算対象
+        # self.ik_bf_indices: dict[str, list[int]] = {}
+        # if self.model and self.motion:
+        #     ik_bones = [bone for bone in self.model.bones if bone.is_ik]
+        #     for ik_bone in ik_bones:
+        #         self.ik_bf_indices[self.model.bones[ik_bone.index].name] = sorted(
+        #             list(set([bfs.index for bone in self.model.bone_trees[ik_bone.index] for bfs in self.motion.bones[bone.name]] + [self.motion.max_fno]))
+        #         )
 
         self.change_motion(wx.wxEVT_NULL)
 
@@ -194,7 +203,16 @@ class PmxCanvas(glcanvas.GLCanvas):
 
     def change_motion(self, event: wx.Event):
         if self.motion:
-            self.bone_matrixes = self.motion.bones.get_mesh_matrixes(self.frame_ctrl.GetValue(), self.model)
+            now_fno = self.frame_ctrl.GetValue()
+            # for ik_bone_name, fnos in self.ik_bf_indices.items():
+            #     # IKがある場合、前計算を行っておく
+            #     prev_fnos = [fno for fno in fnos if now_fno >= fno]
+            #     prev_fno = prev_fnos[-1] if len(prev_fnos) > 0 else 0
+            #     next_fnos = [fno for fno in fnos if now_fno < fno]
+            #     next_fno = next_fnos[0] if len(next_fnos) > 0 else max(fnos)
+            #     self.motion.bones.get_matrix_by_indexes([prev_fno, next_fno], [self.model.bone_trees[self.model.bones[ik_bone_name].index]], self.model)
+
+            self.bone_matrixes = self.motion.bones.get_mesh_matrixes(now_fno, self.model)
             self.Refresh()
 
     def on_capture(self, event: wx.Event):

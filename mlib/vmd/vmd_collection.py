@@ -163,7 +163,9 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
     def create_inner(self, name: str):
         return VmdBoneNameFrames(name=name)
 
-    def get_matrix_by_indexes(self, fnos: list[int], bone_trees: list[BoneTree], model: PmxModel) -> dict[int, dict[str, VmdBoneFrameTree]]:
+    def get_matrix_by_indexes(
+        self, fnos: list[int], bone_trees: list[BoneTree], model: PmxModel, append_ik: bool = True
+    ) -> dict[int, dict[str, VmdBoneFrameTree]]:
         """
         指定されたキーフレ番号の行列計算結果を返す
 
@@ -183,16 +185,18 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         bone_matrixes: dict[int, dict[str, VmdBoneFrameTree]] = {}
         for bone_tree in bone_trees:
             row = len(fnos)
-            col = len(bone_tree)
-            poses = np.full((row, col), MVector3D())
-            qqs = np.full((row, col), MQuaternion())
+            col = len(bone_tree) + 1
+            poses = np.full((row, col, 3), np.zeros(3))
+            qqs = np.full((row, col, 4, 4), np.eye(4))
             for n, fno in enumerate(fnos):
                 for m, bone in enumerate(bone_tree.data.values()):
                     # ボーンの親から見た相対位置
                     poses[n, m] = model.bones.get_parent_relative_position(bone.index).vector
                     poses[n, m] += self.get_position(bone, fno, model).vector
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
-                    qqs[n, m] = self.get_rotation(bone, fno, model, append_ik=True).to_matrix4x4().vector
+                    qqs[n, m] = self.get_rotation(bone, fno, model, append_ik=append_ik).to_matrix4x4().vector
+                # 末端ボーン表示先の位置を計算
+                poses[n, -1] = (model.bones.get_tail_position(bone.index) - bone.position).vector
             # 親ボーンから見たローカル座標行列
             matrixes = MMatrix4x4List(row, col)
             matrixes.translate(poses.tolist())
@@ -429,33 +433,34 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             if ik_target_bone_idx not in model.bones or not ik_bone.ik:
                 continue
 
-            ik_matrixes = self.get_matrix_by_indexes([fno], [model.bone_trees[ik_bone.index]], model)
+            ik_matrixes = self.get_matrix_by_indexes([fno], [model.bone_trees[ik_bone.index]], model, append_ik=False)
             global_target_pos = ik_matrixes[fno][ik_bone.name].position
 
             # IKターゲットボーンツリー
             effector_bone = model.bones[ik_bone.ik.bone_index]
             effector_bone_tree = model.bone_trees[effector_bone.index]
+            # effector_bone_tree = self.create_ik_bone_tree(effector_bone.index, model)
 
-            # IKの角度をターゲットのIK角度に設定する
-            ik_bf = self[ik_bone.name][fno]
+            # # IKの角度をターゲットのIK角度に設定する
+            # ik_bf = self[ik_bone.name][fno]
 
-            effector_bf = (
-                self.data[effector_bone.name].data[fno]
-                if effector_bone.name in self.data and fno in self.data[effector_bone.name].data
-                else VmdBoneFrame(name=effector_bone.name, index=fno)
-            )
-            effector_bf.ik_target_rotation = ik_bf.rotation.copy()
-            self.append(effector_bf)
+            # effector_bf = (
+            #     self.data[effector_bone.name].data[fno]
+            #     if effector_bone.name in self.data and fno in self.data[effector_bone.name].data
+            #     else VmdBoneFrame(name=effector_bone.name, index=fno)
+            # )
+            # effector_bf.ik_target_rotation = ik_bf.rotation.copy()
+            # self.append(effector_bf)
 
             # IKリンクボーンツリー
-            ik_link_bone_trees: dict[int, BoneTree] = {}
+            ik_link_bone_trees: dict[int, BoneTree] = {ik_bone.index: model.bone_trees[ik_bone.index]}
             for ik_link in ik_bone.ik.links:
                 if ik_link.bone_index not in model.bones:
                     continue
                 ik_link_bone_trees[ik_link.bone_index] = model.bone_trees[ik_link.bone_index]
 
+            is_break = False
             for loop in range(ik_bone.ik.loop_count):
-                is_break = False
                 for ik_link in ik_bone.ik.links:
                     # ikLink は末端から並んでる
                     if ik_link.bone_index not in model.bones:
@@ -482,6 +487,14 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     # 処理対象IKボーン
                     link_bone = model.bones[ik_link.bone_index]
                     link_bone_tree = ik_link_bone_trees[link_bone.index]
+
+                    # リンクボーンの角度を保持
+                    link_bf = self[link_bone.name][fno]
+                    if "左" in link_bf.name:
+                        log.debug(
+                            f"- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}] "
+                            + f"rot[{link_bf.ik_rotation.to_euler_degrees_mmd() if link_bf.ik_rotation else '-'}]"
+                        )
 
                     # 処理対象IKボーンのグローバル位置と行列を取得
                     col = len(link_bone_tree)
@@ -511,6 +524,11 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     # 注目ノードを起点とした、IK目標のローカル位置
                     local_target_pos = link_inverse_matrix * global_target_pos
 
+                    log.debug(
+                        f"- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}], "
+                        + f"global_target_pos: {global_target_pos}, global_effector_pos: {global_effector_pos}"
+                    )
+
                     if (local_effector_pos - local_target_pos).length_squared() < 1e-5:
                         # 位置の差がほとんどない場合、スルー
                         is_break = True
@@ -527,28 +545,21 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     # 回転角度
                     rotation_radian = acos(max(-1, min(1, rotation_dot)))
 
-                    if abs(1 - rotation_dot) < 1e-6:
-                        # ほとんど回らない場合、スルー
-                        continue
-
                     # 回転軸
                     rotation_axis = norm_effector_pos.cross(norm_target_pos).normalized()
                     # 回転角度
                     rotation_degree = degrees(rotation_radian)
+
+                    if abs(1 - rotation_dot) < 1e-6:
+                        # ほとんど回らない場合、スルー
+                        is_break = True
+                        break
 
                     # 制限角で最大変位量を制限する
                     rotation_degree = min(rotation_degree, ik_bone.ik.unit_rotation.degrees.x)
 
                     # 補正関節回転量
                     correct_qq = MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
-
-                    # リンクボーンの角度を保持
-                    link_bf = self[link_bone.name][fno]
-                    if "左" in link_bf.name:
-                        log.debug(
-                            f"- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}] "
-                            + f"rot[{link_bf.ik_rotation.to_euler_degrees_mmd() if link_bf.ik_rotation else '-'}]"
-                        )
 
                     # 軸制限をかけた回転
                     mat = MMatrix4x4()
@@ -596,13 +607,15 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     link_bf.ik_rotation = ik_qq
                     if "左" in link_bf.name:
                         log.debug(
-                            f"-- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}] "
+                            f"-- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}], "
                             + f"rot[{link_bf.ik_rotation.to_euler_degrees_mmd() if link_bf.ik_rotation else '-'}]"
                         )
                     self.append(link_bf)
 
                 if is_break:
                     break
+            if is_break:
+                break
 
         # IKの計算結果の回転を加味して返す
         bf = self[bone.name][fno]
@@ -794,8 +807,8 @@ class VmdMotion(BaseHashModel):
         return int(np.sum([len(bfs) for bfs in self.bones]))
 
     @property
-    def max_frame(self) -> int:
-        return int(np.max([max(bfs.indices()) for bfs in self.bones] + [max(mfs.indices()) for mfs in self.morphs]))
+    def max_fno(self) -> int:
+        return int(max([max(bfs.indices() + [0]) for bfs in self.bones] + [max(mfs.indices() + [0]) for mfs in self.morphs]))
 
     @property
     def name(self) -> str:

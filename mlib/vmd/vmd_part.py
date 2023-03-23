@@ -282,7 +282,6 @@ class VmdBoneFrame(BaseVmdNameFrame):
         self.rotation = rotation or MQuaternion()
         self.interpolations = interpolations or BoneInterpolations()
         self.ik_rotation: Optional[MQuaternion] = None
-        self.ik_target_rotation: Optional[MQuaternion] = None
         self.correct_rotation: Optional[MQuaternion] = None
 
 
