@@ -24,7 +24,7 @@ from mlib.vmd.vmd_part import (
     VmdShowIkFrame,
 )
 
-log = MLogger(__name__, logging.INFO)
+log = MLogger(__name__, logging.DEBUG)
 
 
 class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
@@ -556,7 +556,8 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                         break
 
                     # 制限角で最大変位量を制限する
-                    rotation_degree = min(rotation_degree, ik_bone.ik.unit_rotation.degrees.x)
+                    if loop > 0:
+                        rotation_degree = min(rotation_degree, ik_bone.ik.unit_rotation.degrees.x)
 
                     # 補正関節回転量
                     correct_qq = MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
