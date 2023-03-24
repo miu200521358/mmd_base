@@ -54,6 +54,7 @@ void main() {
         // ディフューズ色＋アンビエント色 計算
         float lightNormal = clamp(dot( vetexNormal, -lightDirection ), 0.0, 1.0);
         vertexColor.rgb += diffuse.rgb * lightNormal;
+        vertexColor = clamp(vertexColor, 0.0, 1.0);
     }
 
     // テクスチャ描画位置
