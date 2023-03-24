@@ -566,15 +566,15 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     mat = MMatrix4x4()
                     mat.rotate(link_bf.ik_rotation or MQuaternion())
 
-                    if link_bone.has_local_coordinate:
-                        # ローカル軸を向く
-                        mat.rotate(
-                            MQuaternion.from_axes(
-                                link_bone.local_x_vector,
-                                link_bone.local_y_vector,
-                                link_bone.correct_local_z_vector,
-                            )
-                        )
+                    # if link_bone.has_local_coordinate:
+                    #     # ローカル軸を向く
+                    #     mat.rotate(
+                    #         MQuaternion.from_axes(
+                    #             link_bone.local_x_vector,
+                    #             link_bone.local_y_vector,
+                    #             link_bone.correct_local_z_vector,
+                    #         )
+                    #     )
                     mat.rotate(correct_qq)
                     ik_qq = mat.to_quaternion()
 
