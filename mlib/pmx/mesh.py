@@ -137,7 +137,7 @@ class Mesh(BaseIndexModel):
             gl.glCullFace(gl.GL_BACK)
 
         # ボーンデフォームテクスチャ設定
-        self.bind_mats(mats, shader, False)
+        self.bind_bone_matrixes(mats, shader, False)
 
         # ------------------
         # 材質色設定
@@ -193,7 +193,7 @@ class Mesh(BaseIndexModel):
         if self.sphere_texture:
             self.sphere_texture.unbind()
 
-        self.unbind_mats()
+        self.unbind_bone_matrixes()
 
     def draw_edge(
         self,
@@ -205,7 +205,7 @@ class Mesh(BaseIndexModel):
         gl.glCullFace(gl.GL_FRONT)
 
         # ボーンデフォームテクスチャ設定
-        self.bind_mats(mats, shader, True)
+        self.bind_bone_matrixes(mats, shader, True)
 
         # ------------------
         # エッジ設定
@@ -219,9 +219,9 @@ class Mesh(BaseIndexModel):
             gl.ctypes.c_void_p(self.prev_vertices_pointer),
         )
 
-        self.unbind_mats()
+        self.unbind_bone_matrixes()
 
-    def bind_mats(
+    def bind_bone_matrixes(
         self,
         mats: np.ndarray,
         shader: MShader,
@@ -245,7 +245,7 @@ class Mesh(BaseIndexModel):
 
         gl.glUniform1i(shader.bone_matrix_texture_uniform[edge], 3)
 
-    def unbind_mats(
+    def unbind_bone_matrixes(
         self,
     ):
         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
