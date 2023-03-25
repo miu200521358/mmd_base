@@ -1,13 +1,11 @@
 import argparse
 import os
 import sys
-from multiprocessing import Queue, Process
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import wx
 
-from mlib.pmx.shader import MShader
 from mlib.pmx.viewer import PmxCanvas
 from mlib.base.logger import MLogger
 from mlib.pmx.pmx_reader import PmxReader
@@ -135,11 +133,5 @@ class PmxApp(wx.App):
 
 
 if __name__ == "__main__":
-    # gl_queue: Queue = Queue()
-    # gl_process = Process(
-    #     target=create_canvas,
-    #     args=(gl_queue,),
-    # )
-
     app = PmxApp()
     app.MainLoop()
