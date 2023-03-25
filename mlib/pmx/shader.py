@@ -75,8 +75,8 @@ class MShader:
         self.height = height
         self.vertical_degrees = self.INITIAL_VERTICAL_DEGREES
         self.aspect_ratio = float(self.width) / float(self.height)
-        self.near_plane = 0.01
-        self.far_plane = 10000
+        self.near_plane = 1
+        self.far_plane = 100
         self.look_at_center = MVector3D(0.0, self.INITIAL_LOOK_AT_CENTER_Y, 0.0)
         self.look_at_up = MVector3D(0.0, 1.0, 0.0)
 
