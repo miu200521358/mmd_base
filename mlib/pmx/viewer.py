@@ -1,3 +1,4 @@
+from typing import Optional
 import OpenGL.GL as gl
 from OpenGL.GL import glReadPixels, GL_RGBA, GL_UNSIGNED_BYTE
 import wx
@@ -5,6 +6,7 @@ from wx import glcanvas
 from PIL import Image
 import os
 import numpy as np
+from multiprocessing import Process, Queue
 
 from mlib.base.math import MQuaternion, MVector3D
 from mlib.pmx.shader import MShader
@@ -22,6 +24,13 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.now_pos = wx.Point(0, 0)
 
         self.SetCurrent(self.context)
+
+        self.matrixes_queue: Queue = Queue()
+        self.process: Optional[Process] = None
+        self.fps = 30
+
+        # 毎フレーム呼ばれるメソッド
+        self.on_update = self.get_mesh_matrixes_async
 
         self._initialize_ui(parent)
         self._initialize_ui_event()
@@ -46,6 +55,12 @@ class PmxCanvas(glcanvas.GLCanvas):
         # 再生中かどうかを示すフラグ
         self.playing = False
 
+        # # 非同期処理で演算した結果を格納する変数
+        # self.result = None
+
+        # # multiprocessing プロセス
+        # self.proc: Optional[Process] = None
+
         # # IK計算対象
         # self.ik_bf_indices: dict[str, list[int]] = {}
         # if self.model and self.motion:
@@ -65,8 +80,8 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         # 再生タイマー
         self.play_timer = wx.Timer(self)
-        # 30fpsで設定
-        self.play_timer.Start(int(1000 / 30))
+        # # 30fpsで設定
+        # self.play_timer.Start(int(1000 / 30))
 
     def _initialize_ui_event(self):
         self.Bind(wx.EVT_PAINT, self.on_paint)
@@ -80,8 +95,12 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.on_erase_background)
         self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
 
+        # # タイマーイベントをバインド
+        # self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)
+
         # タイマーイベントをバインド
         self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)
+        self.Bind(wx.EVT_TIMER, self.on_update, self.play_timer)
 
     def on_erase_background(self, event: wx.Event):
         # Do nothing, to avoid flashing on MSW (これがないとチラつくらしい）
@@ -225,8 +244,48 @@ class PmxCanvas(glcanvas.GLCanvas):
             #     next_fno = next_fnos[0] if len(next_fnos) > 0 else max(fnos)
             #     self.motion.bones.get_matrix_by_indexes([prev_fno, next_fno], [self.model.bone_trees[self.model.bones[ik_bone_name].index]], self.model)
 
+            # # 非同期処理を実行する
+            # self.result = None
+            # self.proc = Process(
+            #     target=self.motion.bones.get_mesh_matrixes,
+            #     args=(
+            #         now_fno,
+            #         self.model,
+            #     ),
+            # )
+            # self.proc.start()
+
             self.bone_matrixes = self.motion.bones.get_mesh_matrixes(now_fno, self.model)
             self.Refresh()
+
+    def get_mesh_matrixes_async(self, event: wx.Event):
+        if not self.process or not self.process.is_alive():
+            self.process = Process(
+                target=self.get_mesh_matrixes, args=(self.matrixes_queue, self.motion, self.model, self.frame_ctrl.GetValue()), name="MeshMatrixProcess"
+            )
+            self.process.start()
+
+        if not self.matrixes_queue.empty():
+            bone_matrixes = self.matrixes_queue.get()
+            if bone_matrixes is not None:
+                self.bone_matrixes = bone_matrixes
+                self.frame_ctrl.SetValue(self.frame_ctrl.GetValue() + 1)
+                self.Refresh()
+
+    @staticmethod
+    def get_mesh_matrixes(matrixes_queue: Queue, motion: VmdMotion, model: PmxModel, now_fno: int):
+        while motion and motion.max_fno > now_fno:
+            bone_matrixes = motion.bones.get_mesh_matrixes(now_fno, model)
+            now_fno += 1
+            matrixes_queue.put(bone_matrixes)
+        matrixes_queue.put(None)
+
+    # def _get_mesh_matrixes_async(self, now_fno: int):
+    #     bone_matrixes = np.array([np.eye(4) for _ in range(len(self.model.bones))])
+    #     self.motion.bones.update_world_matrixes(bone_matrixes, now_fno)
+    #     self.motion.bones.update_skinning_matrixes(bone_matrixes, self.model.bones)
+    #     self.motion.update_morph(self.model.morphs, now_fno)
+    #     return bone_matrixes
 
     def on_capture(self, event: wx.Event):
         # キャプチャ
@@ -247,8 +306,10 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.playing = not self.playing  # フラグを反転
         if not self.playing:
             self.play_timer.Stop()  # タイマーを停止
+            if self.process:
+                self.process.terminate()
         else:
-            self.play_timer.Start(int(1000 / 30))  # タイマーを再開
+            self.play_timer.Start(int(1000 / self.fps))  # タイマーを再開
 
     # def on_load(self, event: wx.Event, pmx_path: str, motion_path: str):
     #     if pmx_path:
@@ -262,8 +323,9 @@ class PmxCanvas(glcanvas.GLCanvas):
     #             self.change_motion(wx.wxEVT_NULL)
 
     def on_play_timer(self, event: wx.Event):
-        if self.playing:
-            self.on_frame_forward(event)
+        if self.playing and self.model and self.motion:
+            self.frame_ctrl.SetValue(self.frame_ctrl.GetValue() + 1)
+            # self.on_frame_forward(event)
 
     def on_mouse_down(self, event: wx.Event):
         self.now_pos = self.last_pos = event.GetPosition()
