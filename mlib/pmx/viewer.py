@@ -5,16 +5,18 @@ from wx import glcanvas
 from PIL import Image
 import os
 import numpy as np
+import multiprocessing as mp
 
 from mlib.base.math import MQuaternion, MVector3D
 from mlib.pmx.pmx_reader import PmxReader
 from mlib.pmx.shader import MShader
+from mlib.pmx.pmx_collection import PmxModel
 from mlib.vmd.vmd_reader import VmdReader
 from mlib.vmd.vmd_collection import VmdMotion
 
 
 class PmxCanvas(glcanvas.GLCanvas):
-    def __init__(self, parent, pmx_path: str, vmd_path: str, width: int, height: int, *args, **kw):
+    def __init__(self, parent, draw_queue: mp.Queue, compute_queue: mp.Queue, width: int, height: int, *args, **kw):
         attribList = (glcanvas.WX_GL_RGBA, glcanvas.WX_GL_DOUBLEBUFFER, glcanvas.WX_GL_DEPTH_SIZE, 16, 0)
         glcanvas.GLCanvas.__init__(self, parent, -1, size=(width, height), attribList=attribList)
         self.context = glcanvas.GLContext(self)
@@ -36,16 +38,21 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.on_erase_background)
         self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
 
-        self.model = PmxReader().read_by_filepath(pmx_path)
+        self.shader = MShader(width, height)
+        self.model = PmxModel()
+        self.motion = VmdMotion()
+        self.bone_matrixes = np.array([np.eye(4) for _ in range(1)])
 
-        self.shader = MShader(width, height, len(self.model.bones))
-        self.model.init_draw(self.shader)
+        # self.model = PmxReader().read_by_filepath(pmx_path)
 
-        self.motion = VmdReader().read_by_filepath(vmd_path) if vmd_path else VmdMotion()
-        max_frame = self.motion.max_fno if self.motion else 100
+        # self.model.init_draw(self.shader)
 
-        self.bone_matrixes = np.array([np.eye(4) for _ in range(len(self.model.bones))])
-        self.frame_ctrl = wx.SpinCtrl(parent, value="0", min=0, max=max_frame, size=wx.Size(80, 30))
+        # self.motion = VmdReader().read_by_filepath(vmd_path) if vmd_path else VmdMotion()
+        # max_frame = self.motion.max_fno if self.motion else 100
+
+        # self.bone_matrixes = np.array([np.eye(4) for _ in range(len(self.model.bones))])
+
+        self.frame_ctrl = wx.SpinCtrl(parent, value="0", min=0, max=10000, size=wx.Size(80, 30))
         self.frame_ctrl.Bind(wx.EVT_SPINCTRL, self.change_motion)
 
         self.is_drag = False
@@ -68,7 +75,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         #             list(set([bfs.index for bone in self.model.bone_trees[ik_bone.index] for bfs in self.motion.bones[bone.name]] + [self.motion.max_fno]))
         #         )
 
-        self.change_motion(wx.wxEVT_NULL)
+        # self.change_motion(wx.wxEVT_NULL)
 
     def on_erase_background(self, event: wx.Event):
         # Do nothing, to avoid flashing on MSW (これがないとチラつくらしい）
@@ -236,6 +243,17 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.play_timer.Stop()  # タイマーを停止
         else:
             self.play_timer.Start(int(1000 / 30))  # タイマーを再開
+
+    def on_load(self, event: wx.Event, pmx_path: str, motion_path: str):
+        if pmx_path:
+            self.model = PmxReader().read_by_filepath(pmx_path)
+            self.model.init_draw(self.shader)
+
+            if motion_path:
+                self.motion = VmdReader().read_by_filepath(motion_path)
+                self.bone_matrixes = np.array([np.eye(4) for _ in range(len(self.model.bones))])
+
+                self.change_motion(wx.wxEVT_NULL)
 
     def on_play_timer(self, event: wx.Event):
         if self.playing:

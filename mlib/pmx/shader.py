@@ -70,7 +70,7 @@ class MShader:
     INITIAL_LOOK_AT_CENTER_Y = INITIAL_CAMERA_POSITION_Y * 0.8
     INITIAL_CAMERA_POSITION_X = 40.0
 
-    def __init__(self, width: int, height: int, bone_num: int) -> None:
+    def __init__(self, width: int, height: int) -> None:
         self.width = width
         self.height = height
         self.vertical_degrees = self.INITIAL_VERTICAL_DEGREES
@@ -118,7 +118,7 @@ class MShader:
 
         # 初期化
         self.use()
-        self.initialize(self.model_program, bone_num)
+        self.initialize(self.model_program)
         self.unuse()
 
         # エッジ描画シェーダー ------------------
@@ -127,7 +127,7 @@ class MShader:
 
         # 初期化
         self.use(edge=True)
-        self.initialize(self.edge_program, bone_num, edge=True)
+        self.initialize(self.edge_program, edge=True)
         self.unuse()
 
         # フィット（両方）
@@ -178,7 +178,7 @@ class MShader:
             info = gl.glGetShaderInfoLog(program)
             raise Exception(info)
 
-    def initialize(self, program: Any, bone_num: int, edge=False):
+    def initialize(self, program: Any, edge=False):
         # light color
         # MMD Light Diffuse は必ず0
         self.light_diffuse = MVector3D()

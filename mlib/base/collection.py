@@ -478,3 +478,7 @@ class BaseHashModel(BaseModel):
         sha1.update(self.path.encode(Encoding.UTF_8.value))
 
         return sha1.hexdigest()
+
+    def __bool__(self) -> bool:
+        # パスが定義されていたら、中身入り
+        return len(self.path) > 0
