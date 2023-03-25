@@ -228,8 +228,8 @@ class PmxCanvas(glcanvas.GLCanvas):
     @staticmethod
     def get_mesh_matrixes(matrixes_queue: Queue, motion: VmdMotion, model: PmxModel, now_fno: int):
         while motion and motion.max_fno > now_fno:
-            bone_matrixes = motion.bones.get_mesh_matrixes(now_fno, model)
             now_fno += 1
+            bone_matrixes = motion.bones.get_mesh_matrixes(now_fno, model)
             matrixes_queue.put(bone_matrixes)
         matrixes_queue.put(None)
 
