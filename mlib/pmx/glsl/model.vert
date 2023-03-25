@@ -43,12 +43,6 @@ void main() {
         }
         int boneIndex = int(boneIdxs[i]);
 
-        // // ボーン変形行列のテクスチャから行列を取得する
-        // vec4 boneRow0 = texture(boneMatrixTexture, vec2((boneIndex + 0.5) / float(textureSize(boneMatrixTexture, 0).x), (i + 0.5) / 4.0)).rgba;
-        // vec4 boneRow1 = texture(boneMatrixTexture, vec2((boneIndex + 0.5) / float(textureSize(boneMatrixTexture, 0).x), (i + 0.5 + 1.0/4.0) / 4.0)).rgba;
-        // vec4 boneRow2 = texture(boneMatrixTexture, vec2((boneIndex + 0.5) / float(textureSize(boneMatrixTexture, 0).x), (i + 0.5 + 2.0/4.0) / 4.0)).rgba;
-        // vec4 boneRow3 = texture(boneMatrixTexture, vec2((boneIndex + 0.5) / float(textureSize(boneMatrixTexture, 0).x), (i + 0.5 + 3.0/4.0) / 4.0)).rgba;
-
         vec4 row0 = texelFetch(boneMatrixTexture, ivec2(0, boneIndex), 0);
         vec4 row1 = texelFetch(boneMatrixTexture, ivec2(1, boneIndex), 0);
         vec4 row2 = texelFetch(boneMatrixTexture, ivec2(2, boneIndex), 0);

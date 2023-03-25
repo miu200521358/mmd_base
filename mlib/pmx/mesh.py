@@ -136,15 +136,6 @@ class Mesh(BaseIndexModel):
             gl.glEnable(gl.GL_CULL_FACE)
             gl.glCullFace(gl.GL_BACK)
 
-        # # ボーンデフォーム設定
-        # for n, mat in enumerate(mats):
-        #     gl.glUniformMatrix4fv(
-        #         shader.bone_matrix_uniform[False][n],
-        #         1,
-        #         gl.GL_FALSE,
-        #         mat,
-        #     )
-
         # ボーンデフォームテクスチャ設定
         self.bind_mats(mats, shader, False)
 
@@ -202,7 +193,7 @@ class Mesh(BaseIndexModel):
         if self.sphere_texture:
             self.sphere_texture.unbind()
 
-        # self.unbind_mats()
+        self.unbind_mats()
 
     def draw_edge(
         self,
@@ -213,14 +204,8 @@ class Mesh(BaseIndexModel):
         gl.glEnable(gl.GL_CULL_FACE)
         gl.glCullFace(gl.GL_FRONT)
 
-        # ボーンデフォーム設定
-        for n, mat in enumerate(mats):
-            gl.glUniformMatrix4fv(
-                shader.bone_matrix_uniform[True][n],
-                1,
-                gl.GL_FALSE,
-                mat.T,
-            )
+        # ボーンデフォームテクスチャ設定
+        self.bind_mats(mats, shader, True)
 
         # ------------------
         # エッジ設定
@@ -233,6 +218,8 @@ class Mesh(BaseIndexModel):
             ibo.dtype,
             gl.ctypes.c_void_p(self.prev_vertices_pointer),
         )
+
+        self.unbind_mats()
 
     def bind_mats(
         self,
