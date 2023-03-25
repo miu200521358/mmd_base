@@ -26,7 +26,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.SetCurrent(self.context)
 
         self.matrixes_queue: Queue = Queue()
-        self.process: Optional[Process] = None
+        self.matrixes_process: Optional[Process] = None
         self.fps = 30
 
         # 毎フレーム呼ばれるメソッド
@@ -54,8 +54,6 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         # 再生タイマー
         self.play_timer = wx.Timer(self)
-        # # 30fpsで設定
-        # self.play_timer.Start(int(1000 / 30))
 
     def _initialize_ui_event(self):
         self.Bind(wx.EVT_PAINT, self.on_paint)
@@ -112,11 +110,6 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.shader.msaa.bind()
             self.model.draw(self.bone_matrixes)
             self.shader.msaa.unbind()
-
-        self.draw_text(event)
-
-    def draw_text(self, event: wx.Event):
-        pass
 
     def on_key_down(self, event: wx.Event):
         keycode = event.GetKeyCode()
@@ -212,18 +205,17 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.Refresh()
 
     def get_mesh_matrixes_async(self, event: wx.Event):
-        if not self.process or not self.process.is_alive():
-            self.process = Process(
+        if not self.matrixes_process or not self.matrixes_process.is_alive():
+            self.matrixes_process = Process(
                 target=self.get_mesh_matrixes, args=(self.matrixes_queue, self.motion, self.model, self.frame_ctrl.GetValue()), name="MeshMatrixProcess"
             )
-            self.process.start()
+            self.matrixes_process.start()
 
         if not self.matrixes_queue.empty():
             bone_matrixes = self.matrixes_queue.get()
             if bone_matrixes is not None:
                 self.bone_matrixes = bone_matrixes
                 self.frame_ctrl.SetValue(self.frame_ctrl.GetValue() + 1)
-                self.Refresh()
 
     @staticmethod
     def get_mesh_matrixes(matrixes_queue: Queue, motion: VmdMotion, model: PmxModel, now_fno: int):
@@ -252,8 +244,8 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.playing = not self.playing  # フラグを反転
         if not self.playing:
             self.play_timer.Stop()  # タイマーを停止
-            if self.process:
-                self.process.terminate()
+            if self.matrixes_process:
+                self.matrixes_process.terminate()
         else:
             self.play_timer.Start(int(1000 / self.fps))  # タイマーを再開
 
