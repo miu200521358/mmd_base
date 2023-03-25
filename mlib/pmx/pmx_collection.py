@@ -502,7 +502,7 @@ class PmxModel(BaseHashModel):
         self.rigidbodies = RigidBodies()
         self.joints = Joints()
         self.for_draw = False
-        self.meshes = None
+        self.meshes: Optional[Meshes] = None
 
     @property
     def tail_bone_names(self) -> list[str]:
@@ -512,7 +512,7 @@ class PmxModel(BaseHashModel):
     def name(self) -> str:
         return self.model_name
 
-    def init_draw(self, shader):
+    def init_draw(self, shader: MShader):
         if self.for_draw:
             # 既にフラグが立ってたら描画初期化済み
             return
@@ -574,7 +574,7 @@ class Meshes(BaseIndexListModel[Mesh]):
     メッシュリスト
     """
 
-    def __init__(self, shader: MShader, model: PmxModel):
+    def __init__(self, shader: MShader, model: PmxModel) -> None:
         super().__init__()
 
         self.shader = shader

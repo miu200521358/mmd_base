@@ -1,45 +1,49 @@
 import argparse
 import os
 import sys
-import multiprocessing as mp
+from multiprocessing import Queue, Process
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import wx
 
-from mlib.base.multi import DrawProcess
+from mlib.pmx.shader import MShader
 from mlib.pmx.viewer import PmxCanvas
 from mlib.base.logger import MLogger
+from mlib.pmx.pmx_reader import PmxReader
+from mlib.vmd.vmd_reader import VmdReader
 
 
 class PmxPanel(wx.Panel):
-    def __init__(self, parent, draw_queue: mp.Queue, compute_queue: mp.Queue):
-        parser = argparse.ArgumentParser(description="MMD model viewer sample.")
-        parser.add_argument("--pmx", type=str, help="MMD model file name.")
-        parser.add_argument("--motion", type=str, help="MMD motion file name.")
-        parser.add_argument("--level", type=int, help="MMD motion file name.")
-        args = parser.parse_args()
-
-        MLogger.initialize(lang="ja_JP", root_dir=os.path.join(os.path.dirname(__file__), "..", "mlib"), level=args.level)
-
+    def __init__(self, parent, model_path: str, motion_path: str):
         self.parent = parent
         wx.Panel.__init__(self, parent)
+        self.model_path = model_path
+        self.motion_path = motion_path
+
+        self._initialize_ui()
+        self._initialize_ui_event()
+
+        self.fit()
+
+    def _initialize_ui(self):
         self.SetBackgroundColour("#626D58")
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.canvas = PmxCanvas(self, draw_queue, compute_queue, 800, 700)
+        self.canvas = PmxCanvas(self, 800, 700)
 
         self.sizer.Add(self.canvas, 0, wx.ALL | wx.EXPAND, 0)
 
+        # ファイル系
         self.file_sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.model_file_ctrl = wx.FilePickerCtrl(self, wx.ID_ANY)
         self.file_sizer.Add(self.model_file_ctrl, 1, wx.ALL | wx.EXPAND, 5)
-        self.model_file_ctrl.SetPath(args.pmx)
+        self.model_file_ctrl.SetPath(self.model_path)
 
         self.motion_file_ctrl = wx.FilePickerCtrl(self, wx.ID_ANY)
         self.file_sizer.Add(self.motion_file_ctrl, 1, wx.ALL | wx.EXPAND, 5)
-        self.motion_file_ctrl.SetPath(args.motion)
+        self.motion_file_ctrl.SetPath(self.motion_path)
 
         self.sizer.Add(self.file_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
@@ -47,22 +51,18 @@ class PmxPanel(wx.Panel):
 
         # 読み込み
         self.load_btn = wx.Button(self, wx.ID_ANY, "Load", wx.DefaultPosition, wx.Size(100, 50))
-        self.load_btn.Bind(wx.EVT_BUTTON, self.load)
         self.btn_sizer.Add(self.load_btn, 0, wx.ALL, 5)
 
         # 再生
         self.play_btn = wx.Button(self, wx.ID_ANY, "Play/Stop", wx.DefaultPosition, wx.Size(100, 50))
-        self.play_btn.Bind(wx.EVT_BUTTON, self.play)
         self.btn_sizer.Add(self.play_btn, 0, wx.ALL, 5)
 
         # リセット
         self.reset_btn = wx.Button(self, wx.ID_ANY, "Reset", wx.DefaultPosition, wx.Size(100, 50))
-        self.reset_btn.Bind(wx.EVT_BUTTON, self.reset)
         self.btn_sizer.Add(self.reset_btn, 0, wx.ALL, 5)
 
         # キャプチャー
         self.capture_btn = wx.Button(self, wx.ID_ANY, "Capture", wx.DefaultPosition, wx.Size(100, 50))
-        self.capture_btn.Bind(wx.EVT_BUTTON, self.capture)
         self.btn_sizer.Add(self.capture_btn, 0, wx.ALL, 5)
 
         # キーフレ
@@ -70,30 +70,37 @@ class PmxPanel(wx.Panel):
 
         self.sizer.Add(self.btn_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
-        self.Layout()
-        self.fit()
+    def _initialize_ui_event(self):
+        self.load_btn.Bind(wx.EVT_BUTTON, self.on_load)
+        self.play_btn.Bind(wx.EVT_BUTTON, self.on_play)
+        self.reset_btn.Bind(wx.EVT_BUTTON, self.on_reset)
+        self.capture_btn.Bind(wx.EVT_BUTTON, self.on_capture)
 
     def fit(self):
         self.SetSizer(self.sizer)
         self.Layout()
         self.sizer.Fit(self.parent)
 
-    def reset(self, event: wx.Event):
-        self.canvas.reset(event)
+    def on_reset(self, event: wx.Event):
+        self.canvas.on_reset(event)
 
-    def capture(self, event: wx.Event):
+    def on_capture(self, event: wx.Event):
         self.canvas.on_capture(event)
 
-    def play(self, event: wx.Event):
+    def on_play(self, event: wx.Event):
         self.canvas.on_play(event)
         self.play_btn.SetLabelText("Stop" if self.canvas.playing else "Play")
 
-    def load(self, event: wx.Event):
-        self.canvas.on_load(event, self.model_file_ctrl.GetPath(), self.motion_file_ctrl.GetPath())
+    def on_load(self, event: wx.Event):
+        self.canvas.model = PmxReader().read_by_filepath(self.model_path)
+        self.canvas.model.init_draw(self.canvas.shader)
+
+        self.canvas.motion = VmdReader().read_by_filepath(self.motion_path)
+        self.canvas.change_motion(event)
 
 
 class PmxFrame(wx.Frame):
-    def __init__(self, draw_queue: mp.Queue, compute_queue: mp.Queue, *args, **kw):
+    def __init__(self, model_path: str, motion_path: str):
         self.size = (1000, 1000)
         wx.Frame.__init__(
             self,
@@ -104,7 +111,7 @@ class PmxFrame(wx.Frame):
         )
 
         self.Bind(wx.EVT_CLOSE, self.onClose)
-        self.panel = PmxPanel(self, draw_queue, compute_queue)
+        self.panel = PmxPanel(self, model_path, motion_path)
 
     def onClose(self, event: wx.Event):
         self.Destroy()
@@ -112,30 +119,27 @@ class PmxFrame(wx.Frame):
 
 
 class PmxApp(wx.App):
-    def __init__(self, draw_queue: mp.Queue, compute_queue: mp.Queue, redirect=False, filename=None, useBestVisual=False, clearSigInt=True):
-        super().__init__(redirect, filename, useBestVisual, clearSigInt)
-        self.frame = PmxFrame(draw_queue, compute_queue)
+    def __init__(self):
+        super().__init__()
+
+        parser = argparse.ArgumentParser(description="MMD model viewer sample.")
+        parser.add_argument("--model", type=str, help="MMD model file name.")
+        parser.add_argument("--motion", type=str, help="MMD motion file name.")
+        parser.add_argument("--level", type=int, help="MMD motion file name.")
+        args = parser.parse_args()
+
+        MLogger.initialize(lang="ja_JP", root_dir=os.path.join(os.path.dirname(__file__), "..", "mlib"), level=args.level)
+
+        self.frame = PmxFrame(args.model, args.motion)
         self.frame.Show()
 
 
-def run_app(draw_queue: mp.Queue, compute_queue: mp.Queue):
-    app = PmxApp(draw_queue, compute_queue)
-    app.MainLoop()
-
-
 if __name__ == "__main__":
-    # 描画を担当するキュー
-    draw_queue: mp.Queue = mp.Queue()
-    # 計算処理を担当するキュー
-    compute_queue: mp.Queue = mp.Queue()
-
-    draw_process = DrawProcess(target=run_app, queues=[draw_queue, compute_queue])
-    # compute_process = ComputeProcess(
-    #     target=run_app,
-    #     queues=[compute_queue],
+    # gl_queue: Queue = Queue()
+    # gl_process = Process(
+    #     target=create_canvas,
+    #     args=(gl_queue,),
     # )
-    # gl_process = GlProcess(target=run_app, queues=[draw_queue, compute_queue])
 
-    draw_process.start()
-
-    draw_process.join()
+    app = PmxApp()
+    app.MainLoop()

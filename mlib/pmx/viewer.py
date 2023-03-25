@@ -5,18 +5,15 @@ from wx import glcanvas
 from PIL import Image
 import os
 import numpy as np
-import multiprocessing as mp
 
 from mlib.base.math import MQuaternion, MVector3D
-from mlib.pmx.pmx_reader import PmxReader
 from mlib.pmx.shader import MShader
 from mlib.pmx.pmx_collection import PmxModel
-from mlib.vmd.vmd_reader import VmdReader
 from mlib.vmd.vmd_collection import VmdMotion
 
 
 class PmxCanvas(glcanvas.GLCanvas):
-    def __init__(self, parent, draw_queue: mp.Queue, compute_queue: mp.Queue, width: int, height: int, *args, **kw):
+    def __init__(self, parent, width: int, height: int, *args, **kw):
         attribList = (glcanvas.WX_GL_RGBA, glcanvas.WX_GL_DOUBLEBUFFER, glcanvas.WX_GL_DEPTH_SIZE, 16, 0)
         glcanvas.GLCanvas.__init__(self, parent, -1, size=(width, height), attribList=attribList)
         self.context = glcanvas.GLContext(self)
@@ -25,18 +22,9 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.now_pos = wx.Point(0, 0)
 
         self.SetCurrent(self.context)
-        gl.glClearColor(0.7, 0.7, 0.7, 1)
 
-        self.Bind(wx.EVT_PAINT, self.on_paint)
-        self.Bind(wx.EVT_SIZE, self.on_resize)
-        self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
-        self.Bind(wx.EVT_MIDDLE_DOWN, self.on_mouse_down)
-        self.Bind(wx.EVT_RIGHT_DOWN, self.on_mouse_down)
-        self.Bind(wx.EVT_MOTION, self.on_mouse_motion)
-        self.Bind(wx.EVT_MIDDLE_UP, self.on_mouse_up)
-        self.Bind(wx.EVT_RIGHT_UP, self.on_mouse_up)
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.on_erase_background)
-        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+        self._initialize_ui(parent)
+        self._initialize_ui_event()
 
         self.shader = MShader(width, height)
         self.model = PmxModel()
@@ -52,19 +40,11 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         # self.bone_matrixes = np.array([np.eye(4) for _ in range(len(self.model.bones))])
 
-        self.frame_ctrl = wx.SpinCtrl(parent, value="0", min=0, max=10000, size=wx.Size(80, 30))
-        self.frame_ctrl.Bind(wx.EVT_SPINCTRL, self.change_motion)
-
+        # マウスドラッグフラグ
         self.is_drag = False
 
         # 再生中かどうかを示すフラグ
         self.playing = False
-        # 再生タイマー
-        self.play_timer = wx.Timer(self)
-        # 30fpsで設定
-        self.play_timer.Start(int(1000 / 30))
-        # タイマーイベントをバインド
-        self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)
 
         # # IK計算対象
         # self.ik_bf_indices: dict[str, list[int]] = {}
@@ -76,6 +56,32 @@ class PmxCanvas(glcanvas.GLCanvas):
         #         )
 
         # self.change_motion(wx.wxEVT_NULL)
+
+    def _initialize_ui(self, parent):
+        gl.glClearColor(0.7, 0.7, 0.7, 1)
+
+        self.frame_ctrl = wx.SpinCtrl(parent, value="0", min=0, max=10000, size=wx.Size(80, 30))
+        self.frame_ctrl.Bind(wx.EVT_SPINCTRL, self.change_motion)
+
+        # 再生タイマー
+        self.play_timer = wx.Timer(self)
+        # 30fpsで設定
+        self.play_timer.Start(int(1000 / 30))
+
+    def _initialize_ui_event(self):
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+        self.Bind(wx.EVT_SIZE, self.on_resize)
+        self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
+        self.Bind(wx.EVT_MIDDLE_DOWN, self.on_mouse_down)
+        self.Bind(wx.EVT_RIGHT_DOWN, self.on_mouse_down)
+        self.Bind(wx.EVT_MOTION, self.on_mouse_motion)
+        self.Bind(wx.EVT_MIDDLE_UP, self.on_mouse_up)
+        self.Bind(wx.EVT_RIGHT_UP, self.on_mouse_up)
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.on_erase_background)
+        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+
+        # タイマーイベントをバインド
+        self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)
 
     def on_erase_background(self, event: wx.Event):
         # Do nothing, to avoid flashing on MSW (これがないとチラつくらしい）
@@ -91,7 +97,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         self.SwapBuffers()
 
-    def reset(self, event: wx.Event):
+    def on_reset(self, event: wx.Event):
         self.frame_ctrl.SetValue(0)
         self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
         self.shader.look_at_center = MVector3D(0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0)
@@ -244,16 +250,16 @@ class PmxCanvas(glcanvas.GLCanvas):
         else:
             self.play_timer.Start(int(1000 / 30))  # タイマーを再開
 
-    def on_load(self, event: wx.Event, pmx_path: str, motion_path: str):
-        if pmx_path:
-            self.model = PmxReader().read_by_filepath(pmx_path)
-            self.model.init_draw(self.shader)
+    # def on_load(self, event: wx.Event, pmx_path: str, motion_path: str):
+    #     if pmx_path:
+    #         self.model = PmxReader().read_by_filepath(pmx_path)
+    #         self.model.init_draw(self.shader)
 
-            if motion_path:
-                self.motion = VmdReader().read_by_filepath(motion_path)
-                self.bone_matrixes = np.array([np.eye(4) for _ in range(len(self.model.bones))])
+    #         if motion_path:
+    #             self.motion = VmdReader().read_by_filepath(motion_path)
+    #             self.bone_matrixes = np.array([np.eye(4) for _ in range(len(self.model.bones))])
 
-                self.change_motion(wx.wxEVT_NULL)
+    #             self.change_motion(wx.wxEVT_NULL)
 
     def on_play_timer(self, event: wx.Event):
         if self.playing:

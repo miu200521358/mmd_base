@@ -355,9 +355,6 @@ class Texture(BaseIndexModel):
             # 既にフラグが立ってたら描画初期化済み
             return
 
-        # 描画初期化
-        self.for_draw = True
-
         # global texture
         if is_individual:
             tex_path = os.path.abspath(os.path.join(os.path.dirname(model_path), self.texture_path))
@@ -372,6 +369,9 @@ class Texture(BaseIndexModel):
         self.texture_type = texture_type
         self.texture_id = gl.GL_TEXTURE0 if texture_type == TextureType.TEXTURE else gl.GL_TEXTURE1 if texture_type == TextureType.TOON else gl.GL_TEXTURE2
         self.set_texture()
+
+        # 描画初期化
+        self.for_draw = True
 
     def set_texture(self):
         self.bind()
