@@ -8,8 +8,10 @@ in layout(location = %d) float vertexEdge;
 in layout(location = %d) vec4 boneIdxs;
 in layout(location = %d) vec4 boneWeights;
 
+// ボーン変形行列を格納するテクスチャ
+uniform sampler2D boneMatrixTexture;
+
 uniform vec3 cameraPos;
-uniform mat4 boneMatrixes[%d];
 uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;
 
@@ -35,14 +37,31 @@ void main() {
     // 各頂点で使用されるボーン変形行列を計算する
     mat4 boneTransformMatrix = mat4(0.0);
     for(int i = 0; i < 4; i++) {
-        boneTransformMatrix += boneMatrixes[int(boneIdxs[i])] * boneWeights[i];
+        float boneWeight = boneWeights[i];
+        if (boneWeight <= 0.0) {
+            continue;
+        }
+        int boneIndex = int(boneIdxs[i]);
+
+        // // ボーン変形行列のテクスチャから行列を取得する
+        // vec4 boneRow0 = texture(boneMatrixTexture, vec2((boneIndex + 0.5) / float(textureSize(boneMatrixTexture, 0).x), (i + 0.5) / 4.0)).rgba;
+        // vec4 boneRow1 = texture(boneMatrixTexture, vec2((boneIndex + 0.5) / float(textureSize(boneMatrixTexture, 0).x), (i + 0.5 + 1.0/4.0) / 4.0)).rgba;
+        // vec4 boneRow2 = texture(boneMatrixTexture, vec2((boneIndex + 0.5) / float(textureSize(boneMatrixTexture, 0).x), (i + 0.5 + 2.0/4.0) / 4.0)).rgba;
+        // vec4 boneRow3 = texture(boneMatrixTexture, vec2((boneIndex + 0.5) / float(textureSize(boneMatrixTexture, 0).x), (i + 0.5 + 3.0/4.0) / 4.0)).rgba;
+
+        vec4 row0 = texelFetch(boneMatrixTexture, ivec2(0, boneIndex), 0);
+        vec4 row1 = texelFetch(boneMatrixTexture, ivec2(1, boneIndex), 0);
+        vec4 row2 = texelFetch(boneMatrixTexture, ivec2(2, boneIndex), 0);
+        vec4 row3 = texelFetch(boneMatrixTexture, ivec2(3, boneIndex), 0);
+        mat4 boneMatrix = mat4(row0, row1, row2, row3);
+        boneTransformMatrix += boneMatrix * boneWeight;
     }
 
     // 各頂点で使用される法線変形行列をボーン変形行列から回転情報のみ抽出して生成する
     mat3 normalTransformMatrix = mat3(boneTransformMatrix);
 
     // 頂点位置
-    gl_Position = modelViewProjectionMatrix * boneTransformMatrix * position4;
+    gl_Position = modelViewProjectionMatrix * (boneTransformMatrix * position4);
 
     // 頂点法線
     vetexNormal = normalize(normalTransformMatrix * normalize(normal)).xyz;

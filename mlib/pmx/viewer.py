@@ -44,7 +44,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.motion = VmdReader().read_by_filepath(vmd_path) if vmd_path else VmdMotion()
         max_frame = self.motion.max_fno if self.motion else 100
 
-        self.bone_matrixes = [np.eye(4) for _ in range(len(self.model.bones))]
+        self.bone_matrixes = np.array([np.eye(4) for _ in range(len(self.model.bones))])
         self.frame_ctrl = wx.SpinCtrl(parent, value="0", min=0, max=max_frame, size=wx.Size(80, 30))
         self.frame_ctrl.Bind(wx.EVT_SPINCTRL, self.change_motion)
 

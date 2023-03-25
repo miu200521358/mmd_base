@@ -10,7 +10,6 @@ in layout(location = %d) vec4 boneWeights;
 
 uniform vec3 lightPos;
 uniform vec3 cameraPos;
-uniform mat4 boneMatrixes[%d];
 uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;
 
@@ -19,9 +18,9 @@ uniform float edgeSize;
 void main() {
     // 各頂点で使用されるボーン変形行列を計算する
     mat4 boneTransformMatrix = mat4(0.0);
-    for(int i = 0; i < 4; i++) {
-        boneTransformMatrix += boneMatrixes[int(boneIdxs[i])] * boneWeights[i];
-    }
+    // for(int i = 0; i < 4; i++) {
+    //     boneTransformMatrix += boneMatrixes[int(boneIdxs[i])] * boneWeights[i];
+    // }
 
     // エッジサイズｘ頂点エッジ倍率ｘモーフ倍率＋モーフバイアス
     float edgeWight = edgeSize * vertexEdge;

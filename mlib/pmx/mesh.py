@@ -122,7 +122,7 @@ class Mesh(BaseIndexModel):
 
     def draw_model(
         self,
-        mats: list[np.ndarray],
+        mats: np.ndarray,
         shader: MShader,
         ibo: IBO,
     ):
@@ -136,14 +136,17 @@ class Mesh(BaseIndexModel):
             gl.glEnable(gl.GL_CULL_FACE)
             gl.glCullFace(gl.GL_BACK)
 
-        # ボーンデフォーム設定
-        for n, mat in enumerate(mats):
-            gl.glUniformMatrix4fv(
-                shader.bone_matrix_uniform[False][n],
-                1,
-                gl.GL_FALSE,
-                mat.T,
-            )
+        # # ボーンデフォーム設定
+        # for n, mat in enumerate(mats):
+        #     gl.glUniformMatrix4fv(
+        #         shader.bone_matrix_uniform[False][n],
+        #         1,
+        #         gl.GL_FALSE,
+        #         mat,
+        #     )
+
+        # ボーンデフォームテクスチャ設定
+        self.bind_mats(mats, shader, False)
 
         # ------------------
         # 材質色設定
@@ -199,9 +202,11 @@ class Mesh(BaseIndexModel):
         if self.sphere_texture:
             self.sphere_texture.unbind()
 
+        # self.unbind_mats()
+
     def draw_edge(
         self,
-        mats: list[np.ndarray],
+        mats: np.ndarray,
         shader: MShader,
         ibo: IBO,
     ):
@@ -228,3 +233,32 @@ class Mesh(BaseIndexModel):
             ibo.dtype,
             gl.ctypes.c_void_p(self.prev_vertices_pointer),
         )
+
+    def bind_mats(
+        self,
+        mats: np.ndarray,
+        shader: MShader,
+        edge: bool,
+    ):
+        # テクスチャをアクティブにする
+        gl.glActiveTexture(gl.GL_TEXTURE3)
+
+        # テクスチャをバインドする
+        gl.glBindTexture(gl.GL_TEXTURE_2D, shader.bone_matrix_texture_id[edge])
+
+        # テクスチャのパラメーターの設定
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAX_LEVEL, 0)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
+
+        # テクスチャをシェーダーに渡す
+        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA32F, mats.shape[1], mats.shape[0], 0, gl.GL_RGBA, gl.GL_FLOAT, mats.flatten())
+
+        gl.glUniform1i(shader.bone_matrix_texture_uniform[edge], 3)
+
+    def unbind_mats(
+        self,
+    ):
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)

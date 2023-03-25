@@ -93,7 +93,10 @@ class MShader:
         self.light_position = MVector3D(-20, self.INITIAL_CAMERA_POSITION_Y * 2, self.INITIAL_CAMERA_POSITION_Z * 2)
         self.light_direction = (self.light_position * MVector3D(-1, -1, -1)).normalized()
 
-        self.bone_matrix_uniform: dict[bool, Any] = {}
+        # self.bone_matrix_uniform: dict[bool, Any] = {}
+        self.bone_matrix_texture_uniform: dict[bool, Any] = {}
+        self.bone_matrix_texture_id: dict[bool, Any] = {}
+        # FIXME self.bone_matrix_uniform: dict[bool, Any] = {}
         self.model_view_matrix_uniform: dict[bool, Any] = {}
         self.model_view_projection_matrix_uniform: dict[bool, Any] = {}
         self.light_direction_uniform: dict[bool, Any] = {}
@@ -113,20 +116,20 @@ class MShader:
 
         # モデル描画シェーダー ------------------
         self.model_program = gl.glCreateProgram()
-        self.compile(self.model_program, bone_num, "model.vert", "model.frag")
+        self.compile(self.model_program, "model.vert", "model.frag")
 
         # 初期化
         self.use()
-        self.initialize(self.model_program)
+        self.initialize(self.model_program, bone_num)
         self.unuse()
 
         # エッジ描画シェーダー ------------------
         self.edge_program = gl.glCreateProgram()
-        self.compile(self.edge_program, bone_num, "edge.vert", "edge.frag")
+        self.compile(self.edge_program, "edge.vert", "edge.frag")
 
         # 初期化
         self.use(edge=True)
-        self.initialize(self.edge_program, edge=True)
+        self.initialize(self.edge_program, bone_num, edge=True)
         self.unuse()
 
         # フィット（両方）
@@ -147,7 +150,7 @@ class MShader:
             raise Exception(info)
         return shader
 
-    def compile(self, program: Any, bone_num: int, vertex_shader_name: str, fragments_shader_name: str) -> None:
+    def compile(self, program: Any, vertex_shader_name: str, fragments_shader_name: str) -> None:
         vertex_shader_src = Path(os.path.join(os.path.dirname(__file__), "glsl", vertex_shader_name)).read_text(encoding="utf-8")
         vertex_shader_src = vertex_shader_src % (
             VsLayout.POSITION_ID.value,
@@ -157,7 +160,6 @@ class MShader:
             VsLayout.EDGE_ID.value,
             VsLayout.BONE_ID.value,
             VsLayout.WEIGHT_ID.value,
-            bone_num,
         )
 
         fragments_shader_src = Path(os.path.join(os.path.dirname(__file__), "glsl", fragments_shader_name)).read_text(encoding="utf-8")
@@ -178,7 +180,7 @@ class MShader:
             info = gl.glGetShaderInfoLog(program)
             raise Exception(info)
 
-    def initialize(self, program: Any, edge=False):
+    def initialize(self, program: Any, bone_num: int, edge=False):
         # light color
         # MMD Light Diffuse は必ず0
         self.light_diffuse = MVector3D()
@@ -198,6 +200,12 @@ class MShader:
 
         # MVP行列
         self.model_view_projection_matrix_uniform[edge] = gl.glGetUniformLocation(program, "modelViewProjectionMatrix")
+
+        # ボーン変形行列用テクスチャ
+
+        # テクスチャを作成する
+        self.bone_matrix_texture_id[edge] = gl.glGenTextures(1)
+        self.bone_matrix_texture_uniform[edge] = gl.glGetUniformLocation(program, "boneMatrixTexture")
 
         self.msaa = Msaa(self.width, self.height)
 

@@ -536,7 +536,7 @@ class PmxModel(BaseHashModel):
 
         self.meshes = Meshes(shader, self)
 
-    def draw(self, mats: list[np.ndarray]):
+    def draw(self, mats: np.ndarray):
         if not self.for_draw or not self.meshes:
             return
         self.meshes.draw(mats)
@@ -654,9 +654,10 @@ class Meshes(BaseIndexListModel[Mesh]):
 
             prev_vertices_count += material.vertices_count
 
-        # ボーンデフォーム行列(ボーン個数分用意)
-        shader.bone_matrix_uniform[True] = [gl.glGetUniformLocation(shader.edge_program, f"boneMatrixes[{n}]") for n in range(len(model.bones))]
-        shader.bone_matrix_uniform[False] = [gl.glGetUniformLocation(shader.model_program, f"boneMatrixes[{n}]") for n in range(len(model.bones))]
+        # FIXME
+        # # ボーンデフォーム行列(ボーン個数分用意)
+        # shader.bone_matrix_uniform[True] = [gl.glGetUniformLocation(shader.edge_program, f"boneMatrixes[{n}]") for n in range(len(model.bones))]
+        # shader.bone_matrix_uniform[False] = [gl.glGetUniformLocation(shader.model_program, f"boneMatrixes[{n}]") for n in range(len(model.bones))]
 
         # ---------------------
 
@@ -676,7 +677,7 @@ class Meshes(BaseIndexListModel[Mesh]):
 
         self.ibo_faces = IBO(self.faces)
 
-    def draw(self, mats: list[np.ndarray]):
+    def draw(self, mats: np.ndarray):
         for mesh in self.data:
             self.vao.bind()
             self.vbo_vertices.set_slot(VsLayout.POSITION_ID)
@@ -693,11 +694,11 @@ class Meshes(BaseIndexListModel[Mesh]):
             mesh.draw_model(mats, self.shader, self.ibo_faces)
             self.shader.unuse()
 
-            if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and mesh.material.diffuse_color.w > 0:
-                # エッジ描画
-                self.shader.use(edge=True)
-                mesh.draw_edge(mats, self.shader, self.ibo_faces)
-                self.shader.unuse()
+            # if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and mesh.material.diffuse_color.w > 0:
+            #     # エッジ描画
+            #     self.shader.use(edge=True)
+            #     mesh.draw_edge(mats, self.shader, self.ibo_faces)
+            #     self.shader.unuse()
 
             # ---------------
 

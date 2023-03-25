@@ -24,7 +24,7 @@ from mlib.vmd.vmd_part import (
     VmdShowIkFrame,
 )
 
-log = MLogger(__name__, logging.DEBUG)
+log = MLogger(__name__, logging.INFO)
 
 
 class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
@@ -216,7 +216,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
 
         return bone_matrixes
 
-    def get_mesh_matrixes(self, fno: int, model: PmxModel) -> list[np.ndarray]:
+    def get_mesh_matrixes(self, fno: int, model: PmxModel) -> np.ndarray:
         row = 1
         col = len(model.bones)
         poses = np.full((row, col), MVector3D())
@@ -239,9 +239,9 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             # BOf行列: 自身のボーンのボーンオフセット行列
             matrix = matrix @ bone.offset_matrix.copy().vector
 
-            mesh_matrixes.append(matrix)
+            mesh_matrixes.append(matrix.T)
 
-        return mesh_matrixes
+        return np.array(mesh_matrixes)
 
     def get(self, name: str) -> VmdBoneNameFrames:
         if name not in self.data:
@@ -809,7 +809,7 @@ class VmdMotion(BaseHashModel):
 
     @property
     def max_fno(self) -> int:
-        return int(max([max(bfs.indices() + [0]) for bfs in self.bones] + [max(mfs.indices() + [0]) for mfs in self.morphs]))
+        return int(max([max(bfs.indices() + [0]) for bfs in self.bones] + [max(mfs.indices() + [0]) for mfs in self.morphs] + [0]))
 
     @property
     def name(self) -> str:
