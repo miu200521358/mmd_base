@@ -101,37 +101,20 @@ class Geometries:
             for face_index in range(prev_face_count, prev_face_count + face_count):
                 vertex_position_list.append(
                     np.array(
-                        [
-                            (
-                                (
-                                    self.model.vertices[vidx].position
-                                    + MVector3D(0, -10, 0)
-                                )
-                                / 15
-                            ).vector
-                            for vidx in self.model.faces[face_index].vertices
-                        ],
+                        [((self.model.vertices[vidx].position + MVector3D(0, -10, 0)) / 15).vector for vidx in self.model.faces[face_index].vertices],
                         dtype=np.float64,
                     )
                 )
                 vertex_normal_list.append(
                     np.array(
-                        [
-                            self.model.vertices[vidx].normal.vector
-                            for vidx in self.model.faces[face_index].vertices
-                        ],
+                        [self.model.vertices[vidx].normal.vector for vidx in self.model.faces[face_index].vertices],
                         dtype=np.float64,
                     )
                 )
                 diffuse_color_list.append(
                     np.array(
                         np.array(
-                            [
-                                material.diffuse_color.vector
-                                for _ in range(
-                                    len(self.model.faces[face_index].vertices)
-                                )
-                            ],
+                            [material.diffuse_color.vector for _ in range(len(self.model.faces[face_index].vertices))],
                             dtype=np.float64,
                         ),
                         dtype=np.float64,
@@ -147,9 +130,7 @@ class Geometries:
                                     material.specular_color.z,
                                     material.specular_factor,
                                 ]
-                                for _ in range(
-                                    len(self.model.faces[face_index].vertices)
-                                )
+                                for _ in range(len(self.model.faces[face_index].vertices))
                             ],
                             dtype=np.float64,
                         ),
@@ -165,9 +146,7 @@ class Geometries:
                                     material.ambient_color.y,
                                     material.ambient_color.z,
                                 ]
-                                for _ in range(
-                                    len(self.model.faces[face_index].vertices)
-                                )
+                                for _ in range(len(self.model.faces[face_index].vertices))
                             ],
                             dtype=np.float64,
                         ),
@@ -197,9 +176,7 @@ class Geometries:
         )
 
         gl.glEnableVertexAttribArray(POSITION_ID)
-        gl.glVertexAttribPointer(
-            POSITION_ID, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, gl.ctypes.c_void_p(0)
-        )
+        gl.glVertexAttribPointer(POSITION_ID, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, gl.ctypes.c_void_p(0))
 
         # ---------------------
         # Normalの描画
@@ -215,9 +192,7 @@ class Geometries:
 
         gl.glEnableVertexAttribArray(NORMAL_ID)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_normals)
-        gl.glVertexAttribPointer(
-            NORMAL_ID, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, gl.ctypes.c_void_p(0)
-        )
+        gl.glVertexAttribPointer(NORMAL_ID, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, gl.ctypes.c_void_p(0))
 
         # ---------------------
         # Diffuseの描画
@@ -233,9 +208,7 @@ class Geometries:
 
         gl.glEnableVertexAttribArray(COLOR_DIFFUSE_ID)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_diffuses)
-        gl.glVertexAttribPointer(
-            COLOR_DIFFUSE_ID, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, gl.ctypes.c_void_p(0)
-        )
+        gl.glVertexAttribPointer(COLOR_DIFFUSE_ID, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, gl.ctypes.c_void_p(0))
 
         # ---------------------
         # Ambientの描画
@@ -251,9 +224,7 @@ class Geometries:
 
         gl.glEnableVertexAttribArray(COLOR_AMBIENT_ID)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_ambients)
-        gl.glVertexAttribPointer(
-            COLOR_AMBIENT_ID, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, gl.ctypes.c_void_p(0)
-        )
+        gl.glVertexAttribPointer(COLOR_AMBIENT_ID, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, gl.ctypes.c_void_p(0))
 
 
 class OpenGLCanvas(glcanvas.GLCanvas):
@@ -289,9 +260,7 @@ class OpenGLCanvas(glcanvas.GLCanvas):
         gl.glLoadIdentity()
 
         # set perspective
-        glu.gluPerspective(
-            45.0, float(self.size.width) / float(self.size.height), 0.10, 160.0
-        )
+        glu.gluPerspective(45.0, float(self.size.width) / float(self.size.height), 0.10, 160.0)
 
         # modeling transform
         gl.glMatrixMode(gl.GL_MODELVIEW)
@@ -355,14 +324,10 @@ class OpenGLCanvas(glcanvas.GLCanvas):
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
         if self.rotate:
             self.rot_y.rotate(MQuaternion.from_euler_degrees(0, 1, 0))
-            gl.glUniformMatrix4fv(
-                self.bone_matrix_uniform, 1, gl.GL_FALSE, self.rot_y.vector
-            )
+            gl.glUniformMatrix4fv(self.bone_matrix_uniform, 1, gl.GL_FALSE, self.rot_y.vector)
             self.Refresh()
         else:
-            gl.glUniformMatrix4fv(
-                self.bone_matrix_uniform, 1, gl.GL_FALSE, self.rot_y.vector
-            )
+            gl.glUniformMatrix4fv(self.bone_matrix_uniform, 1, gl.GL_FALSE, self.rot_y.vector)
             self.Refresh()
 
         gl.glPopMatrix()
@@ -381,9 +346,7 @@ class MyPanel(wx.Panel):
         wx.Panel.__init__(self, parent)
         self.SetBackgroundColour("#626D58")
         self.canvas = OpenGLCanvas(self)
-        self.rot_btn = wx.Button(
-            self, -1, label="Start/Stop\nrotation", pos=(620, 10), size=(100, 50)
-        )
+        self.rot_btn = wx.Button(self, -1, label="Start/Stop\nrotation", pos=(620, 10), size=(100, 50))
         self.rot_btn.BackgroundColour = (125, 125, 125)
         self.rot_btn.ForegroundColour = (0, 0, 0)
 
@@ -416,9 +379,7 @@ class MyFrame(wx.Frame):
 
 
 class MyApp(wx.App):
-    def __init__(
-        self, redirect=False, filename=None, useBestVisual=False, clearSigInt=True
-    ):
+    def __init__(self, redirect=False, filename=None, useBestVisual=False, clearSigInt=True):
         super().__init__(redirect, filename, useBestVisual, clearSigInt)
         self.frame = MyFrame()
         self.frame.Show()

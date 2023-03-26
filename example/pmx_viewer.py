@@ -1,7 +1,6 @@
 import argparse
 import os
 import sys
-from multiprocessing import Process, Queue
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -49,27 +48,19 @@ class PmxPanel(wx.Panel):
         self.btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # 読み込み
-        self.load_btn = wx.Button(
-            self, wx.ID_ANY, "Load", wx.DefaultPosition, wx.Size(100, 50)
-        )
+        self.load_btn = wx.Button(self, wx.ID_ANY, "Load", wx.DefaultPosition, wx.Size(100, 50))
         self.btn_sizer.Add(self.load_btn, 0, wx.ALL, 5)
 
         # 再生
-        self.play_btn = wx.Button(
-            self, wx.ID_ANY, "Play/Stop", wx.DefaultPosition, wx.Size(100, 50)
-        )
+        self.play_btn = wx.Button(self, wx.ID_ANY, "Play/Stop", wx.DefaultPosition, wx.Size(100, 50))
         self.btn_sizer.Add(self.play_btn, 0, wx.ALL, 5)
 
         # リセット
-        self.reset_btn = wx.Button(
-            self, wx.ID_ANY, "Reset", wx.DefaultPosition, wx.Size(100, 50)
-        )
+        self.reset_btn = wx.Button(self, wx.ID_ANY, "Reset", wx.DefaultPosition, wx.Size(100, 50))
         self.btn_sizer.Add(self.reset_btn, 0, wx.ALL, 5)
 
         # キャプチャー
-        self.capture_btn = wx.Button(
-            self, wx.ID_ANY, "Capture", wx.DefaultPosition, wx.Size(100, 50)
-        )
+        self.capture_btn = wx.Button(self, wx.ID_ANY, "Capture", wx.DefaultPosition, wx.Size(100, 50))
         self.btn_sizer.Add(self.capture_btn, 0, wx.ALL, 5)
 
         # キーフレ

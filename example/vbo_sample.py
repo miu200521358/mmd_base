@@ -151,9 +151,7 @@ class VBO:
     def unbind(self) -> None:
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-    def set_vertex_attribute(
-        self, component_count: int, byte_length: int, data: any
-    ) -> None:
+    def set_vertex_attribute(self, component_count: int, byte_length: int, data: any) -> None:
         """float2, 3, 4"""
         self.component_count = component_count
         stride = 4 * self.component_count
@@ -213,9 +211,7 @@ class Triangle:
         self.shader.compile(VS, FS)
         self.vbo = VBO()
         self.ibo = IBO()
-        self.vbo.set_vertex_attribute(
-            2, 4 * 2 * 3, (ctypes.c_float * 6)(*self.positions)
-        )
+        self.vbo.set_vertex_attribute(2, 4 * 2 * 3, (ctypes.c_float * 6)(*self.positions))
         self.ibo.set_indices(4, 12, (ctypes.c_uint * 3)(*self.indices))
 
     def draw(self) -> None:

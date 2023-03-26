@@ -253,9 +253,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
 
     __slots__ = ["data", "__indices", "__iter_index", "name"]
 
-    def __init__(
-        self, name: str, data: Optional[dict[int, TBaseIndexNameModel]] = None
-    ) -> None:
+    def __init__(self, name: str, data: Optional[dict[int, TBaseIndexNameModel]] = None) -> None:
         """
         モデル辞書
 
@@ -270,9 +268,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
         self.name = data[0].name if data else name if name else ""
 
     # @profile
-    def range_indexes(
-        self, index: int, indices: list[int] = []
-    ) -> tuple[int, int, int]:
+    def range_indexes(self, index: int, indices: list[int] = []) -> tuple[int, int, int]:
         """
         指定されたINDEXの前後を返す
 
@@ -363,21 +359,15 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
         return v in self.data.keys()
 
 
-TBaseIndexNameDictInnerModel = TypeVar(
-    "TBaseIndexNameDictInnerModel", bound=BaseIndexNameDictInnerModel
-)
+TBaseIndexNameDictInnerModel = TypeVar("TBaseIndexNameDictInnerModel", bound=BaseIndexNameDictInnerModel)
 
 
-class BaseIndexNameDictModel(
-    Generic[TBaseIndexNameModel, TBaseIndexNameDictInnerModel]
-):
+class BaseIndexNameDictModel(Generic[TBaseIndexNameModel, TBaseIndexNameDictInnerModel]):
     """BaseIndexNameModelの辞書基底クラス"""
 
     __slots__ = ["data", "__iter_index", "__names"]
 
-    def __init__(
-        self, data: Optional[dict[str, TBaseIndexNameDictInnerModel]] = None
-    ) -> None:
+    def __init__(self, data: Optional[dict[str, TBaseIndexNameDictInnerModel]] = None) -> None:
         """
         モデル辞書
 
@@ -450,9 +440,7 @@ class BaseIndexNameDictModel(
         return v in self.data.keys()
 
 
-TBaseIndexNameDictModel = TypeVar(
-    "TBaseIndexNameDictModel", bound=BaseIndexNameDictModel
-)
+TBaseIndexNameDictModel = TypeVar("TBaseIndexNameDictModel", bound=BaseIndexNameDictModel)
 
 
 class BaseHashModel(BaseModel):

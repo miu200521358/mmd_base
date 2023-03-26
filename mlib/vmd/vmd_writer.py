@@ -21,11 +21,7 @@ class VmdWriter(BaseModel):
 
             try:
                 # モデル名を20byteで切る
-                model_bname = (
-                    self.model_name.encode("cp932")
-                    .decode("shift_jis")
-                    .encode("shift_jis")[:20]
-                )
+                model_bname = self.model_name.encode("cp932").decode("shift_jis").encode("shift_jis")[:20]
             except Exception:
                 logger.warning(
                     "モデル名に日本語・英語で判読できない文字が含まれているため、仮モデル名を設定します。 %s",
@@ -44,12 +40,7 @@ class VmdWriter(BaseModel):
                 for fno in reversed(self.motion.bones[bone_name].indices()):
                     bf = self.motion.bones[bone_name][fno]
                     # INDEXを逆順に出力する
-                    bname = (
-                        bf.name.encode("cp932")
-                        .decode("shift_jis")
-                        .encode("shift_jis")[:15]
-                        .ljust(15, b"\x00")
-                    )  # 15文字制限
+                    bname = bf.name.encode("cp932").decode("shift_jis").encode("shift_jis")[:15].ljust(15, b"\x00")  # 15文字制限
                     fout.write(bname)
                     fout.write(struct.pack("<L", int(bf.index)))
                     fout.write(struct.pack("<f", float(bf.position.x)))
@@ -60,33 +51,19 @@ class VmdWriter(BaseModel):
                     fout.write(struct.pack("<f", float(v.y)))
                     fout.write(struct.pack("<f", float(v.z)))
                     fout.write(struct.pack("<f", float(v.w)))
-                    fout.write(
-                        bytearray(
-                            [
-                                int(min(255, max(0, x)))
-                                for x in bf.interpolations.merge()
-                            ]
-                        )
-                    )
+                    fout.write(bytearray([int(min(255, max(0, x))) for x in bf.interpolations.merge()]))
 
             fout.write(struct.pack("<L", len(self.motion.morphs)))  # 表情フレーム数
             fout.write(struct.pack("<L", len(self.motion.cameras)))  # カメラキーフレーム数
             fout.write(struct.pack("<L", len(self.motion.lights)))  # 照明キーフレーム数
             fout.write(struct.pack("<L", len(self.motion.shadows)))  # セルフ影キーフレーム数
 
-            fout.write(
-                struct.pack("<L", len(self.motion.show_iks))
-            )  # モデル表示・IK on/offキーフレーム数
+            fout.write(struct.pack("<L", len(self.motion.show_iks)))  # モデル表示・IK on/offキーフレーム数
             for sk in self.motion.show_iks:
                 fout.write(struct.pack("<L", sk.index))
                 fout.write(struct.pack("b", sk.show))
                 fout.write(struct.pack("<L", len(sk.iks)))
                 for ik in sk.iks:
-                    bname = (
-                        ik.name.encode("cp932")
-                        .decode("shift_jis")
-                        .encode("shift_jis")[:20]
-                        .ljust(20, b"\x00")
-                    )  # 20文字制限
+                    bname = ik.name.encode("cp932").decode("shift_jis").encode("shift_jis")[:20].ljust(20, b"\x00")  # 20文字制限
                     fout.write(bname)
                     fout.write(struct.pack("b", ik.onoff))

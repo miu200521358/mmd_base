@@ -93,12 +93,8 @@ class Deform(BaseModel, ABC):
         if align:
             # 揃える必要がある場合
             # 数が足りるよう、かさ増しする
-            ilist = np.fromiter(
-                self.indices.tolist() + [0, 0, 0, 0], count=(len(self.indices) + 4)
-            )
-            wlist = np.fromiter(
-                self.weights.tolist() + [0, 0, 0, 0], count=(len(self.weights) + 4)
-            )
+            ilist = np.fromiter(self.indices.tolist() + [0, 0, 0, 0], count=(len(self.indices) + 4))
+            wlist = np.fromiter(self.weights.tolist() + [0, 0, 0, 0], count=(len(self.weights) + 4))
             # 正規化
             wlist /= wlist.sum(axis=0, keepdims=True)
 
@@ -195,9 +191,7 @@ class Bdef4(Deform):
         weight2: float,
         weight3: float,
     ):
-        super().__init__(
-            [index0, index1, index2, index3], [weight0, weight1, weight2, weight3], 4
-        )
+        super().__init__([index0, index1, index2, index3], [weight0, weight1, weight2, weight3], 4)
 
     def type(self) -> int:
         return 2
@@ -364,18 +358,14 @@ class Texture(BaseIndexModel):
         self.texture_path = texture_path
         self.for_draw = False
 
-    def init_draw(
-        self, model_path: str, texture_type: TextureType, is_individual: bool = True
-    ):
+    def init_draw(self, model_path: str, texture_type: TextureType, is_individual: bool = True):
         if self.for_draw:
             # 既にフラグが立ってたら描画初期化済み
             return
 
         # global texture
         if is_individual:
-            tex_path = os.path.abspath(
-                os.path.join(os.path.dirname(model_path), self.texture_path)
-            )
+            tex_path = os.path.abspath(os.path.join(os.path.dirname(model_path), self.texture_path))
         else:
             tex_path = self.texture_path
         self.image = Image.open(tex_path).convert("RGBA")
@@ -385,13 +375,7 @@ class Texture(BaseIndexModel):
         # テクスチャオブジェクト生成
         self.texture = gl.glGenTextures(1)
         self.texture_type = texture_type
-        self.texture_id = (
-            gl.GL_TEXTURE0
-            if texture_type == TextureType.TEXTURE
-            else gl.GL_TEXTURE1
-            if texture_type == TextureType.TOON
-            else gl.GL_TEXTURE2
-        )
+        self.texture_id = gl.GL_TEXTURE0 if texture_type == TextureType.TEXTURE else gl.GL_TEXTURE1 if texture_type == TextureType.TOON else gl.GL_TEXTURE2
         self.set_texture()
 
         # 描画初期化
@@ -417,12 +401,8 @@ class Texture(BaseIndexModel):
         gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture)
 
         if self.texture_type == TextureType.TOON:
-            gl.glTexParameteri(
-                gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE
-            )
-            gl.glTexParameteri(
-                gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE
-            )
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
 
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAX_LEVEL, 0)
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
@@ -1117,15 +1097,7 @@ class Morph(BaseIndexNameModel):
         english_name: str = "",
         panel: MorphPanel = MorphPanel.EYE_UPPER_LEFT,
         morph_type: MorphType = MorphType.GROUP,
-        offsets: Optional[
-            list[
-                VertexMorphOffset
-                | UvMorphOffset
-                | BoneMorphOffset
-                | GroupMorphOffset
-                | MaterialMorphOffset
-            ]
-        ] = None,
+        offsets: Optional[list[VertexMorphOffset | UvMorphOffset | BoneMorphOffset | GroupMorphOffset | MaterialMorphOffset]] = None,
     ):
         super().__init__(index=index, name=name, english_name=english_name)
         self.panel = panel
@@ -1439,12 +1411,8 @@ class JointParam(BaseModel):
         super().__init__()
         self.translation_limit_min = translation_limit_min or MVector3D()
         self.translation_limit_max = translation_limit_max or MVector3D()
-        self.rotation_limit_min = BaseRotationModel(
-            rotation_limit_min_radians or MVector3D()
-        )
-        self.rotation_limit_max = BaseRotationModel(
-            rotation_limit_max_radians or MVector3D()
-        )
+        self.rotation_limit_min = BaseRotationModel(rotation_limit_min_radians or MVector3D())
+        self.rotation_limit_max = BaseRotationModel(rotation_limit_max_radians or MVector3D())
         self.spring_constant_translation = spring_constant_translation or MVector3D()
         self.spring_constant_rotation = spring_constant_rotation or MVector3D()
 

@@ -13,19 +13,10 @@ kwargs = {"output_dir": "./build/output", "build_dir": "./build/"}
 
 def get_ext():
     ext = []
-    sources = [
-        path
-        for path in glob("mlib/**/*.py", recursive=True)
-        if "__init__" not in path and os.path.isfile(path)
-    ]
+    sources = [path for path in glob("mlib/**/*.py", recursive=True) if "__init__" not in path and os.path.isfile(path)]
 
     for source in sources:
-        path = (
-            source.replace("/", ".")
-            .replace("\\", ".")
-            .replace(".pyx", "")
-            .replace(".py", "")
-        )
+        path = source.replace("/", ".").replace("\\", ".").replace(".pyx", "").replace(".py", "")
         print("%s -> %s" % (source, path))
         ext.append(
             Extension(

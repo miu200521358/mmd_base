@@ -94,28 +94,14 @@ class PmxReader(BaseReader[PmxModel]):
 
     def read_by_buffer(self, model: PmxModel):
         # モデルの各要素サイズから読み取り処理を設定
-        self.read_vertex_index, self.vertex_index_format = self.define_read_index(
-            model.vertex_count, is_vertex=True
-        )
-        self.read_texture_index, self.texture_index_format = self.define_read_index(
-            model.texture_count
-        )
-        self.read_material_index, self.material_index_format = self.define_read_index(
-            model.material_count
-        )
-        self.read_bone_index, self.bone_index_format = self.define_read_index(
-            model.bone_count
-        )
-        self.read_morph_index, self.morph_index_format = self.define_read_index(
-            model.morph_count
-        )
-        self.read_rigidbody_index, self.rigidbody_index_format = self.define_read_index(
-            model.rigidbody_count
-        )
+        self.read_vertex_index, self.vertex_index_format = self.define_read_index(model.vertex_count, is_vertex=True)
+        self.read_texture_index, self.texture_index_format = self.define_read_index(model.texture_count)
+        self.read_material_index, self.material_index_format = self.define_read_index(model.material_count)
+        self.read_bone_index, self.bone_index_format = self.define_read_index(model.bone_count)
+        self.read_morph_index, self.morph_index_format = self.define_read_index(model.morph_count)
+        self.read_rigidbody_index, self.rigidbody_index_format = self.define_read_index(model.rigidbody_count)
 
-        self.read_by_format[Vertex] = StructUnpackType(
-            self.read_vertices, Struct(f"<{'fff' * 2}{'ff'}").unpack_from, 4 * 8
-        )
+        self.read_by_format[Vertex] = StructUnpackType(self.read_vertices, Struct(f"<{'fff' * 2}{'ff'}").unpack_from, 4 * 8)
         self.read_by_format[Bdef2] = StructUnpackType(
             self.read_vertices,
             Struct(f"<{self.bone_index_format * 2}f").unpack_from,
@@ -199,9 +185,7 @@ class PmxReader(BaseReader[PmxModel]):
                 vertex.normal.z,
                 vertex.uv.x,
                 vertex.uv.y,
-            ) = self.unpack(
-                self.read_by_format[Vertex].unpack, self.read_by_format[Vertex].size
-            )
+            ) = self.unpack(self.read_by_format[Vertex].unpack, self.read_by_format[Vertex].size)
 
             if model.extended_uv_count > 0:
                 vertex.extended_uvs.append(self.read_MVector4D())
@@ -224,11 +208,7 @@ class PmxReader(BaseReader[PmxModel]):
                     )
                 )
             else:
-                vertex.deform = Sdef(
-                    *self.unpack(
-                        self.read_by_format[Sdef].unpack, self.read_by_format[Sdef].size
-                    )
-                )
+                vertex.deform = Sdef(*self.unpack(self.read_by_format[Sdef].unpack, self.read_by_format[Sdef].size))
             vertex.edge_factor = self.read_float()
             model.vertices.append(vertex)
 
@@ -240,9 +220,7 @@ class PmxReader(BaseReader[PmxModel]):
             model.vertex_count * faces_vertex_count,
         )
 
-        for i, (v0, v1, v2) in enumerate(
-            zip(faces_vertices[:-2:3], faces_vertices[1:-1:3], faces_vertices[2::3])
-        ):
+        for i, (v0, v1, v2) in enumerate(zip(faces_vertices[:-2:3], faces_vertices[1:-1:3], faces_vertices[2::3])):
             face = Face(i, v0, v1, v2)
             model.faces.append(face)
 
@@ -281,9 +259,7 @@ class PmxReader(BaseReader[PmxModel]):
                 material.sphere_texture_index,
                 material.sphere_mode,
                 material.toon_sharing_flg,
-            ) = self.unpack(
-                self.read_by_format[Material].unpack, self.read_by_format[Material].size
-            )
+            ) = self.unpack(self.read_by_format[Material].unpack, self.read_by_format[Material].size)
 
             material.draw_flg = DrawFlg(draw_flg)
 
@@ -355,15 +331,9 @@ class PmxReader(BaseReader[PmxModel]):
 
             for _ in range(self.read_int()):
                 if morph.morph_type == MorphType.GROUP:
-                    morph.offsets.append(
-                        GroupMorphOffset(self.read_morph_index(), self.read_float())
-                    )
+                    morph.offsets.append(GroupMorphOffset(self.read_morph_index(), self.read_float()))
                 elif morph.morph_type == MorphType.VERTEX:
-                    morph.offsets.append(
-                        VertexMorphOffset(
-                            self.read_vertex_index(), self.read_MVector3D()
-                        )
-                    )
+                    morph.offsets.append(VertexMorphOffset(self.read_vertex_index(), self.read_MVector3D()))
                 elif morph.morph_type == MorphType.BONE:
                     morph.offsets.append(
                         BoneMorphOffset(
@@ -379,9 +349,7 @@ class PmxReader(BaseReader[PmxModel]):
                     MorphType.EXTENDED_UV3,
                     MorphType.EXTENDED_UV4,
                 ]:
-                    morph.offsets.append(
-                        UvMorphOffset(self.read_vertex_index(), self.read_MVector4D())
-                    )
+                    morph.offsets.append(UvMorphOffset(self.read_vertex_index(), self.read_MVector4D()))
                 elif morph.morph_type == MorphType.MATERIAL:
                     morph.offsets.append(
                         MaterialMorphOffset(

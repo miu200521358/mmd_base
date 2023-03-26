@@ -53,34 +53,22 @@ class PmxWriter(BaseModel):
             # 追加UV数
             self.write_byte(fout, self.model.extended_uv_count)
             # 頂点Indexサイズ | 1,2,4 のいずれか
-            vertex_idx_size, vertex_idx_type = self.define_write_index(
-                len(self.model.vertices), is_vertex=True
-            )
+            vertex_idx_size, vertex_idx_type = self.define_write_index(len(self.model.vertices), is_vertex=True)
             self.write_byte(fout, vertex_idx_size)
             # テクスチャIndexサイズ | 1,2,4 のいずれか
-            texture_idx_size, texture_idx_type = self.define_write_index(
-                len(self.model.textures), is_vertex=False
-            )
+            texture_idx_size, texture_idx_type = self.define_write_index(len(self.model.textures), is_vertex=False)
             self.write_byte(fout, texture_idx_size)
             # 材質Indexサイズ | 1,2,4 のいずれか
-            material_idx_size, material_idx_type = self.define_write_index(
-                len(self.model.materials), is_vertex=False
-            )
+            material_idx_size, material_idx_type = self.define_write_index(len(self.model.materials), is_vertex=False)
             self.write_byte(fout, material_idx_size)
             # ボーンIndexサイズ | 1,2,4 のいずれか
-            bone_idx_size, bone_idx_type = self.define_write_index(
-                len(self.model.bones), is_vertex=False
-            )
+            bone_idx_size, bone_idx_type = self.define_write_index(len(self.model.bones), is_vertex=False)
             self.write_byte(fout, bone_idx_size)
             # モーフIndexサイズ | 1,2,4 のいずれか
-            morph_idx_size, morph_idx_type = self.define_write_index(
-                len(self.model.morphs), is_vertex=False
-            )
+            morph_idx_size, morph_idx_type = self.define_write_index(len(self.model.morphs), is_vertex=False)
             self.write_byte(fout, morph_idx_size)
             # 剛体Indexサイズ | 1,2,4 のいずれか
-            rigidbody_idx_size, rigidbody_idx_type = self.define_write_index(
-                len(self.model.rigidbodies), is_vertex=False
-            )
+            rigidbody_idx_size, rigidbody_idx_type = self.define_write_index(len(self.model.rigidbodies), is_vertex=False)
             self.write_byte(fout, rigidbody_idx_size)
 
             # モデル名(日本語)
@@ -108,9 +96,7 @@ class PmxWriter(BaseModel):
             self.write_bones(fout, bone_idx_type)
 
             # モーフ出力
-            self.write_morphs(
-                fout, vertex_idx_type, bone_idx_type, material_idx_type, morph_idx_type
-            )
+            self.write_morphs(fout, vertex_idx_type, bone_idx_type, material_idx_type, morph_idx_type)
 
             # 表示枠出力
             self.write_display_slots(fout, bone_idx_type, morph_idx_type)
@@ -136,9 +122,7 @@ class PmxWriter(BaseModel):
         PmxModel
         """
 
-        self.write_number(
-            fout, PmxBinaryType.INT, len(self.model.vertices), is_positive_only=True
-        )
+        self.write_number(fout, PmxBinaryType.INT, len(self.model.vertices), is_positive_only=True)
 
         # 頂点データ
         for vertex in self.model.vertices:
@@ -216,33 +200,15 @@ class PmxWriter(BaseModel):
                     vertex.deform.weights[0],
                     is_positive_only=True,
                 )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_c.x)
-                )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_c.y)
-                )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_c.z)
-                )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_r0.x)
-                )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_r0.y)
-                )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_r0.z)
-                )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_r1.x)
-                )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_r1.y)
-                )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_r1.z)
-                )
+                self.write_number(fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_c.x))
+                self.write_number(fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_c.y))
+                self.write_number(fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_c.z))
+                self.write_number(fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_r0.x))
+                self.write_number(fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_r0.y))
+                self.write_number(fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_r0.z))
+                self.write_number(fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_r1.x))
+                self.write_number(fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_r1.y))
+                self.write_number(fout, PmxBinaryType.FLOAT, float(vertex.deform.sdef_r1.z))
             else:
                 logger.error("頂点deformなし: {vertex}", vertex=str(vertex))
 
@@ -271,9 +237,7 @@ class PmxWriter(BaseModel):
         """
 
         # 面の数
-        self.write_number(
-            fout, PmxBinaryType.INT, len(self.model.faces) * 3, is_positive_only=True
-        )
+        self.write_number(fout, PmxBinaryType.INT, len(self.model.faces) * 3, is_positive_only=True)
 
         # 面データ
         for face in self.model.faces:
@@ -296,9 +260,7 @@ class PmxWriter(BaseModel):
         PmxModel
         """
         # テクスチャの数
-        self.write_number(
-            fout, PmxBinaryType.INT, len(self.model.textures), is_positive_only=True
-        )
+        self.write_number(fout, PmxBinaryType.INT, len(self.model.textures), is_positive_only=True)
 
         # テクスチャデータ
         for texture in self.model.textures:
@@ -321,9 +283,7 @@ class PmxWriter(BaseModel):
         PmxModel
         """
         # 材質の数
-        self.write_number(
-            fout, PmxBinaryType.INT, len(self.model.materials), is_positive_only=True
-        )
+        self.write_number(fout, PmxBinaryType.INT, len(self.model.materials), is_positive_only=True)
 
         # 材質データ
         for midx, material in enumerate(self.model.materials):
@@ -470,9 +430,7 @@ class PmxWriter(BaseModel):
         PmxModel
         """
         # ボーンの数
-        self.write_number(
-            fout, PmxBinaryType.INT, len(self.model.bones), is_positive_only=True
-        )
+        self.write_number(fout, PmxBinaryType.INT, len(self.model.bones), is_positive_only=True)
 
         for bidx, bone in enumerate(self.model.bones):
             # ボーン名
@@ -485,9 +443,7 @@ class PmxWriter(BaseModel):
             # 親ボーンのボーンIndex
             self.write_number(fout, bone_idx_type, bone.parent_index)
             # 変形階層
-            self.write_number(
-                fout, PmxBinaryType.INT, bone.layer, is_positive_only=True
-            )
+            self.write_number(fout, PmxBinaryType.INT, bone.layer, is_positive_only=True)
             # ボーンフラグ
             fout.write(struct.pack(PmxBinaryType.SHORT.value, bone.bone_flg.value))
 
@@ -496,15 +452,9 @@ class PmxWriter(BaseModel):
                 self.write_number(fout, bone_idx_type, bone.tail_index)
             else:
                 # 接続先位置
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(bone.tail_position.x)
-                )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(bone.tail_position.y)
-                )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(bone.tail_position.z)
-                )
+                self.write_number(fout, PmxBinaryType.FLOAT, float(bone.tail_position.x))
+                self.write_number(fout, PmxBinaryType.FLOAT, float(bone.tail_position.y))
+                self.write_number(fout, PmxBinaryType.FLOAT, float(bone.tail_position.z))
 
             if bone.is_external_translation or bone.is_external_rotation:
                 # 付与親指定ありの場合
@@ -519,25 +469,13 @@ class PmxWriter(BaseModel):
 
             if bone.has_local_coordinate:
                 # ローカルX
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(bone.local_x_vector.x)
-                )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(bone.local_x_vector.y)
-                )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(bone.local_x_vector.z)
-                )
+                self.write_number(fout, PmxBinaryType.FLOAT, float(bone.local_x_vector.x))
+                self.write_number(fout, PmxBinaryType.FLOAT, float(bone.local_x_vector.y))
+                self.write_number(fout, PmxBinaryType.FLOAT, float(bone.local_x_vector.z))
                 # ローカルZ
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(bone.local_z_vector.x)
-                )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(bone.local_z_vector.y)
-                )
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, float(bone.local_z_vector.z)
-                )
+                self.write_number(fout, PmxBinaryType.FLOAT, float(bone.local_z_vector.x))
+                self.write_number(fout, PmxBinaryType.FLOAT, float(bone.local_z_vector.y))
+                self.write_number(fout, PmxBinaryType.FLOAT, float(bone.local_z_vector.z))
 
             if bone.is_external_parent_deform:
                 self.write_number(fout, PmxBinaryType.INT, bone.external_key)
@@ -549,9 +487,7 @@ class PmxWriter(BaseModel):
                 # 4  : int  	| IKループ回数
                 self.write_number(fout, PmxBinaryType.INT, bone.ik.loop_count)
                 # 4  : float	| IKループ計算時の1回あたりの制限角度 -> ラジアン角
-                self.write_number(
-                    fout, PmxBinaryType.FLOAT, bone.ik.unit_rotation.radians.x
-                )
+                self.write_number(fout, PmxBinaryType.FLOAT, bone.ik.unit_rotation.radians.x)
                 # 4  : int  	| IKリンク数 : 後続の要素数
                 self.write_number(fout, PmxBinaryType.INT, len(bone.ik.links))
 
@@ -621,9 +557,7 @@ class PmxWriter(BaseModel):
         PmxModel
         """
         # モーフの数
-        self.write_number(
-            fout, PmxBinaryType.INT, len(self.model.morphs), is_positive_only=True
-        )
+        self.write_number(fout, PmxBinaryType.INT, len(self.model.morphs), is_positive_only=True)
 
         for midx, morph in enumerate(self.model.morphs):
             # モーフ名
@@ -640,15 +574,9 @@ class PmxWriter(BaseModel):
                 if type(offset) is VertexMorphOffset:
                     # 頂点モーフ
                     self.write_number(fout, vertex_idx_type, offset.vertex_index)
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.position_offset.x)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.position_offset.y)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.position_offset.z)
-                    )
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position_offset.x))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position_offset.y))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position_offset.z))
                 elif type(offset) is UvMorphOffset:
                     # UVモーフ
                     self.write_number(fout, vertex_idx_type, offset.vertex_index)
@@ -659,121 +587,49 @@ class PmxWriter(BaseModel):
                 elif type(offset) is BoneMorphOffset:
                     # ボーンモーフ
                     self.write_number(fout, bone_idx_type, offset.bone_index)
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.position.x)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.position.y)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.position.z)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.rotation.x)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.rotation.y)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.rotation.z)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.rotation.scalar)
-                    )
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position.x))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position.y))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position.z))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.rotation.x))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.rotation.y))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.rotation.z))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.rotation.scalar))
                 elif type(offset) is MaterialMorphOffset:
                     # 材質モーフ
                     self.write_number(fout, material_idx_type, offset.material_index)
                     self.write_byte(fout, offset.calc_mode)
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.diffuse.x)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.diffuse.y)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.diffuse.z)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.diffuse.w)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.specular.x)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.specular.y)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.specular.z)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.specular_factor)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.ambient.x)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.ambient.y)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.ambient.z)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.edge_color.x)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.edge_color.y)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.edge_color.z)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.edge_color.w)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.edge_size)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.texture_factor.x)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.texture_factor.y)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.texture_factor.z)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.texture_factor.w)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.sphere_texture_factor.x)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.sphere_texture_factor.y)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.sphere_texture_factor.z)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.sphere_texture_factor.w)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.toon_texture_factor.x)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.toon_texture_factor.y)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.toon_texture_factor.z)
-                    )
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.toon_texture_factor.w)
-                    )
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.diffuse.x))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.diffuse.y))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.diffuse.z))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.diffuse.w))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.specular.x))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.specular.y))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.specular.z))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.specular_factor))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.ambient.x))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.ambient.y))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.ambient.z))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.edge_color.x))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.edge_color.y))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.edge_color.z))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.edge_color.w))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.edge_size))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.texture_factor.x))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.texture_factor.y))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.texture_factor.z))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.texture_factor.w))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.sphere_texture_factor.x))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.sphere_texture_factor.y))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.sphere_texture_factor.z))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.sphere_texture_factor.w))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.toon_texture_factor.x))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.toon_texture_factor.y))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.toon_texture_factor.z))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.toon_texture_factor.w))
                 elif type(offset) is GroupMorphOffset:
                     # グループモーフ
                     self.write_number(fout, morph_idx_type, offset.morph_index)
-                    self.write_number(
-                        fout, PmxBinaryType.FLOAT, float(offset.morph_factor)
-                    )
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.morph_factor))
 
         logger.debug("-- モーフデータ出力終了({count})", count=len(self.model.morphs))
 
@@ -854,11 +710,7 @@ class PmxWriter(BaseModel):
             # 1  : byte	| グループ
             self.write_byte(fout, rigidbody.collision_group)
             # 2  : ushort	| 非衝突グループフラグ
-            fout.write(
-                struct.pack(
-                    PmxBinaryType.UNSIGNED_SHORT, rigidbody.no_collision_group.value
-                )
-            )
+            fout.write(struct.pack(PmxBinaryType.UNSIGNED_SHORT, rigidbody.no_collision_group.value))
             # 1  : byte	| 形状 - 0:球 1:箱 2:カプセル
             self.write_byte(fout, rigidbody.shape_type)
             # 12 : float3	| サイズ(x,y,z)
@@ -881,25 +733,13 @@ class PmxWriter(BaseModel):
                 is_positive_only=True,
             )
             # 12 : float3	| 位置(x,y,z)
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(rigidbody.shape_position.x)
-            )
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(rigidbody.shape_position.y)
-            )
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(rigidbody.shape_position.z)
-            )
+            self.write_number(fout, PmxBinaryType.FLOAT, float(rigidbody.shape_position.x))
+            self.write_number(fout, PmxBinaryType.FLOAT, float(rigidbody.shape_position.y))
+            self.write_number(fout, PmxBinaryType.FLOAT, float(rigidbody.shape_position.z))
             # 12 : float3	| 回転(x,y,z)
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(rigidbody.shape_rotation.radians.x)
-            )
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(rigidbody.shape_rotation.radians.y)
-            )
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(rigidbody.shape_rotation.radians.z)
-            )
+            self.write_number(fout, PmxBinaryType.FLOAT, float(rigidbody.shape_rotation.radians.x))
+            self.write_number(fout, PmxBinaryType.FLOAT, float(rigidbody.shape_rotation.radians.y))
+            self.write_number(fout, PmxBinaryType.FLOAT, float(rigidbody.shape_rotation.radians.z))
             # 4  : float	| 質量
             self.write_number(
                 fout,
@@ -973,35 +813,17 @@ class PmxWriter(BaseModel):
             self.write_number(fout, PmxBinaryType.FLOAT, float(joint.position.y))
             self.write_number(fout, PmxBinaryType.FLOAT, float(joint.position.z))
             # 12 : float3	| 回転(x,y,z) -> ラジアン角
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(joint.rotation.radians.x)
-            )
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(joint.rotation.radians.y)
-            )
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(joint.rotation.radians.z)
-            )
+            self.write_number(fout, PmxBinaryType.FLOAT, float(joint.rotation.radians.x))
+            self.write_number(fout, PmxBinaryType.FLOAT, float(joint.rotation.radians.y))
+            self.write_number(fout, PmxBinaryType.FLOAT, float(joint.rotation.radians.z))
             # 12 : float3	| 移動制限-下限(x,y,z)
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(joint.param.translation_limit_min.x)
-            )
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(joint.param.translation_limit_min.y)
-            )
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(joint.param.translation_limit_min.z)
-            )
+            self.write_number(fout, PmxBinaryType.FLOAT, float(joint.param.translation_limit_min.x))
+            self.write_number(fout, PmxBinaryType.FLOAT, float(joint.param.translation_limit_min.y))
+            self.write_number(fout, PmxBinaryType.FLOAT, float(joint.param.translation_limit_min.z))
             # 12 : float3	| 移動制限-上限(x,y,z)
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(joint.param.translation_limit_max.x)
-            )
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(joint.param.translation_limit_max.y)
-            )
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(joint.param.translation_limit_max.z)
-            )
+            self.write_number(fout, PmxBinaryType.FLOAT, float(joint.param.translation_limit_max.x))
+            self.write_number(fout, PmxBinaryType.FLOAT, float(joint.param.translation_limit_max.y))
+            self.write_number(fout, PmxBinaryType.FLOAT, float(joint.param.translation_limit_max.z))
             # 12 : float3	| 回転制限-下限(x,y,z) -> ラジアン角
             self.write_number(
                 fout,
@@ -1051,21 +873,13 @@ class PmxWriter(BaseModel):
                 float(joint.param.spring_constant_translation.z),
             )
             # 12 : float3	| バネ定数-回転(x,y,z)
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(joint.param.spring_constant_rotation.x)
-            )
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(joint.param.spring_constant_rotation.y)
-            )
-            self.write_number(
-                fout, PmxBinaryType.FLOAT, float(joint.param.spring_constant_rotation.z)
-            )
+            self.write_number(fout, PmxBinaryType.FLOAT, float(joint.param.spring_constant_rotation.x))
+            self.write_number(fout, PmxBinaryType.FLOAT, float(joint.param.spring_constant_rotation.y))
+            self.write_number(fout, PmxBinaryType.FLOAT, float(joint.param.spring_constant_rotation.z))
 
         logger.debug("-- ジョイントデータ出力終了({count})", count=len(self.model.joints))
 
-    def define_write_index(
-        self, size: int, is_vertex: bool
-    ) -> tuple[int, PmxBinaryType]:
+    def define_write_index(self, size: int, is_vertex: bool) -> tuple[int, PmxBinaryType]:
         """
         個数による書き込みサイズの判定
 
@@ -1170,9 +984,7 @@ class PmxWriter(BaseModel):
             finally:
                 pass
 
-    def write_byte(
-        self, fout: BufferedWriter, val: int, is_unsigned: bool = False
-    ) -> None:
+    def write_byte(self, fout: BufferedWriter, val: int, is_unsigned: bool = False) -> None:
         """
         バイト文字の出力
 
