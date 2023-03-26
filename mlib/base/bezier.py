@@ -40,8 +40,12 @@ class Interpolation(BaseModel):
         b = self.begin.copy()
         self.begin = Interpolation.round_mmd((self.begin - b) / diff, MVector2D())
         self.start = Interpolation.round_mmd((self.start - b) / diff, MVector2D())
-        self.end = Interpolation.round_mmd((self.end - b) / diff, MVector2D(IP_MAX, IP_MAX))
-        self.finish = Interpolation.round_mmd((self.finish - b) / diff, MVector2D(IP_MAX, IP_MAX))
+        self.end = Interpolation.round_mmd(
+            (self.end - b) / diff, MVector2D(IP_MAX, IP_MAX)
+        )
+        self.finish = Interpolation.round_mmd(
+            (self.finish - b) / diff, MVector2D(IP_MAX, IP_MAX)
+        )
 
     @classmethod
     def round_mmd(cls, t: MVector2D, s: MVector2D) -> MVector2D:
@@ -80,7 +84,9 @@ def get_infections(values: list[float], threshold) -> np.ndarray:
 
 
 def get_fix_infections(values: list[float]) -> np.ndarray:
-    return np.where(np.diff(np.where(np.isclose(np.abs(np.diff(values)), 0.0))[0]) > 2)[0]
+    return np.where(np.diff(np.where(np.isclose(np.abs(np.diff(values)), 0.0))[0]) > 2)[
+        0
+    ]
 
 
 def get_threshold_infections(values: list[float], threshold) -> np.ndarray:
@@ -96,7 +102,9 @@ def get_threshold_infections(values: list[float], threshold) -> np.ndarray:
             end_idx = start_idx + 1
         else:
             end_idx += 1
-    return np.fromiter(sorted(list(set(extract_idxs))), dtype=np.float64, count=len(extract_idxs))
+    return np.fromiter(
+        sorted(list(set(extract_idxs))), dtype=np.float64, count=len(extract_idxs)
+    )
 
 
 def create_interpolation(values: list[float]):
@@ -136,7 +144,9 @@ def create_interpolation(values: list[float]):
 # https://shspage.hatenadiary.org/entry/20140625/1403702735
 # https://bezier.readthedocs.io/en/stable/python/reference/bezier.curve.html#bezier.curve.Curve.evaluate
 # https://edvakf.hatenadiary.org/entry/20111016/1318716097
-def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> tuple[float, float, float]:
+def evaluate(
+    interpolation: Interpolation, start: int, now: int, end: int
+) -> tuple[float, float, float]:
     """
     補間曲線を求める
 
@@ -193,7 +203,9 @@ def newton(
     derivative = 2 * eps
     for _ in range(30):
         # 中心差分による微分値
-        func_df = (func_f(x1, x2, x, t0 + eps) - func_f(x1, x2, x, t0 - eps)) / derivative
+        func_df = (
+            func_f(x1, x2, x, t0 + eps) - func_f(x1, x2, x, t0 - eps)
+        ) / derivative
         if abs(func_df) <= eps:  # 傾きが0に近ければ止める
             break
 

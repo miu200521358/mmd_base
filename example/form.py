@@ -24,7 +24,9 @@ class TestFrame(BaseFrame):
 
 
 class MuApp(wx.App):
-    def __init__(self, redirect=False, filename=None, useBestVisual=False, clearSigInt=True):
+    def __init__(
+        self, redirect=False, filename=None, useBestVisual=False, clearSigInt=True
+    ):
         super().__init__(redirect, filename, useBestVisual, clearSigInt)
         self.frame = TestFrame()
         self.frame.Show()

@@ -142,7 +142,12 @@ class BoneTrees:
             self.__names[bt.data[bt.last_index()].name] = bt.data[bt.last_index()].index
 
     def names(self) -> dict[str, int]:
-        return dict([(bt.data[bt.last_index()].name, bt.data[bt.last_index()].index) for bt in self.data.values()])
+        return dict(
+            [
+                (bt.data[bt.last_index()].name, bt.data[bt.last_index()].index)
+                for bt in self.data.values()
+            ]
+        )
 
     def gets(self, bone_names: list[str]) -> list[BoneTree]:
         """
@@ -243,7 +248,9 @@ class Bones(BaseIndexNameListModel[Bone]):
         for end_bone in self:
             # レイヤー込みのINDEXリスト取得を末端ボーンをキーとして保持
             bone_tree = BoneTree()
-            for ti, (_, bidx) in enumerate(sorted(self.create_bone_link_indexes(end_bone.index))):
+            for ti, (_, bidx) in enumerate(
+                sorted(self.create_bone_link_indexes(end_bone.index))
+            ):
                 bone_tree[ti] = self[bidx].copy()
             bone_tree[len(bone_tree)] = end_bone.copy()
             bone_trees[end_bone.index] = bone_tree
@@ -265,7 +272,9 @@ class Bones(BaseIndexNameListModel[Bone]):
 
         return tail_bone_names
 
-    def create_bone_link_indexes(self, child_idx: int, bone_link_indexes=None) -> list[tuple[int, int]]:
+    def create_bone_link_indexes(
+        self, child_idx: int, bone_link_indexes=None
+    ) -> list[tuple[int, int]]:
         """
         指定ボーンの親ボーンを繋げてく
 
@@ -327,9 +336,15 @@ class Bones(BaseIndexNameListModel[Bone]):
     def get_parent_relative_position(self, bone_index: int) -> MVector3D:
         """親ボーンから見た相対位置"""
         bone = self[bone_index]
-        return bone.position - (MVector3D() if bone.index < 0 or bone.parent_index not in self else self[bone.parent_index].position)
+        return bone.position - (
+            MVector3D()
+            if bone.index < 0 or bone.parent_index not in self
+            else self[bone.parent_index].position
+        )
 
-    def get_mesh_matrix(self, matrixes: MMatrix4x4List, bone_index: int, matrix: np.ndarray) -> np.ndarray:
+    def get_mesh_matrix(
+        self, matrixes: MMatrix4x4List, bone_index: int, matrix: np.ndarray
+    ) -> np.ndarray:
         """
         スキンメッシュアニメーション用ボーン変形行列を作成する
 
@@ -561,7 +576,9 @@ class PmxModel(BaseHashModel):
 
             # 逆オフセット行列は親ボーンからの相対位置分を戻す
             bone.init_matrix = MMatrix4x4()
-            bone.init_matrix.translate(self.bones.get_parent_relative_position(bone.index).gl)
+            bone.init_matrix.translate(
+                self.bones.get_parent_relative_position(bone.index).gl
+            )
 
             # オフセット行列は自身の位置を原点に戻す行列
             offset_mat = MMatrix4x4()
@@ -593,7 +610,11 @@ class Meshes(BaseIndexListModel[Mesh]):
                         v.normal.z,
                         v.uv.x,
                         1 - v.uv.y,
-                        *(v.extended_uvs[0].vector if len(v.extended_uvs) > 0 else [0, 0]),
+                        *(
+                            v.extended_uvs[0].vector
+                            if len(v.extended_uvs) > 0
+                            else [0, 0]
+                        ),
                         v.edge_factor,
                         *v.deform.normalized_deform(),
                     ],
@@ -604,7 +625,13 @@ class Meshes(BaseIndexListModel[Mesh]):
             dtype=np.float32,
         )
 
-        face_dtype: type = np.uint8 if model.vertex_count == 1 else np.uint16 if model.vertex_count == 2 else np.uint32
+        face_dtype: type = (
+            np.uint8
+            if model.vertex_count == 1
+            else np.uint16
+            if model.vertex_count == 2
+            else np.uint32
+        )
 
         # 面情報
         self.faces: np.ndarray = np.array(
@@ -629,8 +656,13 @@ class Meshes(BaseIndexListModel[Mesh]):
             if ToonSharing.SHARING == material.toon_sharing_flg:
                 # 共有Toon
                 toon_texture = model.toon_textures[material.toon_texture_index]
-                toon_texture.init_draw(model.path, TextureType.TOON, is_individual=False)
-            elif ToonSharing.INDIVIDUAL == material.toon_sharing_flg and material.toon_texture_index >= 0:
+                toon_texture.init_draw(
+                    model.path, TextureType.TOON, is_individual=False
+                )
+            elif (
+                ToonSharing.INDIVIDUAL == material.toon_sharing_flg
+                and material.toon_texture_index >= 0
+            ):
                 # 個別Toon
                 toon_texture = model.textures[material.toon_texture_index]
                 toon_texture.init_draw(model.path, TextureType.TOON)
@@ -688,7 +720,10 @@ class Meshes(BaseIndexListModel[Mesh]):
             mesh.draw_model(mats, self.shader, self.ibo_faces)
             self.shader.unuse()
 
-            if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and mesh.material.diffuse_color.w > 0:
+            if (
+                DrawFlg.DRAWING_EDGE in mesh.material.draw_flg
+                and mesh.material.diffuse_color.w > 0
+            ):
                 # エッジ描画
                 self.shader.use(edge=True)
                 mesh.draw_edge(mats, self.shader, self.ibo_faces)

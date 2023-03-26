@@ -70,12 +70,18 @@ class Geometries:
 
         vbo_triangle = gl.glGenBuffers(1)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_triangle)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, self.triangle.nbytes, self.triangle, gl.GL_STATIC_DRAW)
+        gl.glBufferData(
+            gl.GL_ARRAY_BUFFER, self.triangle.nbytes, self.triangle, gl.GL_STATIC_DRAW
+        )
 
-        gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 24, gl.ctypes.c_void_p(0))
+        gl.glVertexAttribPointer(
+            0, 3, gl.GL_FLOAT, gl.GL_FALSE, 24, gl.ctypes.c_void_p(0)
+        )
         gl.glEnableVertexAttribArray(0)
 
-        gl.glVertexAttribPointer(1, 3, gl.GL_FLOAT, gl.GL_FALSE, 24, gl.ctypes.c_void_p(12))
+        gl.glVertexAttribPointer(
+            1, 3, gl.GL_FLOAT, gl.GL_FALSE, 24, gl.ctypes.c_void_p(12)
+        )
         gl.glEnableVertexAttribArray(1)
         gl.glBindVertexArray(0)
 
@@ -204,7 +210,9 @@ class MyPanel(wx.Panel):
         wx.Panel.__init__(self, parent)
         self.SetBackgroundColour("#626D58")
         self.canvas = OpenGLCanvas(self)
-        self.rot_btn = wx.Button(self, -1, label="Start/Stop\nrotation", pos=(620, 10), size=(100, 50))
+        self.rot_btn = wx.Button(
+            self, -1, label="Start/Stop\nrotation", pos=(620, 10), size=(100, 50)
+        )
         self.rot_btn.BackgroundColour = (125, 125, 125)
         self.rot_btn.ForegroundColour = (0, 0, 0)
 
@@ -239,7 +247,9 @@ class MyFrame(wx.Frame):
 
 
 class MyApp(wx.App):
-    def __init__(self, redirect=False, filename=None, useBestVisual=False, clearSigInt=True):
+    def __init__(
+        self, redirect=False, filename=None, useBestVisual=False, clearSigInt=True
+    ):
         super().__init__(redirect, filename, useBestVisual, clearSigInt)
         self.frame = MyFrame()
         self.frame.Show()

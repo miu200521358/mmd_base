@@ -16,7 +16,9 @@ class BaseFrame(wx.Frame):
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
-        self.note_book = wx.Notebook(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0)
+        self.note_book = wx.Notebook(
+            self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0
+        )
 
         self.Centre(wx.BOTH)
 

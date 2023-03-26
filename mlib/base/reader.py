@@ -38,10 +38,18 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             np.uint: StructUnpackType(self.read_uint, Struct("<I").unpack_from, 4),
             float: StructUnpackType(self.read_float, Struct("<f").unpack_from, 4),
             np.double: StructUnpackType(self.read_double, Struct("<d").unpack_from, 8),
-            MVector2D: StructUnpackType(self.read_MVector2D, Struct("<ff").unpack_from, 4 * 2),
-            MVector3D: StructUnpackType(self.read_MVector3D, Struct("<fff").unpack_from, 4 * 3),
-            MVector4D: StructUnpackType(self.read_MVector4D, Struct("<ffff").unpack_from, 4 * 4),
-            MQuaternion: StructUnpackType(self.read_MQuaternion, Struct("<ffff").unpack_from, 4 * 4),
+            MVector2D: StructUnpackType(
+                self.read_MVector2D, Struct("<ff").unpack_from, 4 * 2
+            ),
+            MVector3D: StructUnpackType(
+                self.read_MVector3D, Struct("<fff").unpack_from, 4 * 3
+            ),
+            MVector4D: StructUnpackType(
+                self.read_MVector4D, Struct("<ffff").unpack_from, 4 * 4
+            ),
+            MQuaternion: StructUnpackType(
+                self.read_MQuaternion, Struct("<ffff").unpack_from, 4 * 4
+            ),
         }
 
     def read_name_by_filepath(self, path: str) -> str:
@@ -361,21 +369,33 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         byteを読み込む
         np.byte:    sbyte	    : 1  - 符号あり  | char
         """
-        return int(self.unpack(self.read_by_format[np.byte].unpack, self.read_by_format[np.byte].size))
+        return int(
+            self.unpack(
+                self.read_by_format[np.byte].unpack, self.read_by_format[np.byte].size
+            )
+        )
 
     def read_byte(self) -> int:
         """
         byteを読み込む
         np.ubyte:   byte	    : 1  - 符号なし  | unsigned char
         """
-        return int(self.unpack(self.read_by_format[np.ubyte].unpack, self.read_by_format[np.ubyte].size))
+        return int(
+            self.unpack(
+                self.read_by_format[np.ubyte].unpack, self.read_by_format[np.ubyte].size
+            )
+        )
 
     def read_short(self) -> int:
         """
         shortを読み込む
         np.short:   short	    : 2  - 符号あり  | short
         """
-        return int(self.unpack(self.read_by_format[np.short].unpack, self.read_by_format[np.short].size))
+        return int(
+            self.unpack(
+                self.read_by_format[np.short].unpack, self.read_by_format[np.short].size
+            )
+        )
 
     def read_ushort(self) -> int:
         """
@@ -394,21 +414,31 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         intを読み込む
         int:        int 	    : 4  - 符号あり  | int (32bit固定)
         """
-        return int(self.unpack(self.read_by_format[int].unpack, self.read_by_format[int].size))
+        return int(
+            self.unpack(self.read_by_format[int].unpack, self.read_by_format[int].size)
+        )
 
     def read_uint(self) -> int:
         """
         uintを読み込む
         np.uint     uint	    : 4  - 符号なし  | unsigned int
         """
-        return int(self.unpack(self.read_by_format[np.uint].unpack, self.read_by_format[np.uint].size))
+        return int(
+            self.unpack(
+                self.read_by_format[np.uint].unpack, self.read_by_format[np.uint].size
+            )
+        )
 
     def read_float(self) -> float:
         """
         floatを読み込む
         float       float	    : 4  - 単精度実数 | float
         """
-        return float(self.unpack(self.read_by_format[float].unpack, self.read_by_format[float].size))
+        return float(
+            self.unpack(
+                self.read_by_format[float].unpack, self.read_by_format[float].size
+            )
+        )
 
     def read_double(self) -> np.double:
         """

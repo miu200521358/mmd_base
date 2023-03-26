@@ -157,11 +157,17 @@ class MLogger:
             if self.mode == LoggingMode.MODE_UPDATE and logging.DEBUG < target_level:
                 # 更新ありの場合、既存データのチェックを行って追記する
                 messages = []
-                with open(f"{self.lang_dir}/messages.pot", mode="r", encoding="utf-8") as f:
+                with open(
+                    f"{self.lang_dir}/messages.pot", mode="r", encoding="utf-8"
+                ) as f:
                     messages = f.readlines()
 
                 new_msg = self.re_break.sub("\\\\n", msg)
-                added_msg_idxs = [n + 1 for n, inmsg in enumerate(messages) if "msgid" in inmsg and new_msg in inmsg]
+                added_msg_idxs = [
+                    n + 1
+                    for n, inmsg in enumerate(messages)
+                    if "msgid" in inmsg and new_msg in inmsg
+                ]
 
                 if not added_msg_idxs:
                     messages.append(f'\nmsgid "{new_msg}"\n')
@@ -169,14 +175,20 @@ class MLogger:
                     messages.append("\n")
                     print("add message: %s", new_msg)
 
-                    with open(f"{self.lang_dir}/messages.pot", mode="w", encoding="utf-8") as f:
+                    with open(
+                        f"{self.lang_dir}/messages.pot", mode="w", encoding="utf-8"
+                    ) as f:
                         f.writelines(messages)
 
             # 翻訳結果を取得する
             trans_msg = self.translator.gettext(msg)
 
             # ログレコード生成
-            if args and isinstance(args[0], Exception) or (args and len(args) > 1 and isinstance(args[0], Exception)):
+            if (
+                args
+                and isinstance(args[0], Exception)
+                or (args and len(args) > 1 and isinstance(args[0], Exception))
+            ):
                 trans_msg = f"{trans_msg}\n\n{traceback.format_exc()}"
                 args = None
                 log_record = self.logger.makeRecord(
@@ -212,11 +224,17 @@ class MLogger:
                 if target_decoration == MLogger.DECORATION_BOX:
                     output_msg = self.create_box_message(print_msg, target_level, title)
                 elif target_decoration == MLogger.DECORATION_LINE:
-                    output_msg = self.create_line_message(print_msg, target_level, title)
+                    output_msg = self.create_line_message(
+                        print_msg, target_level, title
+                    )
                 elif target_decoration == MLogger.DECORATION_IN_BOX:
-                    output_msg = self.create_in_box_message(print_msg, target_level, title)
+                    output_msg = self.create_in_box_message(
+                        print_msg, target_level, title
+                    )
                 else:
-                    output_msg = self.create_simple_message(print_msg, target_level, title)
+                    output_msg = self.create_simple_message(
+                        print_msg, target_level, title
+                    )
             else:
                 output_msg = self.create_simple_message(print_msg, target_level, title)
 

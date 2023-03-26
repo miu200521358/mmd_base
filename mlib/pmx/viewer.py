@@ -1,4 +1,3 @@
-import time
 import OpenGL.GL as gl
 from OpenGL.GL import glReadPixels, GL_RGBA, GL_UNSIGNED_BYTE
 import wx
@@ -16,8 +15,16 @@ from mlib.vmd.vmd_collection import VmdMotion
 
 class PmxCanvas(glcanvas.GLCanvas):
     def __init__(self, parent, width: int, height: int, *args, **kw):
-        attribList = (glcanvas.WX_GL_RGBA, glcanvas.WX_GL_DOUBLEBUFFER, glcanvas.WX_GL_DEPTH_SIZE, 16, 0)
-        glcanvas.GLCanvas.__init__(self, parent, -1, size=(width, height), attribList=attribList)
+        attribList = (
+            glcanvas.WX_GL_RGBA,
+            glcanvas.WX_GL_DOUBLEBUFFER,
+            glcanvas.WX_GL_DEPTH_SIZE,
+            16,
+            0,
+        )
+        glcanvas.GLCanvas.__init__(
+            self, parent, -1, size=(width, height), attribList=attribList
+        )
         self.context = glcanvas.GLContext(self)
         self.size = wx.Size(width, height)
         self.last_pos = wx.Point(0, 0)
@@ -43,7 +50,9 @@ class PmxCanvas(glcanvas.GLCanvas):
     def _initialize_ui(self, parent):
         gl.glClearColor(0.7, 0.7, 0.7, 1)
 
-        self.frame_ctrl = wx.SpinCtrl(parent, value="0", min=0, max=10000, size=wx.Size(80, 30))
+        self.frame_ctrl = wx.SpinCtrl(
+            parent, value="0", min=0, max=10000, size=wx.Size(80, 30)
+        )
         self.frame_ctrl.Bind(wx.EVT_SPINCTRL, self.change_motion)
 
         # 再生タイマー
@@ -108,7 +117,9 @@ class PmxCanvas(glcanvas.GLCanvas):
     def change_motion(self, event: wx.Event):
         if self.motion:
             now_fno = self.frame_ctrl.GetValue()
-            self.bone_matrixes = self.motion.bones.get_mesh_matrixes(now_fno, self.model)
+            self.bone_matrixes = self.motion.bones.get_mesh_matrixes(
+                now_fno, self.model
+            )
             self.Refresh()
 
     def on_play(self, event):
@@ -125,7 +136,9 @@ class PmxCanvas(glcanvas.GLCanvas):
     def on_reset(self, event: wx.Event):
         self.frame_ctrl.SetValue(0)
         self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
-        self.shader.look_at_center = MVector3D(0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0)
+        self.shader.look_at_center = MVector3D(
+            0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0
+        )
         self.shader.camera_rotation = MQuaternion()
         self.shader.camera_position = MVector3D(
             0,
@@ -139,7 +152,9 @@ class PmxCanvas(glcanvas.GLCanvas):
         if keycode == wx.WXK_NUMPAD0:
             # 真下から
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
-            self.shader.look_at_center = MVector3D(0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0)
+            self.shader.look_at_center = MVector3D(
+                0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0
+            )
             self.shader.camera_rotation = MQuaternion()
             self.shader.camera_position = MVector3D(
                 0,
@@ -149,7 +164,9 @@ class PmxCanvas(glcanvas.GLCanvas):
         elif keycode in [wx.WXK_NUMPAD2, wx.WXK_ESCAPE]:
             # 真正面から(=リセット)
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
-            self.shader.look_at_center = MVector3D(0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0)
+            self.shader.look_at_center = MVector3D(
+                0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0
+            )
             self.shader.camera_rotation = MQuaternion()
             self.shader.camera_position = MVector3D(
                 0,
@@ -159,7 +176,9 @@ class PmxCanvas(glcanvas.GLCanvas):
         elif keycode == wx.WXK_NUMPAD4:
             # 左から
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
-            self.shader.look_at_center = MVector3D(0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0)
+            self.shader.look_at_center = MVector3D(
+                0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0
+            )
             self.shader.camera_rotation = MQuaternion()
             self.shader.camera_position = MVector3D(
                 self.shader.INITIAL_CAMERA_POSITION_X,
@@ -169,7 +188,9 @@ class PmxCanvas(glcanvas.GLCanvas):
         elif keycode == wx.WXK_NUMPAD6:
             # 右から
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
-            self.shader.look_at_center = MVector3D(0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0)
+            self.shader.look_at_center = MVector3D(
+                0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0
+            )
             self.shader.camera_rotation = MQuaternion()
             self.shader.camera_position = MVector3D(
                 -self.shader.INITIAL_CAMERA_POSITION_X,
@@ -179,7 +200,9 @@ class PmxCanvas(glcanvas.GLCanvas):
         elif keycode == wx.WXK_NUMPAD8:
             # 真後ろから
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
-            self.shader.look_at_center = MVector3D(0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0)
+            self.shader.look_at_center = MVector3D(
+                0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0
+            )
             self.shader.camera_rotation = MQuaternion()
             self.shader.camera_position = MVector3D(
                 0,
@@ -189,17 +212,29 @@ class PmxCanvas(glcanvas.GLCanvas):
         elif keycode == wx.WXK_NUMPAD5:
             # 真上から
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
-            self.shader.look_at_center = MVector3D(0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0)
+            self.shader.look_at_center = MVector3D(
+                0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0
+            )
             self.shader.camera_rotation = MQuaternion()
             self.shader.camera_position = MVector3D(
                 0,
                 self.shader.INITIAL_CAMERA_POSITION_Y * 3,
                 -0.1,
             )
-        elif keycode in [wx.WXK_NUMPAD3, wx.WXK_RIGHT, wx.WXK_NUMPAD_RIGHT, wx.WXK_WINDOWS_RIGHT]:
+        elif keycode in [
+            wx.WXK_NUMPAD3,
+            wx.WXK_RIGHT,
+            wx.WXK_NUMPAD_RIGHT,
+            wx.WXK_WINDOWS_RIGHT,
+        ]:
             # キーフレを進める
             self.on_frame_forward(event)
-        elif keycode in [wx.WXK_NUMPAD1, wx.WXK_LEFT, wx.WXK_NUMPAD_LEFT, wx.WXK_WINDOWS_LEFT]:
+        elif keycode in [
+            wx.WXK_NUMPAD1,
+            wx.WXK_LEFT,
+            wx.WXK_NUMPAD_LEFT,
+            wx.WXK_WINDOWS_LEFT,
+        ]:
             # キーフレを戻す
             self.on_frame_back(event)
         elif keycode in [wx.WXK_NUMPAD7, wx.WXK_DOWN, wx.WXK_NUMPAD_DOWN]:
@@ -215,7 +250,9 @@ class PmxCanvas(glcanvas.GLCanvas):
     def on_capture(self, event: wx.Event):
         # キャプチャ
         # OpenGLの描画バッファを読み込む
-        buffer = glReadPixels(0, 0, self.size.width, self.size.height, GL_RGBA, GL_UNSIGNED_BYTE)
+        buffer = glReadPixels(
+            0, 0, self.size.width, self.size.height, GL_RGBA, GL_UNSIGNED_BYTE
+        )
 
         # バッファをPILのImageオブジェクトに変換する
         image = Image.frombytes("RGBA", (self.size.width, self.size.height), buffer)
@@ -248,7 +285,9 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.shader.camera_position.x += x
                 self.shader.camera_position.y += y
             elif event.RightIsDown():
-                self.shader.camera_rotation *= MQuaternion.from_euler_degrees(y * 10, -x * 10, 0)
+                self.shader.camera_rotation *= MQuaternion.from_euler_degrees(
+                    y * 10, -x * 10, 0
+                )
             self.last_pos = self.now_pos
             self.Refresh()
 
