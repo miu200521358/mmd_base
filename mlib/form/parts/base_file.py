@@ -1,9 +1,9 @@
 import glob
 import os
 import re
-import wx
-
 from enum import Enum, unique
+
+import wx
 
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_reader import PmxReader

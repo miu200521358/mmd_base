@@ -7,9 +7,8 @@ import numpy as np
 import OpenGL.GL as gl
 from PIL import Image, ImageOps
 
-from mlib.base.math import MMatrix4x4
 from mlib.base.base import BaseModel
-from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
+from mlib.base.math import MMatrix4x4, MQuaternion, MVector2D, MVector3D, MVector4D
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
 
 

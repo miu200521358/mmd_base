@@ -4,28 +4,10 @@ from typing import Optional
 
 import numpy as np
 
-from mlib.base.collection import (
-    BaseHashModel,
-    BaseIndexDictModel,
-    BaseIndexListModel,
-    BaseIndexNameListModel,
-)
-from mlib.base.math import MMatrix4x4List, MVector3D, MMatrix4x4
+from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexListModel, BaseIndexNameListModel
+from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
-from mlib.pmx.pmx_part import (
-    Bone,
-    DisplaySlot,
-    DrawFlg,
-    Face,
-    Joint,
-    Material,
-    Morph,
-    RigidBody,
-    Texture,
-    TextureType,
-    ToonSharing,
-    Vertex,
-)
+from mlib.pmx.pmx_part import Bone, DisplaySlot, DrawFlg, Face, Joint, Material, Morph, RigidBody, Texture, TextureType, ToonSharing, Vertex
 from mlib.pmx.shader import MShader, VsLayout
 
 

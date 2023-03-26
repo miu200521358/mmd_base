@@ -1,23 +1,12 @@
-from enum import Enum
 import struct
+from enum import Enum
 from io import BufferedWriter
 from math import isinf, isnan
 
 from mlib.base.base import BaseModel
 from mlib.base.logger import MLogger
 from mlib.pmx.pmx_collection import PmxModel
-from mlib.pmx.pmx_part import (
-    Bdef1,
-    Bdef2,
-    Bdef4,
-    BoneMorphOffset,
-    GroupMorphOffset,
-    MaterialMorphOffset,
-    Sdef,
-    ToonSharing,
-    UvMorphOffset,
-    VertexMorphOffset,
-)
+from mlib.pmx.pmx_part import Bdef1, Bdef2, Bdef4, BoneMorphOffset, GroupMorphOffset, MaterialMorphOffset, Sdef, ToonSharing, UvMorphOffset, VertexMorphOffset
 
 logger = MLogger(__name__)
 

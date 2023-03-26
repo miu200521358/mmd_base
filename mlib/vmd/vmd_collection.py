@@ -1,28 +1,16 @@
+import logging
 from math import acos, degrees, pi
 from typing import Optional
 
 import numpy as np
-from mlib.base.logger import MLogger
-import logging
 
 from mlib.base.bezier import evaluate
-from mlib.base.collection import (
-    BaseHashModel,
-    BaseIndexDictModel,
-    BaseIndexNameDictInnerModel,
-    BaseIndexNameDictModel,
-)
+from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictInnerModel, BaseIndexNameDictModel
+from mlib.base.logger import MLogger
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
 from mlib.pmx.pmx_collection import BoneTree, PmxModel
 from mlib.pmx.pmx_part import Bone
-from mlib.vmd.vmd_part import (
-    VmdBoneFrame,
-    VmdCameraFrame,
-    VmdLightFrame,
-    VmdMorphFrame,
-    VmdShadowFrame,
-    VmdShowIkFrame,
-)
+from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
 
 log = MLogger(__name__, logging.INFO)
 

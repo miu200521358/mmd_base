@@ -824,6 +824,7 @@ def test_read_by_filepath_ok_arm_ik() -> None:
 
 def test_vmd_save_01():
     import os
+
     from mlib.vmd.vmd_reader import VmdReader
     from mlib.vmd.vmd_writer import VmdWriter
 

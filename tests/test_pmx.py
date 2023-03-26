@@ -432,10 +432,11 @@ def test_read_by_filepath_complicated() -> None:
 
 
 def test_save_pmx01() -> None:
+    import os
+
     from mlib.pmx.pmx_collection import PmxModel
     from mlib.pmx.pmx_reader import PmxReader
     from mlib.pmx.pmx_writer import PmxWriter
-    import os
 
     input_path = os.path.join("tests", "resources", "柱.pmx")
     model: PmxModel = PmxReader().read_by_filepath(input_path)
@@ -452,10 +453,11 @@ def test_save_pmx01() -> None:
 
 
 def test_save_pmx02() -> None:
+    import os
+
     from mlib.pmx.pmx_collection import PmxModel
     from mlib.pmx.pmx_reader import PmxReader
     from mlib.pmx.pmx_writer import PmxWriter
-    import os
 
     input_path = os.path.join("tests", "resources", "曲げ柱tex.pmx")
     model: PmxModel = PmxReader().read_by_filepath(input_path)
@@ -472,10 +474,11 @@ def test_save_pmx02() -> None:
 
 
 def test_save_pmx03() -> None:
+    import os
+
     from mlib.pmx.pmx_collection import PmxModel
     from mlib.pmx.pmx_reader import PmxReader
     from mlib.pmx.pmx_writer import PmxWriter
-    import os
 
     input_path = os.path.join("tests", "resources", "サンプルモデル.pmx")
     model: PmxModel = PmxReader().read_by_filepath(input_path)

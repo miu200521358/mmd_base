@@ -1,16 +1,17 @@
-from typing import Optional
-import OpenGL.GL as gl
-from OpenGL.GL import glReadPixels, GL_RGBA, GL_UNSIGNED_BYTE
-import wx
-from wx import glcanvas
-from PIL import Image
 import os
-import numpy as np
 from multiprocessing import Process, Queue
+from typing import Optional
+
+import numpy as np
+import OpenGL.GL as gl
+import wx
+from OpenGL.GL import GL_RGBA, GL_UNSIGNED_BYTE, glReadPixels
+from PIL import Image
+from wx import glcanvas
 
 from mlib.base.math import MQuaternion, MVector3D
-from mlib.pmx.shader import MShader
 from mlib.pmx.pmx_collection import PmxModel
+from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_collection import VmdMotion
 
 
