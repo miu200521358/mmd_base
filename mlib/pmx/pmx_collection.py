@@ -9,6 +9,7 @@ from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import Bone, DisplaySlot, DrawFlg, Face, Joint, Material, Morph, RigidBody, Texture, TextureType, ToonSharing, Vertex
 from mlib.pmx.shader import MShader, VsLayout
+from mlib.base.base import BaseModel
 
 
 class Vertices(BaseIndexListModel[Vertex]):
@@ -61,6 +62,8 @@ class BoneTree(BaseIndexDictModel[Bone]):
 
     def __init__(self) -> None:
         super().__init__()
+        self.__indices: list[int] = []
+        self.__iter_index = 0
 
     def __getitem__(self, key: int) -> Bone:
         if isinstance(key, int) and key < 0:
@@ -96,8 +99,19 @@ class BoneTree(BaseIndexDictModel[Bone]):
 
         return bone.position - self[bone.parent_index]
 
+    def __iter__(self):
+        self.__iter_index = -1
+        self.__indices = sorted(list(self.data.keys()))
+        return self
 
-class BoneTrees:
+    def __next__(self) -> Bone:
+        self.__iter_index += 1
+        if self.__iter_index >= len(self.__indices):
+            raise StopIteration
+        return self.data[self.__indices[self.__iter_index]]
+
+
+class BoneTrees(BaseModel):
     """
     BoneTreeリスト
     """
@@ -113,9 +127,9 @@ class BoneTrees:
 
     def __getitem__(self, key: int | str) -> BoneTree:
         if isinstance(key, int):
-            return self.get_by_index(key)
+            return self.get_by_index(key).copy()
         else:
-            return self.get_by_name(key)
+            return self.get_by_name(key).copy()
 
     def __setitem__(self, index: int, bt: BoneTree):
         self.data[index] = bt
@@ -293,12 +307,12 @@ class Bones(BaseIndexNameListModel[Bone]):
         to_pos = MVector3D()
 
         from_pos = bone.position
-        if bone.is_tail_bone and bone.tail_position != MVector3D():
-            # 表示先が相対パスの場合、保持
-            to_pos = from_pos + bone.tail_position
-        elif bone.is_tail_bone and bone.tail_index >= 0 and bone.tail_index in self:
+        if bone.is_tail_bone and bone.tail_index >= 0 and bone.tail_index in self:
             # 表示先が指定されているの場合、保持
             to_pos = self[bone.tail_index].position
+        elif not bone.is_tail_bone:
+            # 表示先が相対パスの場合、保持
+            to_pos = from_pos + bone.tail_position
         else:
             # 表示先がない場合、とりあえず親ボーンからの向きにする
             from_pos = self[bone.parent_index].position
@@ -311,7 +325,7 @@ class Bones(BaseIndexNameListModel[Bone]):
         bone = self[bone_index]
         return bone.position - (MVector3D() if bone.index < 0 or bone.parent_index not in self else self[bone.parent_index].position)
 
-    def get_mesh_matrix(self, matrixes: MMatrix4x4List, bone_index: int, matrix: np.ndarray) -> np.ndarray:
+    def get_mesh_gl_matrix(self, matrixes: MMatrix4x4List, bone_index: int, matrix: np.ndarray) -> np.ndarray:
         """
         スキンメッシュアニメーション用ボーン変形行列を作成する
 
@@ -332,7 +346,7 @@ class Bones(BaseIndexNameListModel[Bone]):
 
         if bone.index >= 0 and bone.parent_index in self:
             # 親ボーンがある場合、遡る
-            matrix = self.get_mesh_matrix(matrixes, bone.parent_index, matrix)
+            matrix = self.get_mesh_gl_matrix(matrixes, bone.parent_index, matrix)
 
         # 自身の姿勢をかける
         # 逆BOf行列(初期姿勢行列)
@@ -523,9 +537,6 @@ class PmxModel(BaseHashModel):
         self.meshes.draw(mats)
 
     def setup(self) -> None:
-        # ボーンツリー生成
-        self.bone_trees = self.bones.create_bone_links()
-
         for bone in self.bones:
             # IKのリンクとターゲット
             if bone.is_ik and bone.ik:
@@ -549,6 +560,9 @@ class PmxModel(BaseHashModel):
             offset_mat = MMatrix4x4()
             offset_mat.translate(bone.position.gl)
             bone.offset_matrix = offset_mat.inverse()
+
+        # ボーンツリー生成
+        self.bone_trees = self.bones.create_bone_links()
 
 
 class Meshes(BaseIndexListModel[Mesh]):

@@ -10,7 +10,7 @@ TBaseIndexModel = TypeVar("TBaseIndexModel", bound=BaseIndexModel)
 TBaseIndexNameModel = TypeVar("TBaseIndexNameModel", bound=BaseIndexNameModel)
 
 
-class BaseIndexListModel(Generic[TBaseIndexModel]):
+class BaseIndexListModel(Generic[TBaseIndexModel], BaseModel):
     """BaseIndexModelのリスト基底クラス"""
 
     __slots__ = ["data", "__iter_index"]
@@ -29,6 +29,9 @@ class BaseIndexListModel(Generic[TBaseIndexModel]):
         self.__iter_index = 0
 
     def __getitem__(self, index: int) -> TBaseIndexModel:
+        if index < 0:
+            # マイナス指定の場合、後ろからの順番に置き換える
+            return self.get(len(self.data) + index)
         return self.get(index)
 
     def __setitem__(self, index: int, value: TBaseIndexModel):
@@ -77,7 +80,7 @@ class BaseIndexListModel(Generic[TBaseIndexModel]):
 TBaseIndexListModel = TypeVar("TBaseIndexListModel", bound=BaseIndexListModel)
 
 
-class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
+class BaseIndexNameListModel(Generic[TBaseIndexNameModel], BaseModel):
     """BaseIndexNameModelのリスト基底クラス"""
 
     __slots__ = ["data", "__names", "__iter_index"]
@@ -172,7 +175,7 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel]):
         return v in [v.name for v in self.data] or v in [v.index for v in self.data]
 
 
-class BaseIndexDictModel(Generic[TBaseIndexModel]):
+class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
     """BaseIndexModelの辞書基底クラス"""
 
     __slots__ = ["data", "__indices", "__iter_index"]
@@ -248,7 +251,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel]):
 TBaseIndexDictModel = TypeVar("TBaseIndexDictModel", bound=BaseIndexDictModel)
 
 
-class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
+class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel], BaseModel):
     """BaseIndexNameModelの内部辞書基底クラス"""
 
     __slots__ = ["data", "__indices", "__iter_index", "name"]
@@ -362,7 +365,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel]):
 TBaseIndexNameDictInnerModel = TypeVar("TBaseIndexNameDictInnerModel", bound=BaseIndexNameDictInnerModel)
 
 
-class BaseIndexNameDictModel(Generic[TBaseIndexNameModel, TBaseIndexNameDictInnerModel]):
+class BaseIndexNameDictModel(Generic[TBaseIndexNameModel, TBaseIndexNameDictInnerModel], BaseModel):
     """BaseIndexNameModelの辞書基底クラス"""
 
     __slots__ = ["data", "__iter_index", "__names"]

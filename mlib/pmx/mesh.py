@@ -159,20 +159,20 @@ class Mesh(BaseIndexModel):
         gl.glUniform4f(shader.specular_uniform[False], *(self.material.specular_color * shader.light_specular).vector, self.material.specular_factor)
 
         # テクスチャ使用有無
-        gl.glUniform1i(shader.use_texture_uniform[False], self.texture is not None)
-        if self.texture:
+        gl.glUniform1i(shader.use_texture_uniform[False], self.texture is not None and self.texture.valid)
+        if self.texture and self.texture.valid:
             self.texture.bind()
             gl.glUniform1i(shader.texture_uniform[False], self.texture.texture_type.value)
 
         # Toon使用有無
-        gl.glUniform1i(shader.use_toon_uniform[False], self.toon_texture is not None)
-        if self.toon_texture:
+        gl.glUniform1i(shader.use_toon_uniform[False], self.toon_texture is not None and self.toon_texture.valid)
+        if self.toon_texture and self.toon_texture.valid:
             self.toon_texture.bind()
             gl.glUniform1i(shader.toon_uniform[False], self.toon_texture.texture_type.value)
 
         # Sphere使用有無
-        gl.glUniform1i(shader.use_sphere_uniform[False], self.sphere_texture is not None)
-        if self.sphere_texture:
+        gl.glUniform1i(shader.use_sphere_uniform[False], self.sphere_texture is not None and self.sphere_texture.valid)
+        if self.sphere_texture and self.sphere_texture.valid:
             self.sphere_texture.bind()
             gl.glUniform1i(shader.sphere_mode_uniform[False], self.material.sphere_mode)
             gl.glUniform1i(shader.sphere_uniform[False], self.sphere_texture.texture_type.value)
@@ -184,13 +184,13 @@ class Mesh(BaseIndexModel):
             gl.ctypes.c_void_p(self.prev_vertices_pointer),
         )
 
-        if self.texture:
+        if self.texture and self.texture.valid:
             self.texture.unbind()
 
-        if self.toon_texture:
+        if self.toon_texture and self.toon_texture.valid:
             self.toon_texture.unbind()
 
-        if self.sphere_texture:
+        if self.sphere_texture and self.sphere_texture.valid:
             self.sphere_texture.unbind()
 
         self.unbind_bone_matrixes()

@@ -4,7 +4,7 @@ import os
 import re
 import traceback
 from datetime import datetime
-from enum import IntEnum
+from enum import IntEnum, Enum
 
 import numpy as np
 
@@ -19,12 +19,13 @@ class LoggingMode(IntEnum):
     MODE_UPDATE = 1
 
 
-class MLogger:
+class LoggingDecoration(Enum):
     DECORATION_IN_BOX = "in_box"
     DECORATION_BOX = "box"
     DECORATION_LINE = "line"
-    DEFAULT_FORMAT = "%(message)s [%(funcName)s][P-%(process)s](%(asctime)s)"
 
+
+class LoggingLevel(Enum):
     DEBUG_FULL = 2
     TEST = 5
     TIMER = 12
@@ -35,6 +36,10 @@ class MLogger:
     WARNING = logging.WARNING
     ERROR = logging.ERROR
     CRITICAL = logging.CRITICAL
+
+
+class MLogger:
+    DEFAULT_FORMAT = "%(message)s [%(funcName)s][P-%(process)s](%(asctime)s)"
 
     # システム全体のロギングレベル
     total_level = logging.INFO
@@ -209,11 +214,11 @@ class MLogger:
                 print_msg = print_msg.format(**kwargs)
 
             if target_decoration:
-                if target_decoration == MLogger.DECORATION_BOX:
+                if target_decoration == LoggingDecoration.DECORATION_BOX:
                     output_msg = self.create_box_message(print_msg, target_level, title)
-                elif target_decoration == MLogger.DECORATION_LINE:
+                elif target_decoration == LoggingDecoration.DECORATION_LINE:
                     output_msg = self.create_line_message(print_msg, target_level, title)
-                elif target_decoration == MLogger.DECORATION_IN_BOX:
+                elif target_decoration == LoggingDecoration.DECORATION_IN_BOX:
                     output_msg = self.create_in_box_message(print_msg, target_level, title)
                 else:
                     output_msg = self.create_simple_message(print_msg, target_level, title)
@@ -336,10 +341,10 @@ def parse2str(obj: object) -> str:
         変数リスト文字列
         Sample[x=2, a=sss, child=ChildSample[y=4.5, b=xyz]]
     """
-    return f"{obj.__class__.__name__}[{', '.join([f'{k}={v}' for k, v in vars(obj).items()])}]"
+    return f"{obj.__class__.__name__}[{', '.join([f'{k}={round_str(v)}' for k, v in vars(obj).items()])}]"
 
 
-def parse_str(v: object, decimals=5) -> str:
+def round_str(v: object, decimals=5) -> str:
     """
     丸め処理付き文字列変換処理
 

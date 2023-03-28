@@ -2,13 +2,13 @@ import pytest
 
 
 def test_parse_str():
-    from mlib.base.logger import parse_str
+    from mlib.base.logger import round_str
 
-    assert "1" == parse_str(1)
-    assert "1.23" == parse_str(1.23)
-    assert "1.23444" == parse_str(1.23444444)
-    assert "1.23457" == parse_str(1.23456789)
-    assert "abc" == parse_str("abc")
+    assert "1" == round_str(1)
+    assert "1.23" == round_str(1.23)
+    assert "1.23444" == round_str(1.23444444)
+    assert "1.23457" == round_str(1.23456789)
+    assert "abc" == round_str("abc")
 
 
 def test_parse2str():
@@ -33,7 +33,7 @@ def test_parse2str():
 
     assert parse2str(ChildSample(2, "sss")) == "ChildSample[y=2, b=sss]"
     # cSpell:disable
-    assert parse2str(ChildSample(1.23456789, "abcdefghijklmn")) == "ChildSample[y=1.23456789, b=abcdefghijklmn]"
+    assert parse2str(ChildSample(1.23456789, "abcdefghijklmn")) == "ChildSample[y=1.23457, b=abcdefghijklmn]"
     # cSpell:enable
     assert parse2str(Sample(2, "sss", 4.5, "xyz")) == "Sample[x=2, a=sss, child=ChildSample[y=4.5, b=xyz]]"
 

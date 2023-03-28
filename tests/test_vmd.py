@@ -409,7 +409,7 @@ def test_read_by_filepath_ok_leg_ik1() -> None:
 
     # キーフレ
     bone_trees = model.bone_trees.gets(["左つま先"])
-    bone_matrixes = motion.bones.get_matrix_by_indexes([29, 3152], bone_trees, model)
+    bone_matrixes = motion.bones.get_matrix_by_indexes([29], bone_trees, model)
 
     # --------
     # キーフレがある場合

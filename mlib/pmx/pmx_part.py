@@ -356,6 +356,7 @@ class Texture(BaseIndexModel):
         super().__init__(index=index)
         self.texture_path = texture_path
         self.for_draw = False
+        self.valid = True
 
     def init_draw(self, model_path: str, texture_type: TextureType, is_individual: bool = True):
         if self.for_draw:
@@ -367,15 +368,26 @@ class Texture(BaseIndexModel):
             tex_path = os.path.abspath(os.path.join(os.path.dirname(model_path), self.texture_path))
         else:
             tex_path = self.texture_path
-        self.image = Image.open(tex_path).convert("RGBA")
-        self.image = ImageOps.flip(self.image)
-        self.texture_type = texture_type
 
-        # テクスチャオブジェクト生成
-        self.texture = gl.glGenTextures(1)
-        self.texture_type = texture_type
-        self.texture_id = gl.GL_TEXTURE0 if texture_type == TextureType.TEXTURE else gl.GL_TEXTURE1 if texture_type == TextureType.TOON else gl.GL_TEXTURE2
-        self.set_texture()
+        # テクスチャがちゃんとある場合のみ初期化処理実施
+        self.valid = os.path.exists(tex_path)
+        if self.valid:
+            try:
+                self.image = Image.open(tex_path).convert("RGBA")
+                self.image = ImageOps.flip(self.image)
+            except:
+                self.valid = False
+
+            if self.valid:
+                self.texture_type = texture_type
+
+                # テクスチャオブジェクト生成
+                self.texture = gl.glGenTextures(1)
+                self.texture_type = texture_type
+                self.texture_id = (
+                    gl.GL_TEXTURE0 if texture_type == TextureType.TEXTURE else gl.GL_TEXTURE1 if texture_type == TextureType.TOON else gl.GL_TEXTURE2
+                )
+                self.set_texture()
 
         # 描画初期化
         self.for_draw = True

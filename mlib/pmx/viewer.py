@@ -9,10 +9,13 @@ from OpenGL.GL import GL_RGBA, GL_UNSIGNED_BYTE, glReadPixels
 from PIL import Image
 from wx import glcanvas
 
+from mlib.base.logger import MLogger
 from mlib.base.math import MQuaternion, MVector3D
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_collection import VmdMotion
+
+logger = MLogger(__name__)
 
 
 def calc_bone_matrixes(queue: Queue, fno: int, motion: VmdMotion, model: PmxModel):
@@ -20,7 +23,7 @@ def calc_bone_matrixes(queue: Queue, fno: int, motion: VmdMotion, model: PmxMode
         fno += 1
         if fno > motion.max_fno:
             break
-        matrixes = motion.bones.get_mesh_matrixes(fno, model)
+        matrixes = motion.bones.get_mesh_gl_matrixes(fno, model)
         queue.put(matrixes)
     queue.put(None)
 
@@ -128,7 +131,7 @@ class PmxCanvas(glcanvas.GLCanvas):
     def change_motion(self, event: wx.Event):
         if self.motion:
             now_fno = self.frame_ctrl.GetValue()
-            self.bone_matrixes = self.motion.bones.get_mesh_matrixes(now_fno, self.model)
+            self.bone_matrixes = self.motion.bones.get_mesh_gl_matrixes(now_fno, self.model)
             self.Refresh()
 
     def on_play(self, event: wx.Event):
