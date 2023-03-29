@@ -4,12 +4,12 @@ from typing import Optional
 
 import numpy as np
 
+from mlib.base.base import BaseModel
 from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexListModel, BaseIndexNameListModel
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import Bone, DisplaySlot, DrawFlg, Face, Joint, Material, Morph, RigidBody, Texture, TextureType, ToonSharing, Vertex
 from mlib.pmx.shader import MShader, VsLayout
-from mlib.base.base import BaseModel
 
 
 class Vertices(BaseIndexListModel[Vertex]):
@@ -246,7 +246,8 @@ class Bones(BaseIndexNameListModel[Bone]):
 
         return bone_trees
 
-    def get_tail_bone_names(self) -> list[str]:
+    @property
+    def tail_bone_names(self) -> list[str]:
         """
         親ボーンとして登録されていないボーン名リストを取得する
         """
@@ -499,10 +500,6 @@ class PmxModel(BaseHashModel):
         self.joints = Joints()
         self.for_draw = False
         self.meshes: Optional[Meshes] = None
-
-    @property
-    def tail_bone_names(self) -> list[str]:
-        return self.bones.get_tail_bone_names()
 
     @property
     def name(self) -> str:

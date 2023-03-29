@@ -175,7 +175,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
     def on_key_down(self, event: wx.Event):
         keycode = event.GetKeyCode()
-        if keycode == wx.WXK_NUMPAD0:
+        if keycode == wx.WXK_NUMPAD1:
             # 真下から
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
             self.shader.look_at_center = MVector3D(0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0)
@@ -195,7 +195,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.shader.INITIAL_CAMERA_POSITION_Y,
                 self.shader.INITIAL_CAMERA_POSITION_Z,
             )
-        elif keycode == wx.WXK_NUMPAD4:
+        elif keycode == wx.WXK_NUMPAD6:
             # 左から
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
             self.shader.look_at_center = MVector3D(0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0)
@@ -205,7 +205,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.shader.INITIAL_CAMERA_POSITION_Y,
                 0.1,
             )
-        elif keycode == wx.WXK_NUMPAD6:
+        elif keycode == wx.WXK_NUMPAD4:
             # 右から
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
             self.shader.look_at_center = MVector3D(0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0)
@@ -236,7 +236,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 -0.1,
             )
         elif keycode in [
-            wx.WXK_NUMPAD3,
+            wx.WXK_NUMPAD9,
             wx.WXK_RIGHT,
             wx.WXK_NUMPAD_RIGHT,
             wx.WXK_WINDOWS_RIGHT,
@@ -244,7 +244,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             # キーフレを進める
             self.on_frame_forward(event)
         elif keycode in [
-            wx.WXK_NUMPAD1,
+            wx.WXK_NUMPAD7,
             wx.WXK_LEFT,
             wx.WXK_NUMPAD_LEFT,
             wx.WXK_WINDOWS_LEFT,

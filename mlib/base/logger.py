@@ -4,7 +4,7 @@ import os
 import re
 import traceback
 from datetime import datetime
-from enum import IntEnum, Enum
+from enum import Enum, IntEnum
 
 import numpy as np
 

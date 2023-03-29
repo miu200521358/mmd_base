@@ -56,7 +56,7 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         )
 
     def append(self, value: VmdBoneFrame):
-        if value.ik_rotation is not None:
+        if value.ik_rotation is not None and value.index not in self.__ik_indices:
             self.__ik_indices.append(value.index)
         return super().append(value)
 
@@ -237,22 +237,28 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
     def get_mesh_gl_matrixes(self, fno: int, model: PmxModel) -> np.ndarray:
         row = 1
         col = len(model.bones)
-        poses = np.full((row, col), MVector3D())
-        qqs = np.full((row, col), MQuaternion())
-        for m, bone in enumerate(model.bones):
-            # モーションによる移動量
-            poses[0, m] = self.get_position(bone, fno, model).gl.vector
-            # FK(捩り) > IK(捩り) > 付与親(捩り)
-            qqs[0, m] = self.get_rotation(bone, fno, model, append_ik=True).gl.to_matrix4x4().vector
+        poses = np.full((row, col, 3), np.zeros(3))
+        qqs = np.full((row, col, 4, 4), np.eye(4))
+        bone_indexes: list[int] = []
+
+        for bone_name in model.bones.tail_bone_names:
+            for bone in model.bone_trees[bone_name]:
+                if bone.index not in bone_indexes:
+                    # モーションによる移動量
+                    poses[0, bone.index] = self.get_position(bone, fno, model).vector
+                    # FK(捩り) > IK(捩り) > 付与親(捩り)
+                    qqs[0, bone.index] = self.get_rotation(bone, fno, model, append_ik=True).gl.to_matrix4x4().vector
+                    # 計算済みボーンとして登録
+                    bone_indexes.append(bone.index)
         # 座標変換行列
         matrixes = MMatrix4x4List(row, col)
         matrixes.translate(poses.tolist())
         matrixes.rotate(qqs.tolist())
 
         mesh_matrixes: list[np.ndarray] = []
-        for m, bone in enumerate(model.bones):
+        for bone in model.bones:
             # ボーン変形行列を求める
-            matrix = model.bones.get_mesh_gl_matrix(matrixes, m, np.eye(4))
+            matrix = model.bones.get_mesh_gl_matrix(matrixes, bone.index, np.eye(4))
 
             # BOf行列: 自身のボーンのボーンオフセット行列
             matrix = matrix @ bone.offset_matrix.copy().vector
@@ -568,10 +574,9 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     # 回転角度
                     rotation_degree = degrees(rotation_radian)
 
-                    if abs(1 - rotation_dot) < 1e-6:
-                        # ほとんど回らない場合、スルー
-                        is_break = True
-                        break
+                    # if abs(1 - rotation_dot) < 1e-6:
+                    #     # ほとんど回らない場合、スルー
+                    #     continue
 
                     # 制限角で最大変位量を制限する
                     if loop > 0:
