@@ -53,6 +53,8 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.model = PmxModel()
         self.motion = VmdMotion()
         self.bone_matrixes = np.array([np.eye(4) for _ in range(1)])
+        # IK計算対象
+        self.ik_bf_indices: dict[str, list[int]] = {}
 
         self.queue: Optional[Queue] = None
         self.process: Optional[Process] = None
@@ -129,7 +131,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.change_motion(event)
 
     def change_motion(self, event: wx.Event):
-        if self.motion:
+        if self.model and self.motion:
             now_fno = self.frame_ctrl.GetValue()
             self.bone_matrixes = self.motion.bones.get_mesh_gl_matrixes(now_fno, self.model)
             self.Refresh()

@@ -71,11 +71,13 @@ class BoneTree(BaseIndexDictModel[Bone]):
             return super().__getitem__(len(self.data) + key)
         return super().__getitem__(key)
 
+    @property
     def last_index(self) -> int:
         return len(self.data) - 1
 
+    @property
     def last_name(self) -> str:
-        return self.data[self.last_index()].name
+        return self.data[self.last_index].name
 
     def get_relative_position(self, key: int) -> MVector3D:
         """
@@ -133,12 +135,12 @@ class BoneTrees(BaseModel):
 
     def __setitem__(self, index: int, bt: BoneTree):
         self.data[index] = bt
-        if bt.data[bt.last_index()].name not in self.__names:
+        if bt.data[bt.last_index].name not in self.__names:
             # 名前は先勝ちで保持
-            self.__names[bt.data[bt.last_index()].name] = bt.data[bt.last_index()].index
+            self.__names[bt.data[bt.last_index].name] = bt.data[bt.last_index].index
 
     def names(self) -> dict[str, int]:
-        return dict([(bt.data[bt.last_index()].name, bt.data[bt.last_index()].index) for bt in self.data.values()])
+        return dict([(bt.data[bt.last_index].name, bt.data[bt.last_index].index) for bt in self.data.values()])
 
     def gets(self, bone_names: list[str]) -> list[BoneTree]:
         """

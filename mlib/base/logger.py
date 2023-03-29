@@ -84,21 +84,21 @@ class MLogger:
         if not kwargs:
             kwargs = {}
 
-        kwargs["level"] = self.TEST
+        kwargs["level"] = LoggingLevel.TEST.value
         self.print_logger(msg, *args, **kwargs)
 
     def debug(self, msg, *args, **kwargs):
         if not kwargs:
             kwargs = {}
 
-        kwargs["level"] = logging.DEBUG
+        kwargs["level"] = LoggingLevel.DEBUG.value
         self.print_logger(msg, *args, **kwargs)
 
     def info(self, msg, *args, **kwargs):
         if not kwargs:
             kwargs = {}
 
-        kwargs["level"] = logging.INFO
+        kwargs["level"] = LoggingLevel.INFO.value
         self.print_logger(msg, *args, **kwargs)
 
     # ログレベルカウント
@@ -115,7 +115,7 @@ class MLogger:
             if not kwargs:
                 kwargs = {}
 
-            kwargs["level"] = logging.INFO
+            kwargs["level"] = LoggingLevel.INFO.value
             kwargs["fno"] = fno
             kwargs["per"] = round((fno / last_fno) * 100, 3)
             kwargs["msg"] = msg
@@ -126,21 +126,21 @@ class MLogger:
         if not kwargs:
             kwargs = {}
 
-        kwargs["level"] = logging.WARNING
+        kwargs["level"] = LoggingLevel.WARNING.value
         self.print_logger(msg, *args, **kwargs)
 
     def error(self, msg, *args, **kwargs):
         if not kwargs:
             kwargs = {}
 
-        kwargs["level"] = logging.ERROR
+        kwargs["level"] = LoggingLevel.ERROR.value
         self.print_logger(msg, *args, **kwargs)
 
     def critical(self, msg, *args, **kwargs):
         if not kwargs:
             kwargs = {}
 
-        kwargs["level"] = logging.CRITICAL
+        kwargs["level"] = LoggingLevel.CRITICAL.value
         self.print_logger(msg, *args, **kwargs)
 
     def quit(self):

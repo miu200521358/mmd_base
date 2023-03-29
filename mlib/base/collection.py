@@ -96,7 +96,7 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel], BaseModel):
         """
         super().__init__()
         self.data: list[TBaseIndexNameModel] = data or []
-        self.__names = self.names()
+        self.__names = self.names
         self.__iter_index = 0
 
     def __getitem__(self, key: int | str) -> TBaseIndexNameModel:
@@ -111,6 +111,7 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel], BaseModel):
     #         # 名前は先勝ちで保持
     #         self.__names[v.name] = v.index
 
+    @property
     def names(self) -> dict[str, int]:
         return dict([(v.name, v.index) for v in self.data])
 
@@ -146,14 +147,14 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel], BaseModel):
         TBaseIndexNameModel
             要素
         """
-        if name not in self.names().keys():
+        if name not in self.names.keys():
             raise KeyError(f"Not Found: {name}")
         return self.data[self.__names[name]]
 
     def append(self, v: TBaseIndexNameModel) -> None:
         if v.index < 0:
             v.index = len(self.data)
-        if v.name not in self.names().keys():
+        if v.name not in self.names.keys():
             # 名前は先勝ちで保持
             self.__names[v.name] = v.index
         self.data.append(v)
@@ -191,9 +192,10 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         """
         super().__init__()
         self.data: dict[int, TBaseIndexModel] = data or {}
-        self.__indices: list[int] = self.indices()
+        self.__indices: list[int] = self.indices
         self.__iter_index: int = 0
 
+    @property
     def indices(self) -> list[int]:
         return sorted(list(self.data.keys()))
 
@@ -202,7 +204,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
 
     def __setitem__(self, index: int, value: TBaseIndexModel):
         self.data[index] = value
-        self.__indices = self.indices()
+        self.__indices = self.indices
 
     def __delitem__(self, index: int):
         del self.data[index]
@@ -235,7 +237,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
 
     def __iter__(self):
         self.__iter_index = -1
-        self.__indices = self.indices()
+        self.__indices = self.indices
         return self
 
     def __next__(self) -> TBaseIndexModel:
@@ -267,7 +269,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel], BaseModel):
         """
         super().__init__()
         self.data: dict[int, TBaseIndexNameModel] = data or {}
-        self.__indices = self.indices()
+        self.__indices = self.indices
         self.name = data[0].name if data else name if name else ""
 
     # @profile
@@ -289,7 +291,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel], BaseModel):
                 idx == next_idx: 指定されたINDEXが一番最後
         """
         if not indices:
-            indices = self.indices()
+            indices = self.indices
         if index in indices:
             return index, index, index
 
@@ -313,6 +315,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel], BaseModel):
             int(sorted_indices[next_idx]),
         )
 
+    @property
     def indices(self) -> list[int]:
         return sorted(list(self.data.keys()))
 
@@ -341,7 +344,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel], BaseModel):
 
     def append(self, value: TBaseIndexNameModel):
         self.data[value.index] = value
-        self.__indices = self.indices()
+        self.__indices = self.indices
         self.name = value.name
 
     def __len__(self) -> int:
@@ -349,7 +352,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel], BaseModel):
 
     def __iter__(self):
         self.__iter_index = -1
-        self.__indices = self.indices()
+        self.__indices = self.indices
         return self
 
     def __next__(self) -> TBaseIndexNameModel:
@@ -381,9 +384,10 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel, TBaseIndexNameDictInne
         """
         super().__init__()
         self.data: dict[str, TBaseIndexNameDictInnerModel] = data or {}
-        self.__names = self.names()
+        self.__names = self.names
         self.__iter_index: int = 0
 
+    @property
     def names(self):
         return list(self.data.keys())
 
@@ -403,7 +407,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel, TBaseIndexNameDictInne
         if value.name not in self.data:
             self.data[value.name] = self.create_inner(value.name)
         self.data[value.name].append(value)
-        self.__names = self.names()
+        self.__names = self.names
 
     def get(self, name: str) -> TBaseIndexNameDictInnerModel:
         """
@@ -430,7 +434,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel, TBaseIndexNameDictInne
 
     def __iter__(self):
         self.__iter_index = -1
-        self.__names = self.names()
+        self.__names = self.names
         return self
 
     def __next__(self) -> TBaseIndexNameDictInnerModel:
