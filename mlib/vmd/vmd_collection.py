@@ -250,8 +250,8 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         qqs = np.full((row, col, 4, 4), np.eye(4))
         bone_indexes: list[int] = []
 
-        # # IK回転を事前に求めておく
-        # self.calc_ik_rotations(fno, model)
+        # IK回転を事前に求めておく
+        self.calc_ik_rotations(fno, model)
 
         for bone_name in model.bones.tail_bone_names:
             for bone in model.bone_trees[bone_name]:
