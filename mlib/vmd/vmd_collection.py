@@ -48,34 +48,31 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
             self.__ik_indices.append(value.index)
         return super().append(value)
 
-    def calc(
-        self,
-        prev_index: int,
-        middle_index: int,
-        next_index: int,
-        index: int,
-    ) -> VmdBoneFrame:
+    def calc(self, prev_index: int, middle_index: int, next_index: int, index: int) -> VmdBoneFrame:
+        # check if index is in self.data
         if index in self.data:
             return self.data[index]
 
         bf = VmdBoneFrame(name=self.name, index=index)
 
-        if prev_index == middle_index == next_index:
-            # 全くキーフレがない場合、そのまま返す
-            return bf
-        if prev_index == middle_index and middle_index != next_index:
+        if prev_index == middle_index:
+            if middle_index == next_index:
+                # 全くキーフレがない場合、そのまま返す
+                return bf
+
             # FKのprevと等しい場合、指定INDEX以前がないので、その次のをコピーして返す
             next_bf = self[next_index]
             bf.position = next_bf.position.copy()
             bf.rotation = next_bf.rotation.copy()
             bf.ik_rotation = (next_bf.ik_rotation or MQuaternion()).copy()
             bf.interpolations = next_bf.interpolations.copy()
-            return bf
-        elif prev_index != middle_index and next_index == middle_index:
+
+        elif next_index == middle_index:
             # FKのnextと等しい場合は、その前のをコピーして返す
-            prev_bf = self[prev_index]
+            prev_bf = self[prev_index] if prev_index in self else VmdBoneFrame(name=self.name, index=prev_index)
             bf.position = prev_bf.position.copy()
             bf.rotation = prev_bf.rotation.copy()
+
             if prev_bf.ik_rotation is not None:
                 # prev にIK用回転がある場合はコピー
                 bf.ik_rotation = prev_bf.ik_rotation.copy()
@@ -88,43 +85,96 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
                 else:
                     bf.ik_rotation = MQuaternion()
             bf.interpolations = prev_bf.interpolations.copy()
-            return bf
 
-        prev_bf = self[prev_index] if prev_index in self else VmdBoneFrame(name=self.name, index=prev_index)
-        next_bf = self[next_index] if next_index in self else VmdBoneFrame(name=self.name, index=next_index)
+        else:
+            prev_bf = self[prev_index] if prev_index in self else VmdBoneFrame(name=self.name, index=prev_index)
+            next_bf = self[next_index] if next_index in self else VmdBoneFrame(name=self.name, index=next_index)
 
-        prev_ik_indices = [i for i in self.__ik_indices if i <= middle_index]
-        next_ik_indices = [i for i in self.__ik_indices if i >= middle_index]
+            prev_ik_indices = [i for i in self.__ik_indices if i <= middle_index]
+            next_ik_indices = [i for i in self.__ik_indices if i >= middle_index]
 
-        prev_ik_rotation = MQuaternion()
-        if prev_ik_indices:
-            prev_ik_index = max(prev_ik_indices)
-            prev_ik_rotation = (self[prev_ik_index].ik_rotation or MQuaternion()).copy()
+            prev_ik_rotation = MQuaternion()
+            if prev_ik_indices:
+                prev_ik_index = max(prev_ik_indices)
+                prev_ik_rotation = (self[prev_ik_index].ik_rotation or MQuaternion()).copy()
 
-        next_ik_rotation = MQuaternion()
-        if next_ik_indices:
-            next_ik_index = min(next_ik_indices)
-            next_ik_rotation = (self[next_ik_index].ik_rotation or prev_ik_rotation).copy()
+            next_ik_rotation = MQuaternion()
+            if next_ik_indices:
+                next_ik_index = min(next_ik_indices)
+                next_ik_rotation = (self[next_ik_index].ik_rotation or prev_ik_rotation).copy()
 
-        # 補間結果Yは、FKキーフレ内で計算する
-        _, ry, _ = evaluate(next_bf.interpolations.rotation, prev_index, index, next_index)
+            # 補間結果Yは、FKキーフレ内で計算する
+            _, ry, _ = evaluate(next_bf.interpolations.rotation, prev_index, index, next_index)
 
-        # IK用回転
-        bf.ik_rotation = MQuaternion.slerp(prev_ik_rotation, next_ik_rotation, ry)
+            # IK用回転
+            bf.ik_rotation = MQuaternion.slerp(prev_ik_rotation, next_ik_rotation, ry)
 
-        # FK用回転
-        bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
+            # FK用回転
+            bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
 
-        _, xy, _ = evaluate(next_bf.interpolations.translation_x, prev_index, index, next_index)
-        bf.position.x = prev_bf.position.x + (next_bf.position.x - prev_bf.position.x) * xy
+            _, xy, _ = evaluate(next_bf.interpolations.translation_x, prev_index, index, next_index)
+            bf.position.x = prev_bf.position.x + (next_bf.position.x - prev_bf.position.x) * xy
 
-        _, yy, _ = evaluate(next_bf.interpolations.translation_y, prev_index, index, next_index)
-        bf.position.y = prev_bf.position.y + (next_bf.position.y - prev_bf.position.y) * yy
+            _, yy, _ = evaluate(next_bf.interpolations.translation_y, prev_index, index, next_index)
+            bf.position.y = prev_bf.position.y + (next_bf.position.y - prev_bf.position.y) * yy
 
-        _, zy, _ = evaluate(next_bf.interpolations.translation_z, prev_index, index, next_index)
-        bf.position.z = prev_bf.position.z + (next_bf.position.z - prev_bf.position.z) * zy
+            _, zy, _ = evaluate(next_bf.interpolations.translation_z, prev_index, index, next_index)
+            bf.position.z = prev_bf.position.z + (next_bf.position.z - prev_bf.position.z) * zy
 
         return bf
+
+    # def calc(
+    #     self,
+    #     prev_index: int,
+    #     middle_index: int,
+    #     next_index: int,
+    #     index: int,
+    # ) -> VmdBoneFrame:
+    #     if index in self.data:
+    #         return self.data[index]
+
+    #     bf = VmdBoneFrame(name=self.name, index=index)
+
+    #     if prev_index == middle_index == next_index:
+    #         # 全くキーフレがない場合、そのまま返す
+    #         return bf
+    #     if prev_index == middle_index and middle_index != next_index:
+    #         # FKのprevと等しい場合、指定INDEX以前がないので、その次のをコピーして返す
+    #         next_bf = self[next_index]
+    #         bf.position = next_bf.position.copy()
+    #         bf.rotation = next_bf.rotation.copy()
+    #         bf.ik_rotation = (next_bf.ik_rotation or MQuaternion()).copy()
+    #         bf.interpolations = next_bf.interpolations.copy()
+    #         return bf
+    #     elif prev_index != middle_index and next_index == middle_index:
+    #         # FKのnextと等しい場合は、その前のをコピーして返す
+    #         prev_bf = self[prev_index]
+    #         bf.position = prev_bf.position.copy()
+    #         bf.rotation = prev_bf.rotation.copy()
+    #         if prev_bf.ik_rotation is not None:
+    #             # prev にIK用回転がある場合はコピー
+    #             bf.ik_rotation = prev_bf.ik_rotation.copy()
+    #         else:
+    #             # prevにない場合、自分より前で存在するキーをコピー
+    #             prev_ik_indices = [i for i in self.__ik_indices if i < middle_index]
+    #             if prev_ik_indices:
+    #                 prev_ik_index = max(prev_ik_indices)
+    #                 bf.ik_rotation = (self[prev_ik_index].ik_rotation or MQuaternion()).copy()
+    #             else:
+    #                 bf.ik_rotation = MQuaternion()
+    #         bf.interpolations = prev_bf.interpolations.copy()
+    #         return bf
+
+    #     prev_bf = self[prev_index] if prev_index in self else VmdBoneFrame(name=self.name, index=prev_index)
+    #     next_bf = self[next_index] if next_index in self else VmdBoneFrame(name=self.name, index=next_index)
+
+    #     prev_ik_indices = [i for i in self.__ik_indices if i <= middle_index]
+    #     next_ik_indices = [i for i in self.__ik_indices if i >= middle_index]
+
+    #     prev_ik_rotation = MQuaternion()
+    #     if prev_ik_indices:
+    #         prev_ik_index = max(prev_ik_indices)
+    #         prev_ik_rotation = (self[prev_ik_index].ik_rotation or MQuaternion()).copy()
 
 
 class VmdBoneFrameTree:

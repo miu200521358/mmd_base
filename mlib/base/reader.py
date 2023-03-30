@@ -315,7 +315,6 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         )
         return MQuaternion(scalar, x, y, z)
 
-    # @profile
     def read_to_model(
         self,
         formats: list[

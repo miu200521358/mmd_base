@@ -707,7 +707,7 @@ class MQuaternion(MVector):
             # quaternion と vec3 のかけ算は vec3 を返す
             return self.to_matrix4x4() * other
         elif isinstance(other, MQuaternion):
-            mat = self.to_matrix4x4().copy()
+            mat = MMatrix4x4(*self.to_matrix4x4().vector.flatten())
             mat.rotate(other)
 
             return mat.to_quaternion().normalized()
@@ -823,7 +823,7 @@ class MQuaternion(MVector):
         elif t >= 1.0:
             return q2
 
-        q2b: MQuaternion = q2.copy()
+        q2b = MQuaternion(*q2.vector.components)
         d = q1.dot(q2)
 
         if d < 0.0:

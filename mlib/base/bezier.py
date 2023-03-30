@@ -22,11 +22,10 @@ class Interpolation(BaseModel):
 
     def normalize(self):
         diff = self.finish - self.begin
-        b = self.begin.copy()
-        self.begin = Interpolation.round_mmd((self.begin - b) / diff, MVector2D())
-        self.start = Interpolation.round_mmd((self.start - b) / diff, MVector2D())
-        self.end = Interpolation.round_mmd((self.end - b) / diff, MVector2D(IP_MAX, IP_MAX))
-        self.finish = Interpolation.round_mmd((self.finish - b) / diff, MVector2D(IP_MAX, IP_MAX))
+        self.begin = Interpolation.round_mmd((self.begin - self.begin) / diff, MVector2D())
+        self.start = Interpolation.round_mmd((self.start - self.begin) / diff, MVector2D())
+        self.end = Interpolation.round_mmd((self.end - self.begin) / diff, MVector2D(IP_MAX, IP_MAX))
+        self.finish = Interpolation.round_mmd((self.finish - self.begin) / diff, MVector2D(IP_MAX, IP_MAX))
 
     @classmethod
     def round_mmd(cls, t: MVector2D, s: MVector2D) -> MVector2D:
