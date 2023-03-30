@@ -130,3 +130,4 @@ wheel
 
 # テスト結果
 *result*
+tests/resources/result.vmd
