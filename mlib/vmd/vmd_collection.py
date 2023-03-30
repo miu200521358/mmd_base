@@ -138,8 +138,8 @@ class VmdBoneFrameTree:
         local_matrix : 親ボーンから見たローカル座標行列
         position : ボーン変形後のグローバル位置
         """
-        self.global_matrix = MMatrix4x4(global_matrix)
-        self.local_matrix = MMatrix4x4(local_matrix)
+        self.global_matrix = MMatrix4x4(*global_matrix.flatten())
+        self.local_matrix = MMatrix4x4(*local_matrix.flatten())
         self.position = MVector3D(*position)
 
 
@@ -603,7 +603,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     link_target_mats = matrixes.matmul_cols()
 
                     # 注目ノード（実際に動かすボーン）
-                    link_matrix = MMatrix4x4(link_target_mats.vector[0, -1])
+                    link_matrix = MMatrix4x4(*link_target_mats.vector[0, -1].flatten())
 
                     # ワールド座標系から注目ノードの局所座標系への変換
                     link_inverse_matrix = link_matrix.inverse()

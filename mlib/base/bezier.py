@@ -1,5 +1,3 @@
-from typing import Optional
-
 import bezier
 import numpy as np
 
@@ -13,27 +11,14 @@ IP_MAX = 127
 class Interpolation(BaseModel):
     __slots__ = ["begin", "start", "end", "finish"]
 
-    def __init__(
-        self,
-        begin: Optional[MVector2D] = None,
-        start: Optional[MVector2D] = None,
-        end: Optional[MVector2D] = None,
-        finish: Optional[MVector2D] = None,
-    ):
+    def __init__(self):
         """
         補間曲線
-
-        Parameters
-        ----------
-        start : MVector2D, optional
-            補間曲線開始, by default None
-        end : MVector2D, optional
-            補間曲線終了, by default None
         """
-        self.begin: MVector2D = begin or MVector2D(0, 0)
-        self.start: MVector2D = start or MVector2D(20, 20)
-        self.end: MVector2D = end or MVector2D(107, 107)
-        self.finish: MVector2D = finish or MVector2D(IP_MAX, IP_MAX)
+        self.begin = MVector2D(0, 0)
+        self.start = MVector2D(20, 20)
+        self.end = MVector2D(107, 107)
+        self.finish = MVector2D(IP_MAX, IP_MAX)
 
     def normalize(self):
         diff = self.finish - self.begin
@@ -121,12 +106,11 @@ def create_interpolation(values: list[float]):
     nodes = joined_curve.nodes
 
     # 次数を減らしたベジェ曲線をMMD用補間曲線に変換
-    org_ip = Interpolation(
-        begin=MVector2D(nodes[0, 0], nodes[1, 0]),
-        start=MVector2D(nodes[0, 1], nodes[1, 1]),
-        end=MVector2D(nodes[0, 2], nodes[1, 2]),
-        finish=MVector2D(nodes[0, 3], nodes[1, 3]),
-    )
+    org_ip = Interpolation()
+    org_ip.begin = MVector2D(nodes[0, 0], nodes[1, 0])
+    org_ip.start = MVector2D(nodes[0, 1], nodes[1, 1])
+    org_ip.end = MVector2D(nodes[0, 2], nodes[1, 2])
+    org_ip.finish = MVector2D(nodes[0, 3], nodes[1, 3])
     org_ip.normalize()
 
     return org_ip

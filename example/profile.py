@@ -13,7 +13,7 @@ motion = VmdReader().read_by_filepath("D:/MMD/MikuMikuDance_v926x64/UserFile/Mot
 # 時間計測開始
 start_time = time.perf_counter()
 
-for fno in range(0, 10, 100):
+for fno in range(1000, 1010):
     matrixes = motion.bones.get_mesh_gl_matrixes(fno, model)
 
 # # キーフレ

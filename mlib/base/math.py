@@ -27,10 +27,10 @@ class MRect(BaseModel):
     """
 
     def __init__(self, x: int = 0, y: int = 0, width: int = 0, height: int = 0):
-        self.x = int(x)
-        self.y = int(y)
-        self.width = int(width)
-        self.height = int(height)
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
 
     @property
     def x(self) -> int:
@@ -70,24 +70,11 @@ class MVector(BaseModel):
 
     __slots__ = ["vector"]
 
-    def __init__(self, x: Union[float, np.ndarray] = 0.0):
-        """初期化
-
-        Parameters
-        ----------
-        x : float, MVector, np.ndarray
-        """
-        if isinstance(x, (int, float)):
-            # 実数の場合
-            self.vector = np.fromiter([x], dtype=np.float64, count=1)
-        elif isinstance(x, np.ndarray):
-            # numpy-arrayの場合
-            self.vector = np.copy(x)
-        else:
-            self.vector = x.copy()
+    def __init__(self, x: float = 0.0):
+        self.vector = np.fromiter([x], dtype=np.float64, count=1)
 
     def copy(self):
-        return self.__class__(np.copy(self.vector))
+        return self.__class__(self.x)
 
     def length(self) -> float:
         """
@@ -128,7 +115,7 @@ class MVector(BaseModel):
         l2 = norm(self.vector, ord=2, axis=-1, keepdims=True)
         l2[l2 == 0] = 1
         normv = self.vector / l2
-        return self.__class__(normv)
+        return self.__class__(*normv)
 
     def normalize(self):
         """
@@ -160,13 +147,13 @@ class MVector(BaseModel):
         """
         絶対値変換
         """
-        return self.__class__(np.abs(self.vector))
+        return self.__class__(*np.abs(self.vector))
 
     def cross(self, other):
         """
         外積
         """
-        return self.__class__(np.cross(self.vector, other.vector))
+        return self.__class__(*np.cross(self.vector, other.vector))
 
     def inner(self, other) -> float:
         """
@@ -274,13 +261,13 @@ class MVector(BaseModel):
         return operate_vector(self, other, operator.or_)
 
     def __neg__(self):
-        return self.__class__(operator.neg(self.vector))
+        return self.__class__(*operator.neg(self.vector))
 
     def __pos__(self):
-        return self.__class__(operator.pos(self.vector))
+        return self.__class__(*operator.pos(self.vector))
 
     def __invert__(self):
-        return self.__class__(operator.invert(self.vector))
+        return self.__class__(*operator.invert(self.vector))
 
     @property
     def x(self):
@@ -296,31 +283,24 @@ class MVector2D(MVector):
     2次元ベクトルクラス
     """
 
-    def __init__(self, x: Union[float, np.ndarray] = 0.0, y: float = 0.0):
+    def __init__(self, x: float = 0.0, y: float = 0.0):
         """
         初期化
 
         Parameters
         ----------
-        x : Union[float, np.ndarray], optional
-            by default 0.0
+        x : float, optional
+            X値, by default 0.0
         y : float, optional
-            by default 0.0
+            Y値, by default 0.0
         """
-        if isinstance(x, (int, float)):
-            # 実数の場合
-            self.vector = np.fromiter([x, y], dtype=np.float64, count=2)
-        elif isinstance(x, np.ndarray):
-            # numpy-arrayの場合
-            self.vector = np.copy(x)
-        else:
-            self.vector = x.copy()
+        self.vector = np.fromiter([x, y], dtype=np.float64, count=2)
 
     def __str__(self) -> str:
-        return f"[x={round(self.vector[0], 3)}, y={round(self.vector[1], 3)}]"
+        return f"[x={round(self.vector[0], 5)}, y={round(self.vector[1], 5)}]"
 
     def copy(self) -> "MVector2D":
-        return self.__class__(np.copy(self.vector))
+        return self.__class__(self.x, self.y)
 
     @property
     def y(self):
@@ -336,36 +316,17 @@ class MVector3D(MVector):
     3次元ベクトルクラス
     """
 
-    def __init__(self, x: Union[float, np.ndarray] = 0.0, y: float = 0.0, z: float = 0.0):
-        """
-        初期化
-
-        Parameters
-        ----------
-        x : Union[float, np.ndarray], optional
-            by default 0.0
-        y : float, optional
-            by default 0.0
-        z : float, optional
-            by default 0.0
-        """
-        if isinstance(x, (int, float)):
-            # 実数の場合
-            self.vector = np.fromiter([x, y, z], dtype=np.float64, count=3)
-        elif isinstance(x, np.ndarray):
-            # numpy-arrayの場合
-            self.vector = np.copy(x)
-        else:
-            self.vector = x.copy()
+    def __init__(self, x: float = 0.0, y: float = 0.0, z: float = 0.0):
+        self.vector = np.fromiter([x, y, z], dtype=np.float64, count=3)
 
     def __str__(self) -> str:
         """
         ログ用文字列に変換
         """
-        return f"[x={round(self.vector[0], 3)}, y={round(self.vector[1], 3)}, z={round(self.vector[2], 3)}]"
+        return f"[x={round(self.vector[0], 5)}, y={round(self.vector[1], 5)}, z={round(self.vector[2], 5)}]"
 
     def copy(self) -> "MVector3D":
-        return self.__class__(np.copy(self.vector))
+        return self.__class__(self.x, self.y, self.z)
 
     def to_key(self, threshold=0.1) -> tuple:
         """
@@ -415,37 +376,18 @@ class MVector4D(MVector):
 
     def __init__(
         self,
-        x: Union[float, np.ndarray] = 0.0,
+        x: float = 0.0,
         y: float = 0.0,
         z: float = 0.0,
         w: float = 0.0,
     ):
-        """
-        初期化
-
-        Parameters
-        ----------
-        x : Union[float, np.ndarray], optional
-            by default 0.0
-        y : float, optional
-            by default 0.0
-        z : float, optional
-            by default 0.0
-        """
-        if isinstance(x, (int, float)):
-            # 実数の場合
-            self.vector = np.fromiter([x, y, z, w], dtype=np.float64, count=4)
-        elif isinstance(x, np.ndarray):
-            # numpy-arrayの場合
-            self.vector = np.copy(x)
-        else:
-            self.vector = x.copy()
+        self.vector = np.fromiter([x, y, z, w], dtype=np.float64, count=4)
 
     def __str__(self) -> str:
-        return f"[x={round(self.vector[0], 3)}, y={round(self.vector[1], 3)}, " + f"z={round(self.vector[2], 3)}], w={round(self.vector[2], 3)}]"
+        return f"[x={round(self.vector[0], 5)}, y={round(self.vector[1], 5)}, " + f"z={round(self.vector[2], 5)}], w={round(self.vector[2], 5)}]"
 
     def copy(self) -> "MVector4D":
-        return self.__class__(np.copy(self.vector))
+        return self.__class__(self.x, self.y, self.z, self.w)
 
     @property
     def y(self):
@@ -530,7 +472,7 @@ class MVectorDict:
         MVector
             直近値
         """
-        return v.__class__(np.array(self.values())[np.argmin(self.distances(v))])
+        return v.__class__(*np.array(self.values())[np.argmin(self.distances(v))])
 
     def nearest_key(self, v: MVector) -> np.ndarray:
         """
@@ -555,20 +497,12 @@ class MQuaternion(MVector):
 
     def __init__(
         self,
-        scalar: Union[float, quaternion, list, np.ndarray] = 1.0,
+        scalar: float = 1.0,
         x: float = 0.0,
         y: float = 0.0,
         z: float = 0.0,
     ):
-        if isinstance(scalar, (int, float)):
-            # 実数の場合
-            self.vector = quaternion(scalar, x, y, z)
-        elif isinstance(scalar, quaternion):
-            # quaternionの場合
-            self.vector = quaternion(*scalar.components)
-        else:
-            # numpy-array, listの場合
-            self.vector = quaternion(*scalar)
+        self.vector: quaternion = quaternion(scalar, x, y, z)
 
     @property
     def scalar(self) -> float:
@@ -604,7 +538,7 @@ class MQuaternion(MVector):
 
     @property
     def xyz(self) -> MVector3D:
-        return MVector3D(self.vector.components[1:])  # type: ignore
+        return MVector3D(*self.vector.components[1:])  # type: ignore
 
     @property
     def theta(self) -> float:
@@ -640,7 +574,7 @@ class MQuaternion(MVector):
         """
         逆回転
         """
-        return MQuaternion(self.vector.inverse())
+        return MQuaternion(*self.vector.inverse().components)
 
     def normalized(self):
         """
@@ -650,7 +584,7 @@ class MQuaternion(MVector):
         l2 = norm(self.vector.components, ord=2, axis=-1, keepdims=True)
         l2[l2 == 0] = 1
         normv = self.vector.components / l2
-        return self.__class__(normv)
+        return self.__class__(*normv)
 
     def normalize(self):
         """
@@ -667,7 +601,7 @@ class MQuaternion(MVector):
     def copy(self) -> "MQuaternion":
         return MQuaternion(self.scalar, self.x, self.y, self.z)
 
-    def dot(self, v):
+    def dot(self, v: "MQuaternion") -> float:
         return np.sum(self.vector.components * v.vector.components)
 
     def to_euler_degrees(self) -> MVector3D:
@@ -736,7 +670,7 @@ class MQuaternion(MVector):
 
         return deg
 
-    def to_theta(self, v):
+    def to_theta(self, v: "MQuaternion"):
         """
         自分ともうひとつの値vとのtheta（変位量）を返す
         """
@@ -768,7 +702,7 @@ class MQuaternion(MVector):
 
         return mat
 
-    def __mul__(self, other):
+    def __mul__(self, other: Union[float, MVector3D, "MQuaternion"]):
         if isinstance(other, MVector3D):
             # quaternion と vec3 のかけ算は vec3 を返す
             return self.to_matrix4x4() * other
@@ -778,7 +712,7 @@ class MQuaternion(MVector):
 
             return mat.to_quaternion().normalized()
 
-        return MQuaternion(self.vector * other)
+        return MQuaternion(*(self.vector.components * other))
 
     def multiply_factor(self, factor: float):
         if factor == 0:
@@ -791,7 +725,7 @@ class MQuaternion(MVector):
         オイラー角をクォータニオンに変換する
         """
         euler = np.zeros(3)
-        if isinstance(a, int) or isinstance(a, float):
+        if isinstance(a, (int, float)):
             euler = np.radians([a, b, c], dtype=np.double)
         else:
             euler = np.radians([a.x, a.y, a.z], dtype=np.double)
@@ -866,7 +800,7 @@ class MQuaternion(MVector):
     @classmethod
     def from_axes(cls, x_axis: MVector3D, y_axis: MVector3D, z_axis: MVector3D):
         return MQuaternion(
-            from_rotation_matrix(
+            *from_rotation_matrix(
                 np.array(
                     [
                         [x_axis.x, y_axis.x, z_axis.x],
@@ -875,11 +809,11 @@ class MQuaternion(MVector):
                     ],
                     dtype=np.float64,
                 )
-            )
+            ).components
         )
 
     @classmethod
-    def nlerp(cls, q1, q2, t):
+    def nlerp(cls, q1: "MQuaternion", q2: "MQuaternion", t: float):
         """
         線形補間
         """
@@ -889,20 +823,20 @@ class MQuaternion(MVector):
         elif t >= 1.0:
             return q2
 
-        q2b = q2.copy()
+        q2b: MQuaternion = q2.copy()
         d = q1.dot(q2)
 
         if d < 0.0:
             q2b = -q2b
 
-        return (q1 * (1.0 - t) + q2b * t).normalized()
+        return MQuaternion(*(q1.vector.components * (1.0 - t) + q2b.vector.components * t)).normalized()
 
     @classmethod
-    def slerp(cls, q1, q2, t):
+    def slerp(cls, q1: "MQuaternion", q2: "MQuaternion", t: float):
         """
         球形補間
         """
-        return MQuaternion(slerp_evaluate(q1.vector, q2.vector, t))
+        return MQuaternion(*slerp_evaluate(q1.vector, q2.vector, t).components)
 
     def separate_by_axis(self, global_axis: MVector3D):
         # ローカルZ軸ベースで求める場合
@@ -981,7 +915,7 @@ class MMatrix4x4(MVector):
 
     def __init__(
         self,
-        m11: Union[float, np.ndarray] = 1.0,
+        m11: float = 1.0,
         m12: float = 0.0,
         m13: float = 0.0,
         m14: float = 0.0,
@@ -998,68 +932,34 @@ class MMatrix4x4(MVector):
         m43: float = 0.0,
         m44: float = 1.0,
     ):
-        if isinstance(m11, (int, float)):
-            # 実数の場合
-            self.vector = np.array(
-                [
-                    [m11, m12, m13, m14],
-                    [m21, m22, m23, m24],
-                    [m31, m32, m33, m34],
-                    [m41, m42, m43, m44],
-                ],
-                dtype=np.float64,
-            )
-        elif isinstance(m11, MMatrix4x4):
-            # quaternionの場合
-            self.vector = np.array(
-                [
-                    [
-                        m11.vector[0, 0],
-                        m11.vector[0, 1],
-                        m11.vector[0, 2],
-                        m11.vector[0, 3],
-                    ],
-                    [
-                        m11.vector[1, 0],
-                        m11.vector[1, 1],
-                        m11.vector[1, 2],
-                        m11.vector[1, 3],
-                    ],
-                    [
-                        m11.vector[2, 0],
-                        m11.vector[2, 1],
-                        m11.vector[2, 2],
-                        m11.vector[2, 3],
-                    ],
-                    [
-                        m11.vector[3, 0],
-                        m11.vector[3, 1],
-                        m11.vector[3, 2],
-                        m11.vector[3, 3],
-                    ],
-                ],
-                dtype=np.float64,
-            )
-        elif isinstance(m11, np.ndarray):
-            # 行列そのものの場合
-            self.vector = np.array(
-                [
-                    [m11[0, 0], m11[0, 1], m11[0, 2], m11[0, 3]],
-                    [m11[1, 0], m11[1, 1], m11[1, 2], m11[1, 3]],
-                    [m11[2, 0], m11[2, 1], m11[2, 2], m11[2, 3]],
-                    [m11[3, 0], m11[3, 1], m11[3, 2], m11[3, 3]],
-                ],
-                dtype=np.float64,
-            )
-        else:
-            # listの場合
-            self.vector = MMatrix4x4(*m11)
+        self.vector = np.fromiter(
+            [
+                m11,
+                m12,
+                m13,
+                m14,
+                m21,
+                m22,
+                m23,
+                m24,
+                m31,
+                m32,
+                m33,
+                m34,
+                m41,
+                m42,
+                m43,
+                m44,
+            ],
+            dtype=np.float64,
+            count=16,
+        ).reshape(4, 4)
 
     def inverse(self):
         """
         逆行列
         """
-        return MMatrix4x4(inv(self.vector))
+        return MMatrix4x4(*inv(self.vector).flatten())
 
     def rotate(self, q: MQuaternion):
         """
@@ -1264,7 +1164,7 @@ class MMatrix4x4(MVector):
     def to_position(self) -> MVector3D:
         return MVector3D(*self.vector[3, 0:3])
 
-    def __mul__(self, other):
+    def __mul__(self, other: Union["MMatrix4x4", "MVector3D", "MVector4D", float]):
         if isinstance(other, MMatrix4x4):
             # 行列同士のかけ算は matmul で演算
             raise ValueError("MMatrix4x4同士のかけ算は @ を使って下さい")
@@ -1272,14 +1172,14 @@ class MMatrix4x4(MVector):
             # vec3 とのかけ算は vec3 を返す
             s = np.sum(self.vector[:, :3] * other.vector, axis=1) + self.vector[:, 3]
             if s[3] == 1.0:
-                return MVector3D(s[:3])
+                return MVector3D(*s[:3])
             elif s[3] == 0.0:
                 return MVector3D()
             else:
-                return MVector3D(s[:3] / s[3])
+                return MVector3D(*(s[:3] / s[3]))
         elif isinstance(other, MVector4D):
             # vec4 とのかけ算は vec4 を返す
-            return MVector4D(np.sum(self.vector * other.vector, axis=1))
+            return MVector4D(*np.sum(self.vector * other.vector, axis=1))
         return super().__mul__(other)
 
     def __matmul__(self, other):
@@ -1299,7 +1199,7 @@ class MMatrix4x4(MVector):
         self.vector[y, x] = v
 
     def copy(self) -> "MMatrix4x4":
-        return self.__class__(np.copy(self.vector))
+        return self.__class__(*self.vector.flatten())
 
 
 class MMatrix4x4List:
@@ -1320,9 +1220,9 @@ class MMatrix4x4List:
         col : int
             行数（ボーン数）
         """
-        self.row = row
-        self.col = col
-        self.vector = np.tile(np.eye(4, dtype=np.float64), (row, col, 1, 1))
+        self.row: int = row
+        self.col: int = col
+        self.vector: np.ndarray = np.tile(np.eye(4, dtype=np.float64), (row, col, 1, 1))
 
     def translate(self, vs: list[list[np.ndarray]]):
         """
@@ -1420,6 +1320,10 @@ def operate_vector(v: MVector, other: Union[MVector, float, int], op):
         v1 = op(v.vector, other.vector)
     else:
         v1 = op(v.vector, other)
-    v2 = v.__class__(v1)
+
+    if isinstance(v1, quaternion):
+        v2 = v.__class__(*v1.components)
+    else:
+        v2 = v.__class__(*v1)
     v2.effective()
     return v2
