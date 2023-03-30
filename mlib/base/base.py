@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import TypeVar
 
-import _pickle as cPickle  # type: ignore
+from pickle import loads, dumps
 
 from mlib.base.logger import parse2str
 
@@ -23,7 +23,7 @@ class BaseModel:
         return parse2str(self)
 
     def copy(self):
-        return cPickle.loads(cPickle.dumps(self, -1))
+        return loads(dumps(self))
 
 
 TBaseModel = TypeVar("TBaseModel", bound=BaseModel)
