@@ -103,7 +103,8 @@ class BoneTree(BaseIndexDictModel[Bone]):
 
     def __iter__(self):
         self.__iter_index = -1
-        self.__indices = sorted(list(self.data.keys()))
+        self.__indices = list(self.data.keys())
+        self.__indices.sort()
         return self
 
     def __next__(self) -> Bone:
@@ -202,7 +203,8 @@ class BoneTrees(BaseModel):
 
     def __iter__(self):
         self.__iter_index = -1
-        self.__indices = sorted(list(self.data.keys()))
+        self.__indices = list(self.data.keys())
+        self.__indices.sort()
         return self
 
     def __next__(self) -> BoneTree:

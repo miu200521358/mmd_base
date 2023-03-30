@@ -54,8 +54,8 @@ class Interpolation(BaseModel):
         return int(round(round(t2, -6) / 1000000))
 
 
-def get_infections(values: list[float], threshold) -> np.ndarray:
-    extract_idxs = get_threshold_infections(values, threshold)
+def get_infections(values: list[float], threshold: float) -> np.ndarray:
+    extract_idxs = get_threshold_infections(np.fromiter(values, dtype=np.float64, count=len(values)), threshold)
     if len(extract_idxs) < 2:
         return np.array([])
     extracts = np.fromiter(values, dtype=np.float64, count=len(values))[extract_idxs]
@@ -68,17 +68,16 @@ def get_fix_infections(values: list[float]) -> np.ndarray:
     return np.where(np.diff(np.where(np.isclose(np.abs(np.diff(values)), 0.0))[0]) > 2)[0]
 
 
-def get_threshold_infections(values: list[float], threshold) -> np.ndarray:
+def get_threshold_infections(values: np.ndarray, threshold: float) -> np.ndarray:
     extract_idxs = []
     start_idx = 0
     end_idx = 1
-    # 一定の値以上に増加してるキーを打つ
     while end_idx <= len(values) - 1:
-        if np.sum(np.abs(np.diff(np.abs(values[start_idx:end_idx])))) >= threshold:
+        diff = np.abs(values[start_idx:end_idx]).ptp()
+        if diff >= threshold:
             extract_idxs.append(start_idx)
             extract_idxs.append(end_idx - 1)
             start_idx = end_idx - 1
-            end_idx = start_idx + 1
         else:
             end_idx += 1
     return np.fromiter(sorted(list(set(extract_idxs))), dtype=np.float64, count=len(extract_idxs))
