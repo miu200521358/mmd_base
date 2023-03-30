@@ -473,6 +473,9 @@ class BaseHashModel(BaseModel):
     @property
     def hexdigest(self) -> str:
         """モデルデータのハッシュ値を取得する"""
+        return self.digest
+
+    def update_hexdigest(self) -> None:
         sha1 = hashlib.sha1()
 
         with open(self.path, "rb") as f:
@@ -484,7 +487,7 @@ class BaseHashModel(BaseModel):
         # ファイルパスをハッシュに含める
         sha1.update(self.path.encode(Encoding.UTF_8.value))
 
-        return sha1.hexdigest()
+        self.digest = sha1.hexdigest()
 
     def __bool__(self) -> bool:
         # パスが定義されていたら、中身入り

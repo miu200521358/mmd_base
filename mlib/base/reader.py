@@ -101,7 +101,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             raise MParseException("予期せぬエラー", exception=e)
 
         # ハッシュを保持
-        model.digest = model.hexdigest
+        model.update_hexdigest()
 
         return model
 

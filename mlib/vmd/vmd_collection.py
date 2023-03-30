@@ -35,23 +35,11 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         # キーフレがない場合、生成したのを返す（保持はしない）
         prev_index, middle_index, next_index = self.range_indexes(index)
 
-        # # IK用キーはIK回転情報があるキーフレのみ対象とする
-        # if self.__ik_indices:
-        #     ik_prev_index, ik_middle_index, ik_next_index = self.range_indexes(
-        #         index,
-        #         indices=sorted(self.__ik_indices),
-        #     )
-        # else:
-        #     ik_prev_index = ik_middle_index = ik_next_index = 0
-
         # prevとnextの範囲内である場合、補間曲線ベースで求め直す
         return self.calc(
             prev_index,
             middle_index,
             next_index,
-            # ik_prev_index,
-            # ik_middle_index,
-            # ik_next_index,
             index,
         )
 
@@ -65,9 +53,6 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         prev_index: int,
         middle_index: int,
         next_index: int,
-        # ik_prev_index: int,
-        # ik_middle_index: int,
-        # ik_next_index: int,
         index: int,
     ) -> VmdBoneFrame:
         if index in self.data:
@@ -165,6 +150,12 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
 
     def __init__(self) -> None:
         super().__init__()
+        self.cache_poses: dict[tuple[int, str, str], MVector3D] = {}
+        self.cache_qqs: dict[tuple[int, str, str], MQuaternion] = {}
+
+    def clear(self) -> None:
+        self.cache_poses = {}
+        self.cache_qqs = {}
 
     def create_inner(self, name: str):
         return VmdBoneNameFrames(name=name)
@@ -257,9 +248,20 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             for bone in model.bone_trees[bone_name]:
                 if bone.index not in bone_indexes:
                     # モーションによる移動量
-                    poses[0, bone.index] = self.get_position(bone, fno, model).gl.vector
+                    if (fno, model.hexdigest, bone.name) in self.cache_poses:
+                        poses[0, bone.index] = self.cache_poses[(fno, model.hexdigest, bone.name)].gl.vector
+                    else:
+                        pos = self.get_position(bone, fno, model)
+                        poses[0, bone.index] = pos.gl.vector
+                        self.cache_poses[(fno, model.hexdigest, bone.name)] = pos
+
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
-                    qqs[0, bone.index] = self.get_rotation(bone, fno, model, append_ik=True).gl.to_matrix4x4().vector
+                    if (fno, model.hexdigest, bone.name) in self.cache_qqs:
+                        qqs[0, bone.index] = self.cache_qqs[(fno, model.hexdigest, bone.name)].gl.to_matrix4x4().vector
+                    else:
+                        qq = self.get_rotation(bone, fno, model, append_ik=True)
+                        self.cache_qqs[(fno, model.hexdigest, bone.name)] = qq
+                        qqs[0, bone.index] = qq.gl.to_matrix4x4().vector
                     # 計算済みボーンとして登録
                     bone_indexes.append(bone.index)
 
@@ -316,9 +318,9 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                             is_calc_prev = True
                         if next_fno not in self[bone.name] or not self[bone.name][next_fno].ik_rotation:
                             is_calc_next = True
-                if is_calc_prev:
+                if is_calc_prev and (prev_fno, model.hexdigest, ik_last_bone_name) not in self.cache_qqs:
                     self.get_rotation(model.bones[ik_last_bone_name], prev_fno, model, append_ik=True)
-                if is_calc_next:
+                if is_calc_next and (next_fno, model.hexdigest, ik_last_bone_name) not in self.cache_qqs:
                     self.get_rotation(model.bones[ik_last_bone_name], next_fno, model, append_ik=True)
 
     def get(self, name: str) -> VmdBoneNameFrames:
@@ -410,6 +412,10 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         MQuaternion
             該当キーフレにおけるボーンの回転量
         """
+
+        # if append_ik and (fno, model.hexdigest, bone.name) in self.cache_qqs:
+        #     return self.cache_qqs[(fno, model.hexdigest, bone.name)]
+
         # FK(捩り) > IK(捩り) > 付与親(捩り)
         bf = self[bone.name][fno]
         qq = bf.rotation.copy()
@@ -425,7 +431,12 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         # 付与親を加味した回転
         effect_qq = self.get_effect_rotation(bone, fno, ik_qq, model)
 
-        return effect_qq.normalized()
+        norm_qq = effect_qq.normalized()
+
+        # if append_ik:
+        #     self.cache_qqs[(fno, model.hexdigest, bone.name)] = norm_qq
+
+        return norm_qq
 
     def get_effect_rotation(
         self,

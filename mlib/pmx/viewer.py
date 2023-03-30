@@ -51,8 +51,6 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.model = PmxModel()
         self.motion = VmdMotion()
         self.bone_matrixes = np.array([np.eye(4) for _ in range(1)])
-        # IK計算対象
-        self.ik_bf_indices: dict[str, list[int]] = {}
 
         self.queue: Optional[Queue] = None
         self.process: Optional[Process] = None
