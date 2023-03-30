@@ -5,7 +5,6 @@ from typing import Optional
 import numpy as np
 import OpenGL.GL as gl
 import wx
-from OpenGL.GL import GL_RGBA, GL_UNSIGNED_BYTE, glReadPixels
 from PIL import Image
 from wx import glcanvas
 
@@ -29,7 +28,7 @@ def calc_bone_matrixes(queue: Queue, fno: int, motion: VmdMotion, model: PmxMode
 
 
 class PmxCanvas(glcanvas.GLCanvas):
-    def __init__(self, parent, width: int, height: int, *args, **kw):
+    def __init__(self, parent: wx.Panel, width: int, height: int, *args, **kw):
         attribList = (
             glcanvas.WX_GL_RGBA,
             glcanvas.WX_GL_DOUBLEBUFFER,
@@ -38,6 +37,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             0,
         )
         glcanvas.GLCanvas.__init__(self, parent, -1, size=(width, height), attribList=attribList)
+        self.parent = parent
         self.context = glcanvas.GLContext(self)
         self.size = wx.Size(width, height)
         self.last_pos = wx.Point(0, 0)
@@ -58,12 +58,15 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         self.queue: Optional[Queue] = None
         self.process: Optional[Process] = None
+        self.capture_process: Optional[Process] = None
 
         # マウスドラッグフラグ
         self.is_drag = False
 
         # 再生中かどうかを示すフラグ
         self.playing = False
+        # 録画中かどうかを示すフラグ
+        self.recording = False
 
     def _initialize_ui(self, parent):
         gl.glClearColor(0.7, 0.7, 0.7, 1)
@@ -136,9 +139,10 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.bone_matrixes = self.motion.bones.get_mesh_gl_matrixes(now_fno, self.model)
             self.Refresh()
 
-    def on_play(self, event: wx.Event):
+    def on_play(self, event: wx.Event, record: bool = False):
         self.playing = not self.playing
         if self.playing:
+            self.recording = record
             self.queue = Queue()
             self.process = Process(
                 target=calc_bone_matrixes,
@@ -146,12 +150,12 @@ class PmxCanvas(glcanvas.GLCanvas):
                 name="CalcProcess",
             )
             self.process.start()
-
             self.play_timer.Start(1000 // self.fps)
         else:
             if self.process:
                 self.process.terminate()
             self.play_timer.Stop()
+            self.recording = False
 
     def on_play_timer(self, event: wx.Event):
         if self.queue and not self.queue.empty():
@@ -160,6 +164,10 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.on_play(event)
                 return
             self.bone_matrixes = matrixes
+
+            if self.recording:
+                self.on_capture(event)
+
             self.frame_ctrl.SetValue(self.frame_ctrl.GetValue() + 1)
             self.Refresh()
 
@@ -264,19 +272,30 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.Refresh()
 
     def on_capture(self, event: wx.Event):
+        dc = wx.ClientDC(self)
+
+        # キャプチャ画像のサイズを設定
+        size = dc.GetSize()
+
+        # キャプチャ用のビットマップを作成
+        bitmap = wx.Bitmap(size[0], size[1])
+
         # キャプチャ
-        # OpenGLの描画バッファを読み込む
-        buffer = glReadPixels(0, 0, self.size.width, self.size.height, GL_RGBA, GL_UNSIGNED_BYTE)
+        memory_dc = wx.MemoryDC()
+        memory_dc.SelectObject(bitmap)
+        memory_dc.Blit(0, 0, size[0], size[1], dc, 0, 0)
+        memory_dc.SelectObject(wx.NullBitmap)
 
-        # バッファをPILのImageオブジェクトに変換する
-        image = Image.frombytes("RGBA", (self.size.width, self.size.height), buffer)
-
-        # 画像を反転させる
-        image = image.transpose(method=Image.FLIP_TOP_BOTTOM)
+        # PIL.Imageに変換
+        pil_image = Image.new("RGB", (size[0], size[1]))
+        pil_image.frombytes(bytes(bitmap.ConvertToImage().GetData()))
 
         # ImageをPNGファイルとして保存する
-        file_path = os.path.join(os.path.dirname(self.model.path), "capture.png")
-        image.save(file_path)
+        file_path = os.path.join(os.path.dirname(self.motion.path), "capture", f"{self.frame_ctrl.GetValue():08d}.png")
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+        # 画像をファイルに保存
+        pil_image.save(file_path)
 
     def on_mouse_down(self, event: wx.Event):
         self.now_pos = self.last_pos = event.GetPosition()

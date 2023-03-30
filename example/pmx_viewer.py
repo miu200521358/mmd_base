@@ -52,8 +52,12 @@ class PmxPanel(wx.Panel):
         self.btn_sizer.Add(self.load_btn, 0, wx.ALL, 5)
 
         # 再生
-        self.play_btn = wx.Button(self, wx.ID_ANY, "Play/Stop", wx.DefaultPosition, wx.Size(100, 50))
+        self.play_btn = wx.Button(self, wx.ID_ANY, "Play", wx.DefaultPosition, wx.Size(100, 50))
         self.btn_sizer.Add(self.play_btn, 0, wx.ALL, 5)
+
+        # 録画
+        self.record_btn = wx.Button(self, wx.ID_ANY, "Record", wx.DefaultPosition, wx.Size(100, 50))
+        self.btn_sizer.Add(self.record_btn, 0, wx.ALL, 5)
 
         # リセット
         self.reset_btn = wx.Button(self, wx.ID_ANY, "Reset", wx.DefaultPosition, wx.Size(100, 50))
@@ -73,6 +77,7 @@ class PmxPanel(wx.Panel):
         self.play_btn.Bind(wx.EVT_BUTTON, self.on_play)
         self.reset_btn.Bind(wx.EVT_BUTTON, self.on_reset)
         self.capture_btn.Bind(wx.EVT_BUTTON, self.on_capture)
+        self.record_btn.Bind(wx.EVT_BUTTON, self.on_record)
 
     def fit(self):
         self.SetSizer(self.sizer)
@@ -87,6 +92,10 @@ class PmxPanel(wx.Panel):
 
     def on_play(self, event: wx.Event):
         self.canvas.on_play(event)
+        self.play_btn.SetLabelText("Stop" if self.canvas.playing else "Play")
+
+    def on_record(self, event: wx.Event):
+        self.canvas.on_play(event, record=True)
         self.play_btn.SetLabelText("Stop" if self.canvas.playing else "Play")
 
     def on_load(self, event: wx.Event):
