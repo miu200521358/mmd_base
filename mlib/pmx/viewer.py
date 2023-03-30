@@ -18,10 +18,8 @@ logger = MLogger(__name__)
 
 
 def calc_bone_matrixes(queue: Queue, fno: int, motion: VmdMotion, model: PmxModel):
-    while True:
+    while fno < motion.max_fno:
         fno += 1
-        if fno > motion.max_fno:
-            break
         matrixes = motion.bones.get_mesh_gl_matrixes(fno, model)
         queue.put(matrixes)
     queue.put(None)
@@ -159,11 +157,16 @@ class PmxCanvas(glcanvas.GLCanvas):
 
     def on_play_timer(self, event: wx.Event):
         if self.queue and not self.queue.empty():
-            matrixes = self.queue.get()
+            matrixes: Optional[np.ndarray] = None
+            while not self.queue.empty():
+                matrixes = self.queue.get()
+
             if matrixes is None and self.process:
                 self.on_play(event)
                 return
-            self.bone_matrixes = matrixes
+
+            if matrixes is not None and matrixes.any():
+                self.bone_matrixes = matrixes
 
             if self.recording:
                 self.on_capture(event)
