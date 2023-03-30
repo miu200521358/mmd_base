@@ -528,18 +528,6 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             # IKターゲットボーンツリー
             effector_bone = model.bones[ik_bone.ik.bone_index]
             effector_bone_tree = model.bone_trees[effector_bone.index]
-            # effector_bone_tree = self.create_ik_bone_tree(effector_bone.index, model)
-
-            # # IKの角度をターゲットのIK角度に設定する
-            # ik_bf = self[ik_bone.name][fno]
-
-            # effector_bf = (
-            #     self.data[effector_bone.name].data[fno]
-            #     if effector_bone.name in self.data and fno in self.data[effector_bone.name].data
-            #     else VmdBoneFrame(name=effector_bone.name, index=fno)
-            # )
-            # effector_bf.ik_target_rotation = ik_bf.rotation.copy()
-            # self.append(effector_bf)
 
             # IKリンクボーンツリー
             ik_link_bone_trees: dict[int, BoneTree] = {ik_bone.index: model.bone_trees[ik_bone.index]}
