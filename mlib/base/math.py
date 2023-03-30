@@ -353,11 +353,11 @@ class MVector3D(MVector):
         self.vector[1] = v
 
     @property
-    def z(self):
+    def z(self) -> float:
         return self.vector[2]
 
     @z.setter
-    def z(self, v) -> float:
+    def z(self, v):
         self.vector[2] = v
 
     @property
@@ -672,31 +672,33 @@ class MQuaternion(MVector):
         """
         return acos(min(1, max(-1, self.normalized().dot(v.normalized()))))
 
-    def to_matrix4x4(self):
+    def to_matrix4x4(self) -> "MMatrix4x4":
         mat3x3 = as_rotation_matrix(self.vector)
+        m00, m01, m02, m10, m11, m12, m20, m21, m22 = mat3x3.flatten()
+        return MMatrix4x4(m00, m01, m02, 0.0, m10, m11, m12, 0.0, m20, m21, m22, 0.0, 0.0, 0.0, 0.0, 1.0)
 
-        mat = MMatrix4x4()
-        mat[0, 0] = mat3x3[0, 0]
-        mat[0, 1] = mat3x3[0, 1]
-        mat[0, 2] = mat3x3[0, 2]
-        mat[0, 3] = 0.0
+        # mat = MMatrix4x4()
+        # mat[0, 0] = mat3x3[0, 0]
+        # mat[0, 1] = mat3x3[0, 1]
+        # mat[0, 2] = mat3x3[0, 2]
+        # mat[0, 3] = 0.0
 
-        mat[1, 0] = mat3x3[1, 0]
-        mat[1, 1] = mat3x3[1, 1]
-        mat[1, 2] = mat3x3[1, 2]
-        mat[1, 3] = 0.0
+        # mat[1, 0] = mat3x3[1, 0]
+        # mat[1, 1] = mat3x3[1, 1]
+        # mat[1, 2] = mat3x3[1, 2]
+        # mat[1, 3] = 0.0
 
-        mat[2, 0] = mat3x3[2, 0]
-        mat[2, 1] = mat3x3[2, 1]
-        mat[2, 2] = mat3x3[2, 2]
-        mat[2, 3] = 0.0
+        # mat[2, 0] = mat3x3[2, 0]
+        # mat[2, 1] = mat3x3[2, 1]
+        # mat[2, 2] = mat3x3[2, 2]
+        # mat[2, 3] = 0.0
 
-        mat[3, 0] = 0.0
-        mat[3, 1] = 0.0
-        mat[3, 2] = 0.0
-        mat[3, 3] = 1.0
+        # mat[3, 0] = 0.0
+        # mat[3, 1] = 0.0
+        # mat[3, 2] = 0.0
+        # mat[3, 3] = 1.0
 
-        return mat
+        # return mat
 
     def __mul__(self, other: Union[float, MVector3D, "MQuaternion"]):
         if isinstance(other, MVector3D):
@@ -1286,7 +1288,7 @@ class MMatrix4x4List:
         result_mats.vector = np.tile(np.eye(4, dtype=np.float64), (self.row, self.col, 1, 1))
         result_mats.vector = tile_mats[:, :, 0]
         for c in range(1, self.col):
-            result_mats.vector = result_mats.vector @ tile_mats[:, :, c]
+            result_mats.vector = np.matmul(result_mats.vector, tile_mats[:, :, c])
 
         return result_mats
 
