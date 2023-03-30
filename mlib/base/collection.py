@@ -147,14 +147,14 @@ class BaseIndexNameListModel(Generic[TBaseIndexNameModel], BaseModel):
         TBaseIndexNameModel
             要素
         """
-        if name not in self.names.keys():
+        if name not in self.names:
             raise KeyError(f"Not Found: {name}")
         return self.data[self.__names[name]]
 
     def append(self, v: TBaseIndexNameModel) -> None:
         if v.index < 0:
             v.index = len(self.data)
-        if v.name not in self.names.keys():
+        if v.name not in self.names:
             # 名前は先勝ちで保持
             self.__names[v.name] = v.index
         self.data.append(v)
@@ -247,7 +247,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         return self.data[self.__indices[self.__iter_index]]
 
     def __contains__(self, v) -> bool:
-        return v in self.data.keys()
+        return v in self.data
 
 
 TBaseIndexDictModel = TypeVar("TBaseIndexDictModel", bound=BaseIndexDictModel)
@@ -359,7 +359,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel], BaseModel):
         return self.data[self.__indices[self.__iter_index]]
 
     def __contains__(self, v) -> bool:
-        return v in self.data.keys()
+        return v in self.data
 
 
 TBaseIndexNameDictInnerModel = TypeVar("TBaseIndexNameDictInnerModel", bound=BaseIndexNameDictInnerModel)
@@ -440,7 +440,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel, TBaseIndexNameDictInne
         return self.data[self.__names[self.__iter_index]]
 
     def __contains__(self, v) -> bool:
-        return v in self.data.keys()
+        return v in self.data
 
 
 TBaseIndexNameDictModel = TypeVar("TBaseIndexNameDictModel", bound=BaseIndexNameDictModel)

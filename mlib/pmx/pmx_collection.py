@@ -214,7 +214,7 @@ class BoneTrees(BaseModel):
         return self.data[self.__indices[self.__iter_index]]
 
     def __contains__(self, v) -> bool:
-        return v in self.__names or v in self.data.keys()
+        return v in self.__names or v in self.data
 
 
 class Bones(BaseIndexNameListModel[Bone]):
