@@ -266,7 +266,7 @@ class MVector(BaseModel):
         return self.__class__(*operator.invert(self.vector))
 
     @property
-    def x(self):
+    def x(self) -> float:
         return self.vector[0]
 
     @x.setter
@@ -299,7 +299,7 @@ class MVector2D(MVector):
         return self.__class__(self.x, self.y)
 
     @property
-    def y(self):
+    def y(self) -> float:
         return self.vector[1]
 
     @y.setter
@@ -345,7 +345,7 @@ class MVector3D(MVector):
         )
 
     @property
-    def y(self):
+    def y(self) -> float:
         return self.vector[1]
 
     @y.setter
@@ -357,7 +357,7 @@ class MVector3D(MVector):
         return self.vector[2]
 
     @z.setter
-    def z(self, v):
+    def z(self, v) -> float:
         self.vector[2] = v
 
     @property
@@ -386,7 +386,7 @@ class MVector4D(MVector):
         return self.__class__(self.x, self.y, self.z, self.w)
 
     @property
-    def y(self):
+    def y(self) -> float:
         return self.vector[1]
 
     @y.setter
@@ -394,7 +394,7 @@ class MVector4D(MVector):
         self.vector[1] = v
 
     @property
-    def z(self):
+    def z(self) -> float:
         return self.vector[2]
 
     @z.setter
@@ -402,7 +402,7 @@ class MVector4D(MVector):
         self.vector[2] = v
 
     @property
-    def w(self):
+    def w(self) -> float:
         return self.vector[3]
 
     @w.setter

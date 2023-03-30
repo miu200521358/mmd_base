@@ -182,42 +182,19 @@ def newton(
             func_f_value = func_f(x1, x2, x, t0)
             func_f_cache[t0] = func_f_value
 
+        # 中心差分による微分値
         func_df = (func_f(x1, x2, x, t0 + eps) - func_f(x1, x2, x, t0 - eps)) / derivative
         if abs(func_df) <= eps:
             break
 
+        # 次の解を計算
         t1 = t0 - func_f_value / func_df
+
+        # 「誤差範囲が一定値以下」ならば終了
         if abs(t1 - t0) <= error:
             break
 
+        # 解を更新
         t0 = t1
 
     return t0
-
-
-# def newton(
-#     x1: float,
-#     x2: float,
-#     x: float,
-#     t0: float = 0.5,
-#     eps: float = 1e-10,
-#     error: float = 1e-10,
-# ):
-#     derivative = 2 * eps
-#     for _ in range(30):
-#         # 中心差分による微分値
-#         func_df = (func_f(x1, x2, x, t0 + eps) - func_f(x1, x2, x, t0 - eps)) / derivative
-#         if abs(func_df) <= eps:  # 傾きが0に近ければ止める
-#             break
-
-#         # 次の解を計算
-#         t1 = t0 - func_f(x1, x2, x, t0) / func_df
-
-#         # 「誤差範囲が一定値以下」ならば終了
-#         if abs(t1 - t0) <= error:
-#             break
-
-#         # 解を更新
-#         t0 = t1
-
-#     return t0
