@@ -229,7 +229,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         TBaseIndexModel
             要素
         """
-        if index not in self.data:
+        if index not in self:
             raise KeyError(f"Not Found: {index}")
         return self.data[index]
 
@@ -332,7 +332,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel], BaseModel):
         -------
         TBaseIndexNameModel
         """
-        if index not in self.data:
+        if index not in self:
             raise KeyError(f"Not Found index: {index}")
         return self.data[index]
 
@@ -401,7 +401,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel, TBaseIndexNameDictInne
         raise NotImplementedError()
 
     def append(self, value: TBaseIndexNameModel):
-        if value.name not in self.data:
+        if value.name not in self:
             self.data[value.name] = self.create_inner(value.name)
         self.data[value.name].append(value)
         self.__names = list(self.data.keys())
@@ -421,7 +421,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel, TBaseIndexNameDictInne
         -------
         TBaseIndexNameDictInnerModel
         """
-        if name not in self.data:
+        if name not in self:
             raise KeyError(f"Not Found Name: {name}")
 
         return self.data[name]

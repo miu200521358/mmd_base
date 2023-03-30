@@ -414,8 +414,8 @@ class MVector4D(MVector):
         self.vector[3] = v
 
     @property
-    def xyz(self) -> "MVector4D":
-        return MVector4D(self.vector[:3])  # type: ignore
+    def xyz(self) -> "MVector3D":
+        return MVector3D(*self.vector[:3])  # type: ignore
 
 
 class MVectorDict:

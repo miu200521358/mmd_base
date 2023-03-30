@@ -29,7 +29,7 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
             # まったくデータがない場合、生成
             return VmdBoneFrame(name=self.name, index=index)
 
-        if index in self.data:
+        if index in self:
             return self.data[index]
 
         # キーフレがない場合、生成したのを返す（保持はしない）
@@ -49,8 +49,7 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         return super().append(value)
 
     def calc(self, prev_index: int, middle_index: int, next_index: int, index: int) -> VmdBoneFrame:
-        # check if index is in self.data
-        if index in self.data:
+        if index in self:
             return self.data[index]
 
         bf = VmdBoneFrame(name=self.name, index=index)
@@ -65,8 +64,8 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
             bf.rotation = self.data[next_index].rotation.copy()
             return bf
 
-        prev_bf = self.data[prev_index] if prev_index in self.data else VmdBoneFrame(name=self.name, index=prev_index)
-        next_bf = self.data[next_index] if next_index in self.data else VmdBoneFrame(name=self.name, index=next_index)
+        prev_bf = self.data[prev_index] if prev_index in self else VmdBoneFrame(name=self.name, index=prev_index)
+        next_bf = self.data[next_index] if next_index in self else VmdBoneFrame(name=self.name, index=next_index)
 
         prev_ik_indices = [i for i in self.__ik_indices if i <= middle_index]
         next_ik_indices = [i for i in self.__ik_indices if i >= middle_index]
@@ -311,7 +310,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     self.get_rotation(model.bones[ik_last_bone_name], next_fno, model, append_ik=True)
 
     def get(self, name: str) -> VmdBoneNameFrames:
-        if name not in self.data:
+        if name not in self:
             self.data[name] = self.create_inner(name)
 
         return self.data[name]
@@ -379,7 +378,6 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
 
         return pos
 
-    @profile
     def get_rotation(self, bone: Bone, fno: int, model: PmxModel, append_ik: bool = False) -> MQuaternion:
         """
         該当キーフレにおけるボーンの相対位置
@@ -705,7 +703,7 @@ class VmdMorphNameFrames(BaseIndexNameDictInnerModel[VmdMorphFrame]):
             # まったくデータがない場合、生成
             return VmdMorphFrame(name=self.name, index=index)
 
-        if index in self.data:
+        if index in self:
             return self.data[index]
 
         # キーフレがない場合、生成したのを返す（保持はしない）
@@ -729,7 +727,7 @@ class VmdMorphNameFrames(BaseIndexNameDictInnerModel[VmdMorphFrame]):
         next_index: int,
         index: int,
     ) -> VmdMorphFrame:
-        if index in self.data:
+        if index in self:
             return self.data[index]
 
         mf = VmdMorphFrame(name=self.name, index=index)
