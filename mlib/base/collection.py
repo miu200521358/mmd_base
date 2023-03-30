@@ -1,7 +1,7 @@
 import hashlib
 from typing import Generic, Optional, TypeVar
 
-import bisect
+from bisect import bisect_left
 
 from mlib.base.base import BaseModel, Encoding
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel
@@ -256,7 +256,7 @@ TBaseIndexDictModel = TypeVar("TBaseIndexDictModel", bound=BaseIndexDictModel)
 class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel], BaseModel):
     """BaseIndexNameModelの内部辞書基底クラス"""
 
-    __slots__ = ["data", "__indices", "__iter_index", "name"]
+    __slots__ = ["data", "__indices", "__iter_index", "name", "cache"]
 
     def __init__(self, name: str, data: Optional[dict[int, TBaseIndexNameModel]] = None) -> None:
         """
@@ -271,6 +271,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel], BaseModel):
         self.data: dict[int, TBaseIndexNameModel] = data or {}
         self.__indices: list[int] = []
         self.name = data[0].name if data else name if name else ""
+        self.cache: dict[int, TBaseIndexNameModel] = {}
 
     def range_indexes(self, index: int, indices: list[int] = []) -> tuple[int, int, int]:
         """
@@ -296,7 +297,7 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel], BaseModel):
 
         # index がない場合、前後のINDEXを取得する
 
-        idx = bisect.bisect_left(indices, index)
+        idx = bisect_left(indices, index)
         if idx == 0:
             prev_idx = 0
         else:

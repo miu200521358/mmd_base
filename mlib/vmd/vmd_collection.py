@@ -1,6 +1,7 @@
 import logging
 from math import acos, degrees, pi
 from typing import Optional
+from bisect import bisect_left
 
 import numpy as np
 
@@ -46,13 +47,18 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
     def append(self, value: VmdBoneFrame):
         if value.ik_rotation is not None and value.index not in self.__ik_indices:
             self.__ik_indices.append(value.index)
+            self.__ik_indices.sort()
         return super().append(value)
 
     def calc(self, prev_index: int, middle_index: int, next_index: int, index: int) -> VmdBoneFrame:
         if index in self:
             return self.data[index]
 
-        bf = VmdBoneFrame(name=self.name, index=index)
+        if index in self.cache:
+            bf = self.cache[index]
+        else:
+            bf = VmdBoneFrame(name=self.name, index=index)
+            self.cache[index] = bf
 
         if prev_index == next_index:
             if next_index == middle_index:
@@ -67,10 +73,15 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         prev_bf = self.data[prev_index] if prev_index in self else VmdBoneFrame(name=self.name, index=prev_index)
         next_bf = self.data[next_index] if next_index in self else VmdBoneFrame(name=self.name, index=next_index)
 
-        prev_ik_indices = [i for i in self.__ik_indices if i <= middle_index]
-        next_ik_indices = [i for i in self.__ik_indices if i >= middle_index]
-        prev_ik_rotation = (self.data[max(prev_ik_indices)] if prev_ik_indices else prev_bf).ik_rotation or MQuaternion()
-        next_ik_rotation = (self.data[min(next_ik_indices)] if next_ik_indices else next_bf).ik_rotation or prev_ik_rotation
+        slice_idx = bisect_left(self.__ik_indices, middle_index)
+        prev_ik_indices = self.__ik_indices[:slice_idx]
+        next_ik_indices = self.__ik_indices[slice_idx:]
+
+        prev_index = prev_ik_indices[-1] if prev_ik_indices else prev_index
+        prev_ik_rotation = (self.data[prev_index]).ik_rotation or MQuaternion()
+
+        next_index = next_ik_indices[0] if next_ik_indices else next_index
+        next_ik_rotation = (self.data[next_index]).ik_rotation or prev_ik_rotation
 
         # 補間結果Yは、FKキーフレ内で計算する
         _, ry, _ = evaluate(next_bf.interpolations.rotation, prev_index, index, next_index)
@@ -414,9 +425,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         # 付与親を加味した回転
         effect_qq = self.get_effect_rotation(bone, fno, ik_qq, model)
 
-        norm_qq = effect_qq.normalized()
-
-        return norm_qq
+        return effect_qq
 
     def get_effect_rotation(
         self,
@@ -454,11 +463,11 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                 effect_qq = self.get_rotation(effect_bone, fno, model, append_ik=True)
                 if bone.effect_factor > 0:
                     # 正の付与親
-                    qq = qq * effect_qq.multiply_factor(bone.effect_factor)
+                    qq *= effect_qq.multiply_factor(bone.effect_factor)
                 else:
                     # 負の付与親の場合、逆回転
-                    qq = qq * (effect_qq.multiply_factor(abs(bone.effect_factor))).inverse()
-        return qq
+                    qq *= (effect_qq.multiply_factor(abs(bone.effect_factor))).inverse()
+        return qq.normalized()
 
     def get_ik_rotation(
         self,

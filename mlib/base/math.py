@@ -111,20 +111,16 @@ class MVector(BaseModel):
         """
         正規化した値を返す
         """
-        self.effective()
-        l2 = norm(self.vector, ord=2, axis=-1, keepdims=True)
-        l2[l2 == 0] = 1
-        normv = self.vector / l2
+        vector = self.vector
+        l2 = np.sqrt(np.sum(vector**2, axis=-1, keepdims=True))
+        normv = np.divide(vector, l2, out=np.zeros_like(vector), where=l2 != 0)
         return self.__class__(*normv)
 
     def normalize(self):
         """
         自分自身の正規化
         """
-        self.effective()
-        l2 = norm(self.vector, ord=2, axis=-1, keepdims=True)
-        l2[l2 == 0] = 1
-        self.vector /= l2
+        self.vector = self.normalized().vector
 
     def distance(self, other) -> float:
         """
