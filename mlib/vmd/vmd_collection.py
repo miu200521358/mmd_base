@@ -257,11 +257,12 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             for bone in model.bone_trees[bone_name]:
                 if bone.index not in bone_indexes:
                     # モーションによる移動量
-                    poses[0, bone.index] = self.get_position(bone, fno, model).vector
+                    poses[0, bone.index] = self.get_position(bone, fno, model).gl.vector
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
                     qqs[0, bone.index] = self.get_rotation(bone, fno, model, append_ik=True).gl.to_matrix4x4().vector
                     # 計算済みボーンとして登録
                     bone_indexes.append(bone.index)
+
         # 座標変換行列
         matrixes = MMatrix4x4List(row, col)
         matrixes.translate(poses.tolist())
