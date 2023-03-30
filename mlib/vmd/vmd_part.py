@@ -1,7 +1,7 @@
 from typing import Optional
 
 from mlib.base.base import BaseModel
-from mlib.base.bezier import Interpolation
+from mlib.base.bezier import Interpolation, evaluate
 from mlib.base.math import MQuaternion, MVector3D
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel
 
@@ -157,6 +157,15 @@ class BoneInterpolations(BaseModel):
             0,
             0,
         ]
+
+    def evaluate(self, prev_index: int, index: int, next_index: int) -> tuple[float, float, float, float]:
+        # 補間結果Yは、FKキーフレ内で計算する
+        _, ry, _ = evaluate(self.rotation, prev_index, index, next_index)
+        _, xy, _ = evaluate(self.translation_x, prev_index, index, next_index)
+        _, yy, _ = evaluate(self.translation_y, prev_index, index, next_index)
+        _, zy, _ = evaluate(self.translation_z, prev_index, index, next_index)
+
+        return ry, xy, yy, zy
 
     def merge(self) -> list[int]:
         return [

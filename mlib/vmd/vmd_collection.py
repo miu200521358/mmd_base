@@ -1,11 +1,10 @@
 import logging
+from bisect import bisect_left
 from math import acos, degrees, pi
 from typing import Optional
-from bisect import bisect_left
 
 import numpy as np
 
-from mlib.base.bezier import evaluate
 from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictInnerModel, BaseIndexNameDictModel
 from mlib.base.logger import MLogger
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
@@ -84,7 +83,7 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         next_ik_rotation = (self.data[next_index]).ik_rotation or prev_ik_rotation
 
         # 補間結果Yは、FKキーフレ内で計算する
-        _, ry, _ = evaluate(next_bf.interpolations.rotation, prev_index, index, next_index)
+        ry, xy, yy, zy = next_bf.interpolations.evaluate(prev_index, index, next_index)
 
         # IK用回転
         bf.ik_rotation = MQuaternion.slerp(prev_ik_rotation, next_ik_rotation, ry)
@@ -92,13 +91,9 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         # FK用回転
         bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
 
-        _, xy, _ = evaluate(next_bf.interpolations.translation_x, prev_index, index, next_index)
+        # 移動
         bf.position.x = prev_bf.position.x + (next_bf.position.x - prev_bf.position.x) * xy
-
-        _, yy, _ = evaluate(next_bf.interpolations.translation_y, prev_index, index, next_index)
         bf.position.y = prev_bf.position.y + (next_bf.position.y - prev_bf.position.y) * yy
-
-        _, zy, _ = evaluate(next_bf.interpolations.translation_z, prev_index, index, next_index)
         bf.position.z = prev_bf.position.z + (next_bf.position.z - prev_bf.position.z) * zy
 
         return bf

@@ -1,7 +1,6 @@
 import hashlib
-from typing import Generic, Optional, TypeVar
-
 from bisect import bisect_left
+from typing import Generic, Optional, TypeVar
 
 from mlib.base.base import BaseModel, Encoding
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel

@@ -1,7 +1,6 @@
 from enum import Enum
+from pickle import dumps, loads
 from typing import TypeVar
-
-from pickle import loads, dumps
 
 from mlib.base.logger import parse2str
 
