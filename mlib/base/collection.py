@@ -1,7 +1,7 @@
 import hashlib
 from typing import Generic, Optional, TypeVar
 
-import numpy as np
+import bisect
 
 from mlib.base.base import BaseModel, Encoding
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel
@@ -272,7 +272,6 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel], BaseModel):
         self.__indices = self.indices
         self.name = data[0].name if data else name if name else ""
 
-    # @profile
     def range_indexes(self, index: int, indices: list[int] = []) -> tuple[int, int, int]:
         """
         指定されたINDEXの前後を返す
@@ -297,27 +296,69 @@ class BaseIndexNameDictInnerModel(Generic[TBaseIndexNameModel], BaseModel):
 
         # index がない場合、前後のINDEXを取得する
 
-        # index より大きい中の最小 = next
-        sorted_indices = np.fromiter(indices, dtype=np.int32, count=len(indices))
-        next_indices = np.where(sorted_indices > index)[0].tolist()
-        if next_indices:
-            middle_idx = min(next_indices)
-            next_idx = min([len(sorted_indices) - 1, middle_idx])
+        idx = bisect.bisect_left(indices, index)
+        if idx == 0:
+            prev_idx = 0
         else:
-            middle_idx = len(sorted_indices) - 1
-            next_idx = len(sorted_indices) - 1
-        # next のひとつ前がprevとなる
-        prev_idx = max(0, middle_idx - 1)
+            prev_idx = idx - 1
+        if idx == len(indices):
+            next_idx = len(indices) - 1
+        else:
+            next_idx = idx
 
         return (
-            int(sorted_indices[prev_idx]),
+            indices[prev_idx],
             index,
-            int(sorted_indices[next_idx]),
+            indices[next_idx],
         )
+
+    # def range_indexes(self, index: int, indices: list[int] = []) -> tuple[int, int, int]:
+    #     """
+    #     指定されたINDEXの前後を返す
+
+    #     Parameters
+    #     ----------
+    #     index : int
+    #         指定INDEX
+
+    #     Returns
+    #     -------
+    #     tuple[int, int]
+    #         INDEXがデータ内にある場合: index, index, index
+    #         INDEXがデータ内にない場合: 前のindex, 対象INDEXに相当する場所にあるINDEX, 次のindex
+    #             prev_idx == idx: 指定されたINDEXが一番先頭
+    #             idx == next_idx: 指定されたINDEXが一番最後
+    #     """
+    #     if not indices:
+    #         indices = self.indices
+    #     if index in indices:
+    #         return index, index, index
+
+    #     # index がない場合、前後のINDEXを取得する
+
+    #     # index より大きい中の最小 = next
+    #     sorted_indices = np.fromiter(indices, dtype=np.int32, count=len(indices))
+    #     next_indices = np.where(sorted_indices > index)[0].tolist()
+    #     if next_indices:
+    #         middle_idx = min(next_indices)
+    #         next_idx = min([len(sorted_indices) - 1, middle_idx])
+    #     else:
+    #         middle_idx = len(sorted_indices) - 1
+    #         next_idx = len(sorted_indices) - 1
+    #     # next のひとつ前がprevとなる
+    #     prev_idx = max(0, middle_idx - 1)
+
+    #     return (
+    #         int(sorted_indices[prev_idx]),
+    #         index,
+    #         int(sorted_indices[next_idx]),
+    #     )
 
     @property
     def indices(self) -> list[int]:
-        return sorted(list(self.data.keys()))
+        sorted_keys = list(self.data.keys())
+        sorted_keys.sort()
+        return sorted_keys
 
     def __getitem__(self, index: int) -> TBaseIndexNameModel:
         return self.get(index)

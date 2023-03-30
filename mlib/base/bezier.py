@@ -162,7 +162,8 @@ def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> tu
 
 # 解を求める関数
 def func_f(x1: float, x2: float, x: float, t: float):
-    return (3 * ((1 - t) ** 2) * t * x1) + (3 * (1 - t) * (t**2) * x2) + (t**3) - x
+    t1 = 1 - t
+    return 3 * (t1**2) * t * x1 + 3 * t1 * (t**2) * x2 + (t**3) - x
 
 
 # Newton法（方程式の関数項、探索の開始点、微小量、誤差範囲、最大反復回数）
@@ -175,20 +176,50 @@ def newton(
     error: float = 1e-10,
 ):
     derivative = 2 * eps
-    for _ in range(30):
-        # 中心差分による微分値
+    func_f_cache: dict[float, float] = {}
+    for _ in range(10):
+        if t0 in func_f_cache:
+            func_f_value = func_f_cache[t0]
+        else:
+            func_f_value = func_f(x1, x2, x, t0)
+            func_f_cache[t0] = func_f_value
+
         func_df = (func_f(x1, x2, x, t0 + eps) - func_f(x1, x2, x, t0 - eps)) / derivative
-        if abs(func_df) <= eps:  # 傾きが0に近ければ止める
+        if abs(func_df) <= eps:
             break
 
-        # 次の解を計算
-        t1 = t0 - func_f(x1, x2, x, t0) / func_df
-
-        # 「誤差範囲が一定値以下」ならば終了
+        t1 = t0 - func_f_value / func_df
         if abs(t1 - t0) <= error:
             break
 
-        # 解を更新
         t0 = t1
 
     return t0
+
+
+# def newton(
+#     x1: float,
+#     x2: float,
+#     x: float,
+#     t0: float = 0.5,
+#     eps: float = 1e-10,
+#     error: float = 1e-10,
+# ):
+#     derivative = 2 * eps
+#     for _ in range(30):
+#         # 中心差分による微分値
+#         func_df = (func_f(x1, x2, x, t0 + eps) - func_f(x1, x2, x, t0 - eps)) / derivative
+#         if abs(func_df) <= eps:  # 傾きが0に近ければ止める
+#             break
+
+#         # 次の解を計算
+#         t1 = t0 - func_f(x1, x2, x, t0) / func_df
+
+#         # 「誤差範囲が一定値以下」ならば終了
+#         if abs(t1 - t0) <= error:
+#             break
+
+#         # 解を更新
+#         t0 = t1
+
+#     return t0

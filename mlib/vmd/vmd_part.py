@@ -86,17 +86,12 @@ class BoneInterpolations(BaseModel):
 
     def __init__(
         self,
-        translation_x: Optional[Interpolation] = None,
-        translation_y: Optional[Interpolation] = None,
-        translation_z: Optional[Interpolation] = None,
-        rotation: Optional[Interpolation] = None,
-        vals: Optional[list[int]] = None,
     ):
-        self.translation_x = translation_x or Interpolation()
-        self.translation_y = translation_y or Interpolation()
-        self.translation_z = translation_z or Interpolation()
-        self.rotation = rotation or Interpolation()
-        self.vals = vals or [
+        self.translation_x = Interpolation()
+        self.translation_y = Interpolation()
+        self.translation_z = Interpolation()
+        self.rotation = Interpolation()
+        self.vals = [
             20,
             20,
             0,
@@ -271,16 +266,13 @@ class VmdBoneFrame(BaseVmdNameFrame):
         self,
         name: str = "",
         index: int = -1,
-        position: Optional[MVector3D] = None,
-        rotation: Optional[MQuaternion] = None,
-        interpolations: Optional[BoneInterpolations] = None,
         register: bool = False,
         read: bool = False,
     ):
         super().__init__(index, name, register, read)
-        self.position = position or MVector3D()
-        self.rotation = rotation or MQuaternion()
-        self.interpolations = interpolations or BoneInterpolations()
+        self.position = MVector3D()
+        self.rotation = MQuaternion()
+        self.interpolations = BoneInterpolations()
         self.ik_rotation: Optional[MQuaternion] = None
         self.correct_rotation: Optional[MQuaternion] = None
 

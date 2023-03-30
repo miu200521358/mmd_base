@@ -576,7 +576,7 @@ class MQuaternion(MVector):
         """
         return MQuaternion(*self.vector.inverse().components)
 
-    def normalized(self):
+    def normalized(self) -> "MQuaternion":
         """
         正規化した値を返す
         """

@@ -83,7 +83,7 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
                 # prevにない場合、自分より前で存在するキーをコピー
                 prev_ik_indices = [i for i in self.__ik_indices if i < middle_index]
                 if prev_ik_indices:
-                    prev_ik_index = sorted(prev_ik_indices)[-1]
+                    prev_ik_index = max(prev_ik_indices)
                     bf.ik_rotation = (self[prev_ik_index].ik_rotation or MQuaternion()).copy()
                 else:
                     bf.ik_rotation = MQuaternion()
@@ -98,12 +98,12 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
 
         prev_ik_rotation = MQuaternion()
         if prev_ik_indices:
-            prev_ik_index = sorted(prev_ik_indices)[-1]
+            prev_ik_index = max(prev_ik_indices)
             prev_ik_rotation = (self[prev_ik_index].ik_rotation or MQuaternion()).copy()
 
         next_ik_rotation = MQuaternion()
         if next_ik_indices:
-            next_ik_index = sorted(next_ik_indices)[0]
+            next_ik_index = min(next_ik_indices)
             next_ik_rotation = (self[next_ik_index].ik_rotation or prev_ik_rotation).copy()
 
         # 補間結果Yは、FKキーフレ内で計算する
@@ -150,10 +150,12 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
 
     def __init__(self) -> None:
         super().__init__()
+        self.cache_relative_poses: dict[tuple[int, str, str], MVector3D] = {}
         self.cache_poses: dict[tuple[int, str, str], MVector3D] = {}
         self.cache_qqs: dict[tuple[int, str, str], MQuaternion] = {}
 
     def clear(self) -> None:
+        self.cache_relative_poses = {}
         self.cache_poses = {}
         self.cache_qqs = {}
 
@@ -201,10 +203,28 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             for n, fno in enumerate(fnos):
                 for m, bone in enumerate(bone_tree):
                     # ボーンの親から見た相対位置
-                    poses[n, m] = model.bones.get_parent_relative_position(bone.index).vector
-                    poses[n, m] += self.get_position(bone, fno, model).vector
+                    if (fno, model.hexdigest, bone.name) in self.cache_relative_poses:
+                        poses[n, m] = self.cache_relative_poses[(fno, model.hexdigest, bone.name)].vector
+                    else:
+                        relative_pos = model.bones.get_parent_relative_position(bone.index)
+                        self.cache_relative_poses[(fno, model.hexdigest, bone.name)] = relative_pos
+                        poses[n, m] = relative_pos.vector
+
+                    if (fno, model.hexdigest, bone.name) in self.cache_poses:
+                        poses[n, m] += self.cache_poses[(fno, model.hexdigest, bone.name)].vector
+                    else:
+                        pos = self.get_position(bone, fno, model)
+                        self.cache_poses[(fno, model.hexdigest, bone.name)] = pos
+                        poses[n, m] += pos.vector
+
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
-                    qqs[n, m] = self.get_rotation(bone, fno, model, append_ik=append_ik).to_matrix4x4().vector
+                    if (fno, model.hexdigest, bone.name) in self.cache_qqs:
+                        qqs[n, m] = self.cache_qqs[(fno, model.hexdigest, bone.name)].to_matrix4x4().vector
+                    else:
+                        qq = self.get_rotation(bone, fno, model, append_ik=append_ik)
+                        self.cache_qqs[(fno, model.hexdigest, bone.name)] = qq
+                        qqs[n, m] = qq.to_matrix4x4().vector
+
                 # 末端ボーン表示先の位置を計算
                 poses[n, -1] = (model.bones.get_tail_position(bone.index) - bone.position).vector
                 qqs[n, -1] = np.eye(4)
@@ -413,9 +433,6 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             該当キーフレにおけるボーンの回転量
         """
 
-        # if append_ik and (fno, model.hexdigest, bone.name) in self.cache_qqs:
-        #     return self.cache_qqs[(fno, model.hexdigest, bone.name)]
-
         # FK(捩り) > IK(捩り) > 付与親(捩り)
         bf = self[bone.name][fno]
         qq = bf.rotation.copy()
@@ -432,9 +449,6 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         effect_qq = self.get_effect_rotation(bone, fno, ik_qq, model)
 
         norm_qq = effect_qq.normalized()
-
-        # if append_ik:
-        #     self.cache_qqs[(fno, model.hexdigest, bone.name)] = norm_qq
 
         return norm_qq
 
