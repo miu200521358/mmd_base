@@ -2,6 +2,8 @@ import os
 import glob
 import numpy as np
 
+# ffmpeg  -f image2 -r 30 -i %08d.png sizing.mp4
+
 folder_path = "D:/MMD/MikuMikuDance_v926x64/UserFile/Motion/ダンス_1人/好き雪本気マジック_モーション hino/capture/"  # 対象のフォルダのパス
 png_files = sorted(glob.glob(os.path.join(folder_path, "*.png")))  # フォルダ内のPNGファイルのリストを取得し、ソートする
 
