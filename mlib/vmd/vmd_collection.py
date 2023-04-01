@@ -1,3 +1,4 @@
+from functools import lru_cache
 import logging
 from bisect import bisect_left
 from math import acos, degrees, pi
@@ -686,6 +687,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         return qq
 
 
+@lru_cache(maxsize=None)
+def calc_morph_ratio(prev: float, next: float, ratio: float) -> float:
+    return prev + (next - prev) * ratio
+
+
 class VmdMorphNameFrames(BaseIndexNameDictModel[VmdMorphFrame]):
     """
     モーフ名別キーフレ辞書
@@ -709,8 +715,8 @@ class VmdMorphNameFrames(BaseIndexNameDictModel[VmdMorphFrame]):
         )
 
     def calc(self, prev_index: int, index: int, next_index: int) -> VmdMorphFrame:
-        if index in self:
-            return self[index]
+        if index in self.data:
+            return self.data[index]
 
         if index in self.cache:
             mf = self.cache[index]
@@ -724,15 +730,15 @@ class VmdMorphNameFrames(BaseIndexNameDictModel[VmdMorphFrame]):
                 return mf
 
             # FKのprevと等しい場合、指定INDEX以前がないので、その次のをコピーして返す
-            mf.ratio = self[next_index].ratio
+            mf.ratio = self.data[next_index].ratio
             return mf
 
-        prev_mf = self[prev_index] if prev_index in self else VmdMorphFrame(name=self.name, index=prev_index)
-        next_mf = self[next_index] if next_index in self else VmdMorphFrame(name=self.name, index=next_index)
+        prev_mf = self.data[prev_index] if prev_index in self else VmdMorphFrame(name=self.name, index=prev_index)
+        next_mf = self.data[next_index] if next_index in self else VmdMorphFrame(name=self.name, index=next_index)
 
         # モーフは補間なし
         ry = (next_index - index) / (next_index - prev_index)
-        mf.ratio = prev_mf.ratio + (next_mf.ratio - prev_mf.ratio) * ry
+        mf.ratio = calc_morph_ratio(prev_mf.ratio, next_mf.ratio, ry)
 
         return mf
 
