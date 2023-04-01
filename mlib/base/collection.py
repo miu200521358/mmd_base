@@ -55,7 +55,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
 
     def __next__(self) -> TBaseIndexModel:
         self._iter_index += 1
-        if self._iter_index >= len(self.data):
+        if self._iter_index >= len(self.indexes):
             raise StopIteration
         return self.data[self.indexes[self._iter_index]]
 
@@ -174,12 +174,12 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
 
     def __next__(self) -> TBaseIndexNameModel:
         self._iter_index += 1
-        if self._iter_index >= len(self.data):
+        if self._iter_index >= len(self.indexes):
             raise StopIteration
         return self.data[self.indexes[self._iter_index]]
 
     def __contains__(self, key: int | str) -> bool:
-        return key in self.data or key in self._names
+        return (isinstance(key, int) and key in self.data) or key in self._names
 
     def __bool__(self) -> bool:
         return len(self.data) > 0

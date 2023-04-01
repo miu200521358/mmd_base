@@ -43,11 +43,11 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             next_index,
         )
 
-    def append(self, value: VmdBoneFrame):
+    def append(self, value: VmdBoneFrame, is_sort: bool = True):
         if value.ik_rotation is not None and value.index not in self.__ik_indexes:
             self.__ik_indexes.append(value.index)
             self.__ik_indexes.sort()
-        super().append(value)
+        super().append(value, is_sort)
 
     def calc(self, prev_index: int, index: int, next_index: int) -> VmdBoneFrame:
         if index in self.data:
@@ -360,16 +360,18 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         MVector3D
             計算結果
         """
-        if bone.is_external_translation and bone.effect_index in model.bones:
-            if bone.effect_factor == 0:
-                # 付与率が0の場合、常に0になる
-                return MVector3D()
-            else:
-                # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
-                effect_bone = model.bones[bone.effect_index]
-                # effect_pos = model.bones.get_parent_relative_position(bone.effect_index)
-                effect_pos = self.get_position(effect_bone, fno, model)
-                pos *= effect_pos
+        if not (bone.is_external_translation and bone.effect_index in model.bones):
+            return pos
+
+        if bone.effect_factor == 0:
+            # 付与率が0の場合、常に0になる
+            return MVector3D()
+
+        # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
+        effect_bone = model.bones[bone.effect_index]
+        # effect_pos = model.bones.get_parent_relative_position(bone.effect_index)
+        effect_pos = self.get_position(effect_bone, fno, model)
+        pos *= effect_pos
 
         return pos
 
@@ -437,20 +439,22 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         MQuaternion
             計算結果
         """
-        if bone.is_external_rotation and bone.effect_index in model.bones:
-            if bone.effect_factor == 0:
-                # 付与率が0の場合、常に0になる
-                return MQuaternion()
-            else:
-                # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
-                effect_bone = model.bones[bone.effect_index]
-                effect_qq = self.get_rotation(effect_bone, fno, model, append_ik=True)
-                if bone.effect_factor > 0:
-                    # 正の付与親
-                    qq *= effect_qq.multiply_factor(bone.effect_factor)
-                else:
-                    # 負の付与親の場合、逆回転
-                    qq *= (effect_qq.multiply_factor(abs(bone.effect_factor))).inverse()
+        if not (bone.is_external_rotation and bone.effect_index in model.bones):
+            return qq
+
+        if bone.effect_factor == 0:
+            # 付与率が0の場合、常に0になる
+            return MQuaternion()
+
+        # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
+        effect_bone = model.bones[bone.effect_index]
+        effect_qq = self.get_rotation(effect_bone, fno, model, append_ik=True)
+        if bone.effect_factor > 0:
+            # 正の付与親
+            qq *= effect_qq.multiply_factor(bone.effect_factor)
+        else:
+            # 負の付与親の場合、逆回転
+            qq *= (effect_qq.multiply_factor(abs(bone.effect_factor))).inverse()
         return qq.normalized()
 
     def get_ik_rotation(
