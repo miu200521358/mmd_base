@@ -183,6 +183,9 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
 
             motion.bones[bf.name].append(bf)
 
+        for bfs in motion.bones:
+            bfs.sort_indexes()
+
     def read_morphs(self, motion: VmdMotion):
         for _ in range(self.read_uint()):
             mf = VmdMorphFrame(register=True, read=True)
@@ -197,6 +200,9 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
             )
 
             motion.morphs[mf.name].append(mf)
+
+        for mfs in motion.morphs:
+            mfs.sort_indexes()
 
     def read_cameras(self, motion: VmdMotion):
         for _ in range(self.read_uint()):
@@ -244,6 +250,8 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
             cf.rotation.degrees = degrees
             motion.cameras.append(cf)
 
+        motion.cameras.sort_indexes()
+
     def read_lights(self, motion: VmdMotion):
         for _ in range(self.read_uint()):
             lf = VmdLightFrame(register=True, read=True)
@@ -263,6 +271,8 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
 
             motion.lights.append(lf)
 
+        motion.lights.sort_indexes()
+
     def read_shadows(self, motion: VmdMotion):
         for _ in range(self.read_uint()):
             sf = VmdShadowFrame(register=True, read=True)
@@ -278,6 +288,8 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
 
             motion.shadows.append(sf)
 
+        motion.shadows.sort_indexes()
+
     def read_show_iks(self, motion: VmdMotion):
         for _ in range(self.read_uint()):
             kf = VmdShowIkFrame(register=True, read=True)
@@ -288,3 +300,5 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                 kf.iks.append(VmdIkOnOff(self.read_text(20), bool(self.read_byte())))
 
             motion.show_iks.append(kf)
+
+        motion.show_iks.sort_indexes()

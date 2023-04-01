@@ -119,10 +119,7 @@ def create_interpolation(values: list[float]):
 # https://shspage.hatenadiary.org/entry/20140625/1403702735
 # https://bezier.readthedocs.io/en/stable/python/reference/bezier.curve.html#bezier.curve.Curve.evaluate
 # https://edvakf.hatenadiary.org/entry/20111016/1318716097
-@lru_cache(maxsize=1024)
-def evaluate(
-    interpolation_start_x: float, interpolation_start_y: float, interpolation_end_x: float, interpolation_end_y: float, start: int, now: int, end: int
-) -> tuple[float, float, float]:
+def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> tuple[float, float, float]:
     """
     補間曲線を求める
 
@@ -146,14 +143,19 @@ def evaluate(
         return 0.0, 0.0, 0.0
 
     x = (now - start) / (end - start)
-    x1 = interpolation_start_x / IP_MAX
-    y1 = interpolation_start_y / IP_MAX
-    x2 = interpolation_end_x / IP_MAX
-    y2 = interpolation_end_y / IP_MAX
+    x1 = interpolation.start.x / IP_MAX
+    y1 = interpolation.start.y / IP_MAX
+    x2 = interpolation.end.x / IP_MAX
+    y2 = interpolation.end.y / IP_MAX
 
     if x >= 1:
         return 1.0, 1.0, 1.0
 
+    return cache_evaluate(x, x1, y1, x2, y2)
+
+
+@lru_cache(maxsize=1024)
+def cache_evaluate(x: float, x1: float, y1: float, x2: float, y2: float) -> tuple[float, float, float]:
     t = newton(x1, x2, x)
     s = 1 - t
 

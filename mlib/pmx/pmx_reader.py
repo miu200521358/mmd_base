@@ -210,7 +210,8 @@ class PmxReader(BaseReader[PmxModel]):
             else:
                 vertex.deform = Sdef(*self.unpack(self.read_by_format[Sdef].unpack, self.read_by_format[Sdef].size))
             vertex.edge_factor = self.read_float()
-            model.vertices.append(vertex)
+            model.vertices.append(vertex, is_sort=False)
+        model.vertices.sort_indexes()
 
     def read_faces(self, model: PmxModel):
         """面データ読み込み"""
@@ -222,13 +223,15 @@ class PmxReader(BaseReader[PmxModel]):
 
         for i, (v0, v1, v2) in enumerate(zip(faces_vertices[:-2:3], faces_vertices[1:-1:3], faces_vertices[2::3])):
             face = Face(i, v0, v1, v2)
-            model.faces.append(face)
+            model.faces.append(face, is_sort=False)
+        model.faces.sort_indexes()
 
     def read_textures(self, model: PmxModel):
         """テクスチャデータ読み込み"""
         for i in range(self.read_int()):
             texture = Texture(i, self.read_text())
-            model.textures.append(texture)
+            model.textures.append(texture, is_sort=False)
+        model.textures.sort_indexes()
 
     def read_materials(self, model: PmxModel):
         """材質データ読み込み"""
@@ -271,7 +274,8 @@ class PmxReader(BaseReader[PmxModel]):
                 material.toon_texture_index = self.read_byte()
             material.comment = self.read_text()
             material.vertices_count = self.read_int()
-            model.materials.append(material)
+            model.materials.append(material, is_sort=False)
+        model.materials.sort_indexes()
 
     def read_bones(self, model: PmxModel):
         """ボーンデータ読み込み"""
@@ -318,7 +322,8 @@ class PmxReader(BaseReader[PmxModel]):
                     ik.links.append(ik_link)
                 bone.ik = ik
 
-            model.bones.append(bone)
+            model.bones.append(bone, is_sort=False)
+        model.bones.sort_indexes()
 
     def read_morphs(self, model: PmxModel):
         """モーフデータ読み込み"""
@@ -340,7 +345,7 @@ class PmxReader(BaseReader[PmxModel]):
                             self.read_bone_index(),
                             self.read_MVector3D(),
                             self.read_MQuaternion(),
-                        )
+                        ),
                     )
                 elif morph.morph_type in [
                     MorphType.UV,
@@ -364,10 +369,11 @@ class PmxReader(BaseReader[PmxModel]):
                             self.read_MVector4D(),
                             self.read_MVector4D(),
                             self.read_MVector4D(),
-                        )
+                        ),
                     )
 
-            model.morphs.append(morph)
+            model.morphs.append(morph, is_sort=False)
+        model.morphs.sort_indexes()
 
     def read_display_slots(self, model: PmxModel):
         """表示枠データ読み込み"""
@@ -385,7 +391,8 @@ class PmxReader(BaseReader[PmxModel]):
                     reference.display_index = self.read_morph_index()
                 display_slot.references.append(reference)
 
-            model.display_slots.append(display_slot)
+            model.display_slots.append(display_slot, is_sort=False)
+        model.display_slots.sort_indexes()
 
     def read_rigidbodies(self, model: PmxModel):
         """剛体データ読み込み"""
@@ -424,7 +431,8 @@ class PmxReader(BaseReader[PmxModel]):
             rigidbody.no_collision_group = RigidBodyCollisionGroup(no_collision_group)
             rigidbody.shape_rotation.radians = shape_rotation_radians
 
-            model.rigidbodies.append(rigidbody)
+            model.rigidbodies.append(rigidbody, is_sort=False)
+        model.rigidbodies.sort_indexes()
 
     def read_joints(self, model: PmxModel):
         """モデルデータ読み込み"""
@@ -474,7 +482,8 @@ class PmxReader(BaseReader[PmxModel]):
             joint.param.rotation_limit_min.radians = rotation_limit_min_radians
             joint.param.rotation_limit_max.radians = rotation_limit_max_radians
 
-            model.joints.append(joint)
+            model.joints.append(joint, is_sort=False)
+        model.joints.sort_indexes()
 
     def define_read_index(self, count: int, is_vertex=False):
         """
