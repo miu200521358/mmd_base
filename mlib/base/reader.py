@@ -1,4 +1,4 @@
-import functools
+from functools import lru_cache
 import struct
 from abc import ABCMeta, abstractmethod
 from struct import Struct
@@ -173,7 +173,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
 
         return read_text
 
-    @functools.lru_cache()
+    @lru_cache(maxsize=None)
     def decode_text(self, main_encoding: Encoding, fbytes: bytearray) -> str:
         """
         テキストデコード
