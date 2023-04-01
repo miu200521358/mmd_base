@@ -5,7 +5,7 @@ from typing import Union
 
 import numpy as np
 from numpy.linalg import inv, norm
-from quaternion import as_rotation_matrix, from_rotation_matrix, quaternion, slerp_evaluate
+from quaternion import as_rotation_matrix, from_rotation_matrix, quaternion, slerp_evaluate, one
 
 from .base import BaseModel
 
@@ -122,6 +122,9 @@ class MVector(BaseModel):
         """
         正規化した値を返す
         """
+        if not self:
+            return self.__class__()
+
         vector = self.vector
         l2 = np.sqrt(np.sum(vector**2, axis=-1, keepdims=True))
         normv = np.divide(vector, l2, out=np.zeros_like(vector), where=l2 != 0)
@@ -211,7 +214,7 @@ class MVector(BaseModel):
             return bool(np.all(np.greater_equal(self.vector, other)))
 
     def __bool__(self) -> bool:
-        return self is not None and self.vector is not None and type(self) is not None.__class__ and not np.all(self.vector == 0)
+        return bool(not np.all(self.vector == 0))
 
     def __add__(self, other):
         return operate_vector(self, other, operator.add)
@@ -565,7 +568,7 @@ class MQuaternion(MVector):
         return MQuaternion(-self.scalar, -self.x, self.y, self.z)
 
     def __bool__(self) -> bool:
-        return self is not None and self.vector is not None and type(self) is not None.__class__ and not np.all(self.vector.components == 0)  # type: ignore
+        return not np.all(self.vector == one)
 
     def __str__(self) -> str:
         return f"[x={round(self.x, 5)}, y={round(self.y, 5)}, " + f"z={round(self.z, 5)}, scalar={round(self.scalar, 5)}]"
@@ -596,11 +599,14 @@ class MQuaternion(MVector):
         """
         正規化した値を返す
         """
+        if not self:
+            return MQuaternion()
+
         self.effective()
         l2 = norm(self.vector.components, ord=2, axis=-1, keepdims=True)
         l2[l2 == 0] = 1
         normv = self.vector.components / l2
-        return self.__class__(*normv)
+        return MQuaternion(*normv)
 
     def normalize(self):
         """
@@ -624,6 +630,9 @@ class MQuaternion(MVector):
         """
         クォータニオンをオイラー角に変換する
         """
+        if not self:
+            return MVector3D()
+
         xx = self.x * self.x
         xy = self.x * self.y
         xz = self.x * self.z
@@ -693,32 +702,12 @@ class MQuaternion(MVector):
         return acos(min(1, max(-1, self.normalized().dot(v.normalized()))))
 
     def to_matrix4x4(self) -> "MMatrix4x4":
+        if not self:
+            return MMatrix4x4()
+
         mat3x3 = as_rotation_matrix(self.vector)
         m00, m01, m02, m10, m11, m12, m20, m21, m22 = mat3x3.flatten()
         return MMatrix4x4(m00, m01, m02, 0.0, m10, m11, m12, 0.0, m20, m21, m22, 0.0, 0.0, 0.0, 0.0, 1.0)
-
-        # mat = MMatrix4x4()
-        # mat[0, 0] = mat3x3[0, 0]
-        # mat[0, 1] = mat3x3[0, 1]
-        # mat[0, 2] = mat3x3[0, 2]
-        # mat[0, 3] = 0.0
-
-        # mat[1, 0] = mat3x3[1, 0]
-        # mat[1, 1] = mat3x3[1, 1]
-        # mat[1, 2] = mat3x3[1, 2]
-        # mat[1, 3] = 0.0
-
-        # mat[2, 0] = mat3x3[2, 0]
-        # mat[2, 1] = mat3x3[2, 1]
-        # mat[2, 2] = mat3x3[2, 2]
-        # mat[2, 3] = 0.0
-
-        # mat[3, 0] = 0.0
-        # mat[3, 1] = 0.0
-        # mat[3, 2] = 0.0
-        # mat[3, 3] = 1.0
-
-        # return mat
 
     def __mul__(self, other: Union[float, MVector3D, "MQuaternion"]):
         if isinstance(other, MVector3D):
