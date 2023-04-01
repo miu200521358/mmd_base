@@ -90,7 +90,7 @@ class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
     BoneTreeリスト
     """
 
-    __slots__ = ["data", "__names", "__indexes", "__iter_index"]
+    __slots__ = ["data", "_names", "_indexes", "_iter_index"]
 
     def __init__(self) -> None:
         """モデル辞書"""

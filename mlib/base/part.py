@@ -1,5 +1,5 @@
 from enum import Enum, unique
-from typing import TypeVar
+from typing import Optional, TypeVar
 
 import numpy as np
 
@@ -16,12 +16,14 @@ class Switch(Enum):
 
 
 class BaseRotationModel(BaseModel):
-    def __init__(self, v_radians: MVector3D = MVector3D()) -> None:
+    __slots__ = ["_radians", "_degrees", "_qq"]
+
+    def __init__(self, v_radians: Optional[MVector3D] = None) -> None:
         super().__init__()
         self._radians = MVector3D()
         self._degrees = MVector3D()
         self._qq = MQuaternion()
-        self.radians = v_radians
+        self.radians = v_radians or MVector3D()
 
     @property
     def qq(self) -> MQuaternion:

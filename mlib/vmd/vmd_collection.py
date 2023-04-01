@@ -20,7 +20,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
     ボーン名別キーフレ辞書
     """
 
-    __slots__ = ["data", "name", "cache", "__names", "__indexes", "__iter_index", "__ik_indexes"]
+    __slots__ = ["data", "name", "cache", "_names", "_indexes", "_iter_index", "_ik_indexes"]
 
     def __init__(self, name: str = "") -> None:
         super().__init__(name)
@@ -30,7 +30,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         if isinstance(key, str):
             return VmdBoneFrame(name=key, index=0)
 
-        if key in self.indexes:
+        if key in self.data:
             return self.get_by_index(key)
 
         # キーフレがない場合、生成したのを返す（保持はしない）
@@ -120,7 +120,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     ボーンキーフレ辞書
     """
 
-    __slots__ = ["data", "cache", "cache_ratios", "cache_qqs", "__names", "__iter_index"]
+    __slots__ = ["data", "cache", "cache_ratios", "cache_qqs", "_names", "_iter_index"]
 
     def __init__(self) -> None:
         super().__init__()

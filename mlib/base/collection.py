@@ -9,20 +9,17 @@ from mlib.base.part import TBaseIndexModel, TBaseIndexNameModel
 class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
     """BaseIndexModelのリスト基底クラス"""
 
-    __slots__ = ["data", "__iter_index"]
+    __slots__ = ["data", "indexes", "_iter_index"]
 
     def __init__(self) -> None:
         """モデルリスト"""
         super().__init__()
         self.data: dict[int, TBaseIndexModel] = {}
+        self.indexes: list[int] = []
         self._iter_index = 0
 
     def create(self) -> "TBaseIndexModel":
         raise NotImplementedError
-
-    @property
-    def indexes(self) -> list[int]:
-        return sorted(self.data.keys())
 
     def __getitem__(self, index: int) -> TBaseIndexModel:
         if index < 0:
@@ -40,6 +37,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         if value.index < 0:
             value.index = len(self.data)
         self.data[value.index] = value
+        self.indexes = sorted(self.data.keys())
 
     def __delitem__(self, index: int) -> None:
         del self.data[index]
@@ -74,7 +72,7 @@ TBaseIndexListModel = TypeVar("TBaseIndexListModel", bound=BaseIndexDictModel)
 class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     """BaseIndexNameModelの辞書基底クラス"""
 
-    __slots__ = ["data", "name", "cache", "__names", "__iter_index"]
+    __slots__ = ["name", "data", "cache", "indexes", "_names", "_iter_index"]
 
     def __init__(self, name: str = "") -> None:
         """モデル辞書"""
@@ -82,6 +80,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         self.name = name
         self.data: dict[int, TBaseIndexNameModel] = {}
         self.cache: dict[int, TBaseIndexNameModel] = {}
+        self.indexes: list[int] = []
         self._names: dict[str, int] = {}
         self._iter_index = 0
 
@@ -106,14 +105,11 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             self._names[value.name] = value.index
 
         self.data[value.index] = value
+        self.indexes = sorted(self.data.keys())
 
     @property
     def names(self) -> list[str]:
         return list(self._names.keys())
-
-    @property
-    def indexes(self) -> list[int]:
-        return sorted(self.data.keys()) if self.data else []
 
     @property
     def last_index(self) -> int:
@@ -227,7 +223,7 @@ TBaseIndexNameDictModel = TypeVar("TBaseIndexNameDictModel", bound=BaseIndexName
 class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel):
     """BaseIndexNameDictModelの辞書基底クラス"""
 
-    __slots__ = ["data", "cache", "__names", "__iter_index"]
+    __slots__ = ["data", "cache", "_names", "_iter_index"]
 
     def __init__(self) -> None:
         """モデル辞書"""
