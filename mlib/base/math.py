@@ -1,3 +1,4 @@
+from functools import lru_cache
 import operator
 from math import acos, atan2, cos, degrees, radians, sin, sqrt
 from typing import Union
@@ -63,6 +64,16 @@ class MRect(BaseModel):
     @height.setter
     def height(self, v: int):
         self.height = int(v)
+
+
+@lru_cache(maxsize=None)
+def calc_v3_by_ratio(
+    prev_x: float, prev_y: float, prev_z: float, next_x: float, next_y: float, next_z: float, ratio_x: float, ratio_y: float, ratio_z: float
+) -> np.ndarray:
+    prev_v = np.array([prev_x, prev_y, prev_z])
+    next_v = np.array([next_x, next_y, next_z])
+    ratio_v = np.array([ratio_x, ratio_y, ratio_z])
+    return prev_v + (next_v - prev_v) * ratio_v
 
 
 class MVector(BaseModel):
@@ -364,6 +375,10 @@ class MVector3D(MVector):
     def gl(self) -> "MVector3D":
         return MVector3D(-self.x, self.y, self.z)
 
+    @staticmethod
+    def calc_by_ratio(prev_v: "MVector3D", next_v: "MVector3D", x: float, y: float, z: float) -> "MVector3D":
+        return MVector3D(*calc_v3_by_ratio(*prev_v.vector, *next_v.vector, x, y, z))
+
 
 class MVector4D(MVector):
     """
@@ -484,6 +499,11 @@ class MVectorDict:
         直近キー
         """
         return np.array(self.keys())[np.argmin(self.distances(v))]
+
+
+@lru_cache(maxsize=None)
+def cache_slerp_evaluate(q1: quaternion, q2: quaternion, t) -> quaternion:
+    return slerp_evaluate(q1, q2, t)
 
 
 class MQuaternion(MVector):
@@ -717,8 +737,8 @@ class MQuaternion(MVector):
             return MQuaternion()
         return MQuaternion(self.scalar / factor, self.x, self.y, self.z)
 
-    @classmethod
-    def from_euler_degrees(cls, a: Union[int, float, MVector3D], b=0, c=0):
+    @staticmethod
+    def from_euler_degrees(a: Union[int, float, MVector3D], b=0, c=0):
         """
         オイラー角をクォータニオンに変換する
         """
@@ -739,8 +759,8 @@ class MQuaternion(MVector):
 
         return MQuaternion(w, x, y, z)
 
-    @classmethod
-    def from_axis_angles(cls, v: MVector3D, a: float):
+    @staticmethod
+    def from_axis_angles(v: MVector3D, a: float):
         """
         軸と角度からクォータニオンに変換する
         """
@@ -754,8 +774,8 @@ class MQuaternion(MVector):
         a = radians(a / 2.0)
         return MQuaternion(cos(a), *(xyz * sin(a))).normalized()
 
-    @classmethod
-    def from_direction(cls, direction: MVector3D, up: MVector3D):
+    @staticmethod
+    def from_direction(direction: MVector3D, up: MVector3D):
         """
         軸と角度からクォータニオンに変換する
         """
@@ -773,8 +793,8 @@ class MQuaternion(MVector):
 
         return MQuaternion.from_axes(x_axis, y_axis, z_axis)
 
-    @classmethod
-    def rotate(cls, from_v: MVector3D, to_v: MVector3D):
+    @staticmethod
+    def rotate(from_v: MVector3D, to_v: MVector3D):
         """
         fromベクトルからtoベクトルまでの回転量
         """
@@ -795,8 +815,8 @@ class MQuaternion(MVector):
         axis = v0.cross(v1) / d
         return MQuaternion(d * 0.5, axis.x, axis.y, axis.z).normalized()
 
-    @classmethod
-    def from_axes(cls, x_axis: MVector3D, y_axis: MVector3D, z_axis: MVector3D):
+    @staticmethod
+    def from_axes(x_axis: MVector3D, y_axis: MVector3D, z_axis: MVector3D):
         return MQuaternion(
             *from_rotation_matrix(
                 np.array(
@@ -810,8 +830,8 @@ class MQuaternion(MVector):
             ).components
         )
 
-    @classmethod
-    def nlerp(cls, q1: "MQuaternion", q2: "MQuaternion", t: float):
+    @staticmethod
+    def nlerp(q1: "MQuaternion", q2: "MQuaternion", t: float):
         """
         線形補間
         """
@@ -829,12 +849,12 @@ class MQuaternion(MVector):
 
         return MQuaternion(*(q1.vector.components * (1.0 - t) + q2b.vector.components * t)).normalized()
 
-    @classmethod
-    def slerp(cls, q1: "MQuaternion", q2: "MQuaternion", t: float):
+    @staticmethod
+    def slerp(q1: "MQuaternion", q2: "MQuaternion", t: float):
         """
         球形補間
         """
-        return MQuaternion(*slerp_evaluate(q1.vector, q2.vector, t).components)
+        return MQuaternion(*cache_slerp_evaluate(q1.vector, q2.vector, t).components)
 
     def separate_by_axis(self, global_axis: MVector3D):
         # ローカルZ軸ベースで求める場合

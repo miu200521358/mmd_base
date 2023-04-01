@@ -179,12 +179,14 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         return self.data[self.indexes[self._iter_index]]
 
     def __contains__(self, key: int | str) -> bool:
-        return (isinstance(key, int) and key in self.data) or key in self._names
+        if isinstance(key, int):
+            return key in self.data
+        return key in self._names
 
     def __bool__(self) -> bool:
         return len(self.data) > 0
 
-    def range_indexes(self, index: int, indexes: list[int] = []) -> tuple[int, int, int]:
+    def range_indexes(self, index: int, indexes: Optional[list[int]] = None) -> tuple[int, int, int]:
         """
         指定されたINDEXの前後を返す
 

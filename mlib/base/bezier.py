@@ -154,7 +154,7 @@ def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> tu
     return cache_evaluate(x, x1, y1, x2, y2)
 
 
-@lru_cache(maxsize=1024)
+@lru_cache(maxsize=None)
 def cache_evaluate(x: float, x1: float, y1: float, x2: float, y2: float) -> tuple[float, float, float]:
     t = newton(x1, x2, x)
     s = 1 - t
@@ -170,7 +170,7 @@ def func_f(x1: float, x2: float, x: float, t: float):
     return 3 * (t1**2) * t * x1 + 3 * t1 * (t**2) * x2 + (t**3) - x
 
 
-@lru_cache(maxsize=1024)
+@lru_cache(maxsize=None)
 def cached_func_f(x1, x2, x, t):
     return func_f(x1, x2, x, t)
 

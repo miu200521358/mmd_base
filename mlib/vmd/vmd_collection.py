@@ -92,9 +92,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
 
         # 移動
-        bf.position.x = prev_bf.position.x + (next_bf.position.x - prev_bf.position.x) * xy
-        bf.position.y = prev_bf.position.y + (next_bf.position.y - prev_bf.position.y) * yy
-        bf.position.z = prev_bf.position.z + (next_bf.position.z - prev_bf.position.z) * zy
+        bf.position = MVector3D.calc_by_ratio(prev_bf.position, next_bf.position, xy, yy, zy)
 
         return bf
 
@@ -329,7 +327,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             相対位置
         """
         # 自身の位置
-        pos = self[bone.name][fno].position
+        pos = self[bone.name][fno].position.copy()
 
         # 付与親を加味して返す
         return self.get_effect_position(bone, fno, pos, model)
@@ -399,6 +397,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # FK(捩り) > IK(捩り) > 付与親(捩り)
         bf = self[bone.name][fno]
         qq = bf.rotation.copy()
+
         if bf.ik_rotation is not None:
             # IK用回転を持っている場合、追加
             qq *= bf.ik_rotation
@@ -455,6 +454,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         else:
             # 負の付与親の場合、逆回転
             qq *= (effect_qq.multiply_factor(abs(bone.effect_factor))).inverse()
+
         return qq.normalized()
 
     def get_ik_rotation(
