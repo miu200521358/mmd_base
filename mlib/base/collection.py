@@ -195,7 +195,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         """
         if not indexes:
             indexes = self.indexes
-        if not indexes or index in indexes:
+        if not indexes or index in self.data:
             return index, index, index
 
         # index がない場合、前後のINDEXを取得する

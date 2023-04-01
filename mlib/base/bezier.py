@@ -119,7 +119,10 @@ def create_interpolation(values: list[float]):
 # https://shspage.hatenadiary.org/entry/20140625/1403702735
 # https://bezier.readthedocs.io/en/stable/python/reference/bezier.curve.html#bezier.curve.Curve.evaluate
 # https://edvakf.hatenadiary.org/entry/20111016/1318716097
-def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> tuple[float, float, float]:
+@lru_cache(maxsize=1024)
+def evaluate(
+    interpolation_start_x: float, interpolation_start_y: float, interpolation_end_x: float, interpolation_end_y: float, start: int, now: int, end: int
+) -> tuple[float, float, float]:
     """
     補間曲線を求める
 
@@ -140,13 +143,13 @@ def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> tu
         x（計算キーフレ時点のX値）, y（計算キーフレ時点のY値）, t（計算キーフレまでの変化量）
     """
     if (now - start) == 0 or (end - start) == 0:
-        return 0, 0, 0
+        return 0.0, 0.0, 0.0
 
     x = (now - start) / (end - start)
-    x1 = interpolation.start.x / IP_MAX
-    y1 = interpolation.start.y / IP_MAX
-    x2 = interpolation.end.x / IP_MAX
-    y2 = interpolation.end.y / IP_MAX
+    x1 = interpolation_start_x / IP_MAX
+    y1 = interpolation_start_y / IP_MAX
+    x2 = interpolation_end_x / IP_MAX
+    y2 = interpolation_end_y / IP_MAX
 
     if x >= 1:
         return 1.0, 1.0, 1.0
@@ -165,7 +168,7 @@ def func_f(x1: float, x2: float, x: float, t: float):
     return 3 * (t1**2) * t * x1 + 3 * t1 * (t**2) * x2 + (t**3) - x
 
 
-@lru_cache(maxsize=128)
+@lru_cache(maxsize=1024)
 def cached_func_f(x1, x2, x, t):
     return func_f(x1, x2, x, t)
 
@@ -187,38 +190,3 @@ def newton(x1, x2, x, t0=0.5, eps=1e-10, error=1e-10):
         # 解を更新
         t0 = t1
     return t0
-
-
-# def newton(
-#     x1: float,
-#     x2: float,
-#     x: float,
-#     t0: float = 0.5,
-#     eps: float = 1e-10,
-#     error: float = 1e-10,
-# ):
-#     derivative = 2 * eps
-#     func_f_cache: dict[float, float] = {}
-#     for _ in range(10):
-#         if t0 in func_f_cache:
-#             func_f_value = func_f_cache[t0]
-#         else:
-#             func_f_value = func_f(x1, x2, x, t0)
-#             func_f_cache[t0] = func_f_value
-
-#         # 中心差分による微分値
-#         func_df = (func_f(x1, x2, x, t0 + eps) - func_f(x1, x2, x, t0 - eps)) / derivative
-#         if abs(func_df) <= eps:
-#             break
-
-#         # 次の解を計算
-#         t1 = t0 - func_f_value / func_df
-
-#         # 「誤差範囲が一定値以下」ならば終了
-#         if abs(t1 - t0) <= error:
-#             break
-
-#         # 解を更新
-#         t0 = t1
-
-#     return t0

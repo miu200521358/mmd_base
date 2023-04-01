@@ -50,7 +50,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         super().append(value)
 
     def calc(self, prev_index: int, index: int, next_index: int) -> VmdBoneFrame:
-        if index in self.indexes:
+        if index in self.data:
             return self.data[index]
 
         if index in self.cache:
@@ -76,11 +76,11 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         prev_ik_indexes = self.__ik_indexes[:slice_idx]
         next_ik_indexes = self.__ik_indexes[slice_idx:]
 
-        prev_index = prev_ik_indexes[-1] if prev_ik_indexes else prev_index
-        prev_ik_rotation = (self[prev_index]).ik_rotation or MQuaternion()
+        prev_ik_index = prev_ik_indexes[-1] if prev_ik_indexes else prev_index
+        prev_ik_rotation = self.data[prev_ik_index].ik_rotation or MQuaternion()
 
-        next_index = next_ik_indexes[0] if next_ik_indexes else next_index
-        next_ik_rotation = (self[next_index]).ik_rotation or prev_ik_rotation
+        next_ik_index = next_ik_indexes[0] if next_ik_indexes else next_index
+        next_ik_rotation = self.data[next_ik_index].ik_rotation or prev_ik_rotation
 
         # 補間結果Yは、FKキーフレ内で計算する
         ry, xy, yy, zy = next_bf.interpolations.evaluate(prev_index, index, next_index)
