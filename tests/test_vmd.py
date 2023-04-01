@@ -201,7 +201,7 @@ def test_read_by_filepath_ok_matrix() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
     # キーフレ
-    bone_trees = model.bone_trees.gets(["グルーブ", "左人指先"])
+    bone_trees = model.bone_trees.filter("グルーブ", "左人指先")
     bone_matrixes = motion.bones.get_matrix_by_indexes([10, 999], bone_trees, model)
 
     assert np.isclose(
@@ -408,7 +408,7 @@ def test_read_by_filepath_ok_leg_ik1() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
     # キーフレ
-    bone_trees = model.bone_trees.gets(["左つま先"])
+    bone_trees = model.bone_trees.filter("左つま先")
     bone_matrixes = motion.bones.get_matrix_by_indexes([29], bone_trees, model)
 
     # --------
@@ -463,7 +463,7 @@ def test_read_by_filepath_ok_leg_ik2() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
     # キーフレ
-    bone_trees = model.bone_trees.gets(["左つま先"])
+    bone_trees = model.bone_trees.filter("左つま先")
     bone_matrixes = motion.bones.get_matrix_by_indexes([3152], bone_trees, model)
 
     # --------
@@ -518,7 +518,7 @@ def test_read_by_filepath_ok_leg_ik3() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
     # キーフレ
-    bone_trees = model.bone_trees.gets(["左つま先", "左足先EX"])
+    bone_trees = model.bone_trees.filter("左つま先", "左足先EX")
     bone_matrixes = motion.bones.get_matrix_by_indexes([60], bone_trees, model)
 
     # --------
@@ -586,7 +586,7 @@ def test_read_by_filepath_ok_leg_ik4() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
     # キーフレ
-    bone_trees = model.bone_trees.gets(["右つま先"])
+    bone_trees = model.bone_trees.filter("右つま先")
     bone_matrixes = motion.bones.get_matrix_by_indexes([0], bone_trees, model)
 
     # --------
@@ -641,7 +641,7 @@ def test_read_by_filepath_ok_leg_ik5() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
     # キーフレ
-    bone_trees = model.bone_trees.gets(["右つま先"])
+    bone_trees = model.bone_trees.filter("右つま先")
     bone_matrixes = motion.bones.get_matrix_by_indexes([7409], bone_trees, model)
 
     # --------
@@ -696,7 +696,7 @@ def test_read_by_filepath_ok_arm_ik() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "ボーンツリーテストモデル.pmx"))
 
     # キーフレ
-    bone_trees = model.bone_trees.gets(["グルーブ", "左人指先"])
+    bone_trees = model.bone_trees.filter("グルーブ", "左人指先")
     bone_matrixes = motion.bones.get_matrix_by_indexes([10, 999], bone_trees, model)
 
     assert np.isclose(

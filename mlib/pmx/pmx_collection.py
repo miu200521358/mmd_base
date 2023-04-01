@@ -4,15 +4,14 @@ from typing import Optional
 
 import numpy as np
 
-from mlib.base.base import BaseModel
-from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexListModel, BaseIndexNameListModel
+from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import Bone, DisplaySlot, DrawFlg, Face, Joint, Material, Morph, RigidBody, Texture, TextureType, ToonSharing, Vertex
 from mlib.pmx.shader import MShader, VsLayout
 
 
-class Vertices(BaseIndexListModel[Vertex]):
+class Vertices(BaseIndexDictModel[Vertex]):
     """
     頂点リスト
     """
@@ -21,7 +20,7 @@ class Vertices(BaseIndexListModel[Vertex]):
         super().__init__()
 
 
-class Faces(BaseIndexListModel[Face]):
+class Faces(BaseIndexDictModel[Face]):
     """
     面リスト
     """
@@ -30,7 +29,7 @@ class Faces(BaseIndexListModel[Face]):
         super().__init__()
 
 
-class Textures(BaseIndexListModel[Texture]):
+class Textures(BaseIndexNameDictModel[Texture]):
     """
     テクスチャリスト
     """
@@ -39,7 +38,7 @@ class Textures(BaseIndexListModel[Texture]):
         super().__init__()
 
 
-class ToonTextures(BaseIndexDictModel[Texture]):
+class ToonTextures(BaseIndexNameDictModel[Texture]):
     """
     共有テクスチャ辞書
     """
@@ -48,7 +47,7 @@ class ToonTextures(BaseIndexDictModel[Texture]):
         super().__init__()
 
 
-class Materials(BaseIndexNameListModel[Material]):
+class Materials(BaseIndexNameDictModel[Material]):
     """
     材質リスト
     """
@@ -57,27 +56,11 @@ class Materials(BaseIndexNameListModel[Material]):
         super().__init__()
 
 
-class BoneTree(BaseIndexDictModel[Bone]):
+class BoneTree(BaseIndexNameDictModel[Bone]):
     """ボーンリンク"""
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.__indices: list[int] = []
-        self.__iter_index = 0
-
-    def __getitem__(self, key: int) -> Bone:
-        if isinstance(key, int) and key < 0:
-            # マイナス指定の場合、後ろからの順番に置き換える
-            return super().__getitem__(len(self.data) + key)
-        return super().__getitem__(key)
-
-    @property
-    def last_index(self) -> int:
-        return len(self.data) - 1
-
-    @property
-    def last_name(self) -> str:
-        return self.data[self.last_index].name
+    def __init__(self, name: str = "") -> None:
+        super().__init__(name)
 
     def get_relative_position(self, key: int) -> MVector3D:
         """
@@ -101,132 +84,29 @@ class BoneTree(BaseIndexDictModel[Bone]):
 
         return bone.position - self[bone.parent_index]
 
-    def __iter__(self):
-        self.__iter_index = -1
-        self.__indices = list(self.data.keys())
-        self.__indices.sort()
-        return self
 
-    def __next__(self) -> Bone:
-        self.__iter_index += 1
-        if self.__iter_index >= len(self.__indices):
-            raise StopIteration
-        return self.data[self.__indices[self.__iter_index]]
-
-
-class BoneTrees(BaseModel):
+class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
     """
     BoneTreeリスト
     """
 
-    __slots__ = ["data", "__names", "__indices", "__iter_index"]
+    __slots__ = ["data", "__names", "__indexes", "__iter_index"]
 
     def __init__(self) -> None:
+        """モデル辞書"""
         super().__init__()
-        self.data: dict[int, BoneTree] = {}
-        self.__names: dict[str, int] = {}
-        self.__indices: list[int] = []
-        self.__iter_index = 0
 
-    def __getitem__(self, key: int | str) -> BoneTree:
-        if isinstance(key, int):
-            return self.get_by_index(key).copy()
-        else:
-            return self.get_by_name(key).copy()
-
-    def __setitem__(self, index: int, bt: BoneTree):
-        self.data[index] = bt
-        if bt.data[bt.last_index].name not in self.__names:
-            # 名前は先勝ちで保持
-            self.__names[bt.data[bt.last_index].name] = bt.data[bt.last_index].index
-
-    def names(self) -> dict[str, int]:
-        return dict([(bt.data[bt.last_index].name, bt.data[bt.last_index].index) for bt in self.data.values()])
-
-    def gets(self, bone_names: list[str]) -> list[BoneTree]:
-        """
-        指定したボーン名のみを抽出する
-
-        Parameters
-        ----------
-        bone_names : list[str]
-            抽出対象ボーン名リスト
-
-        Returns
-        -------
-        抽出ボーンツリーリスト
-        """
-        new_trees = []
-        for bname in bone_names:
-            bt = self[bname]
-            new_trees.append(bt)
-        return new_trees
-
-    def get_by_index(self, index: int) -> BoneTree:
-        """
-        リストから要素を取得する
-
-        Parameters
-        ----------
-        index : int
-            インデックス番号
-
-        Returns
-        -------
-        TBaseIndexNameModel
-            要素
-        """
-        if index >= len(self.data):
-            raise KeyError(f"Not Found: {index}")
-        return self.data[index]
-
-    def get_by_name(self, name: str) -> BoneTree:
-        """
-        リストから要素を取得する
-
-        Parameters
-        ----------
-        name : str
-            名前
-
-        Returns
-        -------
-        TBaseIndexNameModel
-            要素
-        """
-        if name not in self.__names:
-            raise KeyError(f"Not Found: {name}")
-        return self.data[self.names()[name]]
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def __iter__(self):
-        self.__iter_index = -1
-        self.__indices = list(self.data.keys())
-        self.__indices.sort()
-        return self
-
-    def __next__(self) -> BoneTree:
-        self.__iter_index += 1
-        if self.__iter_index >= len(self.__indices):
-            raise StopIteration
-        return self.data[self.__indices[self.__iter_index]]
-
-    def __contains__(self, v) -> bool:
-        return v in self.__names or v in self.data
+    def create(self, key: str) -> BoneTree:
+        return BoneTree(key)
 
 
-class Bones(BaseIndexNameListModel[Bone]):
+class Bones(BaseIndexNameDictModel[Bone]):
     """
     ボーンリスト
     """
 
     def __init__(self) -> None:
         super().__init__()
-
-    def append(self, v: Bone) -> None:
-        super().append(v)
 
     def create_bone_links(self) -> BoneTrees:
         """
@@ -242,11 +122,10 @@ class Bones(BaseIndexNameListModel[Bone]):
         # 計算ボーンリスト
         for end_bone in self:
             # レイヤー込みのINDEXリスト取得を末端ボーンをキーとして保持
-            bone_tree = BoneTree()
+            bone_tree = BoneTree(name=end_bone.name)
             for ti, (_, bidx) in enumerate(sorted(self.create_bone_link_indexes(end_bone.index))):
-                bone_tree[ti] = self[bidx].copy()
-            bone_tree[len(bone_tree)] = end_bone.copy()
-            bone_trees[end_bone.index] = bone_tree
+                bone_tree.append(self[bidx].copy())
+            bone_trees.append(bone_tree)
 
         return bone_trees
 
@@ -283,16 +162,16 @@ class Bones(BaseIndexNameListModel[Bone]):
         """
         # 階層＞リスト順（＞FK＞IK＞付与）
         if not bone_link_indexes:
-            bone_link_indexes = []
+            bone_link_indexes = [(self[child_idx].layer, self[child_idx].index)]
 
-        for b in reversed(self.data):
+        for b in reversed(self):
             if b.index == self[child_idx].parent_index:
                 bone_link_indexes.append((b.layer, b.index))
                 return self.create_bone_link_indexes(b.index, bone_link_indexes)
 
         return bone_link_indexes
 
-    def get_tail_position(self, bone_index: int) -> MVector3D:
+    def get_tail_relative_position(self, bone_index: int) -> MVector3D:
         """
         末端位置を取得
 
@@ -361,42 +240,8 @@ class Bones(BaseIndexNameListModel[Bone]):
 
         return matrix
 
-    def get_local_x_axis(self, bone_index: int) -> MVector3D:
-        """
-        ローカルX軸の取得
 
-        Parameters
-        ----------
-        bone_index : int
-            ボーンINDEX
-
-        Returns
-        -------
-        ローカルX軸
-        """
-        if bone_index not in self:
-            return MVector3D()
-
-        bone = self[bone_index]
-
-        if bone.is_ik and ("足ＩＫ" in bone.name or "つま先ＩＫ" in bone.name):
-            # 足IK系は固定
-            return MVector3D(0, 1, 0)
-
-        if bone.has_fixed_axis and bone.fixed_axis:
-            # 軸制限がある場合、親からの向きを保持
-            return bone.fixed_axis.normalized()
-
-        from_pos = self[bone.name].position
-        to_pos = self.get_tail_position(bone_index)
-
-        # 軸制限の指定が無い場合、子の方向
-        x_axis = (to_pos - from_pos).normalized()
-
-        return x_axis
-
-
-class Morphs(BaseIndexNameListModel[Morph]):
+class Morphs(BaseIndexNameDictModel[Morph]):
     """
     モーフリスト
     """
@@ -405,18 +250,16 @@ class Morphs(BaseIndexNameListModel[Morph]):
         super().__init__()
 
 
-class DisplaySlots(BaseIndexNameListModel[DisplaySlot]):
+class DisplaySlots(BaseIndexNameDictModel[DisplaySlot]):
     """
     表示枠リスト
     """
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         super().__init__()
 
 
-class RigidBodies(BaseIndexNameListModel[RigidBody]):
+class RigidBodies(BaseIndexNameDictModel[RigidBody]):
     """
     剛体リスト
     """
@@ -425,7 +268,7 @@ class RigidBodies(BaseIndexNameListModel[RigidBody]):
         super().__init__()
 
 
-class Joints(BaseIndexNameListModel[Joint]):
+class Joints(BaseIndexNameDictModel[Joint]):
     """
     ジョイントリスト
     """
@@ -491,17 +334,17 @@ class PmxModel(BaseHashModel):
         self.comment: str = ""
         self.english_comment: str = ""
         self.json_data: dict = {}
-        self.vertices = Vertices()
-        self.faces = Faces()
-        self.textures = Textures()
-        self.toon_textures = ToonTextures()
-        self.materials = Materials()
-        self.bones = Bones()
-        self.bone_trees = BoneTrees()
-        self.morphs = Morphs()
-        self.display_slots = DisplaySlots()
-        self.rigidbodies = RigidBodies()
-        self.joints = Joints()
+        self.vertices: Vertices = Vertices()
+        self.faces: Faces = Faces()
+        self.textures: Textures = Textures()
+        self.toon_textures: ToonTextures = ToonTextures()
+        self.materials: Materials = Materials()
+        self.bones: Bones = Bones()
+        self.bone_trees: BoneTrees = BoneTrees()
+        self.morphs: Morphs = Morphs()
+        self.display_slots: DisplaySlots = DisplaySlots()
+        self.rigidbodies: RigidBodies = RigidBodies()
+        self.joints: Joints = Joints()
         self.for_draw = False
         self.meshes: Optional[Meshes] = None
 
@@ -528,7 +371,7 @@ class PmxModel(BaseHashModel):
                 )
             )
         ):
-            self.toon_textures[tidx] = Texture(tidx, os.path.abspath(tpath))
+            self.toon_textures.append(Texture(tidx, os.path.abspath(tpath)))
 
         self.meshes = Meshes(shader, self)
 
@@ -545,17 +388,19 @@ class PmxModel(BaseHashModel):
                 for link in bone.ik.links:
                     if link.bone_index in self.bones:
                         # リンクボーンにフラグを立てる
-                        self.bones[link.bone_index].ik_link_indices.append(bone.index)
+                        self.bones[link.bone_index].ik_link_indexes.append(bone.index)
                 if bone.ik.bone_index in self.bones:
                     # ターゲットボーンにもフラグを立てる
-                    self.bones[bone.ik.bone_index].ik_target_indices.append(bone.index)
+                    self.bones[bone.ik.bone_index].ik_target_indexes.append(bone.index)
 
+            bone.parent_relative_position = self.bones.get_parent_relative_position(bone.index)
+            bone.tail_relative_position = self.bones.get_tail_relative_position(bone.index)
             # 各ボーンのローカル軸
-            bone.local_axis = self.bones.get_local_x_axis(bone.index)
+            bone.local_axis = bone.tail_relative_position.normalized()
 
             # 逆オフセット行列は親ボーンからの相対位置分を戻す
             bone.init_matrix = MMatrix4x4()
-            bone.init_matrix.translate(self.bones.get_parent_relative_position(bone.index).gl)
+            bone.init_matrix.translate(bone.parent_relative_position.gl)
 
             # オフセット行列は自身の位置を原点に戻す行列
             offset_mat = MMatrix4x4()
@@ -566,7 +411,7 @@ class PmxModel(BaseHashModel):
         self.bone_trees = self.bones.create_bone_links()
 
 
-class Meshes(BaseIndexListModel[Mesh]):
+class Meshes(BaseIndexDictModel[Mesh]):
     """
     メッシュリスト
     """
@@ -669,7 +514,7 @@ class Meshes(BaseIndexListModel[Mesh]):
         self.ibo_faces = IBO(self.faces)
 
     def draw(self, mats: np.ndarray):
-        for mesh in self.data:
+        for mesh in self:
             self.vao.bind()
             self.vbo_vertices.set_slot(VsLayout.POSITION_ID)
             self.vbo_vertices.set_slot(VsLayout.NORMAL_ID)

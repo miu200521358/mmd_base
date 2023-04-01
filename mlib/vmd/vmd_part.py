@@ -3,32 +3,7 @@ from typing import Optional
 from mlib.base.base import BaseModel
 from mlib.base.bezier import Interpolation, evaluate
 from mlib.base.math import MQuaternion, MVector3D
-from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel
-
-
-class BaseVmdFrame(BaseIndexModel):
-    """
-    VMD用基底クラス
-
-    Parameters
-    ----------
-    index : int, optional
-        キーフレ, by default None
-    registerer : bool, optional
-        登録対象か否か, by default None
-    read : bool, optional
-        VMDデータから読み込んだデータか, by default None
-    """
-
-    def __init__(
-        self,
-        index: int = -1,
-        registerer: bool = False,
-        read: bool = False,
-    ):
-        super().__init__(index)
-        self.registerer = registerer
-        self.read = read
+from mlib.base.part import BaseIndexNameModel, BaseRotationModel
 
 
 class BaseVmdNameFrame(BaseIndexNameModel):
@@ -370,7 +345,7 @@ class CameraInterpolations(BaseModel):
         self.viewing_angle = viewing_angle or Interpolation()
 
 
-class VmdCameraFrame(BaseVmdFrame):
+class VmdCameraFrame(BaseVmdNameFrame):
     """
     カメラキーフレ
 
@@ -420,7 +395,7 @@ class VmdCameraFrame(BaseVmdFrame):
         register: bool = False,
         read: bool = False,
     ):
-        super().__init__(index, register, read)
+        super().__init__(index, "カメラ", register, read)
         self.position = position or MVector3D()
         self.rotation = rotation or BaseRotationModel()
         self.distance = distance
@@ -429,7 +404,7 @@ class VmdCameraFrame(BaseVmdFrame):
         self.interpolations = interpolations or CameraInterpolations()
 
 
-class VmdLightFrame(BaseVmdFrame):
+class VmdLightFrame(BaseVmdNameFrame):
     """
     照明キーフレ
 
@@ -463,12 +438,12 @@ class VmdLightFrame(BaseVmdFrame):
         register: bool = False,
         read: bool = False,
     ):
-        super().__init__(index, register, read)
+        super().__init__(index, "照明", register, read)
         self.color = color or MVector3D()
         self.position = position or MVector3D()
 
 
-class VmdShadowFrame(BaseVmdFrame):
+class VmdShadowFrame(BaseVmdNameFrame):
     """
     セルフ影キーフレ
 
@@ -502,7 +477,7 @@ class VmdShadowFrame(BaseVmdFrame):
         register: bool = False,
         read: bool = False,
     ):
-        super().__init__(index, register, read)
+        super().__init__(index, "セルフ影", register, read)
         self.type = mode
         self.distance = distance
 
@@ -534,7 +509,7 @@ class VmdIkOnOff(BaseModel):
         self.onoff = onoff
 
 
-class VmdShowIkFrame(BaseVmdFrame):
+class VmdShowIkFrame(BaseVmdNameFrame):
     """
     IKキーフレ
 
@@ -568,6 +543,6 @@ class VmdShowIkFrame(BaseVmdFrame):
         register: bool = False,
         read: bool = False,
     ):
-        super().__init__(index, register, read)
+        super().__init__(index, "IK", register, read)
         self.show = show
         self.iks = iks or []

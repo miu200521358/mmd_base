@@ -136,11 +136,11 @@ class PmxWriter(BaseModel):
             # deform
             if type(vertex.deform) is Bdef1:
                 self.write_byte(fout, 0)
-                self.write_number(fout, bone_idx_type, vertex.deform.indices[0])
+                self.write_number(fout, bone_idx_type, vertex.deform.indexes[0])
             elif type(vertex.deform) is Bdef2:
                 self.write_byte(fout, 1)
-                self.write_number(fout, bone_idx_type, vertex.deform.indices[0])
-                self.write_number(fout, bone_idx_type, vertex.deform.indices[1])
+                self.write_number(fout, bone_idx_type, vertex.deform.indexes[0])
+                self.write_number(fout, bone_idx_type, vertex.deform.indexes[1])
 
                 self.write_number(
                     fout,
@@ -150,10 +150,10 @@ class PmxWriter(BaseModel):
                 )
             elif type(vertex.deform) is Bdef4:
                 self.write_byte(fout, 2)
-                self.write_number(fout, bone_idx_type, vertex.deform.indices[0])
-                self.write_number(fout, bone_idx_type, vertex.deform.indices[1])
-                self.write_number(fout, bone_idx_type, vertex.deform.indices[2])
-                self.write_number(fout, bone_idx_type, vertex.deform.indices[3])
+                self.write_number(fout, bone_idx_type, vertex.deform.indexes[0])
+                self.write_number(fout, bone_idx_type, vertex.deform.indexes[1])
+                self.write_number(fout, bone_idx_type, vertex.deform.indexes[2])
+                self.write_number(fout, bone_idx_type, vertex.deform.indexes[3])
 
                 self.write_number(
                     fout,
@@ -181,8 +181,8 @@ class PmxWriter(BaseModel):
                 )
             elif type(vertex.deform) is Sdef:
                 self.write_byte(fout, 3)
-                self.write_number(fout, bone_idx_type, vertex.deform.indices[0])
-                self.write_number(fout, bone_idx_type, vertex.deform.indices[1])
+                self.write_number(fout, bone_idx_type, vertex.deform.indexes[0])
+                self.write_number(fout, bone_idx_type, vertex.deform.indexes[1])
                 self.write_number(
                     fout,
                     PmxBinaryType.FLOAT,
@@ -253,7 +253,7 @@ class PmxWriter(BaseModel):
 
         # テクスチャデータ
         for texture in self.model.textures:
-            self.write_text(fout, texture.texture_path, "")
+            self.write_text(fout, texture.name, "")
 
         logger.debug("-- テクスチャデータ出力終了({count})", count=len(self.model.textures))
 

@@ -5,7 +5,7 @@ from typing import Optional
 
 import numpy as np
 
-from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictInnerModel, BaseIndexNameDictModel
+from mlib.base.collection import BaseHashModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
 from mlib.base.logger import MLogger
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
 from mlib.pmx.pmx_collection import BoneTree, PmxModel
@@ -15,42 +15,42 @@ from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMo
 logger = MLogger(__name__, logging.DEBUG)
 
 
-class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
+class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
     """
     ボーン名別キーフレ辞書
     """
 
-    def __init__(self, name: str):
-        super().__init__(name=name)
-        self.__ik_indices: list[int] = []
+    __slots__ = ["data", "name", "cache", "__names", "__indexes", "__iter_index", "__ik_indexes"]
 
-    def __getitem__(self, index: int) -> VmdBoneFrame:
-        if not self.data:
-            # まったくデータがない場合、生成
-            return VmdBoneFrame(name=self.name, index=index)
+    def __init__(self, name: str = "") -> None:
+        super().__init__(name)
+        self.__ik_indexes: list[int] = []
 
-        if index in self:
-            return self.data[index]
+    def __getitem__(self, key: int | str) -> VmdBoneFrame:
+        if isinstance(key, str):
+            return VmdBoneFrame(name=key, index=0)
+
+        if key in self.indexes:
+            return self.get_by_index(key)
 
         # キーフレがない場合、生成したのを返す（保持はしない）
-        prev_index, middle_index, next_index = self.range_indexes(index)
+        prev_index, middle_index, next_index = self.range_indexes(key)
 
         # prevとnextの範囲内である場合、補間曲線ベースで求め直す
         return self.calc(
             prev_index,
             middle_index,
             next_index,
-            index,
         )
 
     def append(self, value: VmdBoneFrame):
-        if value.ik_rotation is not None and value.index not in self.__ik_indices:
-            self.__ik_indices.append(value.index)
-            self.__ik_indices.sort()
-        return super().append(value)
+        if value.ik_rotation is not None and value.index not in self.__ik_indexes:
+            self.__ik_indexes.append(value.index)
+            self.__ik_indexes.sort()
+        super().append(value)
 
-    def calc(self, prev_index: int, middle_index: int, next_index: int, index: int) -> VmdBoneFrame:
-        if index in self:
+    def calc(self, prev_index: int, index: int, next_index: int) -> VmdBoneFrame:
+        if index in self.indexes:
             return self.data[index]
 
         if index in self.cache:
@@ -60,7 +60,7 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
             self.cache[index] = bf
 
         if prev_index == next_index:
-            if next_index == middle_index:
+            if next_index == index:
                 # 全くキーフレがない場合、そのまま返す
                 return bf
 
@@ -72,15 +72,15 @@ class VmdBoneNameFrames(BaseIndexNameDictInnerModel[VmdBoneFrame]):
         prev_bf = self.data[prev_index] if prev_index in self else VmdBoneFrame(name=self.name, index=prev_index)
         next_bf = self.data[next_index] if next_index in self else VmdBoneFrame(name=self.name, index=next_index)
 
-        slice_idx = bisect_left(self.__ik_indices, middle_index)
-        prev_ik_indices = self.__ik_indices[:slice_idx]
-        next_ik_indices = self.__ik_indices[slice_idx:]
+        slice_idx = bisect_left(self.__ik_indexes, index)
+        prev_ik_indexes = self.__ik_indexes[:slice_idx]
+        next_ik_indexes = self.__ik_indexes[slice_idx:]
 
-        prev_index = prev_ik_indices[-1] if prev_ik_indices else prev_index
-        prev_ik_rotation = (self.data[prev_index]).ik_rotation or MQuaternion()
+        prev_index = prev_ik_indexes[-1] if prev_ik_indexes else prev_index
+        prev_ik_rotation = (self[prev_index]).ik_rotation or MQuaternion()
 
-        next_index = next_ik_indices[0] if next_ik_indices else next_index
-        next_ik_rotation = (self.data[next_index]).ik_rotation or prev_ik_rotation
+        next_index = next_ik_indexes[0] if next_ik_indexes else next_index
+        next_ik_rotation = (self[next_index]).ik_rotation or prev_ik_rotation
 
         # 補間結果Yは、FKキーフレ内で計算する
         ry, xy, yy, zy = next_bf.interpolations.evaluate(prev_index, index, next_index)
@@ -115,33 +115,33 @@ class VmdBoneFrameTree:
         self.position = MVector3D(*position)
 
 
-class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
+class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     """
     ボーンキーフレ辞書
     """
 
+    __slots__ = ["data", "cache", "cache_ratios", "cache_qqs", "__names", "__iter_index"]
+
     def __init__(self) -> None:
         super().__init__()
-        self.cache_relative_poses: dict[tuple[int, str, str], MVector3D] = {}
-        self.cache_poses: dict[tuple[int, str, str], MVector3D] = {}
+        self.cache_ratios: dict[tuple[int, str, str], MVector3D] = {}
         self.cache_qqs: dict[tuple[int, str, str], MQuaternion] = {}
 
-    def clear(self) -> None:
-        self.cache_relative_poses = {}
-        self.cache_poses = {}
-        self.cache_qqs = {}
+    def create(self, key: str) -> VmdBoneNameFrames:
+        return VmdBoneNameFrames(name=key)
 
-    def create_inner(self, name: str):
-        return VmdBoneNameFrames(name=name)
+    def clear(self) -> None:
+        self.cache_ratios = {}
+        self.cache_qqs = {}
 
     @property
     def max_fno(self) -> int:
-        return max([max(self[bname].indices + [0]) for bname in self.names] + [0])
+        return max([max(self[bname].indexes + [0]) for bname in self.names] + [0])
 
     def get_matrix_by_indexes(
         self,
         fnos: list[int],
-        bone_trees: list[BoneTree],
+        bone_trees: dict[str, BoneTree],
         model: PmxModel,
         append_ik: bool = True,
     ) -> dict[int, dict[str, VmdBoneFrameTree]]:
@@ -164,10 +164,10 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
 
         # IK回転を事前に求めておく
         for fno in fnos:
-            self.calc_ik_rotations(fno, model, [bone_tree.last_name for bone_tree in bone_trees])
+            self.calc_ik_rotations(fno, model, [bone_tree.last_name for bone_tree in bone_trees.values()])
 
         bone_matrixes: dict[int, dict[str, VmdBoneFrameTree]] = {}
-        for bone_tree in bone_trees:
+        for bone_tree in bone_trees.values():
             row = len(fnos)
             col = len(bone_tree) + 1
             poses = np.full((row, col, 3), np.zeros(3))
@@ -175,18 +175,13 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             for n, fno in enumerate(fnos):
                 for m, bone in enumerate(bone_tree):
                     # ボーンの親から見た相対位置
-                    if (fno, model.hexdigest, bone.name) in self.cache_relative_poses:
-                        poses[n, m] = self.cache_relative_poses[(fno, model.hexdigest, bone.name)].vector
-                    else:
-                        relative_pos = model.bones.get_parent_relative_position(bone.index)
-                        self.cache_relative_poses[(fno, model.hexdigest, bone.name)] = relative_pos
-                        poses[n, m] = relative_pos.vector
+                    poses[n, m] = bone.parent_relative_position.vector
 
-                    if (fno, model.hexdigest, bone.name) in self.cache_poses:
-                        poses[n, m] += self.cache_poses[(fno, model.hexdigest, bone.name)].vector
+                    if (fno, model.hexdigest, bone.name) in self.cache_ratios:
+                        poses[n, m] += self.cache_ratios[(fno, model.hexdigest, bone.name)].vector
                     else:
                         pos = self.get_position(bone, fno, model)
-                        self.cache_poses[(fno, model.hexdigest, bone.name)] = pos
+                        self.cache_ratios[(fno, model.hexdigest, bone.name)] = pos
                         poses[n, m] += pos.vector
 
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
@@ -198,7 +193,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                         qqs[n, m] = qq.to_matrix4x4().vector
 
                 # 末端ボーン表示先の位置を計算
-                poses[n, -1] = (model.bones.get_tail_position(bone.index) - bone.position).vector
+                poses[n, -1] = bone_tree[-1].tail_relative_position.vector
                 qqs[n, -1] = np.eye(4)
             # 親ボーンから見たローカル座標行列
             matrixes = MMatrix4x4List(row, col)
@@ -240,12 +235,12 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             for bone in model.bone_trees[bone_name]:
                 if bone.index not in bone_indexes:
                     # モーションによる移動量
-                    if (fno, model.hexdigest, bone.name) in self.cache_poses:
-                        poses[0, bone.index] = self.cache_poses[(fno, model.hexdigest, bone.name)].gl.vector
+                    if (fno, model.hexdigest, bone.name) in self.cache_ratios:
+                        poses[0, bone.index] = self.cache_ratios[(fno, model.hexdigest, bone.name)].gl.vector
                     else:
                         pos = self.get_position(bone, fno, model)
                         poses[0, bone.index] = pos.gl.vector
-                        self.cache_poses[(fno, model.hexdigest, bone.name)] = pos
+                        self.cache_ratios[(fno, model.hexdigest, bone.name)] = pos
 
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
                     if (fno, model.hexdigest, bone.name) in self.cache_qqs:
@@ -280,7 +275,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         if bone_names:
             target_last_bone_names = {model.bone_trees[bname].last_name for bname in bone_names}
         else:
-            target_last_bone_names = set(model.bones.names.keys())
+            target_last_bone_names = set(model.bones.names)
         for bone in model.bones:
             if bone.is_ik and bone.ik:
                 # IKリンクボーン・ターゲットボーンのボーンツリーをすべてチェック対象とする
@@ -293,19 +288,19 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             # IK計算対象がない場合はそのまま終了
             return
         # モーション内のキーフレリストから前の変化キーフレと次の変化キーフレを抽出する
-        prev_frame_indices: set[int] = {0}
-        next_frame_indices: set[int] = {self.max_fno}
+        prev_frame_indexes: set[int] = {0}
+        next_frame_indexes: set[int] = {self.max_fno}
         for ik_last_bone_name in [bone.name for bone in model.bones if bone.name in ik_last_bone_names]:
             if ik_last_bone_name in self:
-                prev_frame_indices |= {i for i in self[ik_last_bone_name].indices if fno > i}
-                next_frame_indices |= {i for i in self[ik_last_bone_name].indices if fno < i}
-                prev_fno = max(list(prev_frame_indices))
-                next_fno = min(list(next_frame_indices))
+                prev_frame_indexes |= {i for i in self[ik_last_bone_name].indexes if fno > i}
+                next_frame_indexes |= {i for i in self[ik_last_bone_name].indexes if fno < i}
+                prev_fno = max(list(prev_frame_indexes))
+                next_fno = min(list(next_frame_indexes))
 
                 is_calc_prev = False
                 is_calc_next = False
                 for bone in model.bone_trees[ik_last_bone_name]:
-                    if bone.ik_link_indices or bone.ik_target_indices:
+                    if bone.ik_link_indexes or bone.ik_target_indexes:
                         if prev_fno not in self[bone.name] or not self[bone.name][prev_fno].ik_rotation:
                             is_calc_prev = True
                         if next_fno not in self[bone.name] or not self[bone.name][next_fno].ik_rotation:
@@ -314,12 +309,6 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                     self.get_rotation(model.bones[ik_last_bone_name], prev_fno, model, append_ik=True)
                 if is_calc_next and (next_fno, model.hexdigest, ik_last_bone_name) not in self.cache_qqs:
                     self.get_rotation(model.bones[ik_last_bone_name], next_fno, model, append_ik=True)
-
-    def get(self, name: str) -> VmdBoneNameFrames:
-        if name not in self:
-            self.data[name] = self.create_inner(name)
-
-        return self.data[name]
 
     def get_position(self, bone: Bone, fno: int, model: PmxModel) -> MVector3D:
         """
@@ -493,32 +482,32 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
             計算結果
         """
 
-        if not bone.ik_link_indices:
+        if not bone.ik_link_indexes:
             return qq
 
         # 影響ボーン移動辞書
         bone_positions: dict[int, MVector3D] = {}
 
-        for ik_target_bone_idx in bone.ik_link_indices:
+        for ik_target_bone_idx in bone.ik_link_indexes:
             # IKボーン自身の位置
             ik_bone = model.bones[ik_target_bone_idx]
 
             if ik_target_bone_idx not in model.bones or not ik_bone.ik:
                 continue
 
-            ik_matrixes = self.get_matrix_by_indexes([fno], [model.bone_trees[ik_bone.index]], model, append_ik=False)
+            ik_matrixes = self.get_matrix_by_indexes([fno], model.bone_trees.filter(ik_bone.name), model, append_ik=False)
             global_target_pos = ik_matrixes[fno][ik_bone.name].position
 
             # IKターゲットボーンツリー
             effector_bone = model.bones[ik_bone.ik.bone_index]
-            effector_bone_tree = model.bone_trees[effector_bone.index]
+            effector_bone_tree = model.bone_trees[effector_bone.name]
 
             # IKリンクボーンツリー
-            ik_link_bone_trees: dict[int, BoneTree] = {ik_bone.index: model.bone_trees[ik_bone.index]}
+            ik_link_bone_trees: dict[int, BoneTree] = {ik_bone.index: model.bone_trees[ik_bone.name]}
             for ik_link in ik_bone.ik.links:
                 if ik_link.bone_index not in model.bones:
                     continue
-                ik_link_bone_trees[ik_link.bone_index] = model.bone_trees[ik_link.bone_index]
+                ik_link_bone_trees[ik_link.bone_index] = model.bone_trees[model.bones[ik_link.bone_index].name]
 
             is_break = False
             for loop in range(ik_bone.ik.loop_count):
@@ -656,7 +645,7 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
                             f"-- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}], "
                             + f"rot[{link_bf.ik_rotation.to_euler_degrees_mmd() if link_bf.ik_rotation else '-'}]"
                         )
-                    self.append(link_bf)
+                    self[link_bf.name].append(link_bf)
 
                 if is_break:
                     break
@@ -693,63 +682,49 @@ class VmdBoneFrames(BaseIndexNameDictModel[VmdBoneFrame, VmdBoneNameFrames]):
         return qq
 
 
-class VmdMorphNameFrames(BaseIndexNameDictInnerModel[VmdMorphFrame]):
+class VmdMorphNameFrames(BaseIndexNameDictModel[VmdMorphFrame]):
     """
     モーフ名別キーフレ辞書
     """
 
-    def __init__(self, name: str):
-        super().__init__(name=name)
-        self.__ik_indices: list[int] = []
+    def __getitem__(self, key: int | str) -> VmdMorphFrame:
+        if isinstance(key, str):
+            return VmdMorphFrame(name=key, index=0)
 
-    def __getitem__(self, index: int) -> VmdMorphFrame:
-        if not self.data:
-            # まったくデータがない場合、生成
-            return VmdMorphFrame(name=self.name, index=index)
-
-        if index in self:
-            return self.data[index]
+        if key in self:
+            return self[key]
 
         # キーフレがない場合、生成したのを返す（保持はしない）
-        prev_index, middle_index, next_index = self.range_indexes(index)
+        prev_index, middle_index, next_index = self.range_indexes(key)
 
-        # prevとnextの範囲内である場合、補間曲線ベースで求め直す
+        # prevとnextの範囲内である場合、線形補間ベースで求め直す
         return self.calc(
             prev_index,
             middle_index,
             next_index,
-            index,
         )
 
-    def append(self, value: VmdMorphFrame):
-        return super().append(value)
-
-    def calc(
-        self,
-        prev_index: int,
-        middle_index: int,
-        next_index: int,
-        index: int,
-    ) -> VmdMorphFrame:
+    def calc(self, prev_index: int, index: int, next_index: int) -> VmdMorphFrame:
         if index in self:
-            return self.data[index]
+            return self[index]
 
-        mf = VmdMorphFrame(name=self.name, index=index)
+        if index in self.cache:
+            mf = self.cache[index]
+        else:
+            mf = VmdMorphFrame(name=self.name, index=index)
+            self.cache[index] = mf
 
-        if prev_index == middle_index == next_index:
-            # 全くキーフレがない場合、そのまま返す
-            return mf
-        if prev_index == middle_index and middle_index != next_index:
+        if prev_index == next_index:
+            if next_index == index:
+                # 全くキーフレがない場合、そのまま返す
+                return mf
+
             # FKのprevと等しい場合、指定INDEX以前がないので、その次のをコピーして返す
-            mf.ratio = float(self[next_index].ratio)
-            return mf
-        elif prev_index != middle_index and next_index == middle_index:
-            # FKのnextと等しい場合は、その前のをコピーして返す
-            mf.ratio = float(self[prev_index].ratio)
+            mf.ratio = self[next_index].ratio
             return mf
 
-        prev_mf = self[prev_index]
-        next_mf = self[next_index]
+        prev_mf = self[prev_index] if prev_index in self else VmdMorphFrame(name=self.name, index=prev_index)
+        next_mf = self[next_index] if next_index in self else VmdMorphFrame(name=self.name, index=next_index)
 
         # モーフは補間なし
         ry = (next_index - index) / (next_index - prev_index)
@@ -758,7 +733,7 @@ class VmdMorphNameFrames(BaseIndexNameDictInnerModel[VmdMorphFrame]):
         return mf
 
 
-class VmdMorphFrames(BaseIndexNameDictModel[VmdMorphFrame, VmdMorphNameFrames]):
+class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
     """
     モーフキーフレ辞書
     """
@@ -766,15 +741,15 @@ class VmdMorphFrames(BaseIndexNameDictModel[VmdMorphFrame, VmdMorphNameFrames]):
     def __init__(self) -> None:
         super().__init__()
 
-    def create_inner(self, name: str):
-        return VmdMorphNameFrames(name=name)
+    def create(self, key: str) -> VmdMorphNameFrames:
+        return VmdMorphNameFrames(name=key)
 
     @property
     def max_fno(self) -> int:
-        return max([max(self[fname].indices + [0]) for fname in self.names] + [0])
+        return max([max(self[fname].indexes + [0]) for fname in self.names] + [0])
 
 
-class VmdCameraFrames(BaseIndexDictModel[VmdCameraFrame]):
+class VmdCameraFrames(BaseIndexNameDictModel[VmdCameraFrame]):
     """
     カメラキーフレリスト
     """
@@ -783,7 +758,7 @@ class VmdCameraFrames(BaseIndexDictModel[VmdCameraFrame]):
         super().__init__()
 
 
-class VmdLightFrames(BaseIndexDictModel[VmdLightFrame]):
+class VmdLightFrames(BaseIndexNameDictModel[VmdLightFrame]):
     """
     照明キーフレリスト
     """
@@ -792,7 +767,7 @@ class VmdLightFrames(BaseIndexDictModel[VmdLightFrame]):
         super().__init__()
 
 
-class VmdShadowFrames(BaseIndexDictModel[VmdShadowFrame]):
+class VmdShadowFrames(BaseIndexNameDictModel[VmdShadowFrame]):
     """
     照明キーフレリスト
     """
@@ -801,7 +776,7 @@ class VmdShadowFrames(BaseIndexDictModel[VmdShadowFrame]):
         super().__init__()
 
 
-class VmdShowIkFrames(BaseIndexDictModel[VmdShowIkFrame]):
+class VmdShowIkFrames(BaseIndexNameDictModel[VmdShowIkFrame]):
     """
     IKキーフレリスト
     """

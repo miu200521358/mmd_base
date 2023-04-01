@@ -37,7 +37,7 @@ class VmdWriter(BaseModel):
             # bone frames
             fout.write(struct.pack("<L", self.motion.bone_count))  # ボーンフレーム数
             for bone_name in self.motion.bones.names:
-                for fno in reversed(self.motion.bones[bone_name].indices):
+                for fno in reversed(self.motion.bones[bone_name].indexes):
                     bf = self.motion.bones[bone_name][fno]
                     # INDEXを逆順に出力する
                     bname = bf.name.encode("cp932").decode("shift_jis").encode("shift_jis")[:15].ljust(15, b"\x00")  # 15文字制限

@@ -181,7 +181,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                 self.read_by_format[VmdBoneFrame].size,
             )
 
-            motion.bones.append(bf)
+            motion.bones[bf.name].append(bf)
 
     def read_morphs(self, motion: VmdMotion):
         for _ in range(self.read_uint()):
@@ -196,7 +196,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                 self.read_by_format[VmdMorphFrame].size,
             )
 
-            motion.morphs.append(mf)
+            motion.morphs[mf.name].append(mf)
 
     def read_cameras(self, motion: VmdMotion):
         for _ in range(self.read_uint()):

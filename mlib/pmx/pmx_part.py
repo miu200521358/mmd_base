@@ -32,7 +32,7 @@ class Deform(BaseModel, ABC):
 
     Parameters
     ----------
-    indices : list[int]
+    indexes : list[int]
         ボーンINDEXリスト
     weights : list[float]
         ウェイトリスト
@@ -40,13 +40,13 @@ class Deform(BaseModel, ABC):
         デフォームボーン個数
     """
 
-    def __init__(self, indices: list[int], weights: list[float], count: int):
+    def __init__(self, indexes: list[int], weights: list[float], count: int):
         super().__init__()
-        self.indices = np.fromiter(indices, dtype=np.int32, count=len(indices))
+        self.indexes = np.fromiter(indexes, dtype=np.int32, count=len(indexes))
         self.weights = np.fromiter(weights, dtype=np.float64, count=len(weights))
         self.count: int = count
 
-    def get_indices(self, weight_threshold: float = 0) -> np.ndarray:
+    def get_indexes(self, weight_threshold: float = 0) -> np.ndarray:
         """
         デフォームボーンINDEXリスト取得
 
@@ -61,7 +61,7 @@ class Deform(BaseModel, ABC):
         np.ndarray
             デフォームボーンINDEXリスト
         """
-        return self.indices[self.weights >= weight_threshold]
+        return self.indexes[self.weights >= weight_threshold]
 
     def get_weights(self, weight_threshold: float = 0) -> np.ndarray:
         """
@@ -92,13 +92,13 @@ class Deform(BaseModel, ABC):
         if align:
             # 揃える必要がある場合
             # 数が足りるよう、かさ増しする
-            ilist = np.fromiter(self.indices.tolist() + [0, 0, 0, 0], count=(len(self.indices) + 4))
+            ilist = np.fromiter(self.indexes.tolist() + [0, 0, 0, 0], count=(len(self.indexes) + 4))
             wlist = np.fromiter(self.weights.tolist() + [0, 0, 0, 0], count=(len(self.weights) + 4))
             # 正規化
             wlist /= wlist.sum(axis=0, keepdims=True)
 
             # ウェイトの大きい順に指定個数までを対象とする
-            self.indices = ilist[np.argsort(-wlist)][: self.count]
+            self.indexes = ilist[np.argsort(-wlist)][: self.count]
             self.weights = wlist[np.argsort(-wlist)][: self.count]
 
         # ウェイト正規化
@@ -111,9 +111,9 @@ class Deform(BaseModel, ABC):
         # 揃える必要がある場合
         # 数が足りるよう、かさ増しする
         ilist = np.fromiter(
-            np.array(self.indices.tolist() + [0, 0, 0, 0]),
+            np.array(self.indexes.tolist() + [0, 0, 0, 0]),
             dtype=np.int32,
-            count=len(self.indices) + 4,
+            count=len(self.indexes) + 4,
         )
         wlist = np.fromiter(
             np.array(self.weights.tolist() + [0, 0, 0, 0]),
@@ -124,14 +124,14 @@ class Deform(BaseModel, ABC):
         wlist /= wlist.sum(axis=0, keepdims=True)
 
         # ウェイトの大きい順に指定個数までを対象とする
-        indices = ilist[np.argsort(-wlist)][:4]
+        indexes = ilist[np.argsort(-wlist)][:4]
         weights = wlist[np.argsort(-wlist)][:4]
 
         # ウェイト正規化
         weights /= weights.sum(axis=0, keepdims=True)
 
         normalized_deform = []
-        normalized_deform.extend(indices.tolist())
+        normalized_deform.extend(indexes.tolist())
         normalized_deform.extend(weights.tolist())
 
         return normalized_deform
@@ -145,7 +145,7 @@ class Deform(BaseModel, ABC):
 
 
 class Bdef1(Deform):
-    __slots__ = ["indices", "weights", "count", "index0"]
+    __slots__ = ["indexes", "weights", "count", "index0"]
 
     def __init__(self, index0: int):
         super().__init__([index0], [1.0], 1)
@@ -155,7 +155,7 @@ class Bdef1(Deform):
 
 
 class Bdef2(Deform):
-    __slots__ = ["indices", "weights", "count", "index0", "index1", "weight0"]
+    __slots__ = ["indexes", "weights", "count", "index0", "index1", "weight0"]
 
     def __init__(self, index0: int, index1: int, weight0: float):
         super().__init__([index0, index1], [weight0, 1 - weight0], 2)
@@ -166,7 +166,7 @@ class Bdef2(Deform):
 
 class Bdef4(Deform):
     __slots__ = [
-        "indices",
+        "indexes",
         "weights",
         "count",
         "index0",
@@ -198,7 +198,7 @@ class Bdef4(Deform):
 
 class Sdef(Deform):
     __slots__ = [
-        "indices",
+        "indexes",
         "weights",
         "count",
         "index0",
@@ -332,19 +332,14 @@ class TextureType(IntEnum):
     SPHERE = 2
 
 
-class Texture(BaseIndexModel):
+class Texture(BaseIndexNameModel):
     """
     テクスチャ
-
-    Parameters
-    ----------
-    texture_path : str
-        テクスチャパス
     """
 
     __slots__ = [
         "index",
-        "texture_path",
+        "name",
         "for_draw",
         "image",
         "texture_type",
@@ -352,9 +347,8 @@ class Texture(BaseIndexModel):
         "texture_id",
     ]
 
-    def __init__(self, index: int = -1, texture_path: str = ""):
-        super().__init__(index=index)
-        self.texture_path = texture_path
+    def __init__(self, index: int = -1, name: str = ""):
+        super().__init__(index=index, name=name)
         self.for_draw = False
         self.valid = True
 
@@ -365,9 +359,9 @@ class Texture(BaseIndexModel):
 
         # global texture
         if is_individual:
-            tex_path = os.path.abspath(os.path.join(os.path.dirname(model_path), self.texture_path))
+            tex_path = os.path.abspath(os.path.join(os.path.dirname(model_path), self.name))
         else:
-            tex_path = self.texture_path
+            tex_path = self.name
 
         # テクスチャがちゃんとある場合のみ初期化処理実施
         self.valid = os.path.exists(tex_path)
@@ -734,6 +728,12 @@ class Bone(BaseIndexNameModel):
         "local_y_vector",
         "correct_local_z_vector",
         "local_axis",
+        "ik_link_indexes",
+        "ik_target_indexes",
+        "offset_matrix",
+        "init_matrix",
+        "parent_relative_position",
+        "tail_relative_position",
     ]
 
     def __init__(
@@ -773,11 +773,14 @@ class Bone(BaseIndexNameModel):
         self.ik = ik
         self.display = display
         self.is_system = is_system
-        self.ik_link_indices: list[int] = []
-        self.ik_target_indices: list[int] = []
+        self.ik_link_indexes: list[int] = []
+        self.ik_target_indexes: list[int] = []
 
         self.local_y_vector = self.local_z_vector.cross(self.local_x_vector)
         self.correct_local_z_vector = self.local_x_vector.cross(self.local_y_vector)
+
+        self.parent_relative_position = MVector3D()
+        self.tail_relative_position = MVector3D()
         self.local_axis = MVector3D()
 
         self.offset_matrix = MMatrix4x4()

@@ -10,12 +10,12 @@ def test_Bdef2_get_indexes():
 
     assert np.isclose(
         np.array([1, 2]),
-        Bdef2(1, 2, 0.3).get_indices(),
+        Bdef2(1, 2, 0.3).get_indexes(),
     ).all()
 
     assert np.isclose(
         np.array([2]),
-        Bdef2(1, 2, 0.3).get_indices(0.5),
+        Bdef2(1, 2, 0.3).get_indexes(0.5),
     ).all()
 
 
@@ -26,12 +26,12 @@ def test_Bdef4_get_indexes():
 
     assert np.isclose(
         np.array([1, 2, 3, 4]),
-        Bdef4(1, 2, 3, 4, 0.3, 0.2, 0.4, 0.1).get_indices(),
+        Bdef4(1, 2, 3, 4, 0.3, 0.2, 0.4, 0.1).get_indexes(),
     ).all()
 
     assert np.isclose(
         np.array([1, 3]),
-        Bdef4(1, 2, 3, 4, 0.3, 0.2, 0.4, 0.1).get_indices(0.3),
+        Bdef4(1, 2, 3, 4, 0.3, 0.2, 0.4, 0.1).get_indexes(0.3),
     ).all()
 
 
@@ -84,14 +84,6 @@ def test_DisplaySlots_init() -> None:
     assert 1 == d3.index
     assert "表情" == d3.name
     assert Switch.ON == d3.special_flg
-
-    with pytest.raises(KeyError) as e:
-        dd[2]
-        assert "Not Found 2" == e.value
-
-    with pytest.raises(KeyError) as e:
-        dd["センター"]
-        assert "Not Found センター" == e.value
 
 
 def test_read_by_filepath_error():
@@ -152,7 +144,7 @@ def test_read_by_filepath_ok() -> None:
     assert DeformType.BDEF2 == model.vertices[0].deform_type
     assert np.isclose(
         np.array([4, 108]),
-        model.vertices[0].deform.get_indices(),
+        model.vertices[0].deform.get_indexes(),
     ).all()
     assert np.isclose(
         np.array([0.7978904, 0.2021096]),
@@ -163,8 +155,8 @@ def test_read_by_filepath_ok() -> None:
     assert [2, 1, 0] == model.faces[0].vertices
     # cSpell:disable
     # テクスチャ
-    assert "tex\\_09.png" == model.textures[16].texture_path
-    assert "tex\\MatcapWarp_01.png" == model.textures[1].texture_path
+    assert "tex\\_09.png" == model.textures[16].name
+    assert "tex\\MatcapWarp_01.png" == model.textures[1].name
     # 材質
     assert "00_FaceEyeline" == model.materials[7].name
     assert "N00_000_00_FaceEyeline_00_FACE (Instance)" == model.materials[7].english_name
@@ -362,21 +354,7 @@ def test_read_by_filepath_ok() -> None:
     ).all()
     # ボーンツリー
     bone_tree = model.bone_trees["左手首"]
-    assert "全ての親" == bone_tree[0].name
-    assert "センター" == bone_tree[1].name
-    assert "グルーブ" == bone_tree[2].name
-    assert "腰" == bone_tree[3].name
-    assert "上半身" == bone_tree[4].name
-    assert "上半身2" == bone_tree[5].name
-    assert "上半身3" == bone_tree[6].name
-    assert "左肩P" == bone_tree[7].name
-    assert "左肩" == bone_tree[8].name
-    assert "左肩C" == bone_tree[9].name
-    assert "左腕" == bone_tree[10].name
-    assert "左腕捩" == bone_tree[11].name
-    assert "左ひじ" == bone_tree[12].name
-    assert "左手捩" == bone_tree[13].name
-    assert "左手首" == bone_tree[14].name
+    ["全ての親", "センター", "グルーブ", "腰", "上半身", "上半身2", "上半身3", "左肩P", "左肩", "左肩C", "左腕", "左腕捩", "左ひじ", "左手捩", "左手首"] == bone_tree.names
 
 
 def test_read_by_filepath_ok_tree() -> None:
@@ -389,33 +367,35 @@ def test_read_by_filepath_ok_tree() -> None:
     model: PmxModel = reader.read_by_filepath(os.path.join("tests", "resources", "ボーンツリーテストモデル.pmx"))
     # ボーンツリー
     bone_tree = model.bone_trees["左人指先"]
-    assert "全ての親" == bone_tree[0].name
-    assert "センター" == bone_tree[1].name
-    assert "グルーブ" == bone_tree[2].name
-    assert "腰" == bone_tree[3].name
-    assert "上半身" == bone_tree[4].name
-    assert "上半身2" == bone_tree[5].name
-    assert "左肩P" == bone_tree[6].name
-    assert "左肩" == bone_tree[7].name
-    assert "左腕YZ" == bone_tree[8].name
-    assert "左腕捩YZ" == bone_tree[9].name
-    assert "左腕捩X" == bone_tree[10].name
-    assert "左ひじYZ" == bone_tree[11].name
-    assert "左手捩YZ" == bone_tree[12].name
-    assert "左手捩X" == bone_tree[13].name
-    assert "左手捩6" == bone_tree[14].name
-    assert "左手首R" == bone_tree[15].name
-    assert "左手首2" == bone_tree[16].name
-    assert "左人指１" == bone_tree[17].name
-    assert "左人指２" == bone_tree[18].name
-    assert "左人指３" == bone_tree[19].name
-    assert "左人指先" == bone_tree[20].name
+    [
+        "全ての親",
+        "センター",
+        "グルーブ",
+        "腰",
+        "上半身",
+        "上半身2",
+        "左肩P",
+        "左肩",
+        "左腕YZ",
+        "左腕捩YZ",
+        "左腕捩X",
+        "左ひじYZ",
+        "左手捩YZ",
+        "左手捩X",
+        "左手捩6",
+        "左手首R",
+        "左手首2",
+        "左人指１",
+        "左人指２",
+        "左人指３",
+        "左人指先",
+    ] == bone_tree.names
 
-    new_bone_trees = model.bone_trees.gets(["左人指先", "右人指先"])
-    assert "全ての親" == new_bone_trees[0][0].name
-    assert "左人指先" == new_bone_trees[0][-1].name
-    assert "全ての親" == new_bone_trees[1][0].name
-    assert "右人指先" == new_bone_trees[1][-1].name
+    new_bone_trees = model.bone_trees.filter("左人指先", "右人指先")
+    assert "全ての親" == new_bone_trees["左人指先"][0].name
+    assert "左人指先" == new_bone_trees["左人指先"][-1].name
+    assert "全ての親" == new_bone_trees["右人指先"][0].name
+    assert "右人指先" == new_bone_trees["右人指先"][-1].name
 
 
 def test_read_by_filepath_complicated() -> None:

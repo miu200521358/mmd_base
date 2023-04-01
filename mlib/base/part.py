@@ -1,4 +1,5 @@
 from enum import Enum, unique
+from typing import TypeVar
 
 import numpy as np
 
@@ -89,8 +90,11 @@ class BaseIndexModel(BaseModel):
         super().__init__()
         self.index = index
 
+    def __bool__(self) -> bool:
+        return self.index >= 0
 
-class BaseIndexNameModel(BaseIndexModel):
+
+class BaseIndexNameModel(BaseModel):
     """
     INDEXと名前を持つ基底クラス
     """
@@ -112,3 +116,10 @@ class BaseIndexNameModel(BaseIndexModel):
         self.index: int = index
         self.name: str = name
         self.english_name: str = english_name
+
+    def __bool__(self) -> bool:
+        return self.index >= 0 and len(self.name) >= 0
+
+
+TBaseIndexModel = TypeVar("TBaseIndexModel", bound=BaseIndexModel)
+TBaseIndexNameModel = TypeVar("TBaseIndexNameModel", bound=BaseIndexNameModel)
