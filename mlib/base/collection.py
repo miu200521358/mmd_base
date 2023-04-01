@@ -247,7 +247,7 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
         raise NotImplementedError
 
     def __getitem__(self, key: str) -> TBaseIndexNameDictModel:
-        if key not in self._names:
+        if key not in self.data:
             self.append(self.create(key), name=key)
         return self.data[key]
 
