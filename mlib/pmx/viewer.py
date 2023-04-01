@@ -138,6 +138,7 @@ class PmxCanvas(glcanvas.GLCanvas):
     def on_play(self, event: wx.Event, record: bool = False):
         self.playing = not self.playing
         if self.playing:
+            # print(f"{self.frame_ctrl.GetValue():05d}: {datetime.now()}")
             self.recording = record
             self.queue = Queue()
             self.process = Process(
@@ -170,6 +171,8 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.on_capture(event)
 
             self.frame_ctrl.SetValue(self.frame_ctrl.GetValue() + 1)
+            # print(f"{self.frame_ctrl.GetValue():05d}: {datetime.now()}")
+
             self.Refresh()
 
     def on_reset(self, event: wx.Event):
