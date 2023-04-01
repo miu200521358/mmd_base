@@ -18,9 +18,9 @@ class Switch(Enum):
 class BaseRotationModel(BaseModel):
     def __init__(self, v_radians: MVector3D = MVector3D()) -> None:
         super().__init__()
-        self.__radians = MVector3D()
-        self.__degrees = MVector3D()
-        self.__qq = MQuaternion()
+        self._radians = MVector3D()
+        self._degrees = MVector3D()
+        self._qq = MQuaternion()
         self.radians = v_radians
 
     @property
@@ -28,14 +28,14 @@ class BaseRotationModel(BaseModel):
         """
         回転情報をクォータニオンとして受け取る
         """
-        return self.__qq
+        return self._qq
 
     @property
     def radians(self) -> MVector3D:
         """
         回転情報をラジアンとして受け取る
         """
-        return self.__radians
+        return self._radians
 
     @radians.setter
     def radians(self, v: MVector3D):
@@ -47,16 +47,16 @@ class BaseRotationModel(BaseModel):
         v : MVector3D
             ラジアン
         """
-        self.__radians = v
-        self.__degrees = MVector3D(*np.degrees(v.vector))
-        self.__qq = MQuaternion.from_euler_degrees(self.degrees)
+        self._radians = v
+        self._degrees = MVector3D(*np.degrees(v.vector))
+        self._qq = MQuaternion.from_euler_degrees(self.degrees)
 
     @property
     def degrees(self) -> MVector3D:
         """
         回転情報を度として受け取る
         """
-        return self.__degrees
+        return self._degrees
 
     @degrees.setter
     def degrees(self, v: MVector3D):
@@ -68,9 +68,9 @@ class BaseRotationModel(BaseModel):
         v : MVector3D
             度
         """
-        self.__degrees = v
-        self.__radians = MVector3D(*np.radians(v.vector))
-        self.__qq = MQuaternion.from_euler_degrees(v)
+        self._degrees = v
+        self._radians = MVector3D(*np.radians(v.vector))
+        self._qq = MQuaternion.from_euler_degrees(v)
 
 
 class BaseIndexModel(BaseModel):

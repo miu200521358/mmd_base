@@ -15,7 +15,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         """モデルリスト"""
         super().__init__()
         self.data: dict[int, TBaseIndexModel] = {}
-        self.__iter_index = 0
+        self._iter_index = 0
 
     def create(self) -> "TBaseIndexModel":
         raise NotImplementedError
@@ -48,14 +48,14 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         return len(self.data)
 
     def __iter__(self):
-        self.__iter_index = -1
+        self._iter_index = -1
         return self
 
     def __next__(self) -> TBaseIndexModel:
-        self.__iter_index += 1
-        if self.__iter_index >= len(self.data):
+        self._iter_index += 1
+        if self._iter_index >= len(self.data):
             raise StopIteration
-        return self.data[self.indexes[self.__iter_index]]
+        return self.data[self.indexes[self._iter_index]]
 
     def __contains__(self, key: int) -> bool:
         return key in self.data
@@ -82,8 +82,8 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         self.name = name
         self.data: dict[int, TBaseIndexNameModel] = {}
         self.cache: dict[int, TBaseIndexNameModel] = {}
-        self.__names: dict[str, int] = {}
-        self.__iter_index = 0
+        self._names: dict[str, int] = {}
+        self._iter_index = 0
 
     def __getitem__(self, key: int | str) -> TBaseIndexNameModel:
         if isinstance(key, int):
@@ -95,21 +95,21 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             if isinstance(key, int):
                 del self.data[key]
             else:
-                del self.data[self.__names[key]]
+                del self.data[self._names[key]]
 
     def append(self, value: TBaseIndexNameModel) -> None:
         if value.index < 0:
             value.index = len(self.data)
 
-        if value.name and value.name not in self.__names:
+        if value.name and value.name not in self._names:
             # 名前は先勝ちで保持
-            self.__names[value.name] = value.index
+            self._names[value.name] = value.index
 
         self.data[value.index] = value
 
     @property
     def names(self) -> list[str]:
-        return list(self.__names.keys())
+        return list(self._names.keys())
 
     @property
     def indexes(self) -> list[int]:
@@ -159,23 +159,23 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         TBaseIndexNameModel
             要素
         """
-        return self.data[self.__names[name]]
+        return self.data[self._names[name]]
 
     def __len__(self) -> int:
         return len(self.data)
 
     def __iter__(self):
-        self.__iter_index = -1
+        self._iter_index = -1
         return self
 
     def __next__(self) -> TBaseIndexNameModel:
-        self.__iter_index += 1
-        if self.__iter_index >= len(self.data):
+        self._iter_index += 1
+        if self._iter_index >= len(self.data):
             raise StopIteration
-        return self.data[self.indexes[self.__iter_index]]
+        return self.data[self.indexes[self._iter_index]]
 
     def __contains__(self, key: int | str) -> bool:
-        return key in self.data or key in self.__names
+        return key in self.data or key in self._names
 
     def __bool__(self) -> bool:
         return len(self.data) > 0
@@ -234,14 +234,14 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
         super().__init__()
         self.data: dict[str, TBaseIndexNameDictModel] = {}
         self.cache: dict[str, TBaseIndexNameDictModel] = {}
-        self.__names: list[str] = []
-        self.__iter_index = 0
+        self._names: list[str] = []
+        self._iter_index = 0
 
     def create(self, key: str) -> TBaseIndexNameDictModel:
         raise NotImplementedError
 
     def __getitem__(self, key: str) -> TBaseIndexNameDictModel:
-        if key not in self.__names:
+        if key not in self._names:
             self.append(self.create(key), name=key)
         return self.data[key]
 
@@ -256,29 +256,29 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
         if not name:
             name = value.last_name
 
-        if name not in self.__names:
-            self.__names.append(name)
+        if name not in self._names:
+            self._names.append(name)
         self.data[name] = value
 
     @property
     def names(self) -> list[str]:
-        return self.__names
+        return self._names
 
     def __len__(self) -> int:
         return len(self.data)
 
     def __iter__(self):
-        self.__iter_index = -1
+        self._iter_index = -1
         return self
 
     def __next__(self) -> TBaseIndexNameDictModel:
-        self.__iter_index += 1
-        if self.__iter_index >= len(self.__names):
+        self._iter_index += 1
+        if self._iter_index >= len(self._names):
             raise StopIteration
-        return self.data[self.__names[self.__iter_index]]
+        return self.data[self._names[self._iter_index]]
 
     def __contains__(self, key: str) -> bool:
-        return key in self.__names
+        return key in self._names
 
     def __bool__(self) -> bool:
         return len(self.data) > 0
