@@ -24,6 +24,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
     def __getitem__(self, index: int) -> TBaseIndexModel:
         if index < 0:
             # マイナス指定の場合、後ろからの順番に置き換える
+            self.sort_indexes()
             index = len(self.data) + index
             return self.data[self.indexes[index]]
         if index in self.data:
@@ -37,7 +38,9 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         if value.index < 0:
             value.index = len(self.data)
         self.data[value.index] = value
-        self.indexes = sorted(self.data.keys())
+
+    def sort_indexes(self) -> None:
+        self.indexes = sorted(self.data.keys()) if self.data else []
 
     def __delitem__(self, index: int) -> None:
         del self.data[index]
@@ -47,6 +50,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
 
     def __iter__(self):
         self._iter_index = -1
+        self.sort_indexes()
         return self
 
     def __next__(self) -> TBaseIndexModel:
@@ -105,7 +109,6 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             self._names[value.name] = value.index
 
         self.data[value.index] = value
-        self.indexes = sorted(self.data.keys())
 
     @property
     def names(self) -> list[str]:
@@ -137,6 +140,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         """
         if index < 0:
             # マイナス指定の場合、後ろからの順番に置き換える
+            self.sort_indexes()
             index = len(self.data) + index
             return self.data[self.indexes[index]]
         return self.data[index]
@@ -157,11 +161,15 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         """
         return self.data[self._names[name]]
 
+    def sort_indexes(self) -> None:
+        self.indexes = sorted(self.data.keys()) if self.data else []
+
     def __len__(self) -> int:
         return len(self.data)
 
     def __iter__(self):
         self._iter_index = -1
+        self.sort_indexes()
         return self
 
     def __next__(self) -> TBaseIndexNameModel:
@@ -194,6 +202,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
                 idx == next_idx: 指定されたINDEXが一番最後
         """
         if not indexes:
+            self.sort_indexes()
             indexes = self.indexes
         if not indexes or index in self.data:
             return index, index, index

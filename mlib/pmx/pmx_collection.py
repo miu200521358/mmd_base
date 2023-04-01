@@ -123,9 +123,9 @@ class Bones(BaseIndexNameDictModel[Bone]):
         for end_bone in self:
             # レイヤー込みのINDEXリスト取得を末端ボーンをキーとして保持
             bone_tree = BoneTree(name=end_bone.name)
-            for ti, (_, bidx) in enumerate(sorted(self.create_bone_link_indexes(end_bone.index))):
+            for _, bidx in sorted(self.create_bone_link_indexes(end_bone.index)):
                 bone_tree.append(self[bidx].copy())
-            bone_trees.append(bone_tree)
+            bone_trees.append(bone_tree, name=end_bone.name)
 
         return bone_trees
 
