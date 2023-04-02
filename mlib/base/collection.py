@@ -100,6 +100,9 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             else:
                 del self.data[self._names[key]]
 
+    def __setitem__(self, v: TBaseIndexNameModel) -> None:
+        self.data[v.index] = v
+
     def append(self, value: TBaseIndexNameModel, is_sort: bool = True) -> None:
         if value.index < 0:
             value.index = len(self.data)
@@ -257,6 +260,9 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
     def __delitem__(self, key: str) -> None:
         if key in self:
             del self.data[key]
+
+    def __setitem__(self, v: TBaseIndexNameDictModel) -> None:
+        self.data[v.name] = v
 
     def append(self, value: TBaseIndexNameDictModel, name: Optional[str] = None) -> None:
         if not name:

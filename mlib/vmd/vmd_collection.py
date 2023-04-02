@@ -10,7 +10,7 @@ from mlib.base.collection import BaseHashModel, BaseIndexNameDictModel, BaseInde
 from mlib.base.logger import MLogger
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
 from mlib.pmx.pmx_collection import BoneTree, PmxModel
-from mlib.pmx.pmx_part import Bone, BoneMorphOffset, MorphType, VertexMorphOffset
+from mlib.pmx.pmx_part import Bone, BoneMorphOffset, GroupMorphOffset, MorphType, VertexMorphOffset
 from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
 
 logger = MLogger(__name__, logging.DEBUG)
@@ -725,7 +725,7 @@ class VmdMorphNameFrames(BaseIndexNameDictModel[VmdMorphFrame]):
         next_mf = self.data[next_index] if next_index in self else VmdMorphFrame(name=self.name, index=next_index)
 
         # モーフは補間なし
-        ry = (next_index - index) / (next_index - prev_index)
+        ry = (index - prev_index) / (next_index - prev_index)
         mf.ratio = calc_morph_ratio(prev_mf.ratio, next_mf.ratio, ry)
 
         return mf
@@ -757,13 +757,14 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
             # モーションによる頂点モーフ変動量
             for offset in morph.offsets:
-                if type(offset) is VertexMorphOffset:
+                if type(offset) is VertexMorphOffset and offset.vertex_index < row:
                     ratio_pos: MVector3D = offset.position_offset * mf.ratio
                     poses[offset.vertex_index] += ratio_pos.gl.vector
 
         return np.array(poses)
 
-    def animate_bone_morphs(self, fno: int, model: PmxModel) -> VmdBoneFrames:
+    def animate_bone_morphs(self, fno: int, model: PmxModel) -> tuple[list[str], VmdBoneFrames]:
+        bone_morph_names: set[str] = set([])
         bone_morphs = VmdBoneFrames()
 
         for morph in model.morphs.filter_by_type(MorphType.BONE):
@@ -775,11 +776,47 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             for offset in morph.offsets:
                 if type(offset) is BoneMorphOffset and offset.bone_index in model.bones:
                     bone = model.bones[offset.bone_index]
-                    bf = bone_morphs[bone.name][fno]
+                    bone_morph_names |= {bone.name}
+
+                    bf = VmdBoneFrame(name=bone.name, index=fno)
                     bf.position += offset.position * mf.ratio
                     bf.rotation *= MQuaternion.from_euler_degrees(offset.rotation.degrees * mf.ratio)
+                    bone_morphs[bone.name].append(bf)
 
-        return bone_morphs
+        return list(bone_morph_names), bone_morphs
+
+    def animate_group_morphs(self, fno: int, model: PmxModel) -> tuple[np.ndarray, list[str], VmdBoneFrames]:
+        group_vertex_poses = np.full((len(model.vertices), 3), np.zeros(3))
+        group_bone_morphs = VmdBoneFrames()
+        group_bone_morph_names: set[str] = set([])
+
+        for morph in model.morphs.filter_by_type(MorphType.GROUP):
+            mf = self[morph.name][fno]
+            if not mf.ratio:
+                continue
+
+            # モーションによるボーンモーフ変動量
+            for group_offset in morph.offsets:
+                if type(group_offset) is GroupMorphOffset and group_offset.morph_index in model.morphs:
+                    part_morph = model.morphs[group_offset.morph_index]
+                    mf_factor = mf.ratio * group_offset.morph_factor
+                    if not mf_factor:
+                        continue
+
+                    for offset in part_morph.offsets:
+                        if type(offset) is VertexMorphOffset and offset.vertex_index < group_vertex_poses.shape[0]:
+                            ratio_pos: MVector3D = offset.position_offset * mf_factor
+                            group_vertex_poses[offset.vertex_index] += ratio_pos.gl.vector
+                        elif type(offset) is BoneMorphOffset and offset.bone_index in model.bones:
+                            bone = model.bones[offset.bone_index]
+                            group_bone_morph_names |= {bone.name}
+
+                            bf = VmdBoneFrame(name=bone.name, index=fno)
+                            bf.position += offset.position * mf_factor
+                            bf.rotation *= MQuaternion.from_euler_degrees(offset.rotation.degrees * mf_factor)
+                            group_bone_morphs[bone.name].append(bf)
+
+        return group_vertex_poses, list(group_bone_morph_names), group_bone_morphs
 
 
 class VmdCameraFrames(BaseIndexNameDictModel[VmdCameraFrame]):
@@ -879,13 +916,18 @@ class VmdMotion(BaseHashModel):
         # 頂点モーフ
         vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model)
         # ボーンモーフ
-        bone_morphs = self.morphs.animate_bone_morphs(fno, model)
-        bone_morph_poses, bone_morph_qqs = bone_morphs.animate_bone_matrixes(fno, model)
+        bone_morph_names, bone_morphs = self.morphs.animate_bone_morphs(fno, model)
+        bone_morph_poses, bone_morph_qqs = bone_morphs.animate_bone_matrixes(fno, model, bone_morph_names)
+        # グループモーフ
+        group_vertex_morph_poses, group_bone_morph_names, group_bone_morphs = self.morphs.animate_group_morphs(fno, model)
+        group_bone_morph_poses, group_bone_morph_qqs = group_bone_morphs.animate_bone_matrixes(fno, model, group_bone_morph_names)
 
         # ボーン変形行列
         matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
         matrixes.translate(bone_morph_poses.tolist())
         matrixes.rotate(bone_morph_qqs.tolist())
+        matrixes.translate(group_bone_morph_poses.tolist())
+        matrixes.rotate(group_bone_morph_qqs.tolist())
         matrixes.translate(bone_poses.tolist())
         matrixes.rotate(bone_qqs.tolist())
 
@@ -899,4 +941,4 @@ class VmdMotion(BaseHashModel):
 
             bone_matrixes.append(matrix.T)
 
-        return (np.array(bone_matrixes), vertex_morph_poses)
+        return (np.array(bone_matrixes), vertex_morph_poses + group_vertex_morph_poses)
