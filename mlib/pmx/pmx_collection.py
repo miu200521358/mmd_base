@@ -514,16 +514,17 @@ class Meshes(BaseIndexDictModel[Mesh]):
             VsLayout.WEIGHT_ID.value: {"size": 4, "offset": 15},
             VsLayout.MORPH_ID.value: {"size": 3, "offset": 19},
         }
-        self.ibo_faces = IBO(self.faces)
-
-    def draw(self, bone_matrixes: np.ndarray, vertex_morph_poses: np.ndarray):
-        # モーフ変動量を上書き設定
-        morph_comps = self.vbo_components[VsLayout.MORPH_ID.value]
-        self.vertices[:, morph_comps["offset"] : (morph_comps["offset"] + morph_comps["size"])] = vertex_morph_poses
+        self.morph_comps = self.vbo_components[VsLayout.MORPH_ID.value]
         self.vbo_vertices = VBO(
             self.vertices,
             self.vbo_components,
         )
+        self.ibo_faces = IBO(self.faces)
+
+    def draw(self, bone_matrixes: np.ndarray, vertex_morph_poses: np.ndarray):
+        # 頂点モーフ変動量を上書き設定してからバインド
+        self.vbo_vertices.data[:, self.morph_comps["offset"] : (self.morph_comps["offset"] + self.morph_comps["size"])] = vertex_morph_poses
+        self.vbo_vertices.bind()
 
         for mesh in self:
             self.vao.bind()
