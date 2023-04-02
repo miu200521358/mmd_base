@@ -926,8 +926,10 @@ class VmdMotion(BaseHashModel):
         matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
         matrixes.translate(bone_morph_poses.tolist())
         matrixes.rotate(bone_morph_qqs.tolist())
+
         matrixes.translate(group_bone_morph_poses.tolist())
         matrixes.rotate(group_bone_morph_qqs.tolist())
+
         matrixes.translate(bone_poses.tolist())
         matrixes.rotate(bone_qqs.tolist())
 
