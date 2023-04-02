@@ -364,7 +364,7 @@ class Texture(BaseIndexNameModel):
             tex_path = self.name
 
         # テクスチャがちゃんとある場合のみ初期化処理実施
-        self.valid = os.path.exists(tex_path)
+        self.valid = os.path.exists(tex_path) & os.path.isfile(tex_path)
         if self.valid:
             try:
                 self.image = Image.open(tex_path).convert("RGBA")
