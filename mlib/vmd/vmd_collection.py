@@ -10,7 +10,7 @@ from mlib.base.collection import BaseHashModel, BaseIndexNameDictModel, BaseInde
 from mlib.base.logger import MLogger
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
 from mlib.pmx.pmx_collection import BoneTree, PmxModel
-from mlib.pmx.pmx_part import Bone, MorphType, VertexMorphOffset
+from mlib.pmx.pmx_part import Bone, BoneMorphOffset, MorphType, VertexMorphOffset
 from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
 
 logger = MLogger(__name__, logging.DEBUG)
@@ -220,17 +220,20 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return bone_matrixes
 
-    def animate_bone_matrixes(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray]:
+    def animate_bone_matrixes(self, fno: int, model: PmxModel, bone_names: Optional[list[str]] = None) -> tuple[np.ndarray, np.ndarray]:
         row = 1
         col = len(model.bones)
         poses = np.full((row, col, 3), np.zeros(3))
         qqs = np.full((row, col, 4, 4), np.eye(4))
         bone_indexes: list[int] = []
 
+        if not bone_names:
+            bone_names = model.bones.tail_bone_names
+
         # IK回転を事前に求めておく
         self.calc_ik_rotations(fno, model)
 
-        for bone_name in model.bones.tail_bone_names:
+        for bone_name in bone_names:
             for bone in model.bone_trees[bone_name]:
                 if bone.index not in bone_indexes:
                     # モーションによる移動量
@@ -743,9 +746,9 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
     def max_fno(self) -> int:
         return max([max(self[fname].indexes + [0]) for fname in self.names] + [0])
 
-    def animate_vertex_morph(self, fno: int, model: PmxModel) -> np.ndarray:
+    def animate_vertex_morphs(self, fno: int, model: PmxModel) -> np.ndarray:
         row = len(model.vertices)
-        vertex_morph_poses = np.full((row, 3), np.zeros(3))
+        poses = np.full((row, 3), np.zeros(3))
 
         for morph in model.morphs.filter_by_type(MorphType.VERTEX):
             mf = self[morph.name][fno]
@@ -756,9 +759,27 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             for offset in morph.offsets:
                 if type(offset) is VertexMorphOffset:
                     ratio_pos: MVector3D = offset.position_offset * mf.ratio
-                    vertex_morph_poses[offset.vertex_index] += ratio_pos.gl.vector
+                    poses[offset.vertex_index] += ratio_pos.gl.vector
 
-        return np.array(vertex_morph_poses)
+        return np.array(poses)
+
+    def animate_bone_morphs(self, fno: int, model: PmxModel) -> VmdBoneFrames:
+        bone_morphs = VmdBoneFrames()
+
+        for morph in model.morphs.filter_by_type(MorphType.BONE):
+            mf = self[morph.name][fno]
+            if not mf.ratio:
+                continue
+
+            # モーションによるボーンモーフ変動量
+            for offset in morph.offsets:
+                if type(offset) is BoneMorphOffset and offset.bone_index in model.bones:
+                    bone = model.bones[offset.bone_index]
+                    bf = bone_morphs[bone.name][fno]
+                    bf.position += offset.position * mf.ratio
+                    bf.rotation *= MQuaternion.from_euler_degrees(offset.rotation.degrees * mf.ratio)
+
+        return bone_morphs
 
 
 class VmdCameraFrames(BaseIndexNameDictModel[VmdCameraFrame]):
@@ -852,11 +873,19 @@ class VmdMotion(BaseHashModel):
         return self.model_name
 
     def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray]:
+        # ボーン操作
         bone_poses, bone_qqs = self.bones.animate_bone_matrixes(fno, model)
-        vertex_morph_poses = self.morphs.animate_vertex_morph(fno, model)
 
-        # 座標変換行列
+        # 頂点モーフ
+        vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model)
+        # ボーンモーフ
+        bone_morphs = self.morphs.animate_bone_morphs(fno, model)
+        bone_morph_poses, bone_morph_qqs = bone_morphs.animate_bone_matrixes(fno, model)
+
+        # ボーン変形行列
         matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
+        matrixes.translate(bone_morph_poses.tolist())
+        matrixes.rotate(bone_morph_qqs.tolist())
         matrixes.translate(bone_poses.tolist())
         matrixes.rotate(bone_qqs.tolist())
 

@@ -32,6 +32,20 @@ class BaseRotationModel(BaseModel):
         """
         return self._qq
 
+    @qq.setter
+    def qq(self, v: MQuaternion):
+        """
+        クォータニオンを回転情報として設定する
+
+        Parameters
+        ----------
+        v : MQuaternion
+            クォータニオン
+        """
+        self._qq = v
+        self._degrees = v.to_euler_degrees()
+        self._radians = MVector3D(*np.radians(self._degrees.vector))
+
     @property
     def radians(self) -> MVector3D:
         """

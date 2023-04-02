@@ -909,17 +909,18 @@ class BoneMorphOffset(MorphOffset):
         ボーンIndex
     position : MVector3D
         移動量(x,y,z)
-    rotation : MQuaternion
+    qq : MQuaternion
         回転量-クォータニオン(x,y,z,w)
     """
 
     __slots__ = ["bone_index", "position", "rotation"]
 
-    def __init__(self, bone_index: int, position: MVector3D, rotation: MQuaternion):
+    def __init__(self, bone_index: int, position: MVector3D, qq: MQuaternion):
         super().__init__()
         self.bone_index = bone_index
         self.position = position
-        self.rotation = rotation
+        self.rotation = BaseRotationModel()
+        self.rotation.qq = qq
 
 
 class GroupMorphOffset(MorphOffset):
