@@ -17,11 +17,11 @@ from mlib.vmd.vmd_collection import VmdMotion
 logger = MLogger(__name__)
 
 
-def calc_bone_matrixes(queue: Queue, fno: int, motion: VmdMotion, model: PmxModel):
+def animate(queue: Queue, fno: int, motion: VmdMotion, model: PmxModel):
     while fno < motion.max_fno:
         fno += 1
-        matrixes = motion.bones.get_mesh_gl_matrixes(fno, model)
-        queue.put(matrixes)
+        bone_matrixes, vertex_morph_poses = motion.animate(fno, model)
+        queue.put((bone_matrixes, vertex_morph_poses))
     queue.put(None)
 
 
@@ -132,7 +132,7 @@ class PmxCanvas(glcanvas.GLCanvas):
     def change_motion(self, event: wx.Event):
         if self.model and self.motion:
             now_fno = self.frame_ctrl.GetValue()
-            self.bone_matrixes = self.motion.bones.get_mesh_gl_matrixes(now_fno, self.model)
+            self.bone_matrixes, self.vertex_morph_poses = self.motion.animate(now_fno, self.model)
             self.Refresh()
 
     def on_play(self, event: wx.Event, record: bool = False):
@@ -142,7 +142,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.recording = record
             self.queue = Queue()
             self.process = Process(
-                target=calc_bone_matrixes,
+                target=animate,
                 args=(self.queue, self.frame_ctrl.GetValue(), self.motion, self.model),
                 name="CalcProcess",
             )
@@ -156,16 +156,21 @@ class PmxCanvas(glcanvas.GLCanvas):
 
     def on_play_timer(self, event: wx.Event):
         if self.queue and not self.queue.empty():
-            matrixes: Optional[np.ndarray] = None
-            while not self.queue.empty():
-                matrixes = self.queue.get()
+            bone_matrixes: Optional[np.ndarray] = None
+            vertex_morph_poses: Optional[np.ndarray] = None
 
-            if matrixes is None and self.process:
+            while not self.queue.empty():
+                bone_matrixes, vertex_morph_poses = self.queue.get()
+
+            if bone_matrixes is None and self.process:
                 self.on_play(event)
                 return
 
-            if matrixes is not None and matrixes.any():
-                self.bone_matrixes = matrixes
+            if bone_matrixes is not None and bone_matrixes.any():
+                self.bone_matrixes = bone_matrixes
+
+            if vertex_morph_poses is not None and vertex_morph_poses.any():
+                self.vertex_morph_poses = vertex_morph_poses
 
             if self.recording:
                 self.on_capture(event)

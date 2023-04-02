@@ -10,7 +10,7 @@ from mlib.base.collection import BaseHashModel, BaseIndexNameDictModel, BaseInde
 from mlib.base.logger import MLogger
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
 from mlib.pmx.pmx_collection import BoneTree, PmxModel
-from mlib.pmx.pmx_part import Bone
+from mlib.pmx.pmx_part import Bone, MorphType, VertexMorphOffset
 from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
 
 logger = MLogger(__name__, logging.DEBUG)
@@ -220,7 +220,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return bone_matrixes
 
-    def get_mesh_gl_matrixes(self, fno: int, model: PmxModel) -> np.ndarray:
+    def animate_bone_matrixes(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray]:
         row = 1
         col = len(model.bones)
         poses = np.full((row, col, 3), np.zeros(3))
@@ -251,22 +251,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 計算済みボーンとして登録
                     bone_indexes.append(bone.index)
 
-        # 座標変換行列
-        matrixes = MMatrix4x4List(row, col)
-        matrixes.translate(poses.tolist())
-        matrixes.rotate(qqs.tolist())
-
-        mesh_matrixes: list[np.ndarray] = []
-        for bone in model.bones:
-            # ボーン変形行列を求める
-            matrix = model.bones.get_mesh_gl_matrix(matrixes, bone.index, np.eye(4))
-
-            # BOf行列: 自身のボーンのボーンオフセット行列
-            matrix = matrix @ bone.offset_matrix.copy().vector
-
-            mesh_matrixes.append(matrix.T)
-
-        return np.array(mesh_matrixes)
+        return poses, qqs
 
     def calc_ik_rotations(self, fno: int, model: PmxModel, bone_names: Optional[list[str]] = None):
         # IK関係の末端ボーン名
@@ -701,13 +686,13 @@ class VmdMorphNameFrames(BaseIndexNameDictModel[VmdMorphFrame]):
         if isinstance(key, str):
             return VmdMorphFrame(name=key, index=0)
 
-        if key in self:
-            return self[key]
+        if key in self.data:
+            return self.get_by_index(key)
 
         # キーフレがない場合、生成したのを返す（保持はしない）
         prev_index, middle_index, next_index = self.range_indexes(key)
 
-        # prevとnextの範囲内である場合、線形補間ベースで求め直す
+        # prevとnextの範囲内である場合、補間曲線ベースで求め直す
         return self.calc(
             prev_index,
             middle_index,
@@ -757,6 +742,23 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
     @property
     def max_fno(self) -> int:
         return max([max(self[fname].indexes + [0]) for fname in self.names] + [0])
+
+    def animate_vertex_morph(self, fno: int, model: PmxModel) -> np.ndarray:
+        row = len(model.vertices)
+        vertex_morph_poses = np.full((row, 3), np.zeros(3))
+
+        for morph in model.morphs.filter_by_type(MorphType.VERTEX):
+            mf = self[morph.name][fno]
+            if not mf.ratio:
+                continue
+
+            # モーションによる頂点モーフ変動量
+            for offset in morph.offsets:
+                if type(offset) is VertexMorphOffset:
+                    ratio_pos: MVector3D = offset.position_offset * mf.ratio
+                    vertex_morph_poses[offset.vertex_index] += ratio_pos.gl.vector
+
+        return np.array(vertex_morph_poses)
 
 
 class VmdCameraFrames(BaseIndexNameDictModel[VmdCameraFrame]):
@@ -848,3 +850,24 @@ class VmdMotion(BaseHashModel):
     @property
     def name(self) -> str:
         return self.model_name
+
+    def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray]:
+        bone_poses, bone_qqs = self.bones.animate_bone_matrixes(fno, model)
+        vertex_morph_poses = self.morphs.animate_vertex_morph(fno, model)
+
+        # 座標変換行列
+        matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
+        matrixes.translate(bone_poses.tolist())
+        matrixes.rotate(bone_qqs.tolist())
+
+        bone_matrixes: list[np.ndarray] = []
+        for bone in model.bones:
+            # 全体のボーン変形行列を求める
+            matrix = model.bones.get_mesh_gl_matrix(matrixes, bone.index, np.eye(4))
+
+            # BOf行列: 自身のボーンのボーンオフセット行列
+            matrix = matrix @ bone.offset_matrix.copy().vector
+
+            bone_matrixes.append(matrix.T)
+
+        return (np.array(bone_matrixes), vertex_morph_poses)

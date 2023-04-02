@@ -7,7 +7,7 @@ import numpy as np
 from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
-from mlib.pmx.pmx_part import Bone, DisplaySlot, DrawFlg, Face, Joint, Material, Morph, RigidBody, Texture, TextureType, ToonSharing, Vertex
+from mlib.pmx.pmx_part import Bone, DisplaySlot, DrawFlg, Face, Joint, Material, Morph, MorphType, RigidBody, Texture, TextureType, ToonSharing, Vertex
 from mlib.pmx.shader import MShader, VsLayout
 
 
@@ -248,6 +248,9 @@ class Morphs(BaseIndexNameDictModel[Morph]):
 
     def __init__(self) -> None:
         super().__init__()
+
+    def filter_by_type(self, *keys: MorphType) -> list[Morph]:
+        return [(v.copy()) for v in self.data.values() if v.morph_type in keys]
 
 
 class DisplaySlots(BaseIndexNameDictModel[DisplaySlot]):

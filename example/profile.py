@@ -14,7 +14,7 @@ motion = VmdReader().read_by_filepath("D:/MMD/MikuMikuDance_v926x64/UserFile/Mot
 start_time = time.perf_counter()
 
 for fno in range(1000, 1010):
-    matrixes = motion.bones.get_mesh_gl_matrixes(fno, model)
+    results = motion.animate(fno, model)
 
 # # キーフレ
 # bone_trees = model.bone_trees.gets(["左手首", "右手首"])
