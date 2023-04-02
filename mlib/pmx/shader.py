@@ -18,6 +18,7 @@ class VsLayout(IntEnum):
     EDGE_ID = 4
     BONE_ID = 5
     WEIGHT_ID = 6
+    MORPH_ID = 7
 
 
 class Msaa:
@@ -185,6 +186,7 @@ class MShader:
             VsLayout.EDGE_ID.value,
             VsLayout.BONE_ID.value,
             VsLayout.WEIGHT_ID.value,
+            VsLayout.MORPH_ID.value,
         )
 
         fragments_shader_src = Path(os.path.join(os.path.dirname(__file__), "glsl", fragments_shader_name)).read_text(encoding="utf-8")

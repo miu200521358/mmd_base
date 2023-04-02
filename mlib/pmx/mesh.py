@@ -33,11 +33,12 @@ class VBO:
         self.vbo = gl.glGenBuffers(1)
         self.dsize = np.dtype(data.dtype).itemsize
         self.components = components
+        self.data = data
         stride = sum([v["size"] for v in self.components.values()])
         for v in self.components.values():
             v["stride"] = stride * self.dsize
             v["pointer"] = v["offset"] * self.dsize
-        self.set_vertex_attribute(data)
+        self.set_vertex_attribute()
 
     def __del__(self) -> None:
         if self.vbo:
@@ -49,9 +50,9 @@ class VBO:
     def unbind(self) -> None:
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
 
-    def set_vertex_attribute(self, data: np.ndarray) -> None:
+    def set_vertex_attribute(self) -> None:
         self.bind()
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, data.nbytes, data, gl.GL_STATIC_DRAW)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, self.data.nbytes, self.data, gl.GL_STATIC_DRAW)
 
     def set_slot(self, slot: VsLayout) -> None:
         self.bind()

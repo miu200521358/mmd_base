@@ -7,6 +7,7 @@ in layout(location = %d) vec2 extendUv;
 in layout(location = %d) float vertexEdge;
 in layout(location = %d) vec4 boneIdxs;
 in layout(location = %d) vec4 boneWeights;
+in layout(location = %d) vec3 morphPos;
 
 // ボーン変形行列を格納するテクスチャ
 uniform sampler2D boneMatrixTexture;
@@ -32,7 +33,7 @@ out vec2 sphereUv;
 out vec3 eye;
 
 void main() {
-    vec4 position4 = vec4(position, 1.0);
+    vec4 position4 = vec4(position + morphPos, 1.0);
 
     // 各頂点で使用されるボーン変形行列を計算する
     mat4 boneTransformMatrix = mat4(0.0);

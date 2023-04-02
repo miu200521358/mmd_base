@@ -118,7 +118,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         if self.model:
             self.shader.msaa.bind()
-            self.model.draw(self.bone_matrixes)
+            self.model.draw(self.bone_matrixes, self.vertex_morph_poses)
             self.shader.msaa.unbind()
 
     def on_frame_forward(self, event: wx.Event):

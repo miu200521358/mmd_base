@@ -7,6 +7,7 @@ in layout(location = %d) vec2 extendUv;
 in layout(location = %d) float vertexEdge;
 in layout(location = %d) vec4 boneIdxs;
 in layout(location = %d) vec4 boneWeights;
+in layout(location = %d) vec3 morphPos;
 
 // ボーン変形行列を格納するテクスチャ
 uniform sampler2D boneMatrixTexture;
@@ -40,5 +41,5 @@ void main() {
     float edgeWight = edgeSize * vertexEdge;
 
     // 頂点位置
-    gl_Position = modelViewProjectionMatrix * boneTransformMatrix * (vec4(position + (normal * edgeWight * 0.02), 1.0));
+    gl_Position = modelViewProjectionMatrix * boneTransformMatrix * (vec4(position + morphPos + (normal * edgeWight * 0.02), 1.0));
 }
