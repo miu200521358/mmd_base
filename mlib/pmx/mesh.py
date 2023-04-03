@@ -3,7 +3,6 @@ from typing import Optional
 import numpy as np
 import OpenGL.GL as gl
 
-from mlib.base.math import MVector4D
 from mlib.base.part import BaseIndexModel
 from mlib.pmx.pmx_part import DrawFlg, Material, ShaderMaterial, Texture
 from mlib.pmx.shader import MShader, VsLayout
@@ -140,21 +139,9 @@ class Mesh(BaseIndexModel):
         # ------------------
         # 材質色設定
         # full.fx の AmbientColor相当
-        gl.glUniform4f(
-            shader.diffuse_uniform[False],
-            *(
-                self.material.diffuse_color * shader.light_ambient4
-                + MVector4D(
-                    self.material.ambient_color.x,
-                    self.material.ambient_color.y,
-                    self.material.ambient_color.z,
-                    self.material.diffuse_color.w,
-                )
-            ).vector
-        )
-        # TODO 材質モーフの色を入れる
-        gl.glUniform3f(shader.ambient_uniform[False], *(self.material.diffuse_color.xyz * shader.light_ambient).vector)
-        gl.glUniform4f(shader.specular_uniform[False], *(self.material.specular_color * shader.light_specular).vector, self.material.specular_factor)
+        gl.glUniform4f(shader.diffuse_uniform[False], *material_morphs.diffuse.vector)
+        gl.glUniform3f(shader.ambient_uniform[False], *material_morphs.ambient.vector)
+        gl.glUniform4f(shader.specular_uniform[False], *material_morphs.specular.vector)
 
         # テクスチャ使用有無
         gl.glUniform1i(shader.use_texture_uniform[False], self.texture is not None and self.texture.valid)
@@ -208,8 +195,8 @@ class Mesh(BaseIndexModel):
 
         # ------------------
         # エッジ設定
-        gl.glUniform4f(shader.edge_color_uniform[True], *self.material.edge_color.vector)
-        gl.glUniform1f(shader.edge_size_uniform[True], self.material.edge_size)
+        gl.glUniform4f(shader.edge_color_uniform[True], *material_morphs.edge_color.vector)
+        gl.glUniform1f(shader.edge_size_uniform[True], material_morphs.edge_size)
 
         gl.glDrawElements(
             gl.GL_TRIANGLES,
