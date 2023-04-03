@@ -1051,23 +1051,23 @@ class ShaderMaterial:
         sphere_texture_factor: Optional[MVector4D] = None,
     ):
         super().__init__()
-        self.diffuse = material.diffuse_color * light_ambient4 + MVector4D(
+        self.diffuse: MVector4D = material.diffuse_color * light_ambient4 + MVector4D(
             material.ambient_color.x,
             material.ambient_color.y,
             material.ambient_color.z,
             material.diffuse_color.w,
         )
-        self.ambient = material.diffuse_color.xyz * light_ambient4.xyz
-        self.specular = MVector4D(
+        self.ambient: MVector3D = material.diffuse_color.xyz * light_ambient4.xyz
+        self.specular: MVector4D = MVector4D(
             *(material.specular_color * light_ambient4.xyz).vector,
         )
         self.specular.w = material.specular_factor
 
-        self.edge_color = material.edge_color
+        self.edge_color: MVector4D = material.edge_color
         self.edge_size = material.edge_size
-        self.texture_factor = texture_factor or MVector4D(1, 1, 1, 1)
-        self.sphere_texture_factor = toon_texture_factor or MVector4D(1, 1, 1, 1)
-        self.toon_texture_factor = sphere_texture_factor or MVector4D(1, 1, 1, 1)
+        self.texture_factor: MVector4D = texture_factor or MVector4D(1, 1, 1, 1)
+        self.sphere_texture_factor: MVector4D = toon_texture_factor or MVector4D(1, 1, 1, 1)
+        self.toon_texture_factor: MVector4D = sphere_texture_factor or MVector4D(1, 1, 1, 1)
 
     def __imul__(self, v: Union[float, "ShaderMaterial"]):
         if isinstance(v, float):

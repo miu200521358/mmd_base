@@ -320,6 +320,10 @@ class MVector2D(MVector):
     def y(self, v):
         self.vector[1] = v
 
+    @property
+    def gl(self) -> "MVector2D":
+        return MVector2D(-self.x, self.y)
+
 
 class MVector3D(MVector):
     """
@@ -426,6 +430,14 @@ class MVector4D(MVector):
     @w.setter
     def w(self, v):
         self.vector[3] = v
+
+    @property
+    def gl(self) -> "MVector4D":
+        return MVector4D(-self.x, self.y, self.z, self.w)
+
+    @property
+    def xy(self) -> "MVector2D":
+        return MVector2D(*self.vector[:2])  # type: ignore
 
     @property
     def xyz(self) -> "MVector3D":

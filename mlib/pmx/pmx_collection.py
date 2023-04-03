@@ -393,10 +393,17 @@ class PmxModel(BaseHashModel):
 
         self.meshes = Meshes(shader, self)
 
-    def draw(self, bone_matrixes: np.ndarray, vertex_morph_poses: np.ndarray, material_morphs: list[ShaderMaterial]):
+    def draw(
+        self,
+        bone_matrixes: np.ndarray,
+        vertex_morph_poses: np.ndarray,
+        uv_morph_poses: np.ndarray,
+        uv1_morph_poses: np.ndarray,
+        material_morphs: list[ShaderMaterial],
+    ):
         if not self.for_draw or not self.meshes:
             return
-        self.meshes.draw(bone_matrixes, vertex_morph_poses, material_morphs)
+        self.meshes.draw(bone_matrixes, vertex_morph_poses, uv_morph_poses, uv1_morph_poses, material_morphs)
 
     def setup(self) -> None:
         for bone in self.bones:
@@ -456,6 +463,14 @@ class Meshes(BaseIndexDictModel[Mesh]):
                         *(v.extended_uvs[0].vector if len(v.extended_uvs) > 0 else [0, 0]),
                         v.edge_factor,
                         *v.deform.normalized_deform(),
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
                         0.0,
                         0.0,
                         0.0,
@@ -527,18 +542,31 @@ class Meshes(BaseIndexDictModel[Mesh]):
             VsLayout.EDGE_ID.value: {"size": 1, "offset": 10},
             VsLayout.BONE_ID.value: {"size": 4, "offset": 11},
             VsLayout.WEIGHT_ID.value: {"size": 4, "offset": 15},
-            VsLayout.MORPH_ID.value: {"size": 3, "offset": 19},
+            VsLayout.MORPH_POS_ID.value: {"size": 3, "offset": 19},
+            VsLayout.MORPH_UV_ID.value: {"size": 4, "offset": 22},
+            VsLayout.MORPH_UV1_ID.value: {"size": 4, "offset": 26},
         }
-        self.morph_comps = self.vbo_components[VsLayout.MORPH_ID.value]
+        self.morph_pos_comps = self.vbo_components[VsLayout.MORPH_POS_ID.value]
+        self.morph_uv_comps = self.vbo_components[VsLayout.MORPH_UV_ID.value]
+        self.morph_uv1_comps = self.vbo_components[VsLayout.MORPH_UV1_ID.value]
         self.vbo_vertices = VBO(
             self.vertices,
             self.vbo_components,
         )
         self.ibo_faces = IBO(self.faces)
 
-    def draw(self, bone_matrixes: np.ndarray, vertex_morph_poses: np.ndarray, material_morphs: list[ShaderMaterial]):
+    def draw(
+        self,
+        bone_matrixes: np.ndarray,
+        vertex_morph_poses: np.ndarray,
+        uv_morph_poses: np.ndarray,
+        uv1_morph_poses: np.ndarray,
+        material_morphs: list[ShaderMaterial],
+    ):
         # 頂点モーフ変動量を上書き設定してからバインド
-        self.vbo_vertices.data[:, self.morph_comps["offset"] : (self.morph_comps["offset"] + self.morph_comps["size"])] = vertex_morph_poses
+        self.vbo_vertices.data[:, self.morph_pos_comps["offset"] : (self.morph_pos_comps["offset"] + self.morph_pos_comps["size"])] = vertex_morph_poses
+        self.vbo_vertices.data[:, self.morph_uv_comps["offset"] : (self.morph_uv_comps["offset"] + self.morph_uv_comps["size"])] = uv_morph_poses
+        self.vbo_vertices.data[:, self.morph_uv1_comps["offset"] : (self.morph_uv1_comps["offset"] + self.morph_uv1_comps["size"])] = uv1_morph_poses
         self.vbo_vertices.bind()
 
         for mesh in self:
@@ -550,18 +578,22 @@ class Meshes(BaseIndexDictModel[Mesh]):
             self.vbo_vertices.set_slot(VsLayout.EDGE_ID)
             self.vbo_vertices.set_slot(VsLayout.BONE_ID)
             self.vbo_vertices.set_slot(VsLayout.WEIGHT_ID)
-            self.vbo_vertices.set_slot(VsLayout.MORPH_ID)
+            self.vbo_vertices.set_slot(VsLayout.MORPH_POS_ID)
+            self.vbo_vertices.set_slot(VsLayout.MORPH_UV_ID)
+            self.vbo_vertices.set_slot(VsLayout.MORPH_UV1_ID)
             self.ibo_faces.bind()
+
+            material_morph = material_morphs[mesh.material.index]
 
             # モデル描画
             self.shader.use()
-            mesh.draw_model(bone_matrixes, material_morphs[mesh.material.index], self.shader, self.ibo_faces)
+            mesh.draw_model(bone_matrixes, material_morph, self.shader, self.ibo_faces)
             self.shader.unuse()
 
-            if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and mesh.material.diffuse_color.w > 0:
+            if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and material_morph.diffuse.w > 0:
                 # エッジ描画
                 self.shader.use(edge=True)
-                mesh.draw_edge(bone_matrixes, material_morphs[mesh.material.index], self.shader, self.ibo_faces)
+                mesh.draw_edge(bone_matrixes, material_morph, self.shader, self.ibo_faces)
                 self.shader.unuse()
 
             # ---------------

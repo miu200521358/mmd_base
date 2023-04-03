@@ -19,6 +19,7 @@ from mlib.pmx.pmx_part import (
     MaterialMorphOffset,
     MorphType,
     VertexMorphOffset,
+    UvMorphOffset,
     ShaderMaterial,
 )
 from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
@@ -773,6 +774,24 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
         return np.array(poses)
 
+    def animate_uv_morphs(self, fno: int, model: PmxModel, uv_index: int) -> np.ndarray:
+        row = len(model.vertices)
+        poses = np.full((row, 4), np.zeros(4))
+
+        target_uv_type = MorphType.UV if uv_index == 0 else MorphType.EXTENDED_UV1
+        for morph in model.morphs.filter_by_type(target_uv_type):
+            mf = self[morph.name][fno]
+            if not mf.ratio:
+                continue
+
+            # モーションによるUVモーフ変動量
+            for offset in morph.offsets:
+                if type(offset) is UvMorphOffset and offset.vertex_index < row:
+                    ratio_pos: MVector4D = offset.uv * mf.ratio
+                    poses[offset.vertex_index] += ratio_pos.gl.vector
+
+        return np.array(poses)
+
     def animate_bone_morphs(self, fno: int, model: PmxModel) -> tuple[list[str], VmdBoneFrames]:
         bone_morph_names: set[str] = set([])
         bone_morphs = VmdBoneFrames()
@@ -988,7 +1007,7 @@ class VmdMotion(BaseHashModel):
     def name(self) -> str:
         return self.model_name
 
-    def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray, list[ShaderMaterial]]:
+    def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
         # ボーン操作
         bone_poses, bone_qqs = self.bones.animate_bone_matrixes(fno, model)
 
@@ -998,7 +1017,10 @@ class VmdMotion(BaseHashModel):
         bone_morph_names, bone_morphs = self.morphs.animate_bone_morphs(fno, model)
         bone_morph_poses, bone_morph_qqs = bone_morphs.animate_bone_matrixes(fno, model, bone_morph_names)
         # UVモーフ
-        # 追加UVモーフ1～4
+        uv_morph_poses = self.morphs.animate_uv_morphs(fno, model, 0)
+        # 追加UVモーフ1
+        uv1_morph_poses = self.morphs.animate_uv_morphs(fno, model, 1)
+        # 追加UVモーフ2-4は無視
         # 材質モーフ
         material_morphs = self.morphs.animate_material_morphs(fno, model)
         # グループモーフ
@@ -1026,4 +1048,4 @@ class VmdMotion(BaseHashModel):
 
             bone_matrixes.append(matrix.T)
 
-        return (np.array(bone_matrixes), vertex_morph_poses + group_vertex_morph_poses, group_materials)
+        return (np.array(bone_matrixes), vertex_morph_poses + group_vertex_morph_poses, uv_morph_poses, uv1_morph_poses, group_materials)

@@ -18,7 +18,9 @@ class VsLayout(IntEnum):
     EDGE_ID = 4
     BONE_ID = 5
     WEIGHT_ID = 6
-    MORPH_ID = 7
+    MORPH_POS_ID = 7
+    MORPH_UV_ID = 8
+    MORPH_UV1_ID = 9
 
 
 class Msaa:
@@ -92,10 +94,10 @@ class Msaa:
 
 
 class MShader:
-    INITIAL_VERTICAL_DEGREES = 45.0
-    INITIAL_CAMERA_POSITION_Y = 10.0
+    INITIAL_VERTICAL_DEGREES = 30.0
+    INITIAL_CAMERA_POSITION_Y = 17.0
     INITIAL_CAMERA_POSITION_Z = -40.0
-    INITIAL_LOOK_AT_CENTER_Y = INITIAL_CAMERA_POSITION_Y * 0.8
+    INITIAL_LOOK_AT_CENTER_Y = INITIAL_CAMERA_POSITION_Y * 1.1
     INITIAL_CAMERA_POSITION_X = 40.0
 
     def __init__(self, width: int, height: int) -> None:
@@ -189,7 +191,9 @@ class MShader:
             VsLayout.EDGE_ID.value,
             VsLayout.BONE_ID.value,
             VsLayout.WEIGHT_ID.value,
-            VsLayout.MORPH_ID.value,
+            VsLayout.MORPH_POS_ID.value,
+            VsLayout.MORPH_UV_ID.value,
+            VsLayout.MORPH_UV1_ID.value,
         )
 
         fragments_shader_src = Path(os.path.join(os.path.dirname(__file__), "glsl", fragments_shader_name)).read_text(encoding="utf-8")

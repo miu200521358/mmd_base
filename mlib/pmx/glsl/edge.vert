@@ -8,6 +8,8 @@ in layout(location = %d) float vertexEdge;
 in layout(location = %d) vec4 boneIdxs;
 in layout(location = %d) vec4 boneWeights;
 in layout(location = %d) vec3 morphPos;
+in layout(location = %d) vec4 morphUv;
+in layout(location = %d) vec4 morphUv1;
 
 // ボーン変形行列を格納するテクスチャ
 uniform sampler2D boneMatrixTexture;
