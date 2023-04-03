@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from enum import Flag, IntEnum, unique
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import OpenGL.GL as gl
@@ -1023,6 +1023,91 @@ class MaterialMorphOffset(MorphOffset):
         self.texture_factor = texture_factor
         self.sphere_texture_factor = sphere_texture_factor
         self.toon_texture_factor = toon_texture_factor
+
+
+class ShaderMaterial:
+    """
+    材質モーフを加味したシェーダー用材質情報
+    """
+
+    __slots__ = [
+        "diffuse",
+        "specular",
+        "specular_factor",
+        "ambient",
+        "edge_color",
+        "edge_size",
+        "texture_factor",
+        "sphere_texture_factor",
+        "toon_texture_factor",
+    ]
+
+    def __init__(
+        self,
+        material: Material,
+        light_ambient4: MVector4D,
+        texture_factor: Optional[MVector4D] = None,
+        toon_texture_factor: Optional[MVector4D] = None,
+        sphere_texture_factor: Optional[MVector4D] = None,
+    ):
+        super().__init__()
+        self.diffuse = material.diffuse_color * light_ambient4 + MVector4D(
+            material.ambient_color.x,
+            material.ambient_color.y,
+            material.ambient_color.z,
+            material.diffuse_color.w,
+        )
+        self.ambient = material.diffuse_color.xyz * light_ambient4.xyz
+        self.specular = MVector4D(
+            *(material.specular_color * light_ambient4.xyz).vector,
+        )
+        self.specular.w = material.specular_factor
+
+        self.edge_color = material.edge_color
+        self.edge_size = material.edge_size
+        self.texture_factor = texture_factor or MVector4D(1, 1, 1, 1)
+        self.sphere_texture_factor = toon_texture_factor or MVector4D(1, 1, 1, 1)
+        self.toon_texture_factor = sphere_texture_factor or MVector4D(1, 1, 1, 1)
+
+    def __imul__(self, v: Union[float, "ShaderMaterial"]):
+        if isinstance(v, float):
+            self.diffuse *= v
+            self.ambient *= v
+            self.specular *= v
+            self.edge_color *= v
+            self.edge_size *= v
+            self.texture_factor *= v
+            self.sphere_texture_factor *= v
+            self.toon_texture_factor *= v
+        else:
+            self.diffuse *= v.diffuse
+            self.ambient *= v.ambient
+            self.specular *= v.specular
+            self.edge_color *= v.edge_color
+            self.edge_size *= v.edge_size
+            self.texture_factor *= v.texture_factor
+            self.sphere_texture_factor *= v.sphere_texture_factor
+            self.toon_texture_factor *= v.toon_texture_factor
+
+    def __iadd__(self, v: Union[float, "ShaderMaterial"]):
+        if isinstance(v, float):
+            self.diffuse += v
+            self.ambient += v
+            self.specular += v
+            self.edge_color += v
+            self.edge_size += v
+            self.texture_factor += v
+            self.sphere_texture_factor += v
+            self.toon_texture_factor += v
+        else:
+            self.diffuse += v.diffuse
+            self.ambient += v.ambient
+            self.specular += v.specular
+            self.edge_color += v.edge_color
+            self.edge_size += v.edge_size
+            self.texture_factor += v.texture_factor
+            self.sphere_texture_factor += v.sphere_texture_factor
+            self.toon_texture_factor += v.toon_texture_factor
 
 
 @unique

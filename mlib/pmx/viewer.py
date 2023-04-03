@@ -11,6 +11,7 @@ from wx import glcanvas
 from mlib.base.logger import MLogger
 from mlib.base.math import MQuaternion, MVector3D
 from mlib.pmx.pmx_collection import PmxModel
+from mlib.pmx.pmx_part import ShaderMaterial
 from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_collection import VmdMotion
 
@@ -20,8 +21,8 @@ logger = MLogger(__name__)
 def animate(queue: Queue, fno: int, motion: VmdMotion, model: PmxModel):
     while fno < motion.max_fno:
         fno += 1
-        bone_matrixes, vertex_morph_poses = motion.animate(fno, model)
-        queue.put((bone_matrixes, vertex_morph_poses))
+        bone_matrixes, vertex_morph_poses, material_morphs = motion.animate(fno, model)
+        queue.put((bone_matrixes, vertex_morph_poses, material_morphs))
     queue.put(None)
 
 
@@ -51,6 +52,8 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.model = PmxModel()
         self.motion = VmdMotion()
         self.bone_matrixes = np.array([np.eye(4) for _ in range(1)])
+        self.vertex_morph_poses = np.array([np.zeros(3) for _ in range(1)])
+        self.material_morphs: list[ShaderMaterial] = []
 
         self.queue: Optional[Queue] = None
         self.process: Optional[Process] = None
@@ -118,7 +121,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         if self.model:
             self.shader.msaa.bind()
-            self.model.draw(self.bone_matrixes, self.vertex_morph_poses)
+            self.model.draw(self.bone_matrixes, self.vertex_morph_poses, self.material_morphs)
             self.shader.msaa.unbind()
 
     def on_frame_forward(self, event: wx.Event):
@@ -132,7 +135,7 @@ class PmxCanvas(glcanvas.GLCanvas):
     def change_motion(self, event: wx.Event):
         if self.model and self.motion:
             now_fno = self.frame_ctrl.GetValue()
-            self.bone_matrixes, self.vertex_morph_poses = self.motion.animate(now_fno, self.model)
+            self.bone_matrixes, self.vertex_morph_poses, self.material_morphs = self.motion.animate(now_fno, self.model)
             self.Refresh()
 
     def on_play(self, event: wx.Event, record: bool = False):
@@ -158,9 +161,10 @@ class PmxCanvas(glcanvas.GLCanvas):
         if self.queue and not self.queue.empty():
             bone_matrixes: Optional[np.ndarray] = None
             vertex_morph_poses: Optional[np.ndarray] = None
+            material_morphs: Optional[list[ShaderMaterial]] = None
 
             while not self.queue.empty():
-                bone_matrixes, vertex_morph_poses = self.queue.get()
+                bone_matrixes, vertex_morph_poses, material_morphs = self.queue.get()
 
             if bone_matrixes is None and self.process:
                 self.on_play(event)
@@ -171,6 +175,9 @@ class PmxCanvas(glcanvas.GLCanvas):
 
             if vertex_morph_poses is not None and vertex_morph_poses.any():
                 self.vertex_morph_poses = vertex_morph_poses
+
+            if material_morphs:
+                self.material_morphs = material_morphs
 
             if self.recording:
                 self.on_capture(event)

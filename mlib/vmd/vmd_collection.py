@@ -8,9 +8,9 @@ import numpy as np
 
 from mlib.base.collection import BaseHashModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
 from mlib.base.logger import MLogger
-from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
+from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D, MVector4D
 from mlib.pmx.pmx_collection import BoneTree, PmxModel
-from mlib.pmx.pmx_part import Bone, BoneMorphOffset, GroupMorphOffset, MorphType, VertexMorphOffset
+from mlib.pmx.pmx_part import Bone, BoneMorphOffset, GroupMorphOffset, MorphType, VertexMorphOffset, ShaderMaterial
 from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
 
 logger = MLogger(__name__, logging.DEBUG)
@@ -818,6 +818,58 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
         return group_vertex_poses, list(group_bone_morph_names), group_bone_morphs
 
+    def animate_material_morphs(self, fno: int, model: PmxModel) -> list[ShaderMaterial]:
+        light_ambient = MVector4D(154 / 255, 154 / 255, 154 / 255, 1)
+
+        # デフォルトの材質情報を保持（シェーダーに合わせて一部入れ替え）
+        materials = [ShaderMaterial(m, light_ambient) for m in model.materials]
+
+        # for morph in model.morphs.filter_by_type(MorphType.MATERIAL):
+        #     mf = self[morph.name][fno]
+        #     if not mf.ratio:
+        #         continue
+
+        #     # モーションによる頂点モーフ変動量
+        #     for offset in morph.offsets:
+        #         if type(offset) is MaterialMorphOffset and offset.material_index < row:
+        #             if offset.material_index < 0:
+        #                 # 0の場合、全材質を対象とする
+        #                 material_indexes = model.materials.indexes
+        #             else:
+        #                 # 特定材質の場合、材質固定
+        #                 material_indexes = [offset.material_index]
+        #             # 指定材質を対象として変動量を割り当てる
+        #             for material_index in material_indexes:
+        #                 # シェーダーに合わせてambientとdiffuseを入れ替える
+        #                 mat = model.materials[material_index]
+        #                 material_offset = ShaderMaterial(
+        #                     Material(
+        #                         mat.index,
+        #                         mat.name,
+        #                         mat.english_name,
+        #                         offset.diffuse,
+        #                         offset.specular,
+        #                         offset.specular_factor,
+        #                         offset.ambient,
+        #                         mat.draw_flg,
+        #                         offset.edge_color,
+        #                         offset.edge_size,
+        #                     ),
+        #                     light_ambient,
+        #                     offset.texture_factor,
+        #                     offset.toon_texture_factor,
+        #                     offset.sphere_texture_factor,
+        #                 )
+        #                 material_offset *= mf.ratio
+        #                 if offset.calc_mode == MaterialMorphCalcMode.ADDITION:
+        #                     # 加算
+        #                     materials[material_index] += material_offset
+        #                 else:
+        #                     # 乗算
+        #                     materials[material_index] *= material_offset
+
+        return materials
+
 
 class VmdCameraFrames(BaseIndexNameDictModel[VmdCameraFrame]):
     """
@@ -909,7 +961,7 @@ class VmdMotion(BaseHashModel):
     def name(self) -> str:
         return self.model_name
 
-    def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray]:
+    def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray, list[ShaderMaterial]]:
         # ボーン操作
         bone_poses, bone_qqs = self.bones.animate_bone_matrixes(fno, model)
 
@@ -918,6 +970,10 @@ class VmdMotion(BaseHashModel):
         # ボーンモーフ
         bone_morph_names, bone_morphs = self.morphs.animate_bone_morphs(fno, model)
         bone_morph_poses, bone_morph_qqs = bone_morphs.animate_bone_matrixes(fno, model, bone_morph_names)
+        # UVモーフ
+        # 追加UVモーフ1～4
+        # 材質モーフ
+        material_morphs = self.morphs.animate_material_morphs(fno, model)
         # グループモーフ
         group_vertex_morph_poses, group_bone_morph_names, group_bone_morphs = self.morphs.animate_group_morphs(fno, model)
         group_bone_morph_poses, group_bone_morph_qqs = group_bone_morphs.animate_bone_matrixes(fno, model, group_bone_morph_names)
@@ -943,4 +999,4 @@ class VmdMotion(BaseHashModel):
 
             bone_matrixes.append(matrix.T)
 
-        return (np.array(bone_matrixes), vertex_morph_poses + group_vertex_morph_poses)
+        return (np.array(bone_matrixes), vertex_morph_poses + group_vertex_morph_poses, material_morphs)

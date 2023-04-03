@@ -5,7 +5,7 @@ import OpenGL.GL as gl
 
 from mlib.base.math import MVector4D
 from mlib.base.part import BaseIndexModel
-from mlib.pmx.pmx_part import DrawFlg, Material, Texture
+from mlib.pmx.pmx_part import DrawFlg, Material, ShaderMaterial, Texture
 from mlib.pmx.shader import MShader, VsLayout
 
 
@@ -119,7 +119,8 @@ class Mesh(BaseIndexModel):
 
     def draw_model(
         self,
-        mats: np.ndarray,
+        bone_matrixes: np.ndarray,
+        material_morphs: ShaderMaterial,
         shader: MShader,
         ibo: IBO,
     ):
@@ -134,7 +135,7 @@ class Mesh(BaseIndexModel):
             gl.glCullFace(gl.GL_BACK)
 
         # ボーンデフォームテクスチャ設定
-        self.bind_bone_matrixes(mats, shader, False)
+        self.bind_bone_matrixes(bone_matrixes, shader, False)
 
         # ------------------
         # 材質色設定
@@ -194,7 +195,8 @@ class Mesh(BaseIndexModel):
 
     def draw_edge(
         self,
-        mats: np.ndarray,
+        bone_matrixes: np.ndarray,
+        material_morphs: ShaderMaterial,
         shader: MShader,
         ibo: IBO,
     ):
@@ -202,7 +204,7 @@ class Mesh(BaseIndexModel):
         gl.glCullFace(gl.GL_FRONT)
 
         # ボーンデフォームテクスチャ設定
-        self.bind_bone_matrixes(mats, shader, True)
+        self.bind_bone_matrixes(bone_matrixes, shader, True)
 
         # ------------------
         # エッジ設定
