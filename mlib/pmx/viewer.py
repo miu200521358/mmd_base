@@ -339,8 +339,9 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.Refresh()
 
     def on_mouse_wheel(self, event: wx.Event):
+        unit_degree = 5.0 if event.ShiftDown() else 1.0 if event.ControlDown() else 2.5
         if event.GetWheelRotation() < 0:
-            self.shader.vertical_degrees += 1.0
+            self.shader.vertical_degrees += unit_degree
         else:
-            self.shader.vertical_degrees = max(1.0, self.shader.vertical_degrees - 1.0)
+            self.shader.vertical_degrees = max(1.0, self.shader.vertical_degrees - unit_degree)
         self.Refresh()
