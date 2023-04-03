@@ -4,15 +4,19 @@ uniform mat4 boneMatrixes;
 
 uniform int useTexture;
 uniform sampler2D textureSampler;
+uniform vec4 textureFactor;
+
 uniform vec4 diffuse;
 uniform vec3 ambient;
 
 uniform int useToon;
 uniform sampler2D toonSampler;
+uniform vec4 toonFactor;
 
 uniform int useSphere;
 uniform int sphereMode;
 uniform sampler2D sphereSampler;
+uniform vec4 sphereFactor;
 
 uniform vec3 lightDirection;
 

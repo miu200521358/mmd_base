@@ -134,11 +134,14 @@ class MShader:
         self.edge_size_uniform: dict[bool, Any] = {}
         self.use_texture_uniform: dict[bool, Any] = {}
         self.texture_uniform: dict[bool, Any] = {}
+        self.texture_factor_uniform: dict[bool, Any] = {}
         self.use_toon_uniform: dict[bool, Any] = {}
         self.toon_uniform: dict[bool, Any] = {}
+        self.toon_factor_uniform: dict[bool, Any] = {}
         self.use_sphere_uniform: dict[bool, Any] = {}
         self.sphere_mode_uniform: dict[bool, Any] = {}
         self.sphere_uniform: dict[bool, Any] = {}
+        self.sphere_factor_uniform: dict[bool, Any] = {}
 
         # モデル描画シェーダー ------------------
         self.model_program = gl.glCreateProgram()
@@ -257,15 +260,18 @@ class MShader:
             # テクスチャの設定
             self.use_texture_uniform[edge] = gl.glGetUniformLocation(program, "useTexture")
             self.texture_uniform[edge] = gl.glGetUniformLocation(program, "textureSampler")
+            self.texture_factor_uniform[edge] = gl.glGetUniformLocation(program, "textureFactor")
 
             # Toonの設定
             self.use_toon_uniform[edge] = gl.glGetUniformLocation(program, "useToon")
             self.toon_uniform[edge] = gl.glGetUniformLocation(program, "toonSampler")
+            self.toon_factor_uniform[edge] = gl.glGetUniformLocation(program, "toonFactor")
 
             # Sphereの設定
             self.use_sphere_uniform[edge] = gl.glGetUniformLocation(program, "useSphere")
             self.sphere_mode_uniform[edge] = gl.glGetUniformLocation(program, "sphereMode")
             self.sphere_uniform[edge] = gl.glGetUniformLocation(program, "sphereSampler")
+            self.sphere_factor_uniform[edge] = gl.glGetUniformLocation(program, "sphereFactor")
 
             # --------
         else:

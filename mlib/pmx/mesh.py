@@ -148,12 +148,14 @@ class Mesh(BaseIndexModel):
         if self.texture and self.texture.valid:
             self.texture.bind()
             gl.glUniform1i(shader.texture_uniform[False], self.texture.texture_type.value)
+            gl.glUniform4f(shader.texture_factor_uniform[False], *material_morphs.texture_factor.vector)
 
         # Toon使用有無
         gl.glUniform1i(shader.use_toon_uniform[False], self.toon_texture is not None and self.toon_texture.valid)
         if self.toon_texture and self.toon_texture.valid:
             self.toon_texture.bind()
             gl.glUniform1i(shader.toon_uniform[False], self.toon_texture.texture_type.value)
+            gl.glUniform4f(shader.toon_factor_uniform[False], *material_morphs.toon_texture_factor.vector)
 
         # Sphere使用有無
         gl.glUniform1i(shader.use_sphere_uniform[False], self.sphere_texture is not None and self.sphere_texture.valid)
@@ -161,6 +163,7 @@ class Mesh(BaseIndexModel):
             self.sphere_texture.bind()
             gl.glUniform1i(shader.sphere_mode_uniform[False], self.material.sphere_mode)
             gl.glUniform1i(shader.sphere_uniform[False], self.sphere_texture.texture_type.value)
+            gl.glUniform4f(shader.sphere_factor_uniform[False], *material_morphs.sphere_texture_factor.vector)
 
         gl.glDrawElements(
             gl.GL_TRIANGLES,
