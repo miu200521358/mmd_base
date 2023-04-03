@@ -1196,6 +1196,7 @@ class MMatrix4x4(MVector):
     def __imatmul__(self, other):
         # 行列同士のかけ算代入
         self.vector = np.matmul(self.vector, other.vector)
+        return self
 
     def __getitem__(self, index) -> float:
         y, x = index
@@ -1285,6 +1286,7 @@ class MMatrix4x4List:
         new_mat = MMatrix4x4List(self.row, self.col)
         new_mat.vector = self.vector @ other.vector
         self.vector = new_mat.vector
+        return self
 
     def matmul_cols(self):
         # colを 行列積 するため、ひとつ次元を増やす

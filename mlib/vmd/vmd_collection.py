@@ -10,7 +10,17 @@ from mlib.base.collection import BaseHashModel, BaseIndexNameDictModel, BaseInde
 from mlib.base.logger import MLogger
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D, MVector4D
 from mlib.pmx.pmx_collection import BoneTree, PmxModel
-from mlib.pmx.pmx_part import Bone, BoneMorphOffset, GroupMorphOffset, MorphType, VertexMorphOffset, ShaderMaterial
+from mlib.pmx.pmx_part import (
+    Bone,
+    BoneMorphOffset,
+    GroupMorphOffset,
+    Material,
+    MaterialMorphCalcMode,
+    MaterialMorphOffset,
+    MorphType,
+    VertexMorphOffset,
+    ShaderMaterial,
+)
 from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
 
 logger = MLogger(__name__, logging.DEBUG)
@@ -824,49 +834,49 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         # デフォルトの材質情報を保持（シェーダーに合わせて一部入れ替え）
         materials = [ShaderMaterial(m, light_ambient) for m in model.materials]
 
-        # for morph in model.morphs.filter_by_type(MorphType.MATERIAL):
-        #     mf = self[morph.name][fno]
-        #     if not mf.ratio:
-        #         continue
+        for morph in model.morphs.filter_by_type(MorphType.MATERIAL):
+            mf = self[morph.name][fno]
+            if not mf.ratio:
+                continue
 
-        #     # モーションによる頂点モーフ変動量
-        #     for offset in morph.offsets:
-        #         if type(offset) is MaterialMorphOffset and offset.material_index < row:
-        #             if offset.material_index < 0:
-        #                 # 0の場合、全材質を対象とする
-        #                 material_indexes = model.materials.indexes
-        #             else:
-        #                 # 特定材質の場合、材質固定
-        #                 material_indexes = [offset.material_index]
-        #             # 指定材質を対象として変動量を割り当てる
-        #             for material_index in material_indexes:
-        #                 # シェーダーに合わせてambientとdiffuseを入れ替える
-        #                 mat = model.materials[material_index]
-        #                 material_offset = ShaderMaterial(
-        #                     Material(
-        #                         mat.index,
-        #                         mat.name,
-        #                         mat.english_name,
-        #                         offset.diffuse,
-        #                         offset.specular,
-        #                         offset.specular_factor,
-        #                         offset.ambient,
-        #                         mat.draw_flg,
-        #                         offset.edge_color,
-        #                         offset.edge_size,
-        #                     ),
-        #                     light_ambient,
-        #                     offset.texture_factor,
-        #                     offset.toon_texture_factor,
-        #                     offset.sphere_texture_factor,
-        #                 )
-        #                 material_offset *= mf.ratio
-        #                 if offset.calc_mode == MaterialMorphCalcMode.ADDITION:
-        #                     # 加算
-        #                     materials[material_index] += material_offset
-        #                 else:
-        #                     # 乗算
-        #                     materials[material_index] *= material_offset
+            # モーションによる頂点モーフ変動量
+            for offset in morph.offsets:
+                if type(offset) is MaterialMorphOffset and offset.material_index < len(materials):
+                    if offset.material_index < 0:
+                        # 0の場合、全材質を対象とする
+                        material_indexes = model.materials.indexes
+                    else:
+                        # 特定材質の場合、材質固定
+                        material_indexes = [offset.material_index]
+                    # 指定材質を対象として変動量を割り当てる
+                    for material_index in material_indexes:
+                        # シェーダーに合わせてambientとdiffuseを入れ替える
+                        mat = model.materials[material_index]
+                        material_offset = ShaderMaterial(
+                            Material(
+                                mat.index,
+                                mat.name,
+                                mat.english_name,
+                                offset.diffuse,
+                                offset.specular,
+                                offset.specular_factor,
+                                offset.ambient,
+                                mat.draw_flg,
+                                offset.edge_color,
+                                offset.edge_size,
+                            ),
+                            light_ambient,
+                            offset.texture_factor,
+                            offset.toon_texture_factor,
+                            offset.sphere_texture_factor,
+                        )
+                        material_offset *= mf.ratio
+                        if offset.calc_mode == MaterialMorphCalcMode.ADDITION:
+                            # 加算
+                            materials[material_index] += material_offset
+                        else:
+                            # 乗算
+                            materials[material_index] *= material_offset
 
         return materials
 

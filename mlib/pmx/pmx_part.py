@@ -1088,6 +1088,7 @@ class ShaderMaterial:
             self.texture_factor *= v.texture_factor
             self.sphere_texture_factor *= v.sphere_texture_factor
             self.toon_texture_factor *= v.toon_texture_factor
+        return self
 
     def __iadd__(self, v: Union[float, "ShaderMaterial"]):
         if isinstance(v, float):
@@ -1108,6 +1109,7 @@ class ShaderMaterial:
             self.texture_factor += v.texture_factor
             self.sphere_texture_factor += v.sphere_texture_factor
             self.toon_texture_factor += v.toon_texture_factor
+        return self
 
 
 @unique
