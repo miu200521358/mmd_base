@@ -845,34 +845,37 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             # 特定材質の場合、材質固定
             material_indexes = [offset.material_index]
         # 指定材質を対象として変動量を割り当てる
-        for material_index in material_indexes:
-            # シェーダーに合わせてambientとdiffuseを入れ替える
-            mat = model.materials[material_index]
-            material_offset = ShaderMaterial(
-                Material(
-                    mat.index,
-                    mat.name,
-                    mat.english_name,
-                    offset.diffuse,
-                    offset.specular,
-                    offset.specular_factor,
-                    offset.ambient,
-                    mat.draw_flg,
-                    offset.edge_color,
-                    offset.edge_size,
-                ),
-                light_ambient,
-                offset.texture_factor,
-                offset.toon_texture_factor,
-                offset.sphere_texture_factor,
-            )
-            material_offset *= ratio
-            if offset.calc_mode == MaterialMorphCalcMode.ADDITION:
-                # 加算
-                materials[material_index] += material_offset
-            else:
-                # 乗算
-                materials[material_index] *= material_offset
+        for target_calc_mode in [MaterialMorphCalcMode.MULTIPLICATION, MaterialMorphCalcMode.ADDITION]:
+            # 先に乗算を計算した後に加算を加味する
+            for material_index in material_indexes:
+                # シェーダーに合わせてambientとdiffuseを入れ替える
+                mat = model.materials[material_index]
+                material_offset = ShaderMaterial(
+                    Material(
+                        mat.index,
+                        mat.name,
+                        mat.english_name,
+                        offset.diffuse,
+                        offset.specular,
+                        offset.specular_factor,
+                        offset.ambient,
+                        mat.draw_flg,
+                        offset.edge_color,
+                        offset.edge_size,
+                    ),
+                    light_ambient,
+                    offset.texture_factor,
+                    offset.toon_texture_factor,
+                    offset.sphere_texture_factor,
+                )
+                material_offset *= ratio
+                if offset.calc_mode == target_calc_mode:
+                    if offset.calc_mode == MaterialMorphCalcMode.ADDITION:
+                        # 加算
+                        materials[material_index] += material_offset
+                    else:
+                        # 乗算
+                        materials[material_index] *= material_offset
 
         return materials
 
