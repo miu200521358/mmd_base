@@ -788,7 +788,10 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             for offset in morph.offsets:
                 if type(offset) is UvMorphOffset and offset.vertex_index < row:
                     ratio_pos: MVector4D = offset.uv * mf.ratio
-                    poses[offset.vertex_index] += ratio_pos.gl.vector
+                    poses[offset.vertex_index] += ratio_pos.vector
+
+        # UVのYは 1 - y で求め直しておく
+        poses[:, 1] = 1 - poses[:, 1]
 
         return np.array(poses)
 
