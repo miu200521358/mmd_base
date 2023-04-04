@@ -762,6 +762,9 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         poses = np.full((row, 3), np.zeros(3))
 
         for morph in model.morphs.filter_by_type(MorphType.VERTEX):
+            if morph.name not in self.data:
+                # モーフそのものの定義がなければスルー
+                continue
             mf = self[morph.name][fno]
             if not mf.ratio:
                 continue
@@ -780,6 +783,9 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
         target_uv_type = MorphType.UV if uv_index == 0 else MorphType.EXTENDED_UV1
         for morph in model.morphs.filter_by_type(target_uv_type):
+            if morph.name not in self.data:
+                # モーフそのものの定義がなければスルー
+                continue
             mf = self[morph.name][fno]
             if not mf.ratio:
                 continue
@@ -800,6 +806,9 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         bone_morphs = VmdBoneFrames()
 
         for morph in model.morphs.filter_by_type(MorphType.BONE):
+            if morph.name not in self.data:
+                # モーフそのものの定義がなければスルー
+                continue
             mf = self[morph.name][fno]
             if not mf.ratio:
                 continue
@@ -832,6 +841,9 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         light_ambient = MVector4D(154 / 255, 154 / 255, 154 / 255, 1)
 
         for morph in model.morphs.filter_by_type(MorphType.GROUP):
+            if morph.name not in self.data:
+                # モーフそのものの定義がなければスルー
+                continue
             mf = self[morph.name][fno]
             if not mf.ratio:
                 continue
@@ -908,6 +920,9 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         materials = [ShaderMaterial(m, light_ambient) for m in model.materials]
 
         for morph in model.morphs.filter_by_type(MorphType.MATERIAL):
+            if morph.name not in self.data:
+                # モーフそのものの定義がなければスルー
+                continue
             mf = self[morph.name][fno]
             if not mf.ratio:
                 continue
