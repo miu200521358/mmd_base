@@ -729,7 +729,7 @@ class MQuaternion(MVector):
             mat = MMatrix4x4(*self.to_matrix4x4().vector.flatten())
             mat.rotate(other)
 
-            return mat.to_quaternion().normalized()
+            return mat.to_quaternion()
 
         return MQuaternion(*(self.vector.components * other))
 
@@ -1178,10 +1178,12 @@ class MMatrix4x4(MVector):
                 q.y = (v[1, 2] + v[2, 1]) / s
                 q.z = 0.25 * s
 
+        q.normalize()
+
         return q
 
     def to_position(self) -> MVector3D:
-        return MVector3D(*self.vector[3, 0:3])
+        return MVector3D(*self.vector[:3, 3])
 
     def __mul__(self, other: Union["MMatrix4x4", "MVector3D", "MVector4D", float]):
         if isinstance(other, MMatrix4x4):
@@ -1318,6 +1320,10 @@ class MMatrix4x4List:
     def to_positions(self) -> np.ndarray:
         # 行列計算結果の位置
         return self.vector[..., :3, 3]
+
+    def __getitem__(self, index) -> float:
+        y, x = index
+        return self.vector[y, x]
 
 
 def operate_vector(v: MVector, other: Union[MVector, float, int], op):
