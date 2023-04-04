@@ -170,7 +170,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             material_morphs: Optional[list[ShaderMaterial]] = None
 
             while not self.queue.empty():
-                bone_matrixes, vertex_morph_poses, material_morphs = self.queue.get()
+                bone_matrixes, vertex_morph_poses, uv_morph_poses, uv1_morph_poses, material_morphs = self.queue.get()
 
             if bone_matrixes is None and self.process:
                 self.on_play(event)

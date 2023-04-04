@@ -224,7 +224,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
         bone = self[bone_index]
         return bone.position - (MVector3D() if bone.index < 0 or bone.parent_index not in self else self[bone.parent_index].position)
 
-    def get_mesh_gl_matrix(self, matrixes: MMatrix4x4List, bone_index: int, matrix: np.ndarray) -> np.ndarray:
+    def get_mesh_matrix(self, matrixes: MMatrix4x4List, bone_index: int, matrix: np.ndarray) -> np.ndarray:
         """
         スキンメッシュアニメーション用ボーン変形行列を作成する
 
@@ -243,15 +243,15 @@ class Bones(BaseIndexNameDictModel[Bone]):
         """
         bone = self[bone_index]
 
+        # 自身の姿勢をかける
+        # 座標変換行列
+        matrix = matrixes.vector[0, bone_index] @ matrix
+        # 逆BOf行列(初期姿勢行列)
+        matrix = bone.init_matrix.vector @ matrix
+
         if bone.index >= 0 and bone.parent_index in self:
             # 親ボーンがある場合、遡る
-            matrix = self.get_mesh_gl_matrix(matrixes, bone.parent_index, matrix)
-
-        # 自身の姿勢をかける
-        # 逆BOf行列(初期姿勢行列)
-        matrix = matrix @ bone.init_matrix.vector
-        # 座標変換行列
-        matrix = matrix @ matrixes.vector[0, bone_index]
+            matrix = self.get_mesh_matrix(matrixes, bone.parent_index, matrix)
 
         return matrix
 
@@ -425,12 +425,11 @@ class PmxModel(BaseHashModel):
 
             # 逆オフセット行列は親ボーンからの相対位置分を戻す
             bone.init_matrix = MMatrix4x4()
-            bone.init_matrix.translate(bone.parent_relative_position.gl)
+            bone.init_matrix.translate(bone.parent_relative_position)
 
             # オフセット行列は自身の位置を原点に戻す行列
-            offset_mat = MMatrix4x4()
-            offset_mat.translate(bone.position.gl)
-            bone.offset_matrix = offset_mat.inverse()
+            bone.offset_matrix = MMatrix4x4()
+            bone.offset_matrix.translate(-bone.position)
 
         # ボーンツリー生成
         self.bone_trees = self.bones.create_bone_links()

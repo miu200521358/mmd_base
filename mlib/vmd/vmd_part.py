@@ -258,7 +258,50 @@ class VmdBoneFrame(BaseVmdNameFrame):
         self.rotation = MQuaternion()
         self.interpolations = BoneInterpolations()
         self.ik_rotation: Optional[MQuaternion] = None
+        self.correct_position: Optional[MVector3D] = None
         self.correct_rotation: Optional[MQuaternion] = None
+
+    def __iadd__(self, v: "VmdBoneFrame"):
+        self.position += v.position
+        self.rotation *= v.rotation
+
+        if v.ik_rotation:
+            if self.ik_rotation is None:
+                self.ik_rotation = MQuaternion()
+            self.ik_rotation *= v.ik_rotation
+
+        if v.correct_position:
+            if self.correct_position is None:
+                self.correct_position = MVector3D()
+            self.correct_position += v.correct_position
+
+        if v.correct_rotation:
+            if self.correct_rotation is None:
+                self.correct_rotation = MQuaternion()
+            self.correct_rotation *= v.correct_rotation
+        return self
+
+    def __add__(self, v: "VmdBoneFrame"):
+        vv: VmdBoneFrame = self.copy()
+
+        vv.position += v.position
+        vv.rotation *= v.rotation
+
+        if v.ik_rotation:
+            if vv.ik_rotation is None:
+                vv.ik_rotation = MQuaternion()
+            vv.ik_rotation *= v.ik_rotation
+
+        if v.correct_position:
+            if vv.correct_position is None:
+                vv.correct_position = MVector3D()
+            vv.correct_position += v.correct_position
+
+        if v.correct_rotation:
+            if vv.correct_rotation is None:
+                vv.correct_rotation = MQuaternion()
+            vv.correct_rotation *= v.correct_rotation
+        return vv
 
 
 class VmdMorphFrame(BaseVmdNameFrame):
@@ -297,6 +340,15 @@ class VmdMorphFrame(BaseVmdNameFrame):
     ):
         super().__init__(index, name, register, read)
         self.ratio = ratio
+
+    def __iadd__(self, v: "VmdMorphFrame"):
+        self.ratio += v.ratio
+        return self
+
+    def __add__(self, v: "VmdMorphFrame"):
+        vv: VmdMorphFrame = self.copy()
+        vv.ratio += v.ratio
+        return vv
 
 
 class CameraInterpolations(BaseModel):

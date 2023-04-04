@@ -249,19 +249,19 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 if bone.index not in bone_indexes:
                     # モーションによる移動量
                     if (fno, model.hexdigest, bone.name) in self.cache_ratios:
-                        poses[0, bone.index] = self.cache_ratios[(fno, model.hexdigest, bone.name)].gl.vector
+                        poses[0, bone.index] = self.cache_ratios[(fno, model.hexdigest, bone.name)].vector
                     else:
                         pos = self.get_position(bone, fno, model)
-                        poses[0, bone.index] = pos.gl.vector
+                        poses[0, bone.index] = pos.vector
                         self.cache_ratios[(fno, model.hexdigest, bone.name)] = pos
 
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
                     if (fno, model.hexdigest, bone.name) in self.cache_qqs:
-                        qqs[0, bone.index] = self.cache_qqs[(fno, model.hexdigest, bone.name)].gl.to_matrix4x4().vector
+                        qqs[0, bone.index] = self.cache_qqs[(fno, model.hexdigest, bone.name)].to_matrix4x4().vector
                     else:
                         qq = self.get_rotation(bone, fno, model, append_ik=True)
                         self.cache_qqs[(fno, model.hexdigest, bone.name)] = qq
-                        qqs[0, bone.index] = qq.gl.to_matrix4x4().vector
+                        qqs[0, bone.index] = qq.to_matrix4x4().vector
                     # 計算済みボーンとして登録
                     bone_indexes.append(bone.index)
 
@@ -801,10 +801,8 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
         return np.array(poses)
 
-    def animate_bone_morphs(self, fno: int, model: PmxModel) -> tuple[list[str], VmdBoneFrames]:
-        bone_morph_names: set[str] = set([])
-        bone_morphs = VmdBoneFrames()
-
+    def animate_bone_morphs(self, fno: int, model: PmxModel) -> VmdBoneFrames:
+        bone_frames = VmdBoneFrames()
         for morph in model.morphs.filter_by_type(MorphType.BONE):
             if morph.name not in self.data:
                 # モーフそのものの定義がなければスルー
@@ -817,10 +815,9 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             for offset in morph.offsets:
                 if type(offset) is BoneMorphOffset and offset.bone_index in model.bones:
                     bf = self.animate_bone_morph_frame(fno, model, offset, mf.ratio)
-                    bone_morphs[bf.name].append(bf)
-                    bone_morph_names |= {bf.name}
+                    bone_frames[bf.name][fno] = bf
 
-        return list(bone_morph_names), bone_morphs
+        return bone_frames
 
     def animate_bone_morph_frame(self, fno: int, model: PmxModel, offset: BoneMorphOffset, ratio: float) -> VmdBoneFrame:
         bone = model.bones[offset.bone_index]
@@ -830,12 +827,9 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         bf.rotation *= MQuaternion.from_euler_degrees(offset.rotation.degrees * ratio)
         return bf
 
-    def animate_group_morphs(
-        self, fno: int, model: PmxModel, materials: list[ShaderMaterial]
-    ) -> tuple[np.ndarray, list[str], VmdBoneFrames, list[ShaderMaterial]]:
+    def animate_group_morphs(self, fno: int, model: PmxModel, materials: list[ShaderMaterial]) -> tuple[np.ndarray, VmdBoneFrames, list[ShaderMaterial]]:
         group_vertex_poses = np.full((len(model.vertices), 3), np.zeros(3))
-        group_bone_morphs = VmdBoneFrames()
-        group_bone_morph_names: set[str] = set([])
+        bone_frames = VmdBoneFrames()
 
         # デフォルトの材質情報を保持（シェーダーに合わせて一部入れ替え）
         light_ambient = MVector4D(154 / 255, 154 / 255, 154 / 255, 1)
@@ -862,12 +856,11 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
                             group_vertex_poses[offset.vertex_index] += ratio_pos.gl.vector
                         elif type(offset) is BoneMorphOffset and offset.bone_index in model.bones:
                             bf = self.animate_bone_morph_frame(fno, model, offset, mf_factor)
-                            group_bone_morphs[bf.name].append(bf)
-                            group_bone_morph_names |= {bf.name}
+                            bone_frames[bf.name][fno] = bf
                         elif type(offset) is MaterialMorphOffset and offset.material_index in model.materials:
                             materials = self.animate_material_morph_frame(model, offset, mf_factor, materials, light_ambient)
 
-        return group_vertex_poses, list(group_bone_morph_names), group_bone_morphs, materials
+        return group_vertex_poses, bone_frames, materials
 
     def animate_material_morph_frame(
         self, model: PmxModel, offset: MaterialMorphOffset, ratio: float, materials: list[ShaderMaterial], light_ambient: MVector4D
@@ -1026,14 +1019,8 @@ class VmdMotion(BaseHashModel):
         return self.model_name
 
     def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
-        # ボーン操作
-        bone_poses, bone_qqs = self.bones.animate_bone_matrixes(fno, model)
-
         # 頂点モーフ
         vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model)
-        # ボーンモーフ
-        bone_morph_names, bone_morphs = self.morphs.animate_bone_morphs(fno, model)
-        bone_morph_poses, bone_morph_qqs = bone_morphs.animate_bone_matrixes(fno, model, bone_morph_names)
         # UVモーフ
         uv_morph_poses = self.morphs.animate_uv_morphs(fno, model, 0)
         # 追加UVモーフ1
@@ -1041,29 +1028,46 @@ class VmdMotion(BaseHashModel):
         # 追加UVモーフ2-4は無視
         # 材質モーフ
         material_morphs = self.morphs.animate_material_morphs(fno, model)
+
+        # ボーンモーフ
+        morph_bone_frames = self.morphs.animate_bone_morphs(fno, model)
         # グループモーフ
-        group_vertex_morph_poses, group_bone_morph_names, group_bone_morphs, group_materials = self.morphs.animate_group_morphs(fno, model, material_morphs)
-        group_bone_morph_poses, group_bone_morph_qqs = group_bone_morphs.animate_bone_matrixes(fno, model, group_bone_morph_names)
+        group_vertex_morph_poses, group_morph_bone_frames, group_materials = self.morphs.animate_group_morphs(fno, model, material_morphs)
+
+        bone_names = set([])
+        bone_frames = VmdBoneFrames()
+        for bf_frames in [morph_bone_frames, group_morph_bone_frames, self.bones]:
+            # ボーンモーフ・グループボーンモーフ・ボーンキーフレの順番で重ねていく
+            for bfs in bf_frames:
+                bf = bfs[fno]
+                mbf = bone_frames[bf.name][bf.index]
+                bone_frames[bf.name][bf.index] = mbf + bf
+                bone_names |= {bf.name}
+
+        # ボーン操作
+        bone_poses, bone_qqs = bone_frames.animate_bone_matrixes(fno, model, list(bone_names))
 
         # ボーン変形行列
         matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
-        matrixes.translate(bone_morph_poses.tolist())
-        matrixes.rotate(bone_morph_qqs.tolist())
-
-        matrixes.translate(group_bone_morph_poses.tolist())
-        matrixes.rotate(group_bone_morph_qqs.tolist())
-
         matrixes.translate(bone_poses.tolist())
         matrixes.rotate(bone_qqs.tolist())
 
         bone_matrixes: list[np.ndarray] = []
-        for bone in model.bones:
-            # 全体のボーン変形行列を求める
-            matrix = model.bones.get_mesh_gl_matrix(matrixes, bone.index, np.eye(4))
+        for bone_index in model.bones.indexes:
+            bone = model.bones[bone_index]
 
             # BOf行列: 自身のボーンのボーンオフセット行列
-            matrix = matrix @ bone.offset_matrix.copy().vector
+            matrix = bone.offset_matrix.copy().vector
+
+            # 全体のボーン変形行列を求める
+            matrix = model.bones.get_mesh_matrix(matrixes, bone.index, matrix)
 
             bone_matrixes.append(matrix.T)
 
-        return (np.array(bone_matrixes), vertex_morph_poses + group_vertex_morph_poses, uv_morph_poses, uv1_morph_poses, group_materials)
+        # OpenGL座標系に変換
+        gl_matrixes = np.array(bone_matrixes)
+        gl_matrixes[..., 0, 1:3] *= -1
+        gl_matrixes[..., 1:3, 0] *= -1
+        gl_matrixes[..., 3, 0] *= -1
+
+        return (gl_matrixes, vertex_morph_poses + group_vertex_morph_poses, uv_morph_poses, uv1_morph_poses, group_materials)

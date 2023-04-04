@@ -109,6 +109,12 @@ class BaseIndexModel(BaseModel):
     def __bool__(self) -> bool:
         return self.index >= 0
 
+    def __iadd__(self, v):
+        raise NotImplementedError()
+
+    def __add__(self, v):
+        raise NotImplementedError()
+
 
 class BaseIndexNameModel(BaseModel):
     """
@@ -135,6 +141,12 @@ class BaseIndexNameModel(BaseModel):
 
     def __bool__(self) -> bool:
         return self.index >= 0 and len(self.name) >= 0
+
+    def __iadd__(self, v):
+        raise NotImplementedError()
+
+    def __add__(self, v):
+        raise NotImplementedError()
 
 
 TBaseIndexModel = TypeVar("TBaseIndexModel", bound=BaseIndexModel)

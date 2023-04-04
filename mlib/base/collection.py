@@ -33,6 +33,9 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         self.append(self.create())
         return self.data[index]
 
+    def __setitem__(self, index: int, v: TBaseIndexModel) -> None:
+        self.data[index] = v
+
     def append(self, value: TBaseIndexModel, is_sort: bool = True) -> None:
         if value.index < 0:
             value.index = len(self.data)
@@ -100,8 +103,8 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             else:
                 del self.data[self._names[key]]
 
-    def __setitem__(self, v: TBaseIndexNameModel) -> None:
-        self.data[v.index] = v
+    def __setitem__(self, index: int, v: TBaseIndexNameModel) -> None:
+        self.data[index] = v
 
     def append(self, value: TBaseIndexNameModel, is_sort: bool = True) -> None:
         if value.index < 0:
