@@ -701,7 +701,7 @@ class MQuaternion(MVector):
         if sign != 0:
             deg *= sign
 
-        if abs(deg) > 180:
+        if 180 < abs(deg):
             # 180度を超してる場合、フリップなので、除去
             return (abs(deg) - 180) * np.sign(deg)
 
@@ -837,15 +837,15 @@ class MQuaternion(MVector):
         線形補間
         """
         # Handle the easy cases first.
-        if t <= 0.0:
+        if 0.0 >= t:
             return q1
-        elif t >= 1.0:
+        elif 1.0 <= t:
             return q2
 
         q2b = MQuaternion(*q2.vector.components)
         d = q1.dot(q2)
 
-        if d < 0.0:
+        if 0.0 > d:
             q2b = -q2b
 
         return MQuaternion(*(q1.vector.components * (1.0 - t) + q2b.vector.components * t)).normalized()
@@ -1152,7 +1152,7 @@ class MMatrix4x4(MVector):
         # I removed + 1
         trace = v[0, 0] + v[1, 1] + v[2, 2]
         # I changed M_EPSILON to 0
-        if trace > 0:
+        if 0 < trace:
             s = 0.5 / sqrt(trace + 1)
             q.scalar = 0.25 / s
             q.x = (v[2, 1] - v[1, 2]) * s

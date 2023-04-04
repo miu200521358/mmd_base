@@ -105,13 +105,13 @@ class MLogger:
     def count(self, msg, fno, fnos, *args, **kwargs):
         last_fno = 0
 
-        if fnos and len(fnos) > 0 and fnos[-1] > 0:
+        if fnos and 0 < len(fnos) and 0 < fnos[-1]:
             last_fno = fnos[-1]
 
-        if not fnos and kwargs and "last_fno" in kwargs and kwargs["last_fno"] > 0:
+        if not fnos and kwargs and "last_fno" in kwargs and 0 < kwargs["last_fno"]:
             last_fno = kwargs["last_fno"]
 
-        if last_fno > 0:
+        if 0 < last_fno:
             if not kwargs:
                 kwargs = {}
 
@@ -181,7 +181,7 @@ class MLogger:
             trans_msg = self.translator.gettext(msg)
 
             # ログレコード生成
-            if args and isinstance(args[0], Exception) or (args and len(args) > 1 and isinstance(args[0], Exception)):
+            if args and isinstance(args[0], Exception) or (args and 1 < len(args) and isinstance(args[0], Exception)):
                 trans_msg = f"{trans_msg}\n\n{traceback.format_exc()}"
                 args = None
                 log_record = self.logger.makeRecord(
@@ -255,7 +255,7 @@ class MLogger:
         if level == logging.WARNING:
             msg_block.append("■　**WARNING**  ")
 
-        if level <= logging.INFO and title:
+        if logging.INFO >= level and title:
             msg_block.append(f"■　**{title}**  ")
 
         for msg_line in msg.split("\n"):

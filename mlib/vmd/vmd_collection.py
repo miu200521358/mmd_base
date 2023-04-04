@@ -448,7 +448,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
         effect_qq = self.get_rotation(effect_bone, fno, model, append_ik=True)
-        if bone.effect_factor > 0:
+        if 0 < bone.effect_factor:
             # 正の付与親
             qq *= effect_qq.multiply_factor(bone.effect_factor)
         else:
@@ -865,7 +865,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
     def animate_material_morph_frame(
         self, model: PmxModel, offset: MaterialMorphOffset, ratio: float, materials: list[ShaderMaterial], light_ambient: MVector4D
     ) -> list[ShaderMaterial]:
-        if offset.material_index < 0:
+        if 0 > offset.material_index:
             # 0の場合、全材質を対象とする
             material_indexes = model.materials.indexes
         else:

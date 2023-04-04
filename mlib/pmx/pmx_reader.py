@@ -187,7 +187,7 @@ class PmxReader(BaseReader[PmxModel]):
                 vertex.uv.y,
             ) = self.unpack(self.read_by_format[Vertex].unpack, self.read_by_format[Vertex].size)
 
-            if model.extended_uv_count > 0:
+            if 0 < model.extended_uv_count:
                 vertex.extended_uvs.append(self.read_MVector4D())
 
             vertex.deform_type = DeformType(self.read_byte())

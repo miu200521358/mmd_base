@@ -23,7 +23,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         raise NotImplementedError
 
     def __getitem__(self, index: int) -> TBaseIndexModel:
-        if index < 0:
+        if 0 > index:
             # マイナス指定の場合、後ろからの順番に置き換える
             index = len(self.data) + index
             return self.data[self.indexes[index]]
@@ -38,7 +38,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         self.data[index] = v
 
     def append(self, value: TBaseIndexModel, is_sort: bool = True) -> None:
-        if value.index < 0:
+        if 0 > value.index:
             value.index = len(self.data)
         self.data[value.index] = value
         if is_sort:
@@ -68,7 +68,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         return key in self.data
 
     def __bool__(self) -> bool:
-        return len(self.data) > 0
+        return 0 < len(self.data)
 
     @property
     def last_index(self) -> int:
@@ -110,7 +110,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         self.data[index] = v
 
     def append(self, value: TBaseIndexNameModel, is_sort: bool = True) -> None:
-        if value.index < 0:
+        if 0 > value.index:
             value.index = len(self.data)
 
         if value.name and value.name not in self._names:
@@ -194,7 +194,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         return key in self._names
 
     def __bool__(self) -> bool:
-        return len(self.data) > 0
+        return 0 < len(self.data)
 
     def range_indexes(self, index: int, indexes: Optional[list[int]] = None) -> tuple[int, int, int]:
         """
@@ -302,7 +302,7 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
         return key in self._names
 
     def __bool__(self) -> bool:
-        return len(self.data) > 0
+        return 0 < len(self.data)
 
 
 class BaseHashModel(BaseModel):
@@ -346,4 +346,4 @@ class BaseHashModel(BaseModel):
 
     def __bool__(self) -> bool:
         # パスが定義されていたら、中身入り
-        return len(self.path) > 0
+        return 0 < len(self.path)

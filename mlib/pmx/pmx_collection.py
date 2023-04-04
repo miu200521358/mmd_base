@@ -206,7 +206,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
         to_pos = MVector3D()
 
         from_pos = bone.position
-        if bone.is_tail_bone and bone.tail_index >= 0 and bone.tail_index in self:
+        if bone.is_tail_bone and 0 <= bone.tail_index and bone.tail_index in self:
             # 表示先が指定されているの場合、保持
             to_pos = self[bone.tail_index].position
         elif not bone.is_tail_bone:
@@ -249,7 +249,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
         # 逆BOf行列(初期姿勢行列)
         matrix = bone.init_matrix.vector @ matrix
 
-        if bone.index >= 0 and bone.parent_index in self:
+        if 0 <= bone.index and bone.parent_index in self:
             # 親ボーンがある場合、遡る
             matrix = self.get_mesh_matrix(matrixes, bone.parent_index, matrix)
 
@@ -459,7 +459,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
                         v.normal.z,
                         v.uv.x,
                         1 - v.uv.y,
-                        *(v.extended_uvs[0].vector if len(v.extended_uvs) > 0 else [0, 0]),
+                        *(v.extended_uvs[0].vector if 0 < len(v.extended_uvs) else [0, 0]),
                         v.edge_factor,
                         *v.deform.normalized_deform(),
                         0.0,
@@ -498,7 +498,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         prev_vertices_count = 0
         for material in model.materials:
             texture: Optional[Texture] = None
-            if material.texture_index >= 0:
+            if 0 <= material.texture_index:
                 texture = model.textures[material.texture_index]
                 texture.init_draw(model.path, TextureType.TEXTURE)
 
@@ -507,13 +507,13 @@ class Meshes(BaseIndexDictModel[Mesh]):
                 # 共有Toon
                 toon_texture = model.toon_textures[material.toon_texture_index]
                 toon_texture.init_draw(model.path, TextureType.TOON, is_individual=False)
-            elif ToonSharing.INDIVIDUAL == material.toon_sharing_flg and material.toon_texture_index >= 0:
+            elif ToonSharing.INDIVIDUAL == material.toon_sharing_flg and 0 <= material.toon_texture_index:
                 # 個別Toon
                 toon_texture = model.textures[material.toon_texture_index]
                 toon_texture.init_draw(model.path, TextureType.TOON)
 
             sphere_texture: Optional[Texture] = None
-            if material.sphere_texture_index >= 0:
+            if 0 <= material.sphere_texture_index:
                 sphere_texture = model.textures[material.sphere_texture_index]
                 sphere_texture.init_draw(model.path, TextureType.SPHERE)
 
@@ -589,7 +589,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
             mesh.draw_model(bone_matrixes, material_morph, self.shader, self.ibo_faces)
             self.shader.unuse()
 
-            if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and material_morph.diffuse.w > 0:
+            if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and 0 < material_morph.diffuse.w:
                 # エッジ描画
                 self.shader.use(edge=True)
                 mesh.draw_edge(bone_matrixes, material_morph, self.shader, self.ibo_faces)

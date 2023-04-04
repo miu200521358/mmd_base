@@ -56,7 +56,7 @@ class Interpolation(BaseModel):
 
 def get_infections(values: list[float], threshold: float) -> np.ndarray:
     extract_idxs = get_threshold_infections(np.fromiter(values, dtype=np.float64, count=len(values)), threshold)
-    if len(extract_idxs) < 2:
+    if 2 > len(extract_idxs):
         return np.array([])
     extracts = np.fromiter(values, dtype=np.float64, count=len(values))[extract_idxs]
     f_prime = np.gradient(extracts)
@@ -84,7 +84,7 @@ def get_threshold_infections(values: np.ndarray, threshold: float) -> np.ndarray
 
 
 def create_interpolation(values: list[float]):
-    if len(values) <= 2 or abs(np.max(values) - np.min(values)) < 0.0001:
+    if 2 >= len(values) or 0.0001 >= abs(np.max(values) - np.min(values)):
         return Interpolation()
 
     # Xは次数（フレーム数）分移動
@@ -148,7 +148,7 @@ def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> tu
     x2 = interpolation.end.x / IP_MAX
     y2 = interpolation.end.y / IP_MAX
 
-    if x >= 1:
+    if 1 <= x:
         return 1.0, 1.0, 1.0
 
     return cache_evaluate(x, x1, y1, x2, y2)
@@ -182,11 +182,11 @@ def newton(x1, x2, x, t0=0.5, eps=1e-10, error=1e-10):
         func_f_value = cached_func_f(x1, x2, x, t0)
         # 中心差分による微分値
         func_df = (cached_func_f(x1, x2, x, t0 + eps) - cached_func_f(x1, x2, x, t0 - eps)) / derivative
-        if abs(func_df) <= eps:
+        if eps >= abs(func_df):
             break
         # 次の解を計算
         t1 = t0 - func_f_value / func_df
-        if abs(t1 - t0) <= error:
+        if error >= abs(t1 - t0):
             # 「誤差範囲が一定値以下」ならば終了
             break
         # 解を更新

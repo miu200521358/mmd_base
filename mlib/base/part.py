@@ -107,7 +107,7 @@ class BaseIndexModel(BaseModel):
         self.index = index
 
     def __bool__(self) -> bool:
-        return self.index >= 0
+        return 0 <= self.index
 
     def __iadd__(self, v):
         raise NotImplementedError()
@@ -140,7 +140,7 @@ class BaseIndexNameModel(BaseModel):
         self.english_name: str = english_name
 
     def __bool__(self) -> bool:
-        return self.index >= 0 and len(self.name) >= 0
+        return 0 <= self.index and 0 <= len(self.name)
 
     def __iadd__(self, v):
         raise NotImplementedError()
