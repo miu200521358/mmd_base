@@ -290,7 +290,7 @@ class Vertex(BaseIndexModel):
         self.uv = MVector2D()
         self.extended_uvs: list[MVector4D] = []
         self.deform_type = DeformType.BDEF1
-        self.deform = Bdef1(-1)
+        self.deform: Union[Bdef1, Bdef2, Bdef4, Sdef] = Bdef1(-1)
         self.edge_factor = 0.0
 
 

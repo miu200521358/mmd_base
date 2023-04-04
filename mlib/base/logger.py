@@ -151,96 +151,98 @@ class MLogger:
     # 実際に出力する実態
     def print_logger(self, msg, *args, **kwargs):
         target_level = kwargs.pop("level", logging.INFO)
-        if self.total_level <= target_level and self.default_level <= target_level:
-            # システム全体のロギングレベルもクラス単位のロギングレベルもクリアしてる場合のみ出力
+        if not (self.total_level <= target_level and self.default_level <= target_level and self.translator and self.logger):
+            return
 
-            # モジュール名を出力するよう追加
-            extra_args = {}
-            extra_args["module_name"] = self.module_name
+        # システム全体のロギングレベルもクラス単位のロギングレベルもクリアしてる場合のみ出力
 
-            # 翻訳する
-            if self.mode == LoggingMode.MODE_UPDATE and logging.DEBUG < target_level:
-                # 更新ありの場合、既存データのチェックを行って追記する
-                messages = []
-                with open(f"{self.lang_dir}/messages.pot", mode="r", encoding="utf-8") as f:
-                    messages = f.readlines()
+        # モジュール名を出力するよう追加
+        extra_args = {}
+        extra_args["module_name"] = self.module_name
 
-                new_msg = self.re_break.sub("\\\\n", msg)
-                added_msg_idxs = [n + 1 for n, inmsg in enumerate(messages) if "msgid" in inmsg and new_msg in inmsg]
+        # 翻訳する
+        if self.mode == LoggingMode.MODE_UPDATE and logging.DEBUG < target_level:
+            # 更新ありの場合、既存データのチェックを行って追記する
+            messages = []
+            with open(f"{self.lang_dir}/messages.pot", mode="r", encoding="utf-8") as f:
+                messages = f.readlines()
 
-                if not added_msg_idxs:
-                    messages.append(f'\nmsgid "{new_msg}"\n')
-                    messages.append('msgstr ""\n')
-                    messages.append("\n")
-                    print("add message: %s", new_msg)
+            new_msg = self.re_break.sub("\\\\n", msg)
+            added_msg_idxs = [n + 1 for n, inmsg in enumerate(messages) if "msgid" in inmsg and new_msg in inmsg]
 
-                    with open(f"{self.lang_dir}/messages.pot", mode="w", encoding="utf-8") as f:
-                        f.writelines(messages)
+            if not added_msg_idxs:
+                messages.append(f'\nmsgid "{new_msg}"\n')
+                messages.append('msgstr ""\n')
+                messages.append("\n")
+                print("add message: %s", new_msg)
 
-            # 翻訳結果を取得する
-            trans_msg = self.translator.gettext(msg)
+                with open(f"{self.lang_dir}/messages.pot", mode="w", encoding="utf-8") as f:
+                    f.writelines(messages)
 
-            # ログレコード生成
-            if args and isinstance(args[0], Exception) or (args and 1 < len(args) and isinstance(args[0], Exception)):
-                trans_msg = f"{trans_msg}\n\n{traceback.format_exc()}"
-                args = None
-                log_record = self.logger.makeRecord(
-                    "name",
-                    target_level,
-                    "(unknown file)",
-                    0,
-                    args,
-                    None,
-                    None,
-                    self.module_name,
-                )
-            else:
-                log_record = self.logger.makeRecord(
-                    "name",
-                    target_level,
-                    "(unknown file)",
-                    0,
-                    trans_msg,
-                    args,
-                    None,
-                    self.module_name,
-                )
+        # 翻訳結果を取得する
+        trans_msg = self.translator.gettext(msg)
 
-            target_decoration = kwargs.pop("decoration", None)
-            title = kwargs.pop("title", None)
+        # ログレコード生成
+        if args and isinstance(args[0], Exception) or (args and 1 < len(args) and isinstance(args[0], Exception)):
+            trans_msg = f"{trans_msg}\n\n{traceback.format_exc()}"
+            args = None
+            log_record = self.logger.makeRecord(
+                "name",
+                target_level,
+                "(unknown file)",
+                0,
+                args,
+                None,
+                None,
+                self.module_name,
+            )
+        else:
+            log_record = self.logger.makeRecord(
+                "name",
+                target_level,
+                "(unknown file)",
+                0,
+                trans_msg,
+                args,
+                None,
+                self.module_name,
+            )
 
-            print_msg = str(trans_msg)
-            if kwargs:
-                print_msg = print_msg.format(**kwargs)
+        target_decoration = kwargs.pop("decoration", None)
+        title = kwargs.pop("title", None)
 
-            if target_decoration:
-                if target_decoration == LoggingDecoration.DECORATION_BOX:
-                    output_msg = self.create_box_message(print_msg, target_level, title)
-                elif target_decoration == LoggingDecoration.DECORATION_LINE:
-                    output_msg = self.create_line_message(print_msg, target_level, title)
-                elif target_decoration == LoggingDecoration.DECORATION_IN_BOX:
-                    output_msg = self.create_in_box_message(print_msg, target_level, title)
-                else:
-                    output_msg = self.create_simple_message(print_msg, target_level, title)
+        print_msg = str(trans_msg)
+        if kwargs:
+            print_msg = print_msg.format(**kwargs)
+
+        if target_decoration:
+            if target_decoration == LoggingDecoration.DECORATION_BOX:
+                output_msg = self.create_box_message(print_msg, target_level, title)
+            elif target_decoration == LoggingDecoration.DECORATION_LINE:
+                output_msg = self.create_line_message(print_msg, target_level, title)
+            elif target_decoration == LoggingDecoration.DECORATION_IN_BOX:
+                output_msg = self.create_in_box_message(print_msg, target_level, title)
             else:
                 output_msg = self.create_simple_message(print_msg, target_level, title)
+        else:
+            output_msg = self.create_simple_message(print_msg, target_level, title)
 
-            # 出力
-            try:
-                log_record = self.logger.makeRecord(
-                    "name",
-                    target_level,
-                    "(unknown file)",
-                    0,
-                    output_msg,
-                    None,
-                    None,
-                    self.module_name,
-                )
-                self.logger.handle(log_record)
-            except:
-                # エラーしてたら無視
-                pass
+        # 出力
+        try:
+            log_record = self.logger.makeRecord(
+                "name",
+                target_level,
+                "(unknown file)",
+                0,
+                output_msg,
+                None,
+                None,
+                self.module_name,
+            )
+            self.logger.handle(log_record)
+        except:
+            # エラーしてたら無視
+            pass
 
     def create_box_message(self, msg, level, title=None):
         msg_block = []
@@ -374,7 +376,7 @@ def get_file_encoding(file_path):
     for encoding in codes:
         try:
             fstr = fbytes.decode(encoding)  # bytes文字列から指定文字コードの文字列に変換
-            fstr = fstr.encode("utf-8")  # uft-8文字列に変換
+            fbytes = fstr.encode("utf-8")  # uft-8文字列に変換
             # 問題なく変換できたらエンコードを返す
             return encoding
         except Exception as e:
