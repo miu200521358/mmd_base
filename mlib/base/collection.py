@@ -17,6 +17,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         self.data: dict[int, TBaseIndexModel] = {}
         self.indexes: list[int] = []
         self._iter_index = 0
+        self._size = 0
 
     def create(self) -> "TBaseIndexModel":
         raise NotImplementedError
@@ -54,11 +55,12 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
 
     def __iter__(self):
         self._iter_index = -1
+        self._size = len(self.indexes)
         return self
 
     def __next__(self) -> TBaseIndexModel:
         self._iter_index += 1
-        if self._iter_index >= len(self.indexes):
+        if self._iter_index >= self._size:
             raise StopIteration
         return self.data[self.indexes[self._iter_index]]
 
@@ -90,6 +92,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         self.indexes: list[int] = []
         self._names: dict[str, int] = {}
         self._iter_index = 0
+        self._size = 0
 
     def __getitem__(self, key: int | str) -> TBaseIndexNameModel:
         if isinstance(key, int):
@@ -176,11 +179,12 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
 
     def __iter__(self):
         self._iter_index = -1
+        self._size = len(self.indexes)
         return self
 
     def __next__(self) -> TBaseIndexNameModel:
         self._iter_index += 1
-        if self._iter_index >= len(self.indexes):
+        if self._iter_index >= self._size:
             raise StopIteration
         return self.data[self.indexes[self._iter_index]]
 
@@ -248,6 +252,7 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
         self.cache: dict[str, TBaseIndexNameDictModel] = {}
         self._names: list[str] = []
         self._iter_index = 0
+        self._size = 0
 
     def create(self, key: str) -> TBaseIndexNameDictModel:
         raise NotImplementedError
@@ -284,11 +289,12 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
 
     def __iter__(self):
         self._iter_index = -1
+        self._size = len(self.data)
         return self
 
     def __next__(self) -> TBaseIndexNameDictModel:
         self._iter_index += 1
-        if self._iter_index >= len(self._names):
+        if self._iter_index >= self._size:
             raise StopIteration
         return self.data[self._names[self._iter_index]]
 
