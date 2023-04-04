@@ -139,7 +139,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
             # レイヤー込みのINDEXリスト取得を末端ボーンをキーとして保持
             bone_tree = BoneTree(name=end_bone.name)
             for _, bidx in sorted(self.create_bone_link_indexes(end_bone.index)):
-                bone_tree.append(self[bidx].copy())
+                bone_tree.append(self.data[bidx].copy())
             bone_trees.append(bone_tree, name=end_bone.name)
 
         return bone_trees
@@ -449,7 +449,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         # 頂点情報
         self.vertices = np.array(
             [
-                np.array(
+                np.fromiter(
                     [
                         -v.position.x,
                         v.position.y,
@@ -475,10 +475,10 @@ class Meshes(BaseIndexDictModel[Mesh]):
                         0.0,
                     ],
                     dtype=np.float32,
+                    count=30,
                 )
                 for v in model.vertices
             ],
-            dtype=np.float32,
         )
 
         face_dtype: type = np.uint8 if model.vertex_count == 1 else np.uint16 if model.vertex_count == 2 else np.uint32
@@ -486,13 +486,13 @@ class Meshes(BaseIndexDictModel[Mesh]):
         # 面情報
         self.faces: np.ndarray = np.array(
             [
-                np.array(
+                np.fromiter(
                     [f.vertices[2], f.vertices[1], f.vertices[0]],
                     dtype=face_dtype,
+                    count=3,
                 )
                 for f in model.faces
             ],
-            dtype=face_dtype,
         )
 
         prev_vertices_count = 0

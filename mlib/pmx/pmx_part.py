@@ -111,12 +111,20 @@ class Deform(BaseModel, ABC):
         # 揃える必要がある場合
         # 数が足りるよう、かさ増しする
         ilist = np.fromiter(
-            np.array(self.indexes.tolist() + [0, 0, 0, 0]),
+            np.fromiter(
+                self.indexes.tolist() + [0, 0, 0, 0],
+                dtype=np.int32,
+                count=len(self.indexes) + 4,
+            ),
             dtype=np.int32,
             count=len(self.indexes) + 4,
         )
         wlist = np.fromiter(
-            np.array(self.weights.tolist() + [0, 0, 0, 0]),
+            np.fromiter(
+                self.weights.tolist() + [0, 0, 0, 0],
+                dtype=np.float64,
+                count=len(self.weights) + 4,
+            ),
             dtype=np.float64,
             count=len(self.weights) + 4,
         )

@@ -70,9 +70,9 @@ class MRect(BaseModel):
 def calc_v3_by_ratio(
     prev_x: float, prev_y: float, prev_z: float, next_x: float, next_y: float, next_z: float, ratio_x: float, ratio_y: float, ratio_z: float
 ) -> np.ndarray:
-    prev_v = np.array([prev_x, prev_y, prev_z])
-    next_v = np.array([next_x, next_y, next_z])
-    ratio_v = np.array([ratio_x, ratio_y, ratio_z])
+    prev_v = np.fromiter([prev_x, prev_y, prev_z], dtype=np.float64, count=3)
+    next_v = np.fromiter([next_x, next_y, next_z], dtype=np.float64, count=3)
+    ratio_v = np.fromiter([ratio_x, ratio_y, ratio_z], dtype=np.float64, count=3)
     return prev_v + (next_v - prev_v) * ratio_v
 
 

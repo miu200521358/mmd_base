@@ -220,7 +220,7 @@ class MShader:
         self.light_diffuse = MVector3D()
         # MMDの照明色そのまま
         self.light_ambient = MVector3D(154 / 255, 154 / 255, 154 / 255)
-        self.light_specular = self.light_ambient.copy()
+        self.light_specular = self.light_ambient
         # light_diffuse == MMDのambient
         self.light_ambient4 = MVector4D(
             self.light_ambient.x,
