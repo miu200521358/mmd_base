@@ -1,7 +1,7 @@
 from typing import Optional
 
 from mlib.base.base import BaseModel
-from mlib.base.bezier import Interpolation, evaluate
+from mlib.base.interpolation import Interpolation, evaluate
 from mlib.base.math import MQuaternion, MVector3D
 from mlib.base.part import BaseIndexNameModel, BaseRotationModel
 

@@ -92,8 +92,8 @@ class Deform(BaseModel, ABC):
         if align:
             # 揃える必要がある場合
             # 数が足りるよう、かさ増しする
-            ilist = np.fromiter(self.indexes.tolist() + [0, 0, 0, 0], count=(len(self.indexes) + 4))
-            wlist = np.fromiter(self.weights.tolist() + [0, 0, 0, 0], count=(len(self.weights) + 4))
+            ilist = np.fromiter(self.indexes.tolist() + [0, 0, 0, 0], count=(len(self.indexes) + 4), dtype=np.int32)
+            wlist = np.fromiter(self.weights.tolist() + [0, 0, 0, 0], count=(len(self.weights) + 4), dtype=np.float64)
             # 正規化
             wlist /= wlist.sum(axis=0, keepdims=True)
 
@@ -283,22 +283,15 @@ class Vertex(BaseIndexModel):
     def __init__(
         self,
         index: int = -1,
-        position: Optional[MVector3D] = None,
-        normal: Optional[MVector3D] = None,
-        uv: Optional[MVector2D] = None,
-        extended_uvs: Optional[list[MVector4D]] = None,
-        deform_type: DeformType = DeformType.BDEF1,
-        deform: Optional[Deform] = None,
-        edge_factor: float = 0,
     ):
         super().__init__(index=index)
-        self.position = position or MVector3D()
-        self.normal = normal or MVector3D()
-        self.uv = uv or MVector2D()
-        self.extended_uvs = extended_uvs or []
-        self.deform_type = deform_type
-        self.deform = deform or Bdef1(-1)
-        self.edge_factor = edge_factor
+        self.position = MVector3D()
+        self.normal = MVector3D()
+        self.uv = MVector2D()
+        self.extended_uvs: list[MVector4D] = []
+        self.deform_type = DeformType.BDEF1
+        self.deform = Bdef1(-1)
+        self.edge_factor = 0.0
 
 
 class Face(BaseIndexModel):
@@ -533,36 +526,22 @@ class Material(BaseIndexNameModel):
         index: int = -1,
         name: str = "",
         english_name: str = "",
-        diffuse_color: Optional[MVector4D] = None,
-        specular_color: Optional[MVector3D] = None,
-        specular_factor: float = 0.0,
-        ambient_color: Optional[MVector3D] = None,
-        draw_flg: DrawFlg = DrawFlg.NONE,
-        edge_color: Optional[MVector4D] = None,
-        edge_size: float = 0.0,
-        texture_index: int = -1,
-        sphere_texture_index: int = -1,
-        sphere_mode: SphereMode = SphereMode.INVALID,
-        toon_sharing_flg: ToonSharing = ToonSharing.SHARING,
-        toon_texture_index: int = -1,
-        comment: str = "",
-        vertices_count: int = 0,
     ):
         super().__init__(index=index, name=name, english_name=english_name)
-        self.diffuse_color = diffuse_color or MVector4D()
-        self.specular_color = specular_color or MVector3D()
-        self.specular_factor = specular_factor
-        self.ambient_color = ambient_color or MVector3D()
-        self.draw_flg = draw_flg
-        self.edge_color = edge_color or MVector4D()
-        self.edge_size = edge_size
-        self.texture_index = texture_index
-        self.sphere_texture_index = sphere_texture_index
-        self.sphere_mode = sphere_mode
-        self.toon_sharing_flg = toon_sharing_flg
-        self.toon_texture_index = toon_texture_index
-        self.comment = comment
-        self.vertices_count = vertices_count
+        self.diffuse_color = MVector4D()
+        self.specular_color = MVector3D()
+        self.specular_factor = 0.0
+        self.ambient_color = MVector3D()
+        self.draw_flg = DrawFlg.NONE
+        self.edge_color = MVector4D()
+        self.edge_size = 0.0
+        self.texture_index = -1
+        self.sphere_texture_index = -1
+        self.sphere_mode = SphereMode.INVALID
+        self.toon_sharing_flg = ToonSharing.SHARING
+        self.toon_texture_index = -1
+        self.comment = ""
+        self.vertices_count = 0
 
 
 class IkLink(BaseModel):
@@ -590,16 +569,12 @@ class IkLink(BaseModel):
 
     def __init__(
         self,
-        bone_index: int = -1,
-        angle_limit: bool = False,
-        min_angle_limit_radians: Optional[MVector3D] = None,
-        max_angle_limit_radians: Optional[MVector3D] = None,
     ):
         super().__init__()
-        self.bone_index = bone_index
-        self.angle_limit = angle_limit
-        self.min_angle_limit = BaseRotationModel(min_angle_limit_radians or MVector3D())
-        self.max_angle_limit = BaseRotationModel(max_angle_limit_radians or MVector3D())
+        self.bone_index = -1
+        self.angle_limit = False
+        self.min_angle_limit = BaseRotationModel()
+        self.max_angle_limit = BaseRotationModel()
 
 
 class Ik(BaseModel):
@@ -628,16 +603,12 @@ class Ik(BaseModel):
 
     def __init__(
         self,
-        bone_index: int = -1,
-        loop_count: int = 0,
-        unit_radians: float = 0.0,
-        links: Optional[list[IkLink]] = None,
     ):
         super().__init__()
-        self.bone_index = bone_index
-        self.loop_count = loop_count
-        self.unit_rotation = BaseRotationModel(MVector3D(unit_radians, 0, 0))
-        self.links = links or []
+        self.bone_index = -1
+        self.loop_count = 0
+        self.unit_rotation = BaseRotationModel()
+        self.links: list[IkLink] = []
 
 
 @unique
