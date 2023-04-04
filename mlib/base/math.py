@@ -1,11 +1,11 @@
-from functools import lru_cache
 import operator
+from functools import lru_cache
 from math import acos, atan2, cos, degrees, radians, sin, sqrt
 from typing import Union
 
 import numpy as np
 from numpy.linalg import inv, norm
-from quaternion import as_rotation_matrix, from_rotation_matrix, quaternion, slerp_evaluate, one
+from quaternion import as_rotation_matrix, from_rotation_matrix, one, quaternion, slerp_evaluate
 
 from .base import BaseModel
 

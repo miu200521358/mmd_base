@@ -1,6 +1,6 @@
-from functools import lru_cache
 import logging
 from bisect import bisect_left
+from functools import lru_cache
 from math import acos, degrees, pi
 from typing import Optional
 
@@ -18,9 +18,9 @@ from mlib.pmx.pmx_part import (
     MaterialMorphCalcMode,
     MaterialMorphOffset,
     MorphType,
-    VertexMorphOffset,
-    UvMorphOffset,
     ShaderMaterial,
+    UvMorphOffset,
+    VertexMorphOffset,
 )
 from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
 

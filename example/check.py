@@ -1,5 +1,6 @@
-import os
 import glob
+import os
+
 import numpy as np
 
 # ffmpeg  -f image2 -r 30 -i %08d.png sizing.mp4
