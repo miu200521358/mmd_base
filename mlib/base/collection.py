@@ -146,7 +146,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         TBaseIndexNameModel
             要素
         """
-        if index < 0:
+        if 0 > index:
             # マイナス指定の場合、後ろからの順番に置き換える
             index = len(self.data) + index
             return self.data[self.indexes[index]]

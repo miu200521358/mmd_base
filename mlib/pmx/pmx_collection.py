@@ -177,10 +177,10 @@ class Bones(BaseIndexNameDictModel[Bone]):
         """
         # 階層＞リスト順（＞FK＞IK＞付与）
         if not bone_link_indexes:
-            bone_link_indexes = [(self[child_idx].layer, self[child_idx].index)]
+            bone_link_indexes = [(self.data[child_idx].layer, self.data[child_idx].index)]
 
-        for b in reversed(self):
-            if b.index == self[child_idx].parent_index:
+        for b in reversed(self.data.values()):
+            if b.index == self.data[child_idx].parent_index:
                 bone_link_indexes.append((b.layer, b.index))
                 return self.create_bone_link_indexes(b.index, bone_link_indexes)
 
