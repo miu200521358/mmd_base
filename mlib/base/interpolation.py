@@ -140,7 +140,7 @@ def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> tu
     tuple[float, float, float]
         x（計算キーフレ時点のX値）, y（計算キーフレ時点のY値）, t（計算キーフレまでの変化量）
     """
-    if (now - start) == 0 or (end - start) == 0:
+    if 0 == (now - start) or 0 == (end - start):
         return 0.0, 0.0, 0.0
 
     x = (now - start) / (end - start)

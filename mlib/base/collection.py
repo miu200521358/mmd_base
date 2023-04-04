@@ -221,7 +221,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         # index がない場合、前後のINDEXを取得する
 
         idx = bisect_left(indexes, index)
-        if idx == 0:
+        if 0 == idx:
             prev_index = 0
         else:
             prev_index = indexes[idx - 1]

@@ -1108,13 +1108,13 @@ class MorphPanel(IntEnum):
 
     @property
     def panel_name(self):
-        if self.value == 1:
+        if 1 == self.value:
             return "眉"
-        elif self.value == 2:
+        elif 2 == self.value:
             return "目"
-        elif self.value == 3:
+        elif 3 == self.value:
             return "口"
-        elif self.value == 4:
+        elif 4 == self.value:
             return "他"
         else:
             return "システム"

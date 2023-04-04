@@ -486,7 +486,7 @@ class PmxWriter(BaseModel):
                     # 1  : byte	| 角度制限 0:OFF 1:ON
                     self.write_byte(fout, link.angle_limit)
 
-                    if link.angle_limit == 1:
+                    if link.angle_limit:
                         self.write_number(
                             fout,
                             PmxBinaryType.FLOAT,
@@ -663,7 +663,7 @@ class PmxWriter(BaseModel):
             for reference in display_slot.references:
                 # 要素対象 0:ボーン 1:モーフ
                 self.write_byte(fout, reference.display_type)
-                if reference.display_type == 0:
+                if 0 == reference.display_type:
                     # ボーンIndex
                     self.write_number(fout, bone_idx_type, reference.display_index)
                 else:

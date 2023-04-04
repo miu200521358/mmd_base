@@ -66,7 +66,7 @@ void main() {
     // 頂点色設定
     vertexColor = clamp(diffuse, 0.0, 1.0);
 
-    if (useToon == 0) {
+    if (0 == useToon) {
         // ディフューズ色＋アンビエント色 計算
         float lightNormal = clamp(dot( vetexNormal, -lightDirection ), 0.0, 1.0);
         vertexColor.rgb += diffuse.rgb * lightNormal;
@@ -76,9 +76,9 @@ void main() {
     // テクスチャ描画位置
     vertexUv = uv + morphUv.xy;
 
-    if (useSphere == 1) {
+    if (1 == useSphere) {
         // Sphereマップ計算
-        if (sphereMode == 3) {
+        if (3 == sphereMode) {
             // PMXサブテクスチャ座標
             sphereUv = extendUv;
         }

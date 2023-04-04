@@ -32,15 +32,15 @@ out vec4  outColor;
 void main() {
     outColor = vertexColor;
 
-    if (useTexture == 1) {
+    if (1 == useTexture) {
         // テクスチャ適用
         outColor *= texture(textureSampler, vertexUv);
     }
 
-    if (useSphere == 1) {
+    if (1 == useSphere) {
         // Sphere適用
         vec4 texColor = texture(sphereSampler, sphereUv);
-        if (sphereMode == 2) {
+        if (2 == sphereMode) {
             // スフィア加算
             outColor.rgb += texColor.rgb;
         }
@@ -51,7 +51,7 @@ void main() {
         outColor.a *= texColor.a;
     }
 
-    if (useToon == 1) {
+    if (1 == useToon) {
         // Toon適用
         float lightNormal = dot( vetexNormal, -lightDirection );
         outColor *= texture(toonSampler, vec2(0, lightNormal));

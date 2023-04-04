@@ -361,7 +361,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         if not (bone.is_external_translation and bone.effect_index in model.bones):
             return pos
 
-        if bone.effect_factor == 0:
+        if 0 == bone.effect_factor:
             # 付与率が0の場合、常に0になる
             return MVector3D()
 
@@ -441,7 +441,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         if not (bone.is_external_rotation and bone.effect_index in model.bones):
             return qq
 
-        if bone.effect_factor == 0:
+        if 0 == bone.effect_factor:
             # 付与率が0の場合、常に0になる
             return MQuaternion()
 
@@ -781,7 +781,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         row = len(model.vertices)
         poses = np.full((row, 4), np.zeros(4))
 
-        target_uv_type = MorphType.UV if uv_index == 0 else MorphType.EXTENDED_UV1
+        target_uv_type = MorphType.UV if 0 == uv_index else MorphType.EXTENDED_UV1
         for morph in model.morphs.filter_by_type(target_uv_type):
             if morph.name not in self.data:
                 # モーフそのものの定義がなければスルー

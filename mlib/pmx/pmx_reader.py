@@ -191,16 +191,16 @@ class PmxReader(BaseReader[PmxModel]):
                 vertex.extended_uvs.append(self.read_MVector4D())
 
             vertex.deform_type = DeformType(self.read_byte())
-            if vertex.deform_type == DeformType.BDEF1:
+            if DeformType.BDEF1 == vertex.deform_type:
                 vertex.deform = Bdef1(self.read_bone_index())
-            elif vertex.deform_type == DeformType.BDEF2:
+            elif DeformType.BDEF2 == vertex.deform_type:
                 vertex.deform = Bdef2(
                     *self.unpack(
                         self.read_by_format[Bdef2].unpack,
                         self.read_by_format[Bdef2].size,
                     )
                 )
-            elif vertex.deform_type == DeformType.BDEF4:
+            elif DeformType.BDEF4 == vertex.deform_type:
                 vertex.deform = Bdef4(
                     *self.unpack(
                         self.read_by_format[Bdef4].unpack,
@@ -208,7 +208,12 @@ class PmxReader(BaseReader[PmxModel]):
                     )
                 )
             else:
-                vertex.deform = Sdef(*self.unpack(self.read_by_format[Sdef].unpack, self.read_by_format[Sdef].size))
+                vertex.deform = Sdef(
+                    *self.unpack(
+                        self.read_by_format[Sdef].unpack,
+                        self.read_by_format[Sdef].size,
+                    )
+                )
             vertex.edge_factor = self.read_float()
             model.vertices.append(vertex, is_sort=False)
         model.vertices.sort_indexes()
@@ -315,7 +320,7 @@ class PmxReader(BaseReader[PmxModel]):
                 for _i in range(self.read_int()):
                     ik_link = IkLink()
                     ik_link.bone_index = self.read_bone_index()
-                    ik_link.angle_limit = self.read_byte() == 1
+                    ik_link.angle_limit = 1 == self.read_byte()
                     if ik_link.angle_limit:
                         ik_link.min_angle_limit.radians = self.read_MVector3D()
                         ik_link.max_angle_limit.radians = self.read_MVector3D()
@@ -501,25 +506,25 @@ class PmxReader(BaseReader[PmxModel]):
         function
             読み取り定義関数
         """
-        if count == 1 and is_vertex:
+        if 1 == count and is_vertex:
 
             def read_index():
                 return self.read_byte()
 
             return read_index, "B"
-        elif count == 2 and is_vertex:
+        elif 2 == count and is_vertex:
 
             def read_index():
                 return self.read_ushort()
 
             return read_index, "H"
-        elif count == 1 and not is_vertex:
+        elif 1 == count and not is_vertex:
 
             def read_index():
                 return self.read_sbyte()
 
             return read_index, "b"
-        elif count == 2 and not is_vertex:
+        elif 2 == count and not is_vertex:
 
             def read_index():
                 return self.read_short()
