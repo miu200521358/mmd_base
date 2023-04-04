@@ -544,11 +544,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # リンクボーンの角度を保持
                     link_bf = self[link_bone.name][fno]
-                    if "左" in link_bf.name:
-                        logger.debug(
-                            f"- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}] "
-                            + f"rot[{link_bf.ik_rotation.to_euler_degrees_mmd() if link_bf.ik_rotation else '-'}]"
-                        )
+                    # if "左" in link_bf.name:
+                    #     logger.debug(
+                    #         f"- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}] "
+                    #         + f"rot[{link_bf.ik_rotation.to_euler_degrees_mmd() if link_bf.ik_rotation else '-'}]"
+                    #     )
 
                     # 処理対象IKボーンのグローバル位置と行列を取得
                     col = len(link_bone_tree)
@@ -578,12 +578,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 注目ノードを起点とした、IK目標のローカル位置
                     local_target_pos = link_inverse_matrix * global_target_pos
 
-                    logger.debug(
-                        f"- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}], "
-                        + f"global_target_pos: {global_target_pos}, global_effector_pos: {global_effector_pos}"
-                    )
+                    # logger.debug(
+                    #     f"- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}], "
+                    #     + f"global_target_pos: {global_target_pos}, global_effector_pos: {global_effector_pos}"
+                    # )
 
-                    if (local_effector_pos - local_target_pos).length_squared() < 1e-5:
+                    if 1e-5 > (local_effector_pos - local_target_pos).length_squared():
                         # 位置の差がほとんどない場合、スルー
                         is_break = True
                         break
@@ -600,7 +600,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     rotation_radian = acos(max(-1, min(1, rotation_dot)))
 
                     # 回転軸
-                    rotation_axis = norm_effector_pos.cross(norm_target_pos).normalized()
+                    rotation_axis = norm_effector_pos.cross(norm_target_pos)
                     # 回転角度
                     rotation_degree = degrees(rotation_radian)
 
@@ -609,7 +609,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     #     continue
 
                     # 制限角で最大変位量を制限する
-                    if loop > 0:
+                    if 0 < loop:
                         rotation_degree = min(rotation_degree, ik_bone.ik.unit_rotation.degrees.x)
 
                     # 補正関節回転量
@@ -644,11 +644,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         ik_qq = MQuaternion.from_euler_degrees(euler_degrees)
 
                     link_bf.ik_rotation = ik_qq
-                    if "左" in link_bf.name:
-                        logger.debug(
-                            f"-- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}], "
-                            + f"rot[{link_bf.ik_rotation.to_euler_degrees_mmd() if link_bf.ik_rotation else '-'}]"
-                        )
+                    # if "左" in link_bf.name:
+                    #     logger.debug(
+                    #         f"-- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}], "
+                    #         + f"rot[{link_bf.ik_rotation.to_euler_degrees_mmd() if link_bf.ik_rotation else '-'}]"
+                    #     )
                     self[link_bf.name].append(link_bf)
 
                 if is_break:
