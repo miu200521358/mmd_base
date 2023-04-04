@@ -579,10 +579,10 @@ class PmxWriter(BaseModel):
                     self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position.x))
                     self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position.y))
                     self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position.z))
-                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.rotation.x))
-                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.rotation.y))
-                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.rotation.z))
-                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.rotation.scalar))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.rotation.qq.x))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.rotation.qq.y))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.rotation.qq.z))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.rotation.qq.scalar))
                 elif type(offset) is MaterialMorphOffset:
                     # 材質モーフ
                     self.write_number(fout, material_idx_type, offset.material_index)
