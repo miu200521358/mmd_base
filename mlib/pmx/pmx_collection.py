@@ -265,7 +265,7 @@ class Morphs(BaseIndexNameDictModel[Morph]):
         super().__init__()
 
     def filter_by_type(self, *keys: MorphType) -> list[Morph]:
-        return [(v.copy()) for v in self.data.values() if v.morph_type in keys]
+        return [v for v in self.data.values() if v.morph_type in keys]
 
 
 class DisplaySlots(BaseIndexNameDictModel[DisplaySlot]):
