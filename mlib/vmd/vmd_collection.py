@@ -877,19 +877,21 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             for material_index in material_indexes:
                 # シェーダーに合わせてambientとdiffuseを入れ替える
                 mat = model.materials[material_index]
+
+                # オフセットに合わせた材質情報
+                material = Material(
+                    mat.index,
+                    mat.name,
+                    mat.english_name,
+                )
+                material.diffuse = offset.diffuse
+                material.ambient = offset.ambient
+                material.specular = offset.specular
+                material.edge_color = offset.edge_color
+                material.edge_size = offset.edge_size
+
                 material_offset = ShaderMaterial(
-                    Material(
-                        mat.index,
-                        mat.name,
-                        mat.english_name,
-                        offset.diffuse,
-                        offset.specular,
-                        offset.specular_factor,
-                        offset.ambient,
-                        mat.draw_flg,
-                        offset.edge_color,
-                        offset.edge_size,
-                    ),
+                    material,
                     light_ambient,
                     offset.texture_factor,
                     offset.toon_texture_factor,

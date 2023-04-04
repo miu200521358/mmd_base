@@ -283,44 +283,44 @@ class PmxWriter(BaseModel):
             self.write_number(
                 fout,
                 PmxBinaryType.FLOAT,
-                float(material.diffuse_color.x),
+                float(material.diffuse.x),
                 is_positive_only=True,
             )
             self.write_number(
                 fout,
                 PmxBinaryType.FLOAT,
-                float(material.diffuse_color.y),
+                float(material.diffuse.y),
                 is_positive_only=True,
             )
             self.write_number(
                 fout,
                 PmxBinaryType.FLOAT,
-                float(material.diffuse_color.z),
+                float(material.diffuse.z),
                 is_positive_only=True,
             )
             self.write_number(
                 fout,
                 PmxBinaryType.FLOAT,
-                float(material.diffuse_color.w),
+                float(material.diffuse.w),
                 is_positive_only=True,
             )
             # Specular
             self.write_number(
                 fout,
                 PmxBinaryType.FLOAT,
-                float(material.specular_color.x),
+                float(material.specular.x),
                 is_positive_only=True,
             )
             self.write_number(
                 fout,
                 PmxBinaryType.FLOAT,
-                float(material.specular_color.y),
+                float(material.specular.y),
                 is_positive_only=True,
             )
             self.write_number(
                 fout,
                 PmxBinaryType.FLOAT,
-                float(material.specular_color.z),
+                float(material.specular.z),
                 is_positive_only=True,
             )
             # Specular係数
@@ -334,19 +334,19 @@ class PmxWriter(BaseModel):
             self.write_number(
                 fout,
                 PmxBinaryType.FLOAT,
-                float(material.ambient_color.x),
+                float(material.ambient.x),
                 is_positive_only=True,
             )
             self.write_number(
                 fout,
                 PmxBinaryType.FLOAT,
-                float(material.ambient_color.y),
+                float(material.ambient.y),
                 is_positive_only=True,
             )
             self.write_number(
                 fout,
                 PmxBinaryType.FLOAT,
-                float(material.ambient_color.z),
+                float(material.ambient.z),
                 is_positive_only=True,
             )
             # 描画フラグ(8bit)

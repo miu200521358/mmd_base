@@ -505,10 +505,10 @@ class Material(BaseIndexNameModel):
         "index",
         "name",
         "english_name",
-        "diffuse_color",
-        "specular_color",
+        "diffuse",
+        "specular",
         "specular_factor",
-        "ambient_color",
+        "ambient",
         "draw_flg",
         "edge_color",
         "edge_size",
@@ -528,10 +528,10 @@ class Material(BaseIndexNameModel):
         english_name: str = "",
     ):
         super().__init__(index=index, name=name, english_name=english_name)
-        self.diffuse_color = MVector4D()
-        self.specular_color = MVector3D()
+        self.diffuse = MVector4D()
+        self.specular = MVector3D()
         self.specular_factor = 0.0
-        self.ambient_color = MVector3D()
+        self.ambient = MVector3D()
         self.draw_flg = DrawFlg.NONE
         self.edge_color = MVector4D()
         self.edge_size = 0.0
@@ -1030,15 +1030,15 @@ class ShaderMaterial:
         sphere_texture_factor: Optional[MVector4D] = None,
     ):
         super().__init__()
-        self.diffuse: MVector4D = material.diffuse_color * light_ambient4 + MVector4D(
-            material.ambient_color.x,
-            material.ambient_color.y,
-            material.ambient_color.z,
-            material.diffuse_color.w,
+        self.diffuse: MVector4D = material.diffuse * light_ambient4 + MVector4D(
+            material.ambient.x,
+            material.ambient.y,
+            material.ambient.z,
+            material.diffuse.w,
         )
-        self.ambient: MVector3D = material.diffuse_color.xyz * light_ambient4.xyz
+        self.ambient: MVector3D = material.diffuse.xyz * light_ambient4.xyz
         self.specular: MVector4D = MVector4D(
-            *(material.specular_color * light_ambient4.xyz).vector,
+            *(material.specular * light_ambient4.xyz).vector,
         )
         self.specular.w = material.specular_factor
 

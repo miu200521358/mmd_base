@@ -163,16 +163,16 @@ def test_read_by_filepath_ok() -> None:
     # cSpell:enable
     assert np.isclose(
         np.array([1, 1, 1, 1]),
-        model.materials[7].diffuse_color.vector,
+        model.materials[7].diffuse.vector,
     ).all()
     assert np.isclose(
         np.array([0, 0, 0]),
-        model.materials[7].specular_color.vector,
+        model.materials[7].specular.vector,
     ).all()
     assert 0 == model.materials[7].specular_factor
     assert np.isclose(
         np.array([0.5, 0.5, 0.5]),
-        model.materials[7].ambient_color.vector,
+        model.materials[7].ambient.vector,
     ).all()
     assert DrawFlg.DOUBLE_SIDED_DRAWING in model.materials[7].draw_flg
     assert DrawFlg.GROUND_SHADOW in model.materials[7].draw_flg

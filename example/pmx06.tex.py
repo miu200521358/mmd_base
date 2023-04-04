@@ -159,7 +159,7 @@ class Geometries:
                 diffuse_color_list.append(
                     np.array(
                         np.array(
-                            [material.diffuse_color.vector for _ in range(len(self.model.faces[face_index].vertices))],
+                            [material.diffuse.vector for _ in range(len(self.model.faces[face_index].vertices))],
                             dtype=np.float64,
                         ),
                         dtype=np.float64,
@@ -170,9 +170,9 @@ class Geometries:
                         np.array(
                             [
                                 [
-                                    material.specular_color.x,
-                                    material.specular_color.y,
-                                    material.specular_color.z,
+                                    material.specular.x,
+                                    material.specular.y,
+                                    material.specular.z,
                                     material.specular_factor,
                                 ]
                                 for _ in range(len(self.model.faces[face_index].vertices))
@@ -187,9 +187,9 @@ class Geometries:
                         np.array(
                             [
                                 [
-                                    material.ambient_color.x,
-                                    material.ambient_color.y,
-                                    material.ambient_color.z,
+                                    material.ambient.x,
+                                    material.ambient.y,
+                                    material.ambient.z,
                                 ]
                                 for _ in range(len(self.model.faces[face_index].vertices))
                             ],

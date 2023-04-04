@@ -76,9 +76,9 @@ class Geometries:
                         np.array(
                             [
                                 [
-                                    material.diffuse_color.x,
-                                    material.diffuse_color.y,
-                                    material.diffuse_color.z,
+                                    material.diffuse.x,
+                                    material.diffuse.y,
+                                    material.diffuse.z,
                                 ]
                                 for _ in range(len(self.model.faces[face_index].vertices))
                             ],
