@@ -4,7 +4,7 @@ import wx
 
 
 class BaseFrame(wx.Frame):
-    def __init__(self, title: str, size: wx.Size, *args, **kw):
+    def __init__(self, app: wx.App, title: str, size: wx.Size, *args, **kw):
         wx.Frame.__init__(
             self,
             None,
@@ -12,6 +12,7 @@ class BaseFrame(wx.Frame):
             size=size,
             style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL,
         )
+        self.app = app
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW))
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
