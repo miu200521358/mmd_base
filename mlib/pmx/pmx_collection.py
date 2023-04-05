@@ -461,7 +461,10 @@ class Meshes(BaseIndexDictModel[Mesh]):
                         1 - v.uv.y,
                         *(v.extended_uvs[0].vector if 0 < len(v.extended_uvs) else [0, 0]),
                         v.edge_factor,
-                        *v.deform.normalized_deform(),
+                        *v.deform.indexes,
+                        *[0 for _ in range(4 - v.deform.count)],
+                        *v.deform.weights,
+                        *[0.0 for _ in range(4 - v.deform.count)],
                         0.0,
                         0.0,
                         0.0,
@@ -570,6 +573,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
         for mesh in self:
             self.vao.bind()
+            self.vbo_vertices.bind()
             self.vbo_vertices.set_slot(VsLayout.POSITION_ID)
             self.vbo_vertices.set_slot(VsLayout.NORMAL_ID)
             self.vbo_vertices.set_slot(VsLayout.UV_ID)

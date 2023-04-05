@@ -50,7 +50,6 @@ class VBO:
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
 
     def set_slot(self, slot: VsLayout) -> None:
-        self.bind()
         gl.glEnableVertexAttribArray(slot.value)
         gl.glVertexAttribPointer(
             slot.value,
@@ -72,7 +71,9 @@ class IBO:
         self.dtype = gl.GL_UNSIGNED_BYTE if data.dtype == np.uint8 else gl.GL_UNSIGNED_SHORT if data.dtype == np.uint16 else gl.GL_UNSIGNED_INT
         self.dsize = np.dtype(data.dtype).itemsize
 
+        self.bind()
         self.set_indices(data)
+        self.unbind()
 
     def __del__(self) -> None:
         if self.ibo:
@@ -85,7 +86,6 @@ class IBO:
         gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
 
     def set_indices(self, data: np.ndarray) -> None:
-        self.bind()
         gl.glBufferData(
             gl.GL_ELEMENT_ARRAY_BUFFER,
             data.nbytes,
