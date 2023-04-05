@@ -103,7 +103,6 @@ class BaseIndexModel(BaseModel):
         index : int, optional
             INDEX, by default -1
         """
-        super().__init__()
         self.index = index
 
     def __bool__(self) -> bool:
@@ -134,7 +133,6 @@ class BaseIndexNameModel(BaseModel):
         english_name : str, optional
             英語名, by default ""
         """
-        super().__init__()
         self.index: int = index
         self.name: str = name
         self.english_name: str = english_name
