@@ -315,8 +315,8 @@ class MLogger:
     ):
         logging.basicConfig(level=level, format=cls.DEFAULT_FORMAT)
         cls.total_level = level
-        cls.mode = mode
-        cls.lang = "ja" if mode == LoggingMode.MODE_UPDATE else lang
+        cls.mode = LoggingMode.MODE_READONLY if lang != "ja" else mode
+        cls.lang = lang
         cls.saving = saving
         cls.lang_dir = f"{root_dir}/i18n"
 
