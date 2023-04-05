@@ -152,13 +152,13 @@ class MLogger:
         with open("../log/quit.log", "w") as f:
             f.write("quit")
 
-    def get_text(self, text: str, target_level: int = logging.DEBUG) -> str:
+    def get_text(self, text: str) -> str:
         """指定された文字列の翻訳結果を取得する"""
         if not self.translator:
             return text
 
         # 翻訳する
-        if self.mode == LoggingMode.MODE_UPDATE and logging.DEBUG < target_level:
+        if self.mode == LoggingMode.MODE_UPDATE and logging.DEBUG < self.total_level:
             # 更新ありの場合、既存データのチェックを行って追記する
             messages = []
             with open(f"{self.lang_dir}/messages.pot", mode="r", encoding="utf-8") as f:
