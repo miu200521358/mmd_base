@@ -729,7 +729,7 @@ class Bone(BaseIndexNameModel):
         self.tail_position = MVector3D()
         self.tail_index = -1
         self.effect_index = -1
-        self.effect_factor = 0
+        self.effect_factor = 0.0
         self.fixed_axis = MVector3D()
         self.local_x_vector = MVector3D()
         self.local_z_vector = MVector3D()
