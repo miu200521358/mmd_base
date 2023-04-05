@@ -148,17 +148,10 @@ class MLogger:
         with open("../log/quit.log", "w") as f:
             f.write("quit")
 
-    # 実際に出力する実態
-    def print_logger(self, msg, *args, **kwargs):
-        target_level = kwargs.pop("level", logging.INFO)
-        if not (self.total_level <= target_level and self.default_level <= target_level and self.translator and self.logger):
-            return
-
-        # システム全体のロギングレベルもクラス単位のロギングレベルもクリアしてる場合のみ出力
-
-        # モジュール名を出力するよう追加
-        extra_args = {}
-        extra_args["module_name"] = self.module_name
+    def get_text(self, text: str, target_level: int = logging.DEBUG) -> str:
+        """指定された文字列の翻訳結果を取得する"""
+        if not self.translator:
+            return text
 
         # 翻訳する
         if self.mode == LoggingMode.MODE_UPDATE and logging.DEBUG < target_level:
@@ -167,7 +160,7 @@ class MLogger:
             with open(f"{self.lang_dir}/messages.pot", mode="r", encoding="utf-8") as f:
                 messages = f.readlines()
 
-            new_msg = self.re_break.sub("\\\\n", msg)
+            new_msg = self.re_break.sub("\\\\n", text)
             added_msg_idxs = [n + 1 for n, inmsg in enumerate(messages) if "msgid" in inmsg and new_msg in inmsg]
 
             if not added_msg_idxs:
@@ -180,7 +173,22 @@ class MLogger:
                     f.writelines(messages)
 
         # 翻訳結果を取得する
-        trans_msg = self.translator.gettext(msg)
+        return self.translator.gettext(text)
+
+    # 実際に出力する実態
+    def print_logger(self, msg, *args, **kwargs):
+        target_level = kwargs.pop("level", logging.INFO)
+        if not (self.total_level <= target_level and self.default_level <= target_level and self.translator and self.logger):
+            return
+
+        # システム全体のロギングレベルもクラス単位のロギングレベルもクリアしてる場合のみ出力
+
+        # モジュール名を出力するよう追加
+        extra_args = {}
+        extra_args["module_name"] = self.module_name
+
+        # 翻訳結果を取得する
+        trans_msg = self.get_text(msg)
 
         # ログレコード生成
         if args and isinstance(args[0], Exception) or (args and 1 < len(args) and isinstance(args[0], Exception)):
