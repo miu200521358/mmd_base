@@ -1,6 +1,7 @@
 import sys
 
 import wx
+from mlib.utils.file_utils import get_root_dir
 
 
 class BaseFrame(wx.Frame):
@@ -13,6 +14,7 @@ class BaseFrame(wx.Frame):
             style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL,
         )
         self.app = app
+        self.root_dir = get_root_dir()
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW))
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
