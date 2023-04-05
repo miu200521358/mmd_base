@@ -720,38 +720,23 @@ class Bone(BaseIndexNameModel):
         index: int = -1,
         name: str = "",
         english_name: str = "",
-        position: Optional[MVector3D] = None,
-        parent_index: int = -1,
-        layer: int = 0,
-        bone_flg: BoneFlg = BoneFlg.NONE,
-        tail_position: Optional[MVector3D] = None,
-        tail_index: int = -1,
-        effect_index: int = -1,
-        effect_factor: float = 0,
-        fixed_axis: Optional[MVector3D] = None,
-        local_x_vector: Optional[MVector3D] = None,
-        local_z_vector: Optional[MVector3D] = None,
-        external_key: int = -1,
-        ik: Optional[Ik] = None,
-        display: bool = False,
-        is_system: bool = False,
     ):
         super().__init__(index=index, name=name, english_name=english_name)
-        self.position = position or MVector3D()
-        self.parent_index = parent_index
-        self.layer = layer
-        self.bone_flg = bone_flg
-        self.tail_position = tail_position or MVector3D()
-        self.tail_index = tail_index
-        self.effect_index = effect_index
-        self.effect_factor = effect_factor
-        self.fixed_axis = fixed_axis or MVector3D()
-        self.local_x_vector = local_x_vector or MVector3D()
-        self.local_z_vector = local_z_vector or MVector3D()
-        self.external_key = external_key
-        self.ik = ik
-        self.display = display
-        self.is_system = is_system
+        self.position = MVector3D()
+        self.parent_index = -1
+        self.layer = 0
+        self.bone_flg = BoneFlg.NONE
+        self.tail_position = MVector3D()
+        self.tail_index = -1
+        self.effect_index = -1
+        self.effect_factor = 0
+        self.fixed_axis = MVector3D()
+        self.local_x_vector = MVector3D()
+        self.local_z_vector = MVector3D()
+        self.external_key = -1
+        self.ik: Optional[Ik] = None
+        self.display: bool = False
+        self.is_system: bool = False
         self.ik_link_indexes: list[int] = []
         self.ik_target_indexes: list[int] = []
 
@@ -1176,14 +1161,11 @@ class Morph(BaseIndexNameModel):
         index: int = -1,
         name: str = "",
         english_name: str = "",
-        panel: MorphPanel = MorphPanel.EYE_UPPER_LEFT,
-        morph_type: MorphType = MorphType.GROUP,
-        offsets: Optional[list[VertexMorphOffset | UvMorphOffset | BoneMorphOffset | GroupMorphOffset | MaterialMorphOffset]] = None,
     ):
         super().__init__(index=index, name=name, english_name=english_name)
-        self.panel = panel
-        self.morph_type = morph_type
-        self.offsets = offsets or []
+        self.panel = MorphPanel.EYE_UPPER_LEFT
+        self.morph_type = MorphType.GROUP
+        self.offsets: list[VertexMorphOffset | UvMorphOffset | BoneMorphOffset | GroupMorphOffset | MaterialMorphOffset] = []
 
 
 @unique
@@ -1212,12 +1194,10 @@ class DisplaySlotReference(BaseModel):
 
     def __init__(
         self,
-        display_type: Optional[DisplayType] = None,
-        display_index: Optional[int] = None,
     ):
         super().__init__()
-        self.display_type = display_type or DisplayType.BONE
-        self.display_index = display_index or -1
+        self.display_type = DisplayType.BONE
+        self.display_index = -1
 
 
 class DisplaySlot(BaseIndexNameModel):
@@ -1243,10 +1223,9 @@ class DisplaySlot(BaseIndexNameModel):
         index: int = -1,
         name: str = "",
         english_name: str = "",
-        special_flg: Switch = Switch.OFF,
     ):
         super().__init__(index=index, name=name, english_name=english_name)
-        self.special_flg = special_flg
+        self.special_flg = Switch.OFF
         self.references: list[DisplaySlotReference] = []
 
 
@@ -1401,26 +1380,17 @@ class RigidBody(BaseIndexNameModel):
         index: int = -1,
         name: str = "",
         english_name: str = "",
-        bone_index: int = -1,
-        collision_group: int = 0,
-        no_collision_group: RigidBodyCollisionGroup = RigidBodyCollisionGroup.NONE,
-        shape_type: RigidBodyShape = RigidBodyShape.SPHERE,
-        shape_size: Optional[MVector3D] = None,
-        shape_position: Optional[MVector3D] = None,
-        shape_rotation: Optional[BaseRotationModel] = None,
-        param: Optional[RigidBodyParam] = None,
-        mode: RigidBodyMode = RigidBodyMode.STATIC,
     ) -> None:
         super().__init__(index=index, name=name, english_name=english_name)
-        self.bone_index = bone_index
-        self.collision_group = collision_group
-        self.no_collision_group = no_collision_group
-        self.shape_type = shape_type
-        self.shape_size = shape_size or MVector3D()
-        self.shape_position = shape_position or MVector3D()
-        self.shape_rotation = shape_rotation or BaseRotationModel()
-        self.param = param or RigidBodyParam()
-        self.mode = mode
+        self.bone_index = -1
+        self.collision_group = 0
+        self.no_collision_group = RigidBodyCollisionGroup.NONE
+        self.shape_type = RigidBodyShape.SPHERE
+        self.shape_size = MVector3D()
+        self.shape_position = MVector3D()
+        self.shape_rotation = BaseRotationModel()
+        self.param = RigidBodyParam()
+        self.mode = RigidBodyMode.STATIC
         # 軸方向
         self.x_direction = MVector3D()
         self.y_direction = MVector3D()
@@ -1482,20 +1452,14 @@ class JointParam(BaseModel):
 
     def __init__(
         self,
-        translation_limit_min: Optional[MVector3D] = None,
-        translation_limit_max: Optional[MVector3D] = None,
-        rotation_limit_min_radians: Optional[MVector3D] = None,
-        rotation_limit_max_radians: Optional[MVector3D] = None,
-        spring_constant_translation: Optional[MVector3D] = None,
-        spring_constant_rotation: Optional[MVector3D] = None,
     ) -> None:
         super().__init__()
-        self.translation_limit_min = translation_limit_min or MVector3D()
-        self.translation_limit_max = translation_limit_max or MVector3D()
-        self.rotation_limit_min = BaseRotationModel(rotation_limit_min_radians or MVector3D())
-        self.rotation_limit_max = BaseRotationModel(rotation_limit_max_radians or MVector3D())
-        self.spring_constant_translation = spring_constant_translation or MVector3D()
-        self.spring_constant_rotation = spring_constant_rotation or MVector3D()
+        self.translation_limit_min = MVector3D()
+        self.translation_limit_max = MVector3D()
+        self.rotation_limit_min = BaseRotationModel()
+        self.rotation_limit_max = BaseRotationModel()
+        self.spring_constant_translation = MVector3D()
+        self.spring_constant_rotation = MVector3D()
 
 
 class Joint(BaseIndexNameModel):
@@ -1549,17 +1513,11 @@ class Joint(BaseIndexNameModel):
         index: int = -1,
         name: str = "",
         english_name: str = "",
-        joint_type: int = 0,
-        rigidbody_index_a: int = -1,
-        rigidbody_index_b: int = -1,
-        position: Optional[MVector3D] = None,
-        rotation: Optional[BaseRotationModel] = None,
-        param: Optional[JointParam] = None,
     ) -> None:
         super().__init__(index=index, name=name, english_name=english_name)
-        self.joint_type = joint_type
-        self.rigidbody_index_a = rigidbody_index_a
-        self.rigidbody_index_b = rigidbody_index_b
-        self.position = position or MVector3D()
-        self.rotation = rotation or BaseRotationModel()
-        self.param = param or JointParam()
+        self.joint_type = 0
+        self.rigidbody_index_a = -1
+        self.rigidbody_index_b = -1
+        self.position = MVector3D()
+        self.rotation = BaseRotationModel()
+        self.param = JointParam()

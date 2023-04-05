@@ -69,8 +69,12 @@ def test_DisplaySlots_init() -> None:
     from mlib.pmx.pmx_part import DisplaySlot, Switch
 
     dd = DisplaySlots()
-    dd.append(DisplaySlot(name="Root", english_name="Root", special_flg=Switch.ON))
-    dd.append(DisplaySlot(name="表情", english_name="Exp", special_flg=Switch.ON))
+    d01 = DisplaySlot(name="Root", english_name="Root")
+    d01.special_flg = Switch.ON
+    dd.append(d01)
+    d02 = DisplaySlot(name="表情", english_name="Exp")
+    d02.special_flg = Switch.ON
+    dd.append(d02)
 
     d1: DisplaySlot = dd[0]
     assert 0 == d1.index
