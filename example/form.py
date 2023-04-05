@@ -5,8 +5,8 @@ import wx
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from mlib.form.frame.base_frame import BaseFrame
-from mlib.form.panel.base_panel import BasePanel
+from mlib.form.base_frame import BaseFrame
+from mlib.form.base_panel import BasePanel
 
 
 class TestPanel(BasePanel):

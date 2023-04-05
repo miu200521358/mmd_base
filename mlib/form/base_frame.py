@@ -1,6 +1,7 @@
 import sys
 
 import wx
+from mlib.form.base_notebook import BaseNotebook
 from mlib.utils.file_utils import get_root_dir
 
 
@@ -19,7 +20,7 @@ class BaseFrame(wx.Frame):
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
-        self.note_book = wx.Notebook(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0)
+        self.notebook = BaseNotebook(self)
 
         self.Centre(wx.BOTH)
 

@@ -55,6 +55,10 @@ class MLogger:
     translator = None
     # i18n配置ディレクトリ
     lang_dir = None
+    # セーブモード
+    saving = True
+    # ログ出力モード
+    out_log = False
 
     logger = None
     re_break = re.compile(r"\n")
@@ -305,6 +309,7 @@ class MLogger:
         lang: str,
         root_dir: str,
         mode: LoggingMode = LoggingMode.MODE_READONLY,
+        saving: bool = True,
         level=logging.INFO,
         out_path=None,
     ):
@@ -312,6 +317,7 @@ class MLogger:
         cls.total_level = level
         cls.mode = mode
         cls.lang = lang
+        cls.saving = saving
         cls.lang_dir = f"{root_dir}/i18n"
 
         # 翻訳用クラスの設定
@@ -330,8 +336,10 @@ class MLogger:
         if not out_path:
             os.makedirs(log_dir, exist_ok=True)
             cls.default_out_path = f"{log_dir}/mutool_{output_datetime}.log"
+            cls.out_log = False
         else:
             cls.default_out_path = out_path
+            cls.out_log = True
 
         if os.path.exists(f"{log_dir}/quit.log"):
             # 終了ログは初期化時に削除
