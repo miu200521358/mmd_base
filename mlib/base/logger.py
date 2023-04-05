@@ -316,14 +316,14 @@ class MLogger:
         logging.basicConfig(level=level, format=cls.DEFAULT_FORMAT)
         cls.total_level = level
         cls.mode = mode
-        cls.lang = lang
+        cls.lang = "ja" if mode == LoggingMode.MODE_UPDATE else lang
         cls.saving = saving
         cls.lang_dir = f"{root_dir}/i18n"
 
         # 翻訳用クラスの設定
         cls.translator = gettext.translation(
             "messages",  # domain: 辞書ファイルの名前
-            localedir=cls.lang_dir,  # 辞書ファイル配置ディレクトリ
+            localedir=f"{root_dir}/i18n",  # 辞書ファイル配置ディレクトリ
             languages=[lang],  # 翻訳に使用する言語
             fallback=True,  # .moファイルが見つからなかった時は未翻訳の文字列を出力
         )

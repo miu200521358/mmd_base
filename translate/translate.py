@@ -24,7 +24,7 @@ if __name__ == "__main__":
     translator = deepl.Translator(args.api_key)
 
     for lang in langs:
-        file_path = f"{args.base_dir}/{lang}/messages.po"
+        file_path = f"{args.base_dir}/{lang}/LC_MESSAGES/messages.po"
         is_ja = "ja" == lang
 
         try:
