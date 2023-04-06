@@ -54,7 +54,7 @@ class MFilePickerCtrl:
             self.name_ctrl = wx.TextCtrl(
                 self.parent,
                 wx.ID_ANY,
-                __("未設定"),
+                __("(未設定)"),
                 wx.DefaultPosition,
                 wx.DefaultSize,
                 wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS,
@@ -131,6 +131,9 @@ class MFilePickerCtrl:
             self.file_ctrl.SetPath(v)
 
     def update_name(self):
-        if self.is_show_name and not self.is_save and validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
-            name = self.reader.read_name_by_filepath(self.file_ctrl.GetPath())
+        if self.is_show_name and not self.is_save:
+            if validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
+                name = self.reader.read_name_by_filepath(self.file_ctrl.GetPath())
+            else:
+                name = "読取失敗"
             self.name_ctrl.SetValue(f"({name[:20]})")

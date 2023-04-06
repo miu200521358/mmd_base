@@ -79,6 +79,9 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         except Exception:
             return ""
 
+        self.offset = 0
+        self.buffer = b""
+
         return hash_data.name
 
     def read_by_filepath(self, path: str) -> TBaseHashModel:
@@ -112,6 +115,9 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
 
         # ハッシュを保持
         model.update_hexdigest()
+
+        self.offset = 0
+        self.buffer = b""
 
         return model
 

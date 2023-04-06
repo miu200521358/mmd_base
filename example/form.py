@@ -11,7 +11,7 @@ from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
 from mlib.form.parts.file_ctrl import MFilePickerCtrl
 from mlib.pmx.pmx_reader import PmxReader
-from mlib.utils.file_utils import separate_path, validate_file
+from mlib.utils.file_utils import separate_path
 
 logger = MLogger(__name__)
 __ = logger.get_text
