@@ -6,11 +6,15 @@ import wx
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+from mlib.base.logger import MLogger
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
 from mlib.form.parts.file_ctrl import MFilePickerCtrl
 from mlib.pmx.pmx_reader import PmxReader
-from mlib.utils.file_utils import separate_path
+from mlib.utils.file_utils import separate_path, validate_file
+
+logger = MLogger(__name__)
+__ = logger.get_text
 
 
 class TestPanel(BasePanel):
@@ -52,6 +56,7 @@ class TestPanel(BasePanel):
         self.fit()
 
     def on_change_model_pmx(self, event: wx.Event):
+        self.model_pmx_ctrl.update_name()
         dir_path, file_name, file_ext = separate_path(self.model_pmx_ctrl.path)
         self.output_pmx_ctrl.path = os.path.join(dir_path, f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
 
@@ -67,7 +72,11 @@ class TestFrame(BaseFrame):
 
         # ファイルタブ
         self.file_panel = TestPanel(self, 0)
-        self.notebook.AddPage(self.file_panel, "ファイル", False)
+        self.notebook.AddPage(self.file_panel, __("ファイル"), True)
+
+        # 設定タブ
+        self.config_panel = TestPanel(self, 1)
+        self.notebook.AddPage(self.config_panel, __("設定"), False)
 
 
 class MuApp(wx.App):

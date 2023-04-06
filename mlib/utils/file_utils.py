@@ -97,7 +97,7 @@ def validate_file(
         return False
 
     _, _, file_ext = separate_path(path)
-    return file_ext.lower() in file_type.name.lower()
+    return file_ext[1:].lower() in file_type.name.lower()
 
 
 def separate_path(path: str) -> tuple[str, str, str]:
