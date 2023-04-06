@@ -21,8 +21,8 @@ class BaseFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
         self.notebook = BaseNotebook(self)
-
         self.Centre(wx.BOTH)
+        self.Layout()
 
     def on_close(self, event: wx.Event):
         self.Destroy()

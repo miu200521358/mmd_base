@@ -1,6 +1,6 @@
 from struct import Struct
 
-from mlib.base.base import Encoding
+from mlib.base.base import Encoding, FileType
 from mlib.base.exception import MParseException
 from mlib.base.math import MVector3D
 from mlib.base.part import Switch
@@ -43,6 +43,10 @@ from mlib.pmx.pmx_part import (
 class PmxReader(BaseReader[PmxModel]):
     def __init__(self) -> None:
         super().__init__()
+
+    @property
+    def file_type(self) -> str:
+        return FileType.PMX.value
 
     def create_model(self, path: str) -> PmxModel:
         return PmxModel(path=path)

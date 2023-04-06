@@ -152,9 +152,11 @@ class MLogger:
         with open("../log/quit.log", "w") as f:
             f.write("quit")
 
-    def get_text(self, text: str) -> str:
+    def get_text(self, text: str, **kwargs) -> str:
         """指定された文字列の翻訳結果を取得する"""
         if not self.translator:
+            if kwargs:
+                return text.format(**kwargs)
             return text
 
         # 翻訳する
@@ -177,7 +179,10 @@ class MLogger:
                     f.writelines(messages)
 
         # 翻訳結果を取得する
-        return self.translator.gettext(text)
+        trans_text = self.translator.gettext(text)
+        if kwargs:
+            return trans_text.format(**kwargs)
+        return trans_text
 
     # 実際に出力する実態
     def print_logger(self, msg, *args, **kwargs):

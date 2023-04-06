@@ -23,6 +23,11 @@ class StructUnpackType:
 
 
 class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
+    @property
+    def file_type(self) -> str:
+        """ファイルタイプを返す"""
+        raise NotImplementedError()
+
     def __init__(self) -> None:
         super().__init__()
         self.offset = 0
@@ -317,12 +322,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
 
     def read_to_model(
         self,
-        formats: list[
-            tuple[
-                str,
-                type,
-            ]
-        ],
+        formats: list[tuple[str, type]],
         model: TBaseModel,
     ) -> TBaseModel:
         """
