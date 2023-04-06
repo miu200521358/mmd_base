@@ -40,7 +40,7 @@ class LoggingLevel(Enum):
 
 
 class MLogger:
-    DEFAULT_FORMAT = "%(message)s [%(call_file)s:%(call_func)s:%(call_lno)s][P-%(process)s](%(asctime)s)"
+    DEFAULT_FORMAT = "%(original_msg)s [%(call_file)s:%(call_func)s:%(call_lno)s][P-%(process)s](%(asctime)s)"
 
     # システム全体のロギングレベル
     total_level = logging.INFO
@@ -99,19 +99,47 @@ class MLogger:
                     return
             self.logger.addHandler(self.console_handler)
 
-    def get_extra(self, func: Optional[str] = "", lno: Optional[int] = 0):
-        return {"call_file": self.file_name, "call_func": func, "call_lno": str(lno)}
+    def get_extra(self, msg: str, func: Optional[str] = "", lno: Optional[int] = 0):
+        return {"original_msg": msg, "call_file": self.file_name, "call_func": func, "call_lno": str(lno)}
 
-    def debug(self, msg, *args, func: Optional[str] = "", lno: Optional[int] = 0, **kwargs):
+    def debug(
+        self,
+        msg,
+        *args,
+        decoration: Optional[LoggingDecoration] = None,
+        func: Optional[str] = "",
+        lno: Optional[int] = 0,
+        **kwargs,
+    ):
         self.add_console_handler()
-        self.logger.debug(self.create_message(msg, logging.DEBUG, **kwargs), extra=self.get_extra(func, lno))
+        self.logger.debug(self.create_message(msg, logging.DEBUG, None, decoration, **kwargs), extra=self.get_extra(msg, func, lno))
 
-    def info(self, msg, *args, func: Optional[str] = "", lno: Optional[int] = 0, **kwargs):
+    def info(
+        self,
+        msg,
+        *args,
+        title: Optional[str] = None,
+        decoration: Optional[LoggingDecoration] = None,
+        func: Optional[str] = "",
+        lno: Optional[int] = 0,
+        **kwargs,
+    ):
         self.add_console_handler()
-        self.logger.info(self.create_message(msg, logging.INFO, **kwargs), extra=self.get_extra(func, lno))
+        self.logger.info(self.create_message(msg, logging.INFO, title, decoration, **kwargs), extra=self.get_extra(msg, func, lno))
 
     # ログレベルカウント
-    def count(self, msg, fno, fnos, *args, func: Optional[str] = "", lno: Optional[int] = 0, **kwargs):
+    def count(
+        self,
+        msg,
+        fno,
+        fnos,
+        *args,
+        title: Optional[str] = None,
+        decoration: Optional[LoggingDecoration] = None,
+        func: Optional[str] = "",
+        lno: Optional[int] = 0,
+        **kwargs,
+    ):
         self.add_console_handler()
         last_fno = 0
 
@@ -131,19 +159,46 @@ class MLogger:
             kwargs["msg"] = msg
             log_msg = "-- {fno}フレーム目:終了({per}％){msg}"
 
-            self.logger.info(self.create_message(log_msg, logging.INFO, **kwargs), extra=self.get_extra(func, lno))
+            self.logger.info(self.create_message(log_msg, logging.INFO, title, **kwargs), decoration, extra=self.get_extra(msg, func, lno))
 
-    def warning(self, msg, *args, func: Optional[str] = "", lno: Optional[int] = 0, **kwargs):
+    def warning(
+        self,
+        msg,
+        *args,
+        title: Optional[str] = None,
+        decoration: Optional[LoggingDecoration] = None,
+        func: Optional[str] = "",
+        lno: Optional[int] = 0,
+        **kwargs,
+    ):
         self.add_console_handler()
-        self.logger.warning(self.create_message(msg, logging.INFO, **kwargs), extra=self.get_extra(func, lno))
+        self.logger.warning(self.create_message(msg, logging.INFO, title, decoration, **kwargs), extra=self.get_extra(msg, func, lno))
 
-    def error(self, msg, *args, func: Optional[str] = "", lno: Optional[int] = 0, **kwargs):
+    def error(
+        self,
+        msg,
+        *args,
+        title: Optional[str] = None,
+        decoration: Optional[LoggingDecoration] = None,
+        func: Optional[str] = "",
+        lno: Optional[int] = 0,
+        **kwargs,
+    ):
         self.add_console_handler()
-        self.logger.error(self.create_message(msg, logging.INFO, **kwargs), extra=self.get_extra(func, lno))
+        self.logger.error(self.create_message(msg, logging.INFO, title, decoration, **kwargs), extra=self.get_extra(msg, func, lno))
 
-    def critical(self, msg, *args, func: Optional[str] = "", lno: Optional[int] = 0, **kwargs):
+    def critical(
+        self,
+        msg,
+        *args,
+        title: Optional[str] = None,
+        decoration: Optional[LoggingDecoration] = None,
+        func: Optional[str] = "",
+        lno: Optional[int] = 0,
+        **kwargs,
+    ):
         self.add_console_handler()
-        self.logger.critical(self.create_message(msg, logging.INFO, **kwargs), extra=self.get_extra(func, lno))
+        self.logger.critical(self.create_message(msg, logging.INFO, title, decoration, **kwargs), exc_info=True, extra=self.get_extra(msg, func, lno))
 
     def quit(self):
         # 終了ログ
@@ -183,12 +238,16 @@ class MLogger:
         return trans_text
 
     # 実際に出力する実態
-    def create_message(self, msg, level: int, **kwargs) -> str:
+    def create_message(
+        self,
+        msg,
+        level: int,
+        title: Optional[str] = None,
+        decoration: Optional[LoggingDecoration] = None,
+        **kwargs,
+    ) -> str:
         # 翻訳結果を取得する
         trans_msg = self.get_text(msg, **kwargs)
-
-        decoration = kwargs.pop("decoration", None)
-        title = kwargs.pop("title", None)
 
         if decoration:
             if decoration == LoggingDecoration.DECORATION_BOX:

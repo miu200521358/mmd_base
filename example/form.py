@@ -6,7 +6,7 @@ import wx
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from mlib.base.logger import MLogger
+from mlib.base.logger import MLogger, LoggingDecoration
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
 from mlib.form.parts.file_ctrl import MFilePickerCtrl
@@ -63,7 +63,7 @@ class FilePanel(BasePanel):
         self.model_pmx_ctrl.read_name()
         dir_path, file_name, file_ext = separate_path(self.model_pmx_ctrl.path)
         self.output_pmx_ctrl.path = os.path.join(dir_path, f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
-        logger.info(self.model_pmx_ctrl.path, func="on_change_model_pmx", lno=10)
+        logger.info(self.model_pmx_ctrl.path, decoration=LoggingDecoration.DECORATION_BOX, func="on_change_model_pmx", lno=10)
 
 
 class ConfigPanel(BasePanel):
