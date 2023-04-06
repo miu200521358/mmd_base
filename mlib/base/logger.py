@@ -1,12 +1,15 @@
 import gettext
 import logging
+from logging import LogRecord, Handler, StreamHandler
 import os
 import re
-import traceback
+import sys
 from datetime import datetime
 from enum import Enum, IntEnum
+from typing import Optional
 
 import numpy as np
+import wx
 
 from mlib.base.exception import MLibException
 
@@ -62,10 +65,16 @@ class MLogger:
 
     logger = None
     re_break = re.compile(r"\n")
-    stream_handler = None
+    stream_handler: Optional[StreamHandler] = None
     file_handler = None
+    console_handler: Optional["ConsoleHandler"] = None
 
-    def __init__(self, module_name, level=logging.INFO, out_path=None):
+    def __init__(
+        self,
+        module_name,
+        level=logging.INFO,
+        out_path: Optional[str] = None,
+    ):
         self.module_name = module_name
         self.default_level = level
 
@@ -81,8 +90,10 @@ class MLogger:
             self.file_handler = logging.FileHandler(out_path)
             self.file_handler.setLevel(self.default_level)
             self.file_handler.setFormatter(logging.Formatter(self.DEFAULT_FORMAT))
+            self.logger.addHandler(self.file_handler)
 
         self.stream_handler = logging.StreamHandler()
+        self.logger.addHandler(self.stream_handler)
 
     def test(self, msg, *args, **kwargs):
         if not kwargs:
@@ -187,10 +198,9 @@ class MLogger:
     # 実際に出力する実態
     def print_logger(self, msg, *args, **kwargs):
         target_level = kwargs.pop("level", logging.INFO)
-        if not (self.total_level <= target_level and self.default_level <= target_level and self.translator and self.logger):
+        if not (self.total_level <= target_level and self.default_level <= target_level and self.logger):
+            # システム全体のロギングレベルもクラス単位のロギングレベルもクリアしてる場合のみ出力
             return
-
-        # システム全体のロギングレベルもクラス単位のロギングレベルもクリアしてる場合のみ出力
 
         # モジュール名を出力するよう追加
         extra_args = {}
@@ -198,32 +208,6 @@ class MLogger:
 
         # 翻訳結果を取得する
         trans_msg = self.get_text(msg)
-
-        # ログレコード生成
-        if args and isinstance(args[0], Exception) or (args and 1 < len(args) and isinstance(args[0], Exception)):
-            trans_msg = f"{trans_msg}\n\n{traceback.format_exc()}"
-            args = None
-            log_record = self.logger.makeRecord(
-                "name",
-                target_level,
-                "(unknown file)",
-                0,
-                args,
-                None,
-                None,
-                self.module_name,
-            )
-        else:
-            log_record = self.logger.makeRecord(
-                "name",
-                target_level,
-                "(unknown file)",
-                0,
-                trans_msg,
-                args,
-                None,
-                self.module_name,
-            )
 
         target_decoration = kwargs.pop("decoration", None)
         title = kwargs.pop("title", None)
@@ -246,17 +230,34 @@ class MLogger:
 
         # 出力
         try:
-            log_record = self.logger.makeRecord(
-                "name",
-                target_level,
-                "(unknown file)",
-                0,
-                output_msg,
-                None,
-                None,
-                self.module_name,
-            )
-            self.logger.handle(log_record)
+            # ログレコード生成
+            exc_info = sys.exc_info()
+            if None in exc_info:
+                record = self.logger.makeRecord(
+                    name="name",
+                    level=target_level,
+                    fn="(unknown file)",
+                    lno=0,
+                    msg=output_msg,
+                    args=(),
+                    exc_info=None,
+                    func=self.module_name,
+                )
+            else:
+                record = self.logger.makeRecord(
+                    name="name",
+                    level=target_level,
+                    fn="(unknown file)",
+                    lno=0,
+                    msg=output_msg,
+                    args=(),
+                    exc_info=exc_info,
+                    func=self.module_name,
+                )
+            if self.stream_handler:
+                self.stream_handler.emit(record)
+            if self.console_handler:
+                self.console_handler.emit(record)
         except:
             # エラーしてたら無視
             pass
@@ -405,3 +406,13 @@ def get_file_encoding(file_path):
             pass
 
     raise MLibException("unknown encoding!")
+
+
+class ConsoleHandler(Handler):
+    def __init__(self, text_ctrl: wx.TextCtrl):
+        super().__init__()
+        self.text_ctrl = text_ctrl
+
+    def emit(self, record: LogRecord):
+        msg = self.format(record)
+        wx.CallAfter(self.text_ctrl.WriteText, msg + "\n")

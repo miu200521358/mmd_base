@@ -2,6 +2,7 @@ from struct import Struct
 
 from mlib.base.base import Encoding, FileType
 from mlib.base.exception import MParseException
+from mlib.base.logger import MLogger
 from mlib.base.math import MVector3D
 from mlib.base.part import Switch
 from mlib.base.reader import BaseReader, StructUnpackType
@@ -38,6 +39,8 @@ from mlib.pmx.pmx_part import (
     Vertex,
     VertexMorphOffset,
 )
+
+logger = MLogger(__name__)
 
 
 class PmxReader(BaseReader[PmxModel]):

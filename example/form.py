@@ -12,12 +12,13 @@ from mlib.form.base_panel import BasePanel
 from mlib.form.parts.file_ctrl import MFilePickerCtrl
 from mlib.pmx.pmx_reader import PmxReader
 from mlib.utils.file_utils import separate_path
+from mlib.form.parts.console_ctrl import ConsoleCtrl
 
 logger = MLogger(__name__)
 __ = logger.get_text
 
 
-class TestPanel(BasePanel):
+class FilePanel(BasePanel):
     def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
         super().__init__(frame, tab_idx, *args, **kw)
 
@@ -49,6 +50,9 @@ class TestPanel(BasePanel):
         )
         self.output_pmx_ctrl.set_parent_sizer(self.root_sizer)
 
+        self.console_ctrl = ConsoleCtrl(self.frame, self, rows=200)
+        self.console_ctrl.set_parent_sizer(self.root_sizer)
+
         self.root_sizer.Add(wx.StaticLine(self, wx.ID_ANY), wx.GROW)
 
         self.SetSizer(self.root_sizer)
@@ -61,6 +65,11 @@ class TestPanel(BasePanel):
         self.output_pmx_ctrl.path = os.path.join(dir_path, f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
 
 
+class ConfigPanel(BasePanel):
+    def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
+        super().__init__(frame, tab_idx, *args, **kw)
+
+
 class TestFrame(BaseFrame):
     def __init__(self, app) -> None:
         super().__init__(
@@ -71,11 +80,11 @@ class TestFrame(BaseFrame):
         )
 
         # ファイルタブ
-        self.file_panel = TestPanel(self, 0)
+        self.file_panel = FilePanel(self, 0)
         self.notebook.AddPage(self.file_panel, __("ファイル"), True)
 
         # 設定タブ
-        self.config_panel = TestPanel(self, 1)
+        self.config_panel = ConfigPanel(self, 1)
         self.notebook.AddPage(self.config_panel, __("設定"), False)
 
 

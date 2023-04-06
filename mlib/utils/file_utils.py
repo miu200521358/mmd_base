@@ -90,7 +90,6 @@ def get_dir_path(path: str) -> str:
 
 def validate_file(
     path: str,
-    title: str,
     file_type: FileType,
 ) -> bool:
     """利用可能なファイルであるか"""
@@ -101,6 +100,11 @@ def validate_file(
     if not file_ext[1:].lower() in file_type.name.lower():
         return False
 
+    return True
+
+
+def validate_save_file(path: str, title: str) -> bool:
+    """保存可能なファイルであるか"""
     try:
         open(path, "w")
         os.remove(path)
@@ -113,7 +117,6 @@ def validate_file(
             + f"{title}に書き込み権限がない"
         )
         return False
-
     return True
 
 

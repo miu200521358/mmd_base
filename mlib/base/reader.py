@@ -3,6 +3,7 @@ from abc import ABCMeta, abstractmethod
 from functools import lru_cache
 from struct import Struct
 from typing import Callable, Generic, TypeVar
+import os
 
 import numpy as np
 
@@ -71,16 +72,19 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         # モデルを新規作成
         hash_data: TBaseHashModel = self.create_model(path)
 
+        if not (os.path.exists(path) and os.path.isfile(path)):
+            return ""
+
         # バイナリを解凍してモデルに展開
         try:
+            self.offset = 0
+            self.buffer = b""
+
             with open(path, "rb") as f:
                 self.buffer = f.read()
                 self.read_by_buffer_header(hash_data)
         except Exception:
             return ""
-
-        self.offset = 0
-        self.buffer = b""
 
         return hash_data.name
 
@@ -101,8 +105,14 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         # モデルを新規作成
         model: TBaseHashModel = self.create_model(path)
 
+        if not (os.path.exists(path) and os.path.isfile(path)):
+            raise MParseException("モデル読み込み失敗")
+
         # バイナリを解凍してモデルに展開
         try:
+            self.offset = 0
+            self.buffer = b""
+
             with open(path, "rb") as f:
                 self.buffer = f.read()
                 self.read_by_buffer_header(model)
@@ -115,9 +125,6 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
 
         # ハッシュを保持
         model.update_hexdigest()
-
-        self.offset = 0
-        self.buffer = b""
 
         return model
 
