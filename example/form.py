@@ -56,7 +56,7 @@ class TestPanel(BasePanel):
         self.fit()
 
     def on_change_model_pmx(self, event: wx.Event):
-        self.model_pmx_ctrl.update_name()
+        self.model_pmx_ctrl.read_name()
         dir_path, file_name, file_ext = separate_path(self.model_pmx_ctrl.path)
         self.output_pmx_ctrl.path = os.path.join(dir_path, f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
 

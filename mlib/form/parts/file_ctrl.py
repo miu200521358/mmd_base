@@ -130,7 +130,7 @@ class MFilePickerCtrl:
         if (not self.is_save and validate_file(v, self.reader.file_type)) or self.is_save:
             self.file_ctrl.SetPath(v)
 
-    def update_name(self):
+    def read_name(self):
         if self.is_show_name and not self.is_save:
             if validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
                 name = self.reader.read_name_by_filepath(self.file_ctrl.GetPath())
