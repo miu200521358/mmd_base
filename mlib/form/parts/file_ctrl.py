@@ -28,21 +28,22 @@ class MFilePickerCtrl:
         self.parent = parent
         self.reader = reader
         self.key = key
+        self.title = title
         self.is_save = is_save
         self.is_show_name = is_show_name
         self.root_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self._initialize_ui(title, name_spacer, tooltip)
+        self._initialize_ui(name_spacer, tooltip)
         self._initialize_event(event)
 
     def set_parent_sizer(self, parent_sizer: wx.Sizer):
         parent_sizer.Add(self.root_sizer, 1, wx.GROW, 0)
 
-    def _initialize_ui(self, title: str, name_spacer: int, tooltip: str):
+    def _initialize_ui(self, name_spacer: int, tooltip: str):
         # ファイルタイトル
         self.title_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.title_ctrl = wx.StaticText(self.parent, wx.ID_ANY, title, wx.DefaultPosition, wx.DefaultSize, 0)
+        self.title_ctrl = wx.StaticText(self.parent, wx.ID_ANY, self.title, wx.DefaultPosition, wx.DefaultSize, 0)
         self.title_ctrl.SetToolTip(__(tooltip))
         self.title_sizer.Add(self.title_ctrl, 1, wx.GROW | wx.ALL, 3)
 
@@ -60,7 +61,7 @@ class MFilePickerCtrl:
                 wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS,
             )
             self.name_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
-            self.name_ctrl.SetToolTip(__("{title}に記録されているモデル名です。\n文字列は選択およびコピー可能です。", title=title))
+            self.name_ctrl.SetToolTip(__("{title}に記録されているモデル名です。\n文字列は選択およびコピー可能です。", title=self.title))
             self.title_sizer.Add(self.name_ctrl, 0, wx.ALL, 3)
 
         self.root_sizer.Add(self.title_sizer, 0, wx.ALL, 3)
@@ -90,7 +91,7 @@ class MFilePickerCtrl:
                 wx.ID_ANY,
                 label=__("履歴"),
             )
-            self.history_ctrl.SetToolTip(__("これまでに指定された事のある{title}を再指定することができます。", title=title))
+            self.history_ctrl.SetToolTip(__("これまでに指定された事のある{title}を再指定することができます。", title=self.title))
             self.file_sizer.Add(self.history_ctrl, 0, wx.ALL, 3)
 
         self.root_sizer.Add(self.file_sizer, 0, wx.GROW | wx.ALL, 0)
@@ -127,12 +128,12 @@ class MFilePickerCtrl:
 
     @path.setter
     def path(self, v: str):
-        if (not self.is_save and validate_file(v, self.reader.file_type)) or self.is_save:
+        if (not self.is_save and validate_file(v, self.title, self.reader.file_type)) or self.is_save:
             self.file_ctrl.SetPath(escape_path(v))
 
     def read_name(self):
         if self.is_show_name and not self.is_save:
-            if validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
+            if validate_file(self.file_ctrl.GetPath(), self.title, self.reader.file_type):
                 name = self.reader.read_name_by_filepath(self.file_ctrl.GetPath())
             else:
                 name = "読取失敗"

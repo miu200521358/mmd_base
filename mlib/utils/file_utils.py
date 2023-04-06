@@ -90,6 +90,7 @@ def get_dir_path(path: str) -> str:
 
 def validate_file(
     path: str,
+    title: str,
     file_type: FileType,
 ) -> bool:
     """利用可能なファイルであるか"""
@@ -97,7 +98,23 @@ def validate_file(
         return False
 
     _, _, file_ext = separate_path(path)
-    return file_ext[1:].lower() in file_type.name.lower()
+    if not file_ext[1:].lower() in file_type.name.lower():
+        return False
+
+    try:
+        open(path, "w")
+        os.remove(path)
+    except Exception:
+        logger.warning(
+            f"{title}の生成に失敗しました。以下の原因が考えられます。\n"
+            + f"{title}が255文字を超えている\n"
+            + f'{title}に使えない文字列が含まれている（例) \\ / : * ? " < > |）'
+            + f"{title}の親フォルダに書き込み権限がない"
+            + f"{title}に書き込み権限がない"
+        )
+        return False
+
+    return True
 
 
 def separate_path(path: str) -> tuple[str, str, str]:
@@ -109,6 +126,7 @@ def separate_path(path: str) -> tuple[str, str, str]:
 
 
 def escape_path(path: str):
+    """ファイルパスをエスケープ"""
     for org_txt, rep_txt in (
         ("\\", "\\\\"),
         ("*", "\\*"),
