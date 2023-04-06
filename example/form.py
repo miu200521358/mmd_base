@@ -14,7 +14,7 @@ from mlib.pmx.pmx_reader import PmxReader
 from mlib.utils.file_utils import separate_path
 from mlib.form.parts.console_ctrl import ConsoleCtrl
 
-logger = MLogger(__name__)
+logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
 
@@ -63,6 +63,7 @@ class FilePanel(BasePanel):
         self.model_pmx_ctrl.read_name()
         dir_path, file_name, file_ext = separate_path(self.model_pmx_ctrl.path)
         self.output_pmx_ctrl.path = os.path.join(dir_path, f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
+        logger.info(self.model_pmx_ctrl.path, func="on_change_model_pmx", lno=10)
 
 
 class ConfigPanel(BasePanel):

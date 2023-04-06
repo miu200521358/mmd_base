@@ -1,3 +1,4 @@
+import os
 import wx
 from mlib.base.logger import MLogger
 from mlib.base.reader import BaseReader
@@ -6,7 +7,7 @@ from mlib.form.base_panel import BasePanel
 from mlib.utils.file_utils import HISTORY_MAX, get_dir_path, validate_file, validate_save_file
 
 
-logger = MLogger(__name__)
+logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
 

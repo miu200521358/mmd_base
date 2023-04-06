@@ -15,7 +15,7 @@ from mlib.pmx.pmx_part import ShaderMaterial
 from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_collection import VmdMotion
 
-logger = MLogger(__name__)
+logger = MLogger(os.path.basename(__file__))
 
 
 def animate(queue: Queue, fno: int, motion: VmdMotion, model: PmxModel):

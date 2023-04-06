@@ -1,3 +1,4 @@
+import os
 from struct import Struct
 
 from mlib.base.base import Encoding, FileType
@@ -40,7 +41,7 @@ from mlib.pmx.pmx_part import (
     VertexMorphOffset,
 )
 
-logger = MLogger(__name__)
+logger = MLogger(os.path.basename(__file__))
 
 
 class PmxReader(BaseReader[PmxModel]):

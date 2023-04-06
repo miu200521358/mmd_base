@@ -1,8 +1,9 @@
+import os
 import wx
 
 from mlib.base.logger import LoggingLevel, MLogger
 
-logger = MLogger(__name__)
+logger = MLogger(os.path.basename(__file__))
 
 
 class BaseNotebook(wx.Notebook):

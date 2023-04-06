@@ -8,7 +8,7 @@ from mlib.base.base import FileType
 
 from mlib.base.logger import LoggingDecoration, MLogger
 
-logger = MLogger(__name__)
+logger = MLogger(os.path.basename(__file__))
 
 
 def get_root_dir():

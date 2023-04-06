@@ -1,10 +1,11 @@
+import os
 import wx
 from mlib.base.logger import MLogger, ConsoleHandler
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
 
 
-logger = MLogger(__name__)
+logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
 

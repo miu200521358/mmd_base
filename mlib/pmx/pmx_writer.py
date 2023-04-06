@@ -1,3 +1,4 @@
+import os
 import struct
 from enum import Enum
 from io import BufferedWriter
@@ -8,7 +9,7 @@ from mlib.base.logger import MLogger
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import Bdef1, Bdef2, Bdef4, BoneMorphOffset, GroupMorphOffset, MaterialMorphOffset, Sdef, ToonSharing, UvMorphOffset, VertexMorphOffset
 
-logger = MLogger(__name__)
+logger = MLogger(os.path.basename(__file__))
 
 
 class PmxBinaryType(str, Enum):

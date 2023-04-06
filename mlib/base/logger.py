@@ -1,9 +1,7 @@
 import gettext
 import logging
-from logging import LogRecord, Handler, StreamHandler
+from logging import LogRecord, Handler, StreamHandler, Formatter
 import os
-import re
-import sys
 from datetime import datetime
 from enum import Enum, IntEnum
 from typing import Optional
@@ -42,7 +40,7 @@ class LoggingLevel(Enum):
 
 
 class MLogger:
-    DEFAULT_FORMAT = "%(message)s [%(funcName)s][P-%(process)s](%(asctime)s)"
+    DEFAULT_FORMAT = "%(message)s [%(call_file)s:%(call_func)s:%(call_lno)s][P-%(process)s](%(asctime)s)"
 
     # システム全体のロギングレベル
     total_level = logging.INFO
@@ -63,10 +61,6 @@ class MLogger:
     # ログ出力モード
     out_log = False
 
-    logger = None
-    re_break = re.compile(r"\n")
-    stream_handler: Optional[StreamHandler] = None
-    file_handler = None
     console_handler: Optional["ConsoleHandler"] = None
 
     def __init__(
@@ -75,15 +69,19 @@ class MLogger:
         level=logging.INFO,
         out_path: Optional[str] = None,
     ):
-        self.module_name = module_name
+        self.file_name = module_name
         self.default_level = level
-
-        # ロガー
-        self.logger = logging.getLogger("mutool").getChild(self.module_name)
 
         if not out_path:
             # クラス単位の出力パスがない場合、デフォルトパス
             out_path = self.default_out_path
+
+        # ロガー
+        self.logger = logging.getLogger("mutool").getChild(self.file_name)
+
+        self.stream_handler = StreamHandler()
+        self.stream_handler.setFormatter(Formatter(self.DEFAULT_FORMAT))
+        self.logger.addHandler(self.stream_handler)
 
         if out_path:
             # ファイル出力ハンドラ
@@ -92,32 +90,29 @@ class MLogger:
             self.file_handler.setFormatter(logging.Formatter(self.DEFAULT_FORMAT))
             self.logger.addHandler(self.file_handler)
 
-        self.stream_handler = logging.StreamHandler()
-        self.logger.addHandler(self.stream_handler)
+        self.logger.setLevel(level)
 
-    def test(self, msg, *args, **kwargs):
-        if not kwargs:
-            kwargs = {}
+    def add_console_handler(self):
+        if self.console_handler:
+            for h in self.logger.handlers:
+                if isinstance(h, ConsoleHandler):
+                    return
+            self.logger.addHandler(self.console_handler)
 
-        kwargs["level"] = LoggingLevel.TEST.value
-        self.print_logger(msg, *args, **kwargs)
+    def get_extra(self, func: Optional[str] = "", lno: Optional[int] = 0):
+        return {"call_file": self.file_name, "call_func": func, "call_lno": str(lno)}
 
-    def debug(self, msg, *args, **kwargs):
-        if not kwargs:
-            kwargs = {}
+    def debug(self, msg, *args, func: Optional[str] = "", lno: Optional[int] = 0, **kwargs):
+        self.add_console_handler()
+        self.logger.debug(self.create_message(msg, logging.DEBUG, **kwargs), extra=self.get_extra(func, lno))
 
-        kwargs["level"] = LoggingLevel.DEBUG.value
-        self.print_logger(msg, *args, **kwargs)
-
-    def info(self, msg, *args, **kwargs):
-        if not kwargs:
-            kwargs = {}
-
-        kwargs["level"] = LoggingLevel.INFO.value
-        self.print_logger(msg, *args, **kwargs)
+    def info(self, msg, *args, func: Optional[str] = "", lno: Optional[int] = 0, **kwargs):
+        self.add_console_handler()
+        self.logger.info(self.create_message(msg, logging.INFO, **kwargs), extra=self.get_extra(func, lno))
 
     # ログレベルカウント
-    def count(self, msg, fno, fnos, *args, **kwargs):
+    def count(self, msg, fno, fnos, *args, func: Optional[str] = "", lno: Optional[int] = 0, **kwargs):
+        self.add_console_handler()
         last_fno = 0
 
         if fnos and 0 < len(fnos) and 0 < fnos[-1]:
@@ -135,28 +130,20 @@ class MLogger:
             kwargs["per"] = round((fno / last_fno) * 100, 3)
             kwargs["msg"] = msg
             log_msg = "-- {fno}フレーム目:終了({per}％){msg}"
-            self.print_logger(log_msg, *args, **kwargs)
 
-    def warning(self, msg, *args, **kwargs):
-        if not kwargs:
-            kwargs = {}
+            self.logger.info(self.create_message(log_msg, logging.INFO, **kwargs), extra=self.get_extra(func, lno))
 
-        kwargs["level"] = LoggingLevel.WARNING.value
-        self.print_logger(msg, *args, **kwargs)
+    def warning(self, msg, *args, func: Optional[str] = "", lno: Optional[int] = 0, **kwargs):
+        self.add_console_handler()
+        self.logger.warning(self.create_message(msg, logging.INFO, **kwargs), extra=self.get_extra(func, lno))
 
-    def error(self, msg, *args, **kwargs):
-        if not kwargs:
-            kwargs = {}
+    def error(self, msg, *args, func: Optional[str] = "", lno: Optional[int] = 0, **kwargs):
+        self.add_console_handler()
+        self.logger.error(self.create_message(msg, logging.INFO, **kwargs), extra=self.get_extra(func, lno))
 
-        kwargs["level"] = LoggingLevel.ERROR.value
-        self.print_logger(msg, *args, **kwargs)
-
-    def critical(self, msg, *args, **kwargs):
-        if not kwargs:
-            kwargs = {}
-
-        kwargs["level"] = LoggingLevel.CRITICAL.value
-        self.print_logger(msg, *args, **kwargs)
+    def critical(self, msg, *args, func: Optional[str] = "", lno: Optional[int] = 0, **kwargs):
+        self.add_console_handler()
+        self.logger.critical(self.create_message(msg, logging.INFO, **kwargs), extra=self.get_extra(func, lno))
 
     def quit(self):
         # 終了ログ
@@ -196,71 +183,26 @@ class MLogger:
         return trans_text
 
     # 実際に出力する実態
-    def print_logger(self, msg, *args, **kwargs):
-        target_level = kwargs.pop("level", logging.INFO)
-        if not (self.total_level <= target_level and self.default_level <= target_level and self.logger):
-            # システム全体のロギングレベルもクラス単位のロギングレベルもクリアしてる場合のみ出力
-            return
-
-        # モジュール名を出力するよう追加
-        extra_args = {}
-        extra_args["module_name"] = self.module_name
-
+    def create_message(self, msg, level: int, **kwargs) -> str:
         # 翻訳結果を取得する
-        trans_msg = self.get_text(msg)
+        trans_msg = self.get_text(msg, **kwargs)
 
-        target_decoration = kwargs.pop("decoration", None)
+        decoration = kwargs.pop("decoration", None)
         title = kwargs.pop("title", None)
 
-        print_msg = str(trans_msg)
-        if kwargs:
-            print_msg = print_msg.format(**kwargs)
-
-        if target_decoration:
-            if target_decoration == LoggingDecoration.DECORATION_BOX:
-                output_msg = self.create_box_message(print_msg, target_level, title)
-            elif target_decoration == LoggingDecoration.DECORATION_LINE:
-                output_msg = self.create_line_message(print_msg, target_level, title)
-            elif target_decoration == LoggingDecoration.DECORATION_IN_BOX:
-                output_msg = self.create_in_box_message(print_msg, target_level, title)
+        if decoration:
+            if decoration == LoggingDecoration.DECORATION_BOX:
+                output_msg = self.create_box_message(trans_msg, level, title)
+            elif decoration == LoggingDecoration.DECORATION_LINE:
+                output_msg = self.create_line_message(trans_msg, level, title)
+            elif decoration == LoggingDecoration.DECORATION_IN_BOX:
+                output_msg = self.create_in_box_message(trans_msg, level, title)
             else:
-                output_msg = self.create_simple_message(print_msg, target_level, title)
+                output_msg = self.create_simple_message(trans_msg, level, title)
         else:
-            output_msg = self.create_simple_message(print_msg, target_level, title)
+            output_msg = self.create_simple_message(trans_msg, level, title)
 
-        # 出力
-        try:
-            # ログレコード生成
-            exc_info = sys.exc_info()
-            if None in exc_info:
-                record = self.logger.makeRecord(
-                    name="name",
-                    level=target_level,
-                    fn="(unknown file)",
-                    lno=0,
-                    msg=output_msg,
-                    args=(),
-                    exc_info=None,
-                    func=self.module_name,
-                )
-            else:
-                record = self.logger.makeRecord(
-                    name="name",
-                    level=target_level,
-                    fn="(unknown file)",
-                    lno=0,
-                    msg=output_msg,
-                    args=(),
-                    exc_info=exc_info,
-                    func=self.module_name,
-                )
-            if self.stream_handler:
-                self.stream_handler.emit(record)
-            if self.console_handler:
-                self.console_handler.emit(record)
-        except:
-            # エラーしてたら無視
-            pass
+        return output_msg
 
     def create_box_message(self, msg, level, title=None):
         msg_block = []

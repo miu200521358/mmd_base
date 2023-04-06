@@ -4,7 +4,7 @@ from mlib.base.base import BaseModel
 from mlib.base.logger import LoggingDecoration, MLogger
 from mlib.vmd.vmd_collection import VmdMotion
 
-logger = MLogger(__name__)
+logger = MLogger(os.path.basename(__file__))
 
 
 class VmdWriter(BaseModel):
