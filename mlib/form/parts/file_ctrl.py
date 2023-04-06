@@ -3,7 +3,7 @@ from mlib.base.logger import MLogger
 from mlib.base.reader import BaseReader
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
-from mlib.utils.file_utils import HISTORY_MAX, get_dir_path, validate_file
+from mlib.utils.file_utils import HISTORY_MAX, get_dir_path, validate_file, escape_path
 
 
 logger = MLogger(__name__)
@@ -128,7 +128,7 @@ class MFilePickerCtrl:
     @path.setter
     def path(self, v: str):
         if (not self.is_save and validate_file(v, self.reader.file_type)) or self.is_save:
-            self.file_ctrl.SetPath(v)
+            self.file_ctrl.SetPath(escape_path(v))
 
     def read_name(self):
         if self.is_show_name and not self.is_save:

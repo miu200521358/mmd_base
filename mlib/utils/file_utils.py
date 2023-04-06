@@ -106,3 +106,27 @@ def separate_path(path: str) -> tuple[str, str, str]:
     file_name, file_ext = os.path.splitext(os.path.basename(path))
 
     return dir_path, file_name, file_ext
+
+
+def escape_path(path: str):
+    for org_txt, rep_txt in (
+        ("\\", "\\\\"),
+        ("*", "\\*"),
+        ("+", "\\+"),
+        (".", "\\."),
+        ("?", "\\?"),
+        ("{", "\\{"),
+        ("}", "\\}"),
+        ("(", "\\("),
+        (")", "\\)"),
+        ("[", "\\["),
+        ("]", "\\]"),
+        ("^", "\\^"),
+        ("$", "\\$"),
+        ("-", "\\-"),
+        ("|", "\\|"),
+        ("/", "\\/"),
+    ):
+        path = path.replace(org_txt, rep_txt)
+
+    return path
