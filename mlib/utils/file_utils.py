@@ -106,7 +106,7 @@ def validate_file(
         os.remove(path)
     except Exception:
         logger.warning(
-            f"{title}の生成に失敗しました。以下の原因が考えられます。\n"
+            f"{title}のチェックに失敗しました。以下の原因が考えられます。\n"
             + f"{title}が255文字を超えている\n"
             + f'{title}に使えない文字列が含まれている（例) \\ / : * ? " < > |）'
             + f"{title}の親フォルダに書き込み権限がない"
