@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import sys
+from mlib.base.base import FileType
 
 from mlib.base.logger import LoggingDecoration, MLogger
 
@@ -85,3 +86,23 @@ def get_dir_path(path: str) -> str:
     except Exception:
         logger.error("ファイルパスの解析に失敗しました。\nパスに使えない文字がないか確認してください。\nファイルパス: {path}", path=path)
         return ""
+
+
+def validate_file(
+    path: str,
+    file_type: FileType,
+) -> bool:
+    """利用可能なファイルであるか"""
+    if not (os.path.exists(path) and os.path.isfile(path)):
+        return False
+
+    _, _, file_ext = separate_path(path)
+    return file_ext.lower() in file_type.name.lower()
+
+
+def separate_path(path: str) -> tuple[str, str, str]:
+    """ファイルパスをディレクトリ・ファイル名・ファイル拡張子に分割する"""
+    dir_path = os.path.dirname(path)
+    file_name, file_ext = os.path.splitext(os.path.basename(path))
+
+    return dir_path, file_name, file_ext

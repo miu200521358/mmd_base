@@ -3,11 +3,11 @@ from mlib.base.logger import MLogger
 from mlib.base.reader import BaseReader
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
-from mlib.utils.file_utils import HISTORY_MAX, get_dir_path
+from mlib.utils.file_utils import HISTORY_MAX, get_dir_path, validate_file
 
 
 logger = MLogger(__name__)
-_ = logger.get_text
+__ = logger.get_text
 
 
 class MFilePickerCtrl:
@@ -22,15 +22,17 @@ class MFilePickerCtrl:
         name_spacer: int = 0,
         is_save: bool = False,
         tooltip: str = "",
+        event=None,
     ) -> None:
         self.frame = frame
         self.parent = parent
         self.reader = reader
         self.key = key
+        self.is_save = is_save
         self.root_sizer = wx.BoxSizer(wx.VERTICAL)
 
         self._initialize_ui(title, is_show_name, name_spacer, is_save, tooltip)
-        self._initialize_event(is_save)
+        self._initialize_event(event)
 
     def set_parent_sizer(self, parent_sizer: wx.Sizer):
         parent_sizer.Add(self.root_sizer, 1, wx.GROW | wx.TOP | wx.LEFT | wx.RIGHT, 0)
@@ -40,7 +42,7 @@ class MFilePickerCtrl:
         self.title_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         self.title_ctrl = wx.StaticText(self.parent, wx.ID_ANY, title, wx.DefaultPosition, wx.DefaultSize, 0)
-        self.title_ctrl.SetToolTip(_(tooltip))
+        self.title_ctrl.SetToolTip(__(tooltip))
         self.title_sizer.Add(self.title_ctrl, 1, wx.GROW | wx.ALL, 3)
 
         # モデル名等の表示
@@ -51,13 +53,13 @@ class MFilePickerCtrl:
             self.name_ctrl = wx.TextCtrl(
                 self.parent,
                 wx.ID_ANY,
-                _("未設定"),
+                __("未設定"),
                 wx.DefaultPosition,
                 wx.DefaultSize,
                 wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS,
             )
             self.name_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
-            self.name_ctrl.SetToolTip(_("{title}に記録されているモデル名です。\n文字列は選択およびコピー可能です。", title=title))
+            self.name_ctrl.SetToolTip(__("{title}に記録されているモデル名です。\n文字列は選択およびコピー可能です。", title=title))
             self.title_sizer.Add(self.name_ctrl, 0, wx.ALL, 3)
 
         self.root_sizer.Add(self.title_sizer, 0, wx.ALL, 3)
@@ -72,11 +74,11 @@ class MFilePickerCtrl:
             self.parent,
             wx.ID_ANY,
             path=wx.EmptyString,
-            wildcard=self.reader.file_type,
+            wildcard=self.reader.file_ext,
             style=file_ctrl_style,
         )
-        self.file_ctrl.GetPickerCtrl().SetLabel(_("開く"))
-        self.file_ctrl.SetToolTip(_(tooltip))
+        self.file_ctrl.GetPickerCtrl().SetLabel(__("開く"))
+        self.file_ctrl.SetToolTip(__(tooltip))
 
         self.file_sizer.Add(self.file_ctrl, 1, wx.GROW | wx.ALL, 3)
 
@@ -85,16 +87,19 @@ class MFilePickerCtrl:
             self.history_ctrl = wx.Button(
                 self.parent,
                 wx.ID_ANY,
-                label=_("履歴"),
+                label=__("履歴"),
             )
-            self.history_ctrl.SetToolTip(_("これまでに指定された事のある{title}を再指定することができます。", title=title))
+            self.history_ctrl.SetToolTip(__("これまでに指定された事のある{title}を再指定することができます。", title=title))
             self.file_sizer.Add(self.history_ctrl, 0, wx.ALL, 3)
 
         self.root_sizer.Add(self.file_sizer, 0, wx.GROW | wx.ALL, 0)
 
-    def _initialize_event(self, is_save: bool):
-        if not is_save:
+    def _initialize_event(self, event):
+        if not self.is_save:
             self.history_ctrl.Bind(wx.EVT_BUTTON, self.on_show_histories)
+
+        if event:
+            self.file_ctrl.Bind(wx.EVT_FILEPICKER_CHANGED, event)
 
     def on_show_histories(self, event: wx.Event):
         """履歴一覧を表示する"""
@@ -102,8 +107,8 @@ class MFilePickerCtrl:
 
         with wx.SingleChoiceDialog(
             self.frame,
-            _("ファイルを選んでダブルクリック、またはOKボタンをクリックしてください。"),
-            caption=_("ファイル履歴選択"),
+            __("ファイルを選んでダブルクリック、またはOKボタンをクリックしてください。"),
+            caption=__("ファイル履歴選択"),
             choices=histories,
             style=wx.CAPTION | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.OK | wx.CANCEL | wx.CENTRE,
         ) as choiceDialog:
@@ -115,8 +120,11 @@ class MFilePickerCtrl:
             self.file_ctrl.UpdatePickerFromTextCtrl()
             self.file_ctrl.SetInitialDirectory(get_dir_path(choiceDialog.GetStringSelection()))
 
-            # ファイル変更処理
-            self.on_change_file(wx.FileDirPickerEvent())
+    @property
+    def path(self):
+        return self.file_ctrl.GetPath()
 
-    def on_change_file(self, event: wx.Event):
-        pass
+    @path.setter
+    def path(self, v: str):
+        if (not self.is_save and validate_file(v, self.reader.file_type)) or self.is_save:
+            self.file_ctrl.SetPath(v)

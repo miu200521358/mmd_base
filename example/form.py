@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime
 
 import wx
 
@@ -7,8 +8,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
-from mlib.form.parts.base_file_ctrl import MFilePickerCtrl
+from mlib.form.parts.file_ctrl import MFilePickerCtrl
 from mlib.pmx.pmx_reader import PmxReader
+from mlib.utils.file_utils import separate_path
 
 
 class TestPanel(BasePanel):
@@ -27,6 +29,7 @@ class TestPanel(BasePanel):
             name_spacer=20,
             is_save=False,
             tooltip="なんか色々",
+            event=self.on_change_model_pmx,
         )
         self.model_pmx_ctrl.set_parent_sizer(self.root_sizer)
 
@@ -47,6 +50,10 @@ class TestPanel(BasePanel):
         self.SetSizer(self.root_sizer)
         self.Layout()
         self.fit()
+
+    def on_change_model_pmx(self, event: wx.Event):
+        dir_path, file_name, file_ext = separate_path(self.model_pmx_ctrl.path)
+        self.output_pmx_ctrl.path = os.path.join(dir_path, f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
 
 
 class TestFrame(BaseFrame):

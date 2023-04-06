@@ -6,7 +6,7 @@ from typing import Callable, Generic, TypeVar
 
 import numpy as np
 
-from mlib.base.base import BaseModel, Encoding
+from mlib.base.base import BaseModel, Encoding, FileType
 from mlib.base.collection import BaseHashModel
 from mlib.base.exception import MParseException
 from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
@@ -24,7 +24,12 @@ class StructUnpackType:
 
 class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
     @property
-    def file_type(self) -> str:
+    def file_ext(self) -> str:
+        """ファイル拡張子を返す"""
+        raise NotImplementedError()
+
+    @property
+    def file_type(self) -> FileType:
         """ファイルタイプを返す"""
         raise NotImplementedError()
 

@@ -45,8 +45,12 @@ class PmxReader(BaseReader[PmxModel]):
         super().__init__()
 
     @property
-    def file_type(self) -> str:
+    def file_ext(self) -> str:
         return FileType.PMX.value
+
+    @property
+    def file_type(self) -> FileType:
+        return FileType.PMX
 
     def create_model(self, path: str) -> PmxModel:
         return PmxModel(path=path)
