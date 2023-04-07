@@ -82,14 +82,14 @@ class MLogger:
         self.logger = logging.getLogger("mutool").getChild(self.file_name)
 
         self.stream_handler = StreamHandler()
-        # self.stream_handler.setFormatter(Formatter(self.DEFAULT_FORMAT))
+        self.stream_handler.setFormatter(Formatter(self.DEFAULT_FORMAT))
         self.logger.addHandler(self.stream_handler)
 
         if out_path:
             # ファイル出力ハンドラ
             self.file_handler = logging.FileHandler(out_path)
             self.file_handler.setLevel(self.default_level)
-            # self.file_handler.setFormatter(Formatter(self.DEFAULT_FORMAT))
+            self.file_handler.setFormatter(Formatter(self.DEFAULT_FORMAT))
             self.logger.addHandler(self.file_handler)
 
         self.logger.setLevel(level)
