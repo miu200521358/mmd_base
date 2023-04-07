@@ -61,8 +61,8 @@ if __name__ == "__main__":
                             # 値がないメッセージを翻訳
                             trans_text = translator.translate_text(msg_id, source_lang="JA", target_lang=lang.upper())
                             translated_text = trans_text.text
-                            if trans_text.text[-1] == ".":
-                                translated_text = trans_text.text[:-1]
+                            if trans_text.text[-2:] == '."':
+                                translated_text = trans_text.text[:-2] + '"'
                             messages[i] = f"msgstr {translated_text}"
                             print(f"翻訳: [{lang}][{msg_id}] -> [{translated_text}]")
                         msg_id = None
