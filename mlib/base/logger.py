@@ -41,7 +41,7 @@ class LoggingLevel(Enum):
 
 
 class MLogger:
-    DEFAULT_FORMAT = "%(original_msg)s [%(call_file)s:%(call_func)s:%(call_lno)s][P-%(process)s](%(asctime)s)"
+    DEFAULT_FORMAT = "%(message)s [%(call_file)s:%(call_func)s:%(call_lno)s][P-%(process)s](%(asctime)s)"
 
     # システム全体のロギングレベル
     total_level = logging.INFO
@@ -228,7 +228,7 @@ class MLogger:
                 messages.append(f'\nmsgid "{new_msg}"\n')
                 messages.append('msgstr ""\n')
                 messages.append("\n")
-                print("add message: %s", new_msg)
+                self.logger.debug("add message: ", new_msg)
 
                 with open(f"{self.lang_dir}/messages.pot", mode="w", encoding="utf-8") as f:
                     f.writelines(messages)
