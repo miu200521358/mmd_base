@@ -68,6 +68,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.last_pos = wx.Point(0, 0)
         self.now_pos = wx.Point(0, 0)
         self.fps = 30
+        self.max_fno = 0
 
         self.set_context()
 
@@ -139,6 +140,7 @@ class PmxCanvas(glcanvas.GLCanvas):
     def append_model_set(self, model: PmxModel, motion: VmdMotion):
         self.model_sets.append(ModelSet(self.shader, model, motion))
         self.animations.append(MotionSet(model, motion, 0))
+        self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
 
     def clear_model_set(self):
         self.model_sets.clear()
@@ -165,7 +167,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.shader.msaa.unbind()
 
     def on_frame_forward(self, event: wx.Event):
-        self.frame_ctrl.SetValue(self.frame_ctrl.GetValue() + 1)
+        self.frame_ctrl.SetValue(min(self.max_fno, self.frame_ctrl.GetValue() + 1))
         self.change_motion(event)
 
     def on_frame_back(self, event: wx.Event):
@@ -184,42 +186,52 @@ class PmxCanvas(glcanvas.GLCanvas):
     def on_play(self, event: wx.Event, record: bool = False):
         self.playing = not self.playing
         if self.playing:
+            self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
             # print(f"{self.frame_ctrl.GetValue():05d}: {datetime.now()}")
             self.recording = record
-            self.queue = Queue()
-            self.process = Process(
-                target=animate,
-                args=(self.queue, self.frame_ctrl.GetValue(), self.model_sets),
-                name="CalcProcess",
-            )
-            self.process.start()
+            # self.queue = Queue()
+            # self.process = Process(
+            #     target=animate,
+            #     args=(self.queue, self.frame_ctrl.GetValue(), self.model_sets),
+            #     name="CalcProcess",
+            # )
+            # self.process.start()
             self.play_timer.Start(1000 // self.fps)
         else:
-            if self.process:
-                self.process.terminate()
+            # if self.process:
+            #     self.process.terminate()
             self.play_timer.Stop()
             self.recording = False
 
     def on_play_timer(self, event: wx.Event):
-        if self.queue and not self.queue.empty():
-            animations: Optional[list[MotionSet]] = None
+        self.on_frame_forward(event)
+        # self.frame_ctrl.SetValue(self.frame_ctrl.GetValue() + 1)
+        # animations: list[MotionSet] = []
+        # for model_set in self.model_sets:
+        #     if model_set.model and model_set.motion:
+        #         animations.append(MotionSet(model_set.model, model_set.motion, fno))
+        # self.animations = animations
+        # self.Refresh()
 
-            while not self.queue.empty():
-                animations = self.queue.get()
+        # if self.queue and not self.queue.empty():
+        #     animations: Optional[list[MotionSet]] = None
 
-            if animations is None and self.process:
-                self.on_play(event)
-                return
+        #     while not self.queue.empty():
+        #         animations = self.queue.get()
 
-            if animations is not None:
-                self.animations = animations
+        #     if animations is None and self.process:
+        #         self.on_play(event)
+        #         return
 
-            if self.recording:
-                self.on_capture(event)
+        #     if animations is not None:
+        #         self.animations = animations
 
-            self.frame_ctrl.SetValue(self.frame_ctrl.GetValue() + 1)
+        #     if self.recording:
+        #         self.on_capture(event)
 
-            self.Refresh()
+        #     self.frame_ctrl.SetValue(self.frame_ctrl.GetValue() + 1)
+
+        #     self.Refresh()
 
     def on_reset(self, event: wx.Event):
         self.frame_ctrl.SetValue(0)
