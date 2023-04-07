@@ -38,7 +38,7 @@ class MFilePickerCtrl:
         self.reader = reader
         self.data: Optional[BaseHashModel] = None
         self.key = key
-        self.title = title
+        self.title = __(title)
         self.is_save = is_save
         self.is_show_name = is_show_name
         self.root_sizer = wx.BoxSizer(wx.VERTICAL)
