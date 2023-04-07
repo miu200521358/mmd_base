@@ -73,37 +73,37 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
         motion.model_name = self.read_text(20)
 
     def read_by_buffer(self, motion: VmdMotion):
-        logger.info(__("VMDモーションデータ読み取り開始"))
+        logger.info("VMDモーションデータ読み取り開始")
 
         # ボーンモーション
         self.read_bones(motion)
 
-        logger.info(__("ボーンデータ読み取り完了: {count}", count=len(motion.bones)))
+        logger.info("ボーンデータ読み取り完了: {count}", count=len(motion.bones))
 
         # モーフモーション
         self.read_morphs(motion)
 
-        logger.info(__("モーフデータ読み取り完了: {count}", count=len(motion.morphs)))
+        logger.info("モーフデータ読み取り完了: {count}", count=len(motion.morphs))
 
         # カメラ
         self.read_cameras(motion)
 
-        logger.info(__("カメラデータ読み取り完了: {count}", count=len(motion.cameras)))
+        logger.info("カメラデータ読み取り完了: {count}", count=len(motion.cameras))
 
         # 照明
         self.read_lights(motion)
 
-        logger.info(__("照明データ読み取り完了: {count}", count=len(motion.lights)))
+        logger.info("照明データ読み取り完了: {count}", count=len(motion.lights))
 
         # セルフ影
         self.read_shadows(motion)
 
-        logger.info(__("セルフ影データ読み取り完了: {count}", count=len(motion.shadows)))
+        logger.info("セルフ影データ読み取り完了: {count}", count=len(motion.shadows))
 
         # IK
         self.read_show_iks(motion)
 
-        logger.info(__("IKデータ読み取り完了: {count}", count=len(motion.show_iks)))
+        logger.info("IKデータ読み取り完了: {count}", count=len(motion.show_iks))
 
     def define_read_text(self, encoding: Encoding):
         """
