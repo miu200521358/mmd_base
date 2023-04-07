@@ -206,5 +206,11 @@ class MuApp(wx.App):
 
 
 if __name__ == "__main__":
+    MLogger.initialize(
+        lang="en",
+        root_dir=os.path.join(os.path.dirname(__file__), "..", "mlib"),
+        level=20,
+    )
+
     app = MuApp()
     app.MainLoop()
