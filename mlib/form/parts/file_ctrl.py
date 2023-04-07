@@ -28,6 +28,11 @@ class MFilePickerCtrl:
         tooltip: str = "",
         event=None,
     ) -> None:
+        global logger
+        logger = MLogger(os.path.basename(__file__))
+        global __
+        __ = logger.get_text
+
         self.frame = frame
         self.parent = parent
         self.reader = reader
