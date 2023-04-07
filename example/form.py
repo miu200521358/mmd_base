@@ -151,6 +151,7 @@ class TestFrame(BaseFrame):
             if not self.worker.started:
                 if not self.file_panel.model_ctrl.data:
                     # 設定タブにうつった時に読み込む
+                    self.config_panel.canvas.clear_model_set()
                     self.worker.start()
                 else:
                     # 既に読み取りが完了していたらそのまま表示
@@ -170,9 +171,7 @@ class TestFrame(BaseFrame):
 
         try:
             self.config_panel.canvas.set_context()
-            self.config_panel.canvas.set_model(self.file_panel.model_ctrl.data)
-            self.config_panel.canvas.set_motion(self.file_panel.motion_ctrl.data)
-            self.config_panel.canvas.model.init_draw(self.config_panel.canvas.shader)
+            self.config_panel.canvas.append_model_set(self.file_panel.model_ctrl.data, self.file_panel.motion_ctrl.data)
             self.config_panel.canvas.Refresh()
             self.notebook.ChangeSelection(self.config_panel.tab_idx)
         except:
