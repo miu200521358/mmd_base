@@ -5,9 +5,12 @@ from typing import Any, Optional
 
 import wx
 
+
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from mlib.pmx.pmx_collection import PmxModel
+from mlib.vmd.vmd_reader import VmdReader
+from mlib.vmd.vmd_collection import VmdMotion
 
 from mlib.pmx.canvas import PmxCanvas
 from mlib.form.base_worker import BaseWorker
@@ -28,33 +31,48 @@ class FilePanel(BasePanel):
         super().__init__(frame, tab_idx, *args, **kw)
 
         self.pmx_reader = PmxReader()
+        self.vmd_reader = VmdReader()
 
         self._initialize_ui()
 
     def _initialize_ui(self):
-        self.model_pmx_ctrl = MFilePickerCtrl(
+        self.model_ctrl = MFilePickerCtrl(
             self.frame,
             self,
             self.pmx_reader,
             key="model_pmx",
-            title="テスト",
+            title="表示モデル",
             is_show_name=True,
             name_spacer=20,
             is_save=False,
-            tooltip="なんか色々",
+            tooltip="PMXモデル",
             event=self.on_change_model_pmx,
         )
-        self.model_pmx_ctrl.set_parent_sizer(self.root_sizer)
+        self.model_ctrl.set_parent_sizer(self.root_sizer)
+
+        self.motion_ctrl = MFilePickerCtrl(
+            self.frame,
+            self,
+            self.vmd_reader,
+            key="motion_vmd",
+            title="表示モーション",
+            is_show_name=True,
+            name_spacer=20,
+            is_save=False,
+            tooltip="VMDモーションデータ",
+            event=self.on_change_motion,
+        )
+        self.motion_ctrl.set_parent_sizer(self.root_sizer)
 
         self.output_pmx_ctrl = MFilePickerCtrl(
             self.frame,
             self,
             self.pmx_reader,
-            key="model_pmx",
+            key="output_pmx",
             title="出力先",
             is_show_name=False,
             is_save=True,
-            tooltip="なんか色々",
+            tooltip="実際は動いてないよ",
         )
         self.output_pmx_ctrl.set_parent_sizer(self.root_sizer)
 
@@ -65,11 +83,15 @@ class FilePanel(BasePanel):
         self.fit()
 
     def on_change_model_pmx(self, event: wx.Event):
-        if self.model_pmx_ctrl.read_name():
-            self.model_pmx_ctrl.read_digest()
-            dir_path, file_name, file_ext = separate_path(self.model_pmx_ctrl.path)
+        if self.model_ctrl.read_name():
+            self.model_ctrl.read_digest()
+            dir_path, file_name, file_ext = separate_path(self.model_ctrl.path)
             model_path = os.path.join(dir_path, f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
             self.output_pmx_ctrl.path = model_path
+
+    def on_change_motion(self, event: wx.Event):
+        if self.motion_ctrl.read_name():
+            self.motion_ctrl.read_digest()
 
 
 class PmxLoadWorker(BaseWorker):
@@ -79,7 +101,10 @@ class PmxLoadWorker(BaseWorker):
     def thread_execute(self):
         file_panel: FilePanel = self.panel
 
-        self.result_data = file_panel.pmx_reader.read_by_filepath(file_panel.model_pmx_ctrl.path)
+        self.result_data = (
+            file_panel.pmx_reader.read_by_filepath(file_panel.model_ctrl.path),
+            file_panel.vmd_reader.read_by_filepath(file_panel.motion_ctrl.path),
+        )
 
 
 class ConfigPanel(BasePanel):
@@ -91,7 +116,7 @@ class ConfigPanel(BasePanel):
     def _initialize_ui(self):
         self.config_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.canvas = PmxCanvas(self, 400, 600)
+        self.canvas = PmxCanvas(self, 500, 800)
         self.config_sizer.Add(self.canvas, 0, wx.EXPAND | wx.ALL, 0)
 
         # キーフレ
@@ -108,7 +133,7 @@ class TestFrame(BaseFrame):
             app,
             history_keys=["model_pmx"],
             title="Mu Test Frame",
-            size=wx.Size(800, 600),
+            size=wx.Size(1000, 800),
         )
         # ファイルタブ
         self.file_panel = FilePanel(self, 0)
@@ -124,7 +149,7 @@ class TestFrame(BaseFrame):
         if self.notebook.GetSelection() == self.config_panel.tab_idx:
             self.notebook.ChangeSelection(self.file_panel.tab_idx)
             if not self.worker.started:
-                if not self.file_panel.model_pmx_ctrl.data:
+                if not self.file_panel.model_ctrl.data:
                     # 設定タブにうつった時に読み込む
                     self.worker.start()
                 else:
@@ -137,12 +162,16 @@ class TestFrame(BaseFrame):
         if not (result and data):
             return
 
-        model: PmxModel = data
-        self.file_panel.model_pmx_ctrl.data = model
+        data1, data2 = data
+        model: PmxModel = data1
+        motion: VmdMotion = data2
+        self.file_panel.model_ctrl.data = model
+        self.file_panel.motion_ctrl.data = motion
 
         try:
             self.config_panel.canvas.set_context()
-            self.config_panel.canvas.set_model(self.file_panel.model_pmx_ctrl.data)
+            self.config_panel.canvas.set_model(self.file_panel.model_ctrl.data)
+            self.config_panel.canvas.set_motion(self.file_panel.motion_ctrl.data)
             self.config_panel.canvas.model.init_draw(self.config_panel.canvas.shader)
             self.config_panel.canvas.Refresh()
             self.notebook.ChangeSelection(self.config_panel.tab_idx)

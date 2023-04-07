@@ -119,6 +119,10 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.model = model
         self.bone_matrixes, self.vertex_morph_poses, self.uv_morph_poses, self.uv1_morph_poses, self.material_morphs = self.motion.animate(0, self.model)
 
+    def set_motion(self, motion: VmdMotion):
+        self.motion = motion
+        self.bone_matrixes, self.vertex_morph_poses, self.uv_morph_poses, self.uv1_morph_poses, self.material_morphs = self.motion.animate(0, self.model)
+
     def draw(self):
         self.set_context()
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)

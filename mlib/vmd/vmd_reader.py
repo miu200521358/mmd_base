@@ -1,7 +1,9 @@
+import os
 import re
 from struct import Struct
 
-from mlib.base.base import Encoding
+from mlib.base.base import Encoding, FileType
+from mlib.base.logger import MLogger
 from mlib.base.math import MVector3D
 from mlib.base.reader import BaseReader, StructUnpackType
 from mlib.vmd.vmd_collection import VmdMotion
@@ -12,10 +14,21 @@ TRIM_TEXT_REGEXP = [
     re.compile(rb"\x00\xfd+$"),
 ]
 
+logger = MLogger(os.path.basename(__file__))
+__ = logger.get_text
+
 
 class VmdReader(BaseReader[VmdMotion]):  # type: ignore
     def __init__(self) -> None:
         super().__init__()
+
+    @property
+    def file_ext(self) -> str:
+        return FileType.VMD.value
+
+    @property
+    def file_type(self) -> FileType:
+        return FileType.VMD
 
     def create_model(self, path: str) -> VmdMotion:
         return VmdMotion(path=path)
@@ -60,23 +73,37 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
         motion.model_name = self.read_text(20)
 
     def read_by_buffer(self, motion: VmdMotion):
+        logger.info(__("VMDモーションデータ読み取り開始"))
+
         # ボーンモーション
         self.read_bones(motion)
+
+        logger.info(__("ボーンデータ読み取り完了: {count}", count=len(motion.bones)))
 
         # モーフモーション
         self.read_morphs(motion)
 
+        logger.info(__("モーフデータ読み取り完了: {count}", count=len(motion.morphs)))
+
         # カメラ
         self.read_cameras(motion)
+
+        logger.info(__("カメラデータ読み取り完了: {count}", count=len(motion.cameras)))
 
         # 照明
         self.read_lights(motion)
 
+        logger.info(__("照明データ読み取り完了: {count}", count=len(motion.lights)))
+
         # セルフ影
         self.read_shadows(motion)
 
-        # セルフ影
+        logger.info(__("セルフ影データ読み取り完了: {count}", count=len(motion.shadows)))
+
+        # IK
         self.read_show_iks(motion)
+
+        logger.info(__("IKデータ読み取り完了: {count}", count=len(motion.show_iks)))
 
     def define_read_text(self, encoding: Encoding):
         """

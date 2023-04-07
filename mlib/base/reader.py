@@ -142,6 +142,8 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         self.offset = 0
         self.buffer = b""
 
+        logger.info("----------------------")
+
         with open(path, "rb") as f:
             self.buffer = f.read()
             self.read_by_buffer_header(model)
