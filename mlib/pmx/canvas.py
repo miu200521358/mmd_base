@@ -9,7 +9,7 @@ from PIL import Image
 from wx import glcanvas
 
 from mlib.base.logger import MLogger
-from mlib.base.math import MQuaternion, MVector3D
+from mlib.base.math import MQuaternion, MVector3D, MVector4D
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import ShaderMaterial
 from mlib.pmx.shader import MShader
@@ -23,16 +23,11 @@ def animate(queue: Queue, fno: int, model_sets: list["ModelSet"]):
 
     while fno < max_fno:
         fno += 1
+        animations: list["MotionSet"] = []
         for model_set in model_sets:
             if model_set.model and model_set.motion:
-                (
-                    model_set.bone_matrixes,
-                    model_set.vertex_morph_poses,
-                    model_set.uv_morph_poses,
-                    model_set.uv1_morph_poses,
-                    model_set.material_morphs,
-                ) = model_set.motion.animate(fno, model_set.model)
-        queue.put((model_sets))
+                animations.append(MotionSet(model_set.model, model_set.motion, fno))
+        queue.put(animations)
     queue.put(None)
 
 
@@ -42,14 +37,19 @@ class ModelSet:
         model.init_draw(shader)
 
         self.motion = motion
+        self.animation = MotionSet(model, motion)
+
+
+class MotionSet:
+    def __init__(self, model: PmxModel, motion: VmdMotion, fno: int = 0) -> None:
         if motion:
-            self.bone_matrixes, self.vertex_morph_poses, self.uv_morph_poses, self.uv1_morph_poses, self.material_morphs = self.motion.animate(0, self.model)
+            self.bone_matrixes, self.vertex_morph_poses, self.uv_morph_poses, self.uv1_morph_poses, self.material_morphs = motion.animate(fno, model)
         else:
-            self.bone_matrixes = np.array([np.eye(4) for _ in range(len(self.model.bones))])
-            self.vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(self.model.vertices))])
-            self.uv_morph_poses = np.array([np.zeros(4) for _ in range(len(self.model.vertices))])
-            self.uv1_morph_poses = np.array([np.zeros(4) for _ in range(len(self.model.vertices))])
-            self.material_morphs = [ShaderMaterial(m, shader.light_ambient4) for m in model.materials]
+            self.bone_matrixes = np.array([np.eye(4) for _ in range(len(model.bones))])
+            self.vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])
+            self.uv_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
+            self.uv1_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
+            self.material_morphs = [ShaderMaterial(m, MVector4D()) for m in model.materials]
 
 
 class PmxCanvas(glcanvas.GLCanvas):
@@ -76,6 +76,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         self.shader = MShader(width, height)
         self.model_sets: list[ModelSet] = []
+        self.animations: list[MotionSet] = []
 
         self.queue: Optional[Queue] = None
         self.process: Optional[Process] = None
@@ -137,6 +138,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
     def append_model_set(self, model: PmxModel, motion: VmdMotion):
         self.model_sets.append(ModelSet(self.shader, model, motion))
+        self.animations.append(MotionSet(model, motion, 0))
 
     def clear_model_set(self):
         self.model_sets.clear()
@@ -150,11 +152,15 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.shader.update_camera(is_edge)
             self.shader.unuse()
 
-        for model_set in self.model_sets:
+        for model_set, animation in zip(self.model_sets, self.animations):
             if model_set.model:
                 self.shader.msaa.bind()
                 model_set.model.draw(
-                    model_set.bone_matrixes, model_set.vertex_morph_poses, model_set.uv_morph_poses, model_set.uv1_morph_poses, model_set.material_morphs
+                    animation.bone_matrixes,
+                    animation.vertex_morph_poses,
+                    animation.uv_morph_poses,
+                    animation.uv1_morph_poses,
+                    animation.material_morphs,
                 )
                 self.shader.msaa.unbind()
 
@@ -168,15 +174,11 @@ class PmxCanvas(glcanvas.GLCanvas):
 
     def change_motion(self, event: wx.Event):
         now_fno = self.frame_ctrl.GetValue()
+        animations: list[MotionSet] = []
         for model_set in self.model_sets:
             if model_set.model and model_set.motion:
-                (
-                    model_set.bone_matrixes,
-                    model_set.vertex_morph_poses,
-                    model_set.uv_morph_poses,
-                    model_set.uv1_morph_poses,
-                    model_set.material_morphs,
-                ) = model_set.motion.animate(now_fno, model_set.model)
+                animations.append(MotionSet(model_set.model, model_set.motion, now_fno))
+        self.animations = animations
         self.Refresh()
 
     def on_play(self, event: wx.Event, record: bool = False):
@@ -200,17 +202,17 @@ class PmxCanvas(glcanvas.GLCanvas):
 
     def on_play_timer(self, event: wx.Event):
         if self.queue and not self.queue.empty():
-            model_sets: Optional[list[ModelSet]] = None
+            animations: Optional[list[MotionSet]] = None
 
             while not self.queue.empty():
-                model_sets = self.queue.get()
+                animations = self.queue.get()
 
-            if model_sets is None and self.process:
+            if animations is None and self.process:
                 self.on_play(event)
                 return
 
-            if model_sets is not None:
-                self.model_sets = model_sets
+            if animations is not None:
+                self.animations = animations
 
             if self.recording:
                 self.on_capture(event)
