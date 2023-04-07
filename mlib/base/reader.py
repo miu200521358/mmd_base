@@ -1,9 +1,9 @@
+import os
 import struct
 from abc import ABCMeta, abstractmethod
 from functools import lru_cache
 from struct import Struct
 from typing import Callable, Generic, TypeVar
-import os
 
 import numpy as np
 

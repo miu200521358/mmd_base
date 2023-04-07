@@ -1,9 +1,9 @@
 import gettext
 import logging
-from logging import LogRecord, Handler, StreamHandler, Formatter
 import os
 from datetime import datetime
 from enum import Enum, IntEnum
+from logging import Formatter, Handler, LogRecord, StreamHandler
 from typing import Optional
 
 import numpy as np

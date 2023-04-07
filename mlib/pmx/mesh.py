@@ -2,8 +2,8 @@ from typing import Optional
 
 import numpy as np
 import OpenGL.GL as gl
-from mlib.base.exception import MViewerException
 
+from mlib.base.exception import MViewerException
 from mlib.base.part import BaseIndexModel
 from mlib.pmx.pmx_part import DrawFlg, Material, ShaderMaterial, Texture
 from mlib.pmx.shader import MShader, VsLayout

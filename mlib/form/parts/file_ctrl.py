@@ -1,13 +1,14 @@
 import os
 from typing import Optional
+
 import wx
+
 from mlib.base.collection import BaseHashModel
 from mlib.base.logger import MLogger
 from mlib.base.reader import BaseReader
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
-from mlib.utils.file_utils import get_dir_path, validate_file, validate_save_file, insert_history
-
+from mlib.utils.file_utils import get_dir_path, insert_history, validate_file, validate_save_file
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text

@@ -1,12 +1,13 @@
 import os
-from threading import Thread, enumerate, current_thread
 from functools import wraps
+from threading import Thread, current_thread, enumerate
 from time import sleep, time
 from typing import Any, Callable, Optional
+
 import wx
+
 from mlib.base.exception import MLibException
 from mlib.base.logger import MLogger
-
 from mlib.form.base_panel import BasePanel
 
 logger = MLogger(os.path.basename(__file__))

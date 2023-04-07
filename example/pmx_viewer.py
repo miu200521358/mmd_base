@@ -7,8 +7,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import wx
 
 from mlib.base.logger import MLogger
-from mlib.pmx.pmx_reader import PmxReader
 from mlib.pmx.canvas import PmxCanvas
+from mlib.pmx.pmx_reader import PmxReader
 from mlib.vmd.vmd_reader import VmdReader
 
 

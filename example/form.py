@@ -5,22 +5,20 @@ from typing import Any, Optional
 
 import wx
 
-
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from mlib.pmx.pmx_collection import PmxModel
-from mlib.vmd.vmd_reader import VmdReader
-from mlib.vmd.vmd_collection import VmdMotion
-
-from mlib.pmx.canvas import PmxCanvas
-from mlib.form.base_worker import BaseWorker
 from mlib.base.logger import MLogger
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
-from mlib.form.parts.file_ctrl import MFilePickerCtrl
-from mlib.pmx.pmx_reader import PmxReader
-from mlib.utils.file_utils import separate_path, save_histories
+from mlib.form.base_worker import BaseWorker
 from mlib.form.parts.console_ctrl import ConsoleCtrl
+from mlib.form.parts.file_ctrl import MFilePickerCtrl
+from mlib.pmx.canvas import PmxCanvas
+from mlib.pmx.pmx_collection import PmxModel
+from mlib.pmx.pmx_reader import PmxReader
+from mlib.utils.file_utils import save_histories, separate_path
+from mlib.vmd.vmd_collection import VmdMotion
+from mlib.vmd.vmd_reader import VmdReader
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
