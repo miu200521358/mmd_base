@@ -259,9 +259,9 @@ class MLogger:
             elif decoration == LoggingDecoration.DECORATION_IN_BOX:
                 output_msg = self.create_in_box_message(trans_msg, level, title)
             else:
-                output_msg = msg
+                output_msg = trans_msg
         else:
-            output_msg = msg
+            output_msg = trans_msg
 
         return output_msg
 
