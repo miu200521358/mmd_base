@@ -325,12 +325,7 @@ class BaseHashModel(BaseModel):
         """モデル内の名前に相当する値を返す"""
         raise NotImplementedError()
 
-    @property
-    def hexdigest(self) -> str:
-        """モデルデータのハッシュ値を取得する"""
-        return self.digest
-
-    def update_hexdigest(self) -> None:
+    def update_digest(self) -> None:
         sha1 = hashlib.sha1()
 
         with open(self.path, "rb") as f:

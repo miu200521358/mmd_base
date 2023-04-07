@@ -77,12 +77,14 @@ class BaseWorker:
     def __init__(self, panel: BasePanel, result_func: Callable) -> None:
         self.start_time = 0.0
         self.panel = panel
+        self.started = False
         self.killed = False
         self.result: bool = True
         self.result_data: Optional[Any] = None
         self.result_func = result_func
 
     def start(self):
+        self.started = True
         self.start_time = time()
 
         self.run()
@@ -101,6 +103,8 @@ class BaseWorker:
             logger.critical(__("予期せぬエラーが発生しました"))
             self.result = False
         finally:
+            self.started = False
+            self.killed = False
             self.result_func(result=self.result, data=self.result_data, elapsed_time=show_worked_time(time() - self.start_time))
 
     def thread_execute(self):

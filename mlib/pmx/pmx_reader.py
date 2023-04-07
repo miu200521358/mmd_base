@@ -42,6 +42,7 @@ from mlib.pmx.pmx_part import (
 )
 
 logger = MLogger(os.path.basename(__file__))
+__ = logger.get_text
 
 
 class PmxReader(BaseReader[PmxModel]):
@@ -105,6 +106,8 @@ class PmxReader(BaseReader[PmxModel]):
         model.model_name = self.read_text()
 
     def read_by_buffer(self, model: PmxModel):
+        logger.info(__("PMXモデルデータ読み取り開始"))
+
         # モデルの各要素サイズから読み取り処理を設定
         self.read_vertex_index, self.vertex_index_format = self.define_read_index(model.vertex_count, is_vertex=True)
         self.read_texture_index, self.texture_index_format = self.define_read_index(model.texture_count)
@@ -157,29 +160,47 @@ class PmxReader(BaseReader[PmxModel]):
         # 頂点
         self.read_vertices(model)
 
+        logger.info(__("頂点データ読み取り完了: {count}", count=len(model.vertices)))
+
         # 面
         self.read_faces(model)
+
+        logger.info(__("面データ読み取り完了: {count}", count=len(model.faces)))
 
         # テクスチャ
         self.read_textures(model)
 
+        logger.info(__("テクスチャデータ読み取り完了: {count}", count=len(model.textures)))
+
         # 材質
         self.read_materials(model)
+
+        logger.info(__("材質データ読み取り完了: {count}", count=len(model.materials)))
 
         # ボーン
         self.read_bones(model)
 
+        logger.info(__("ボーンデータ読み取り完了: {count}", count=len(model.bones)))
+
         # モーフ
         self.read_morphs(model)
+
+        logger.info(__("モーフデータ読み取り完了: {count}", count=len(model.morphs)))
 
         # 表示枠
         self.read_display_slots(model)
 
+        logger.info(__("表示枠データ読み取り完了: {count}", count=len(model.display_slots)))
+
         # 剛体
         self.read_rigidbodies(model)
 
+        logger.info(__("剛体データ読み取り完了: {count}", count=len(model.rigidbodies)))
+
         # ジョイント
         self.read_joints(model)
+
+        logger.info(__("ジョイントデータ読み取り完了: {count}", count=len(model.joints)))
 
         # セットアップ
         model.setup()

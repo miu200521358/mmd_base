@@ -1,5 +1,7 @@
 import os
+from typing import Optional
 import wx
+from mlib.base.collection import BaseHashModel
 from mlib.base.logger import MLogger
 from mlib.base.reader import BaseReader
 from mlib.form.base_frame import BaseFrame
@@ -28,6 +30,7 @@ class MFilePickerCtrl:
         self.frame = frame
         self.parent = parent
         self.reader = reader
+        self.data: Optional[BaseHashModel] = None
         self.key = key
         self.title = title
         self.is_save = is_save
@@ -132,10 +135,27 @@ class MFilePickerCtrl:
         if (not self.is_save and validate_file(v, self.reader.file_type)) or (self.is_save and validate_save_file(v, self.title)):
             self.file_ctrl.SetPath(v)
 
-    def read_name(self):
+    def read_name(self) -> bool:
+        """
+        リーダー対象オブジェクトの名前を読み取る
+
+        Returns
+        -------
+        bool
+            読み取り出来るパスか否か
+        """
         if self.is_show_name and not self.is_save:
             if validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
-                name = self.reader.read_name_by_filepath(self.file_ctrl.GetPath()) or __("読取失敗")
-            else:
-                name = __("読取失敗")
-            self.name_ctrl.SetValue(f"({name[:20]})")
+                name = self.reader.read_name_by_filepath(self.file_ctrl.GetPath())
+                self.name_ctrl.SetValue(f"({name[:20]})")
+                return True
+        self.name_ctrl.SetValue(__("読取失敗"))
+        return False
+
+    def read_digest(self):
+        """リーダー対象オブジェクトのハッシュを読み取る"""
+        if self.is_show_name and not self.is_save and validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
+            digest = self.reader.read_hash_by_filepath(self.file_ctrl.GetPath())
+            if self.data and self.data.digest != digest:
+                # 読み取り対象データが変わっている場合、オブジェクトをクリアしておく
+                self.data = None

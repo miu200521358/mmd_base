@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from mlib.pmx.pmx_collection import PmxModel
 
 from mlib.form.base_worker import BaseWorker
-from mlib.base.logger import MLogger, LoggingDecoration
+from mlib.base.logger import MLogger
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
 from mlib.form.parts.file_ctrl import MFilePickerCtrl
@@ -67,10 +67,11 @@ class FilePanel(BasePanel):
         self.fit()
 
     def on_change_model_pmx(self, event: wx.Event):
-        self.model_pmx_ctrl.read_name()
-        dir_path, file_name, file_ext = separate_path(self.model_pmx_ctrl.path)
-        self.output_pmx_ctrl.path = os.path.join(dir_path, f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
-        logger.info(self.model_pmx_ctrl.path, decoration=LoggingDecoration.DECORATION_BOX, func="on_change_model_pmx", lno=10)
+        if self.model_pmx_ctrl.read_name():
+            self.model_pmx_ctrl.read_digest()
+            dir_path, file_name, file_ext = separate_path(self.model_pmx_ctrl.path)
+            model_path = os.path.join(dir_path, f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
+            self.output_pmx_ctrl.path = model_path
 
 
 class PmxLoadWorker(BaseWorker):
@@ -96,8 +97,6 @@ class TestFrame(BaseFrame):
             title="Mu Test Frame",
             size=wx.Size(800, 600),
         )
-        self.model: Optional[PmxModel] = None
-
         # ファイルタブ
         self.file_panel = FilePanel(self, 0)
         self.notebook.AddPage(self.file_panel, __("ファイル"), False)
@@ -106,10 +105,18 @@ class TestFrame(BaseFrame):
         self.config_panel = ConfigPanel(self, 1)
         self.notebook.AddPage(self.config_panel, __("設定"), False)
 
+        self.worker = PmxLoadWorker(self.file_panel, self.on_result)
+
     def on_change_tab(self, event: wx.Event):
         if self.notebook.GetSelection() == self.config_panel.tab_idx:
-            # 設定タブにうつった時に読み込む
-            PmxLoadWorker(self.file_panel, self.on_result).start()
+            self.notebook.ChangeSelection(self.file_panel.tab_idx)
+            if not self.worker.started:
+                if not self.file_panel.model_pmx_ctrl.data:
+                    # 設定タブにうつった時に読み込む
+                    self.worker.start()
+                else:
+                    # 既に読み取りが完了していたらそのまま表示
+                    self.notebook.ChangeSelection(self.config_panel.tab_idx)
 
     def on_result(self, result: bool, data: Optional[Any], elapsed_time: str):
         self.file_panel.console_ctrl.write(f"\n----------------\n{elapsed_time}")
@@ -118,8 +125,10 @@ class TestFrame(BaseFrame):
             return
 
         model: PmxModel = data
-        self.model = model
-        self.file_panel.console_ctrl.write(self.model.name)
+        self.file_panel.model_pmx_ctrl.data = model
+        self.file_panel.console_ctrl.write(model.name)
+
+        self.notebook.ChangeSelection(self.config_panel.tab_idx)
 
 
 class MuApp(wx.App):

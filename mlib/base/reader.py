@@ -73,11 +73,11 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         str
             読み込み結果文字列
         """
-        # モデルを新規作成
-        hash_data: TBaseHashModel = self.create_model(path)
-
         if not (os.path.exists(path) and os.path.isfile(path)):
             return ""
+
+        # モデルを新規作成
+        hash_data: TBaseHashModel = self.create_model(path)
 
         # バイナリを解凍してモデルに展開
         try:
@@ -91,6 +91,32 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             return ""
 
         return hash_data.name
+
+    def read_hash_by_filepath(self, path: str) -> str:
+        """
+        指定されたパスのファイルからハッシュデータを読み込む
+
+        Parameters
+        ----------
+        path : str
+            ファイルパス
+
+        Returns
+        -------
+        int
+            ハッシュデータ
+        """
+
+        if not (os.path.exists(path) and os.path.isfile(path)):
+            return ""
+
+        # モデルを新規作成
+        hash_data: TBaseHashModel = self.create_model(path)
+
+        # ハッシュデータを読み取り
+        hash_data.update_digest()
+
+        return hash_data.digest
 
     def read_by_filepath(self, path: str) -> TBaseHashModel:
         """
@@ -122,7 +148,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             self.read_by_buffer(model)
 
         # ハッシュを保持
-        model.update_hexdigest()
+        model.update_digest()
 
         return model
 
