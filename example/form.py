@@ -19,7 +19,7 @@ from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
 from mlib.form.parts.file_ctrl import MFilePickerCtrl
 from mlib.pmx.pmx_reader import PmxReader
-from mlib.utils.file_utils import separate_path
+from mlib.utils.file_utils import separate_path, save_histories
 from mlib.form.parts.console_ctrl import ConsoleCtrl
 
 logger = MLogger(os.path.basename(__file__))
@@ -68,7 +68,6 @@ class FilePanel(BasePanel):
             self.frame,
             self,
             self.pmx_reader,
-            key="output_pmx",
             title="出力先",
             is_show_name=False,
             is_save=True,
@@ -131,7 +130,7 @@ class TestFrame(BaseFrame):
     def __init__(self, app) -> None:
         super().__init__(
             app,
-            history_keys=["model_pmx"],
+            history_keys=["model_pmx", "motion_vmd"],
             title="Mu Test Frame",
             size=wx.Size(1000, 800),
         )
@@ -152,10 +151,18 @@ class TestFrame(BaseFrame):
                 if not self.file_panel.model_ctrl.data:
                     # 設定タブにうつった時に読み込む
                     self.config_panel.canvas.clear_model_set()
+                    self.save_histories()
+
                     self.worker.start()
                 else:
                     # 既に読み取りが完了していたらそのまま表示
                     self.notebook.ChangeSelection(self.config_panel.tab_idx)
+
+    def save_histories(self):
+        self.file_panel.model_ctrl.save_path()
+        self.file_panel.motion_ctrl.save_path()
+
+        save_histories(self.histories)
 
     def on_result(self, result: bool, data: Optional[Any], elapsed_time: str):
         self.file_panel.console_ctrl.write(f"\n----------------\n{elapsed_time}")

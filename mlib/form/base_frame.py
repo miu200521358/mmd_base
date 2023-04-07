@@ -16,11 +16,11 @@ class BaseFrame(wx.Frame):
         )
         self.app = app
 
-        self._initialize_ui()
-        self._initialize_event()
-
         self.history_keys = history_keys
         self.histories = read_histories(self.history_keys)
+
+        self._initialize_ui()
+        self._initialize_event()
 
         self.Centre(wx.BOTH)
         self.Layout()

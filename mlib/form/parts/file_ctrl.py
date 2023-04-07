@@ -6,7 +6,7 @@ from mlib.base.logger import MLogger
 from mlib.base.reader import BaseReader
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
-from mlib.utils.file_utils import HISTORY_MAX, get_dir_path, validate_file, validate_save_file
+from mlib.utils.file_utils import get_dir_path, validate_file, validate_save_file, insert_history
 
 
 logger = MLogger(os.path.basename(__file__))
@@ -19,8 +19,8 @@ class MFilePickerCtrl:
         frame: BaseFrame,
         parent: BasePanel,
         reader: BaseReader,
-        key: str,
         title: str,
+        key: Optional[str] = None,
         is_show_name: bool = True,
         name_spacer: int = 0,
         is_save: bool = False,
@@ -85,6 +85,8 @@ class MFilePickerCtrl:
         )
         self.file_ctrl.GetPickerCtrl().SetLabel(__("開く"))
         self.file_ctrl.SetToolTip(__(tooltip))
+        if self.key and self.frame.histories[self.key]:
+            self.file_ctrl.SetInitialDirectory(os.path.dirname(self.frame.histories[self.key][0]))
 
         self.file_sizer.Add(self.file_ctrl, 1, wx.GROW | wx.ALL, 3)
 
@@ -109,7 +111,10 @@ class MFilePickerCtrl:
 
     def on_show_histories(self, event: wx.Event):
         """履歴一覧を表示する"""
-        histories = (self.frame.histories[self.key] + [" " * 200])[:HISTORY_MAX]
+        if not self.key:
+            return
+
+        histories = self.frame.histories[self.key] + [" " * 200]
 
         with wx.SingleChoiceDialog(
             self.frame,
@@ -134,6 +139,11 @@ class MFilePickerCtrl:
     def path(self, v: str):
         if (not self.is_save and validate_file(v, self.reader.file_type)) or (self.is_save and validate_save_file(v, self.title)):
             self.file_ctrl.SetPath(v)
+
+    def save_path(self):
+        if not self.key:
+            return
+        insert_history(self.file_ctrl.GetPath(), self.frame.histories[self.key])
 
     def read_name(self) -> bool:
         """

@@ -59,13 +59,24 @@ def read_histories(history_keys: list[str]) -> dict[str, list[str]]:
     return file_histories
 
 
+def insert_history(value: str, histories: list[str]):
+    """ファイル履歴に追加する"""
+    if value in histories:
+        histories.remove(value)
+    histories.insert(0, value)
+
+
 def save_histories(histories: dict[str, list[str]]):
     """ファイル履歴を保存する"""
     root_dir = get_root_dir()
 
+    limited_histories: dict[str, list[str]] = {}
+    for key, values in histories.items():
+        limited_histories[key] = values[:HISTORY_MAX]
+
     try:
         with open(os.path.join(root_dir, "history.json"), "w", encoding="utf-8") as f:
-            json.dump(histories, f, ensure_ascii=False)
+            json.dump(limited_histories, f, ensure_ascii=False)
     except Exception as e:
         logger.error("履歴ファイルの保存に失敗しました", e, decoration=LoggingDecoration.DECORATION_BOX)
 
