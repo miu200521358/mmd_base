@@ -5,6 +5,7 @@ from typing import Optional
 import numpy as np
 
 from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
+from mlib.base.logger import MLogger
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
@@ -24,6 +25,9 @@ from mlib.pmx.pmx_part import (
     Vertex,
 )
 from mlib.pmx.shader import MShader, VsLayout
+
+logger = MLogger(os.path.basename(__file__))
+__ = logger.get_text
 
 
 class Vertices(BaseIndexDictModel[Vertex]):
@@ -406,6 +410,8 @@ class PmxModel(BaseHashModel):
         self.meshes.draw(bone_matrixes, vertex_morph_poses, uv_morph_poses, uv1_morph_poses, material_morphs)
 
     def setup(self) -> None:
+        total_index_count = len(self.bones)
+
         for bone in self.bones:
             # IKのリンクとターゲット
             if bone.is_ik and bone.ik:
@@ -431,8 +437,24 @@ class PmxModel(BaseHashModel):
             bone.offset_matrix = MMatrix4x4()
             bone.offset_matrix.translate(-bone.position)
 
+            logger.count(
+                "モデルセットアップ：ボーン",
+                index=bone.index,
+                total_index_count=total_index_count,
+                display_block=100,
+            )
+
+        logger.count(
+            "モデルセットアップ：ボーン",
+            index=bone.index,
+            total_index_count=total_index_count,
+            display_block=100,
+        )
+
         # ボーンツリー生成
         self.bone_trees = self.bones.create_bone_links()
+
+        logger.info("-- モデルセットアップ：ボーンツリー")
 
 
 class Meshes(BaseIndexDictModel[Mesh]):
