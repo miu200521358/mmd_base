@@ -10,10 +10,14 @@ import numpy as np
 from mlib.base.base import BaseModel, Encoding, FileType
 from mlib.base.collection import BaseHashModel
 from mlib.base.exception import MParseException
+from mlib.base.logger import MLogger
 from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
 
 TBaseModel = TypeVar("TBaseModel", bound=BaseModel)
 TBaseHashModel = TypeVar("TBaseHashModel", bound=BaseHashModel)
+
+logger = MLogger(os.path.basename(__file__))
+__ = logger.get_text
 
 
 class StructUnpackType:
@@ -106,22 +110,16 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         model: TBaseHashModel = self.create_model(path)
 
         if not (os.path.exists(path) and os.path.isfile(path)):
-            raise MParseException("モデル読み込み失敗")
+            raise MParseException(__("指定されたパスに読み取り対象がいないため、処理を中断します"))
 
         # バイナリを解凍してモデルに展開
-        try:
-            self.offset = 0
-            self.buffer = b""
+        self.offset = 0
+        self.buffer = b""
 
-            with open(path, "rb") as f:
-                self.buffer = f.read()
-                self.read_by_buffer_header(model)
-                self.read_by_buffer(model)
-        except MParseException as pe:
-            raise pe
-        except Exception as e:
-            # TODO
-            raise MParseException("予期せぬエラー", exception=e)
+        with open(path, "rb") as f:
+            self.buffer = f.read()
+            self.read_by_buffer_header(model)
+            self.read_by_buffer(model)
 
         # ハッシュを保持
         model.update_hexdigest()

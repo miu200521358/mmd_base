@@ -33,3 +33,6 @@ class ConsoleCtrl:
 
     def set_parent_sizer(self, parent_sizer: wx.Sizer):
         parent_sizer.Add(self.root_sizer, 1, wx.GROW, 0)
+
+    def write(self, text: str):
+        self.text_ctrl.AppendText(text + "\n")

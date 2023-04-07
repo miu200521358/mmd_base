@@ -1,11 +1,15 @@
 import os
 import sys
 from datetime import datetime
+from typing import Any, Optional
 
 import wx
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+from mlib.pmx.pmx_collection import PmxModel
+
+from mlib.form.base_worker import BaseWorker
 from mlib.base.logger import MLogger, LoggingDecoration
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
@@ -69,6 +73,16 @@ class FilePanel(BasePanel):
         logger.info(self.model_pmx_ctrl.path, decoration=LoggingDecoration.DECORATION_BOX, func="on_change_model_pmx", lno=10)
 
 
+class PmxLoadWorker(BaseWorker):
+    def __init__(self, panel: BasePanel, result_event: wx.Event) -> None:
+        super().__init__(panel, result_event)
+
+    def thread_execute(self):
+        file_panel: FilePanel = self.panel
+
+        self.result_data = file_panel.pmx_reader.read_by_filepath(file_panel.model_pmx_ctrl.path)
+
+
 class ConfigPanel(BasePanel):
     def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
         super().__init__(frame, tab_idx, *args, **kw)
@@ -82,10 +96,11 @@ class TestFrame(BaseFrame):
             title="Mu Test Frame",
             size=wx.Size(800, 600),
         )
+        self.model: Optional[PmxModel] = None
 
         # ファイルタブ
         self.file_panel = FilePanel(self, 0)
-        self.notebook.AddPage(self.file_panel, __("ファイル"), True)
+        self.notebook.AddPage(self.file_panel, __("ファイル"), False)
 
         # 設定タブ
         self.config_panel = ConfigPanel(self, 1)
@@ -94,7 +109,17 @@ class TestFrame(BaseFrame):
     def on_change_tab(self, event: wx.Event):
         if self.notebook.GetSelection() == self.config_panel.tab_idx:
             # 設定タブにうつった時に読み込む
-            pass
+            PmxLoadWorker(self.file_panel, self.on_result).start()
+
+    def on_result(self, result: bool, data: Optional[Any], elapsed_time: str):
+        self.file_panel.console_ctrl.write(f"\n----------------\n{elapsed_time}")
+
+        if not (result and data):
+            return
+
+        model: PmxModel = data
+        self.model = model
+        self.file_panel.console_ctrl.write(self.model.name)
 
 
 class MuApp(wx.App):
