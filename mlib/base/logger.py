@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 from enum import Enum, IntEnum
 from logging import Formatter, Handler, LogRecord, StreamHandler
+import re
 from typing import Optional
 
 import numpy as np
@@ -62,6 +63,7 @@ class MLogger:
     out_log = False
 
     console_handler: Optional["ConsoleHandler"] = None
+    re_break = re.compile(r"\n")
 
     def __init__(
         self,
