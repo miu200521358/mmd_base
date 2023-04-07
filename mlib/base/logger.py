@@ -1,10 +1,10 @@
 import gettext
 import logging
 import os
+import re
 from datetime import datetime
 from enum import Enum, IntEnum
 from logging import Formatter, Handler, LogRecord, StreamHandler
-import re
 from typing import Optional
 
 import numpy as np
