@@ -257,9 +257,9 @@ class MLogger:
             elif decoration == LoggingDecoration.DECORATION_IN_BOX:
                 output_msg = self.create_in_box_message(trans_msg, level, title)
             else:
-                output_msg = self.create_simple_message(trans_msg, level, title)
+                output_msg = msg
         else:
-            output_msg = self.create_simple_message(trans_msg, level, title)
+            output_msg = msg
 
         return output_msg
 
@@ -279,35 +279,17 @@ class MLogger:
         if logging.INFO >= level and title:
             msg_block.append(f"■　**{title}**  ")
 
-        for msg_line in msg.split("\n"):
-            msg_block.append(f"■　{msg_line}")
-
+        msg_block.extend([f"■　{msg_line}" for msg_line in msg.split("\n")])
         msg_block.append("■■■■■■■■■■■■■■■■■")
 
         return "\n".join(msg_block)
 
     def create_line_message(self, msg, level, title=None):
-        msg_block = []
-
-        for msg_line in msg.split("\n"):
-            msg_block.append(f"-- {msg_line} --------------------")
-
+        msg_block = [f"-- {msg_line} --------------------" for msg_line in msg.split("\n")]
         return "\n".join(msg_block)
 
     def create_in_box_message(self, msg, level, title=None):
-        msg_block = []
-
-        for msg_line in msg.split("\n"):
-            msg_block.append(f"■　{msg_line}")
-
-        return "\n".join(msg_block)
-
-    def create_simple_message(self, msg, level, title=None):
-        msg_block = []
-
-        for msg_line in msg.split("\n"):
-            msg_block.append(msg_line)
-
+        msg_block = [f"■　{msg_line}" for msg_line in msg.split("\n")]
         return "\n".join(msg_block)
 
     @classmethod
