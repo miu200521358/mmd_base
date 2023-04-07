@@ -27,11 +27,14 @@ class BaseFrame(wx.Frame):
 
     def _initialize_ui(self):
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW))
-
         self.notebook = BaseNotebook(self)
 
     def _initialize_event(self):
         self.Bind(wx.EVT_CLOSE, self.on_close)
+        self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_change_tab)
+
+    def on_change_tab(self, event: wx.Event):
+        pass
 
     def on_close(self, event: wx.Event):
         self.Destroy()

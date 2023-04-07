@@ -46,7 +46,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.SetCurrent(self.context)
 
         self._initialize_ui(parent)
-        self._initialize_ui_event()
+        self._initialize_event()
 
         self.shader = MShader(width, height)
         self.model = PmxModel()
@@ -78,7 +78,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         # 再生タイマー
         self.play_timer = wx.Timer(self)
 
-    def _initialize_ui_event(self):
+    def _initialize_event(self):
         # ペイントイベントをバインド
         self.Bind(wx.EVT_PAINT, self.on_paint)
 

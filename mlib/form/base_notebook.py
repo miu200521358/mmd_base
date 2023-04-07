@@ -12,6 +12,7 @@ class BaseNotebook(wx.Notebook):
         super().__init__(frame, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL)
 
         self._initialize_ui()
+        self._initialize_event()
 
     def _initialize_ui(self):
         if logger.total_level <= LoggingLevel.DEBUG.value:
@@ -25,3 +26,6 @@ class BaseNotebook(wx.Notebook):
             self.SetBackgroundColour("AQUAMARINE")
         else:
             self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW))
+
+    def _initialize_event(self):
+        pass

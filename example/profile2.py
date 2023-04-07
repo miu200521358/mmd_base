@@ -18,7 +18,7 @@ class PmxPanel(wx.Panel):
         self.motion_path = motion_path
 
         self._initialize_ui()
-        self._initialize_ui_event()
+        self._initialize_event()
         self.on_load(wx.wxEVT_BUTTON)
 
         self.fit()
@@ -71,7 +71,7 @@ class PmxPanel(wx.Panel):
 
         self.sizer.Add(self.btn_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
-    def _initialize_ui_event(self):
+    def _initialize_event(self):
         self.load_btn.Bind(wx.EVT_BUTTON, self.on_load)
         self.play_btn.Bind(wx.EVT_BUTTON, self.on_play)
         self.reset_btn.Bind(wx.EVT_BUTTON, self.on_reset)

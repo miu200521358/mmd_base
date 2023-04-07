@@ -22,12 +22,15 @@ class FilePanel(BasePanel):
     def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
         super().__init__(frame, tab_idx, *args, **kw)
 
-        pmx_reader = PmxReader()
+        self.pmx_reader = PmxReader()
 
+        self._initialize_ui()
+
+    def _initialize_ui(self):
         self.model_pmx_ctrl = MFilePickerCtrl(
             self.frame,
             self,
-            pmx_reader,
+            self.pmx_reader,
             key="model_pmx",
             title="テスト",
             is_show_name=True,
@@ -41,7 +44,7 @@ class FilePanel(BasePanel):
         self.output_pmx_ctrl = MFilePickerCtrl(
             self.frame,
             self,
-            pmx_reader,
+            self.pmx_reader,
             key="model_pmx",
             title="出力先",
             is_show_name=False,
@@ -87,6 +90,11 @@ class TestFrame(BaseFrame):
         # 設定タブ
         self.config_panel = ConfigPanel(self, 1)
         self.notebook.AddPage(self.config_panel, __("設定"), False)
+
+    def on_change_tab(self, event: wx.Event):
+        if self.notebook.GetSelection() == self.config_panel.tab_idx:
+            # 設定タブにうつった時に読み込む
+            pass
 
 
 class MuApp(wx.App):
