@@ -187,19 +187,19 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # ボーンの親から見た相対位置
                     poses[n, m] = bone.parent_relative_position.vector
 
-                    if (fno, model.hexdigest, bone.name) in self.cache_ratios:
-                        poses[n, m] += self.cache_ratios[(fno, model.hexdigest, bone.name)].vector
+                    if (fno, model.digest, bone.name) in self.cache_ratios:
+                        poses[n, m] += self.cache_ratios[(fno, model.digest, bone.name)].vector
                     else:
                         pos = self.get_position(bone, fno, model)
-                        self.cache_ratios[(fno, model.hexdigest, bone.name)] = pos
+                        self.cache_ratios[(fno, model.digest, bone.name)] = pos
                         poses[n, m] += pos.vector
 
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
-                    if (fno, model.hexdigest, bone.name) in self.cache_qqs:
-                        qqs[n, m] = self.cache_qqs[(fno, model.hexdigest, bone.name)].to_matrix4x4().vector
+                    if (fno, model.digest, bone.name) in self.cache_qqs:
+                        qqs[n, m] = self.cache_qqs[(fno, model.digest, bone.name)].to_matrix4x4().vector
                     else:
                         qq = self.get_rotation(bone, fno, model, append_ik=append_ik)
-                        self.cache_qqs[(fno, model.hexdigest, bone.name)] = qq
+                        self.cache_qqs[(fno, model.digest, bone.name)] = qq
                         qqs[n, m] = qq.to_matrix4x4().vector
 
                 # 末端ボーン表示先の位置を計算
@@ -248,19 +248,19 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for bone in model.bone_trees[bone_name]:
                 if bone.index not in bone_indexes:
                     # モーションによる移動量
-                    if (fno, model.hexdigest, bone.name) in self.cache_ratios:
-                        poses[0, bone.index] = self.cache_ratios[(fno, model.hexdigest, bone.name)].vector
+                    if (fno, model.digest, bone.name) in self.cache_ratios:
+                        poses[0, bone.index] = self.cache_ratios[(fno, model.digest, bone.name)].vector
                     else:
                         pos = self.get_position(bone, fno, model)
                         poses[0, bone.index] = pos.vector
-                        self.cache_ratios[(fno, model.hexdigest, bone.name)] = pos
+                        self.cache_ratios[(fno, model.digest, bone.name)] = pos
 
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
-                    if (fno, model.hexdigest, bone.name) in self.cache_qqs:
-                        qqs[0, bone.index] = self.cache_qqs[(fno, model.hexdigest, bone.name)].to_matrix4x4().vector
+                    if (fno, model.digest, bone.name) in self.cache_qqs:
+                        qqs[0, bone.index] = self.cache_qqs[(fno, model.digest, bone.name)].to_matrix4x4().vector
                     else:
                         qq = self.get_rotation(bone, fno, model, append_ik=True)
-                        self.cache_qqs[(fno, model.hexdigest, bone.name)] = qq
+                        self.cache_qqs[(fno, model.digest, bone.name)] = qq
                         qqs[0, bone.index] = qq.to_matrix4x4().vector
                     # 計算済みボーンとして登録
                     bone_indexes.append(bone.index)
@@ -303,9 +303,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             is_calc_prev = True
                         if next_fno not in self[bone.name] or not self[bone.name][next_fno].ik_rotation:
                             is_calc_next = True
-                if is_calc_prev and (prev_fno, model.hexdigest, ik_last_bone_name) not in self.cache_qqs:
+                if is_calc_prev and (prev_fno, model.digest, ik_last_bone_name) not in self.cache_qqs:
                     self.get_rotation(model.bones[ik_last_bone_name], prev_fno, model, append_ik=True)
-                if is_calc_next and (next_fno, model.hexdigest, ik_last_bone_name) not in self.cache_qqs:
+                if is_calc_next and (next_fno, model.digest, ik_last_bone_name) not in self.cache_qqs:
                     self.get_rotation(model.bones[ik_last_bone_name], next_fno, model, append_ik=True)
 
     def get_position(self, bone: Bone, fno: int, model: PmxModel) -> MVector3D:

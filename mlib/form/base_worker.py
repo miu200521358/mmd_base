@@ -89,6 +89,11 @@ class BaseWorker:
 
         self.run()
 
+        if not self.killed:
+            self.started = False
+            self.killed = False
+            self.result_func(result=self.result, data=self.result_data, elapsed_time=show_worked_time(time() - self.start_time))
+
     def stop(self):
         self.killed = True
 
@@ -102,10 +107,6 @@ class BaseWorker:
         except Exception:
             logger.critical(__("予期せぬエラーが発生しました"))
             self.result = False
-        finally:
-            self.started = False
-            self.killed = False
-            self.result_func(result=self.result, data=self.result_data, elapsed_time=show_worked_time(time() - self.start_time))
 
     def thread_execute(self):
         raise NotImplementedError

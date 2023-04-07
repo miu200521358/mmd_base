@@ -9,6 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from mlib.pmx.pmx_collection import PmxModel
 
+from mlib.pmx.canvas import PmxCanvas
 from mlib.form.base_worker import BaseWorker
 from mlib.base.logger import MLogger
 from mlib.form.base_frame import BaseFrame
@@ -57,13 +58,10 @@ class FilePanel(BasePanel):
         )
         self.output_pmx_ctrl.set_parent_sizer(self.root_sizer)
 
-        self.console_ctrl = ConsoleCtrl(self.frame, self, rows=200)
+        self.console_ctrl = ConsoleCtrl(self.frame, self, rows=300)
         self.console_ctrl.set_parent_sizer(self.root_sizer)
 
         self.root_sizer.Add(wx.StaticLine(self, wx.ID_ANY), wx.GROW)
-
-        self.SetSizer(self.root_sizer)
-        self.Layout()
         self.fit()
 
     def on_change_model_pmx(self, event: wx.Event):
@@ -87,6 +85,21 @@ class PmxLoadWorker(BaseWorker):
 class ConfigPanel(BasePanel):
     def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
         super().__init__(frame, tab_idx, *args, **kw)
+
+        self._initialize_ui()
+
+    def _initialize_ui(self):
+        self.config_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.canvas = PmxCanvas(self, 400, 600)
+        self.config_sizer.Add(self.canvas, 0, wx.EXPAND | wx.ALL, 0)
+
+        # キーフレ
+        self.config_sizer.Add(self.canvas.frame_ctrl, 0, wx.ALL, 5)
+
+        self.root_sizer.Add(self.config_sizer, 0, wx.ALL, 0)
+
+        self.fit()
 
 
 class TestFrame(BaseFrame):
@@ -126,9 +139,15 @@ class TestFrame(BaseFrame):
 
         model: PmxModel = data
         self.file_panel.model_pmx_ctrl.data = model
-        self.file_panel.console_ctrl.write(model.name)
 
-        self.notebook.ChangeSelection(self.config_panel.tab_idx)
+        try:
+            self.config_panel.canvas.set_context()
+            self.config_panel.canvas.set_model(self.file_panel.model_pmx_ctrl.data)
+            self.config_panel.canvas.model.init_draw(self.config_panel.canvas.shader)
+            self.config_panel.canvas.Refresh()
+            self.notebook.ChangeSelection(self.config_panel.tab_idx)
+        except:
+            logger.critical(__("モデル描画初期化処理失敗"))
 
 
 class MuApp(wx.App):

@@ -43,7 +43,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.now_pos = wx.Point(0, 0)
         self.fps = 30
 
-        self.SetCurrent(self.context)
+        self.set_context()
 
         self._initialize_ui(parent)
         self._initialize_event()
@@ -112,8 +112,15 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.draw()
         self.SwapBuffers()
 
-    def draw(self):
+    def set_context(self):
         self.SetCurrent(self.context)
+
+    def set_model(self, model: PmxModel):
+        self.model = model
+        self.bone_matrixes, self.vertex_morph_poses, self.uv_morph_poses, self.uv1_morph_poses, self.material_morphs = self.motion.animate(0, self.model)
+
+    def draw(self):
+        self.set_context()
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
         for is_edge in [False, True]:

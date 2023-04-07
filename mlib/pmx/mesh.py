@@ -2,6 +2,7 @@ from typing import Optional
 
 import numpy as np
 import OpenGL.GL as gl
+from mlib.base.exception import MViewerException
 
 from mlib.base.part import BaseIndexModel
 from mlib.pmx.pmx_part import DrawFlg, Material, ShaderMaterial, Texture
@@ -15,6 +16,10 @@ class VAO:
 
     def __init__(self) -> None:
         self.vao = gl.glGenVertexArrays(1)
+
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"VAO glGenVertexArrays Failure\n{error_code}")
 
     def bind(self) -> None:
         gl.glBindVertexArray(self.vao)
@@ -30,6 +35,11 @@ class VBO:
 
     def __init__(self, data: np.ndarray, components: dict[int, dict[str, int]]) -> None:
         self.vbo = gl.glGenBuffers(1)
+
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"VBO glGenBuffers Failure\n{error_code}")
+
         self.dsize = np.dtype(data.dtype).itemsize
         self.components = components
         self.data = data
@@ -68,6 +78,11 @@ class IBO:
 
     def __init__(self, data: np.ndarray) -> None:
         self.ibo = gl.glGenBuffers(1)
+
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"IBO glGenBuffers Failure\n{error_code}")
+
         self.dtype = gl.GL_UNSIGNED_BYTE if data.dtype == np.uint8 else gl.GL_UNSIGNED_SHORT if data.dtype == np.uint16 else gl.GL_UNSIGNED_INT
         self.dsize = np.dtype(data.dtype).itemsize
 
@@ -172,6 +187,10 @@ class Mesh(BaseIndexModel):
             gl.ctypes.c_void_p(self.prev_vertices_pointer),
         )
 
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"Mesh draw_model Failure\n{error_code}")
+
         if self.texture and self.texture.valid:
             self.texture.unbind()
 
@@ -208,6 +227,10 @@ class Mesh(BaseIndexModel):
             gl.ctypes.c_void_p(self.prev_vertices_pointer),
         )
 
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"Mesh draw_edge Failure\n{error_code}")
+
         self.unbind_bone_matrixes()
 
     def bind_bone_matrixes(
@@ -243,6 +266,10 @@ class Mesh(BaseIndexModel):
         )
 
         gl.glUniform1i(shader.bone_matrix_texture_uniform[edge], 3)
+
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"Mesh bind_bone_matrixes Failure\n{error_code}")
 
     def unbind_bone_matrixes(
         self,

@@ -29,6 +29,13 @@ class MParseException(MLibException):
         super().__init__(message, variants, exception, *args)
 
 
+class MViewerException(MLibException):
+    """ツールが描画出来なかった時のエラー"""
+
+    def __init__(self, message: str = "", variants: list = [], exception: Optional[Exception] = None, *args):
+        super().__init__(message, variants, exception, *args)
+
+
 class MKilledException(MLibException):
     """ツールの実行が停止された時のエラー"""
 

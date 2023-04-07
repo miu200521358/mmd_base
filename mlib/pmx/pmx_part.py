@@ -8,6 +8,7 @@ import OpenGL.GL as gl
 from PIL import Image, ImageOps
 
 from mlib.base.base import BaseModel
+from mlib.base.exception import MViewerException
 from mlib.base.math import MMatrix4x4, MQuaternion, MVector2D, MVector3D, MVector4D
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
 
@@ -378,6 +379,10 @@ class Texture(BaseIndexNameModel):
 
                 # テクスチャオブジェクト生成
                 self.texture = gl.glGenTextures(1)
+                error_code = gl.glGetError()
+                if error_code != gl.GL_NO_ERROR:
+                    raise MViewerException(f"glGenTextures Failure\n{error_code}")
+
                 self.texture_type = texture_type
                 self.texture_id = (
                     gl.GL_TEXTURE0 if texture_type == TextureType.TEXTURE else gl.GL_TEXTURE1 if texture_type == TextureType.TOON else gl.GL_TEXTURE2
@@ -400,6 +405,11 @@ class Texture(BaseIndexNameModel):
             gl.GL_UNSIGNED_BYTE,
             self.image.tobytes(),
         )
+
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"Texture set_texture Failure\n{error_code}")
+
         self.unbind()
 
     def bind(self) -> None:
@@ -414,8 +424,16 @@ class Texture(BaseIndexNameModel):
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
 
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"Texture bind Failure\n{error_code}")
+
     def unbind(self) -> None:
         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"Texture unbind Failure\n{error_code}")
 
 
 @unique

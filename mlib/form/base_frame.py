@@ -12,7 +12,7 @@ class BaseFrame(wx.Frame):
             None,
             title=title,
             size=size,
-            style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL,
+            style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL | wx.FULL_REPAINT_ON_RESIZE,
         )
         self.app = app
 
