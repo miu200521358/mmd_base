@@ -7,6 +7,7 @@ import wx
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+from mlib.form.parts.spin_ctrl import WheelSpinCtrl
 from mlib.pmx.canvas import CanvasPanel
 from mlib.base.logger import MLogger
 from mlib.form.base_frame import BaseFrame
@@ -141,9 +142,7 @@ class ConfigPanel(CanvasPanel):
         self.btn_sizer = wx.BoxSizer(wx.VERTICAL)
 
         # キーフレ
-        self.frame_ctrl = wx.SpinCtrl(self, value="0", min=0, max=10000, size=wx.Size(80, 30))
-        self.frame_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change_frame)
-
+        self.frame_ctrl = WheelSpinCtrl(self, change_event=self.on_change_frame, initial=0, min=-100, max=10000, size=wx.Size(80, -1))
         self.btn_sizer.Add(self.frame_ctrl, 0, wx.ALL, 5)
 
         # 再生

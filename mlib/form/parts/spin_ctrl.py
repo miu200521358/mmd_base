@@ -1,38 +1,39 @@
-from typing import Callable
 import wx
 
 
 class WheelSpinCtrl(wx.SpinCtrl):
-    def __init__(self, change_event: Callable, *args, **kw):
+    def __init__(self, *args, **kw):
+        change_event = kw.pop("change_event", None)
+        inc = kw.pop("inc", 1)
         super().__init__(*args, **kw)
-        self.Bind(wx.EVT_SPINCTRL, change_event)
-        self.Bind(wx.EVT_MOUSEWHEEL, lambda event: self.on_wheel_spin_ctrl(event, 1))
+        self.change_event = change_event
+        self.inc = inc
 
-    def on_wheel_spin_ctrl(self, event: wx.Event, inc=0.1):
-        # スピンコントロール変更時
-        if event.GetWheelRotation() > 0:
-            event.GetEventObject().SetValue(event.GetEventObject().GetValue() + inc)
-            if event.GetEventObject().GetValue() >= 0:
-                event.GetEventObject().SetBackgroundColour("WHITE")
+        self.Bind(wx.EVT_SPINCTRL, self.on_wheel_spin)
+
+    def on_wheel_spin(self, event: wx.SpinEvent):
+        if self.GetValue() >= 0:
+            self.SetBackgroundColour("WHITE")
         else:
-            event.GetEventObject().SetValue(event.GetEventObject().GetValue() - inc)
-            if event.GetEventObject().GetValue() < 0:
-                event.GetEventObject().SetBackgroundColour("TURQUOISE")
+            self.SetBackgroundColour("TURQUOISE")
+
+        self.change_event(event)
 
 
 class WheelSpinCtrlDouble(wx.SpinCtrlDouble):
-    def __init__(self, change_event: Callable, *args, **kw):
+    def __init__(self, *args, **kw):
+        change_event = kw.pop("change_event", None)
+        inc = kw.pop("inc", 0.1)
         super().__init__(*args, **kw)
-        self.Bind(wx.EVT_SPINCTRL, change_event)
-        self.Bind(wx.EVT_MOUSEWHEEL, lambda event: self.on_wheel_spin_ctrl(event, 0.1))
+        self.change_event = change_event
+        self.inc = inc
 
-    def on_wheel_spin_ctrl(self, event: wx.Event, inc=0.1):
-        # スピンコントロール変更時
-        if event.GetWheelRotation() > 0:
-            event.GetEventObject().SetValue(event.GetEventObject().GetValue() + inc)
-            if event.GetEventObject().GetValue() >= 0:
-                event.GetEventObject().SetBackgroundColour("WHITE")
+        self.Bind(wx.EVT_SPINCTRLDOUBLE, self.on_wheel_spin)
+
+    def on_wheel_spin(self, event: wx.SpinEvent):
+        if self.GetValue() >= 0:
+            self.SetBackgroundColour("WHITE")
         else:
-            event.GetEventObject().SetValue(event.GetEventObject().GetValue() - inc)
-            if event.GetEventObject().GetValue() < 0:
-                event.GetEventObject().SetBackgroundColour("TURQUOISE")
+            self.SetBackgroundColour("TURQUOISE")
+
+        self.change_event(event)
