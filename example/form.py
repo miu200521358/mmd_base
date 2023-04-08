@@ -116,17 +116,6 @@ class PmxLoadWorker(BaseWorker):
 
         if not file_panel.model_ctrl.data and file_panel.model_ctrl.valid():
             model = file_panel.model_ctrl.reader.read_by_filepath(file_panel.model_ctrl.path)
-
-            for bone in model.bones:
-                # ウェイト頂点の法線に基づいたスケールを取得
-                bone.weighted_scales = model.vertices.get_scale_by_bone_index(bone.index)
-
-                logger.count(
-                    "モデル追加セットアップ：ウェイトボーン分布",
-                    index=bone.index,
-                    total_index_count=len(model.bones),
-                    display_block=20,
-                )
         elif file_panel.model_ctrl.data:
             model = file_panel.model_ctrl.data
         else:
@@ -135,16 +124,10 @@ class PmxLoadWorker(BaseWorker):
         if not file_panel.dress_ctrl.data and file_panel.dress_ctrl.valid():
             dress = file_panel.dress_ctrl.reader.read_by_filepath(file_panel.dress_ctrl.path)
 
+            # ウェイト頂点の法線に基づいたスケールを取得
+            vertex_bone_scales = dress.get_scale_by_bone_index()
             for bone in dress.bones:
-                # ウェイト頂点の法線に基づいたスケールを取得
-                bone.weighted_scales = dress.vertices.get_scale_by_bone_index(bone.index)
-
-                logger.count(
-                    "モデル追加セットアップ：ウェイトボーン分布",
-                    index=bone.index,
-                    total_index_count=len(dress.bones),
-                    display_block=20,
-                )
+                bone.weighted_scales = vertex_bone_scales.get(bone.index, {})
 
         elif file_panel.dress_ctrl.data:
             dress = file_panel.dress_ctrl.data

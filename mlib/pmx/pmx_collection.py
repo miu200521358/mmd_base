@@ -38,15 +38,6 @@ class Vertices(BaseIndexDictModel[Vertex]):
     def __init__(self) -> None:
         super().__init__()
 
-    def get_scale_by_bone_index(self, bone_index: int) -> dict[int, MVector3D]:
-        vertex_weights: dict[int, MVector3D] = {}
-        for v in self:
-            indexes = v.deform.get_indexes()
-            if bone_index in indexes:
-                weights = v.deform.get_weights()
-                vertex_weights[v.index] = MVector3D(*(v.normal.vector * weights[indexes == bone_index][0]))
-        return vertex_weights
-
 
 class Faces(BaseIndexDictModel[Face]):
     """
@@ -390,6 +381,25 @@ class PmxModel(BaseHashModel):
     @property
     def name(self) -> str:
         return self.model_name
+
+    def get_scale_by_bone_index(self) -> dict[int, dict[int, MVector3D]]:
+        vertex_bone_scales: dict[int, dict[int, MVector3D]] = {}
+        total_index_count = len(self.vertices)
+        for vertex in self.vertices:
+            indexes = vertex.deform.get_indexes()
+            weights = vertex.deform.get_weights()
+            for bone_index in indexes:
+                if bone_index not in vertex_bone_scales:
+                    vertex_bone_scales[bone_index] = {}
+                vertex_bone_scales[bone_index][vertex.index] = MVector3D(*(vertex.normal.vector * weights[indexes == bone_index][0]))
+
+                logger.count(
+                    "ウェイトボーン分布",
+                    index=vertex.index,
+                    total_index_count=total_index_count,
+                    display_block=1000,
+                )
+        return vertex_bone_scales
 
     def init_draw(self, shader: MShader):
         if self.for_draw:
