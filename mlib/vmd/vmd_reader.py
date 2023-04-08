@@ -23,8 +23,12 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
         super().__init__()
 
     @property
-    def file_ext(self) -> str:
+    def file_wildcard(self) -> str:
         return FileType.VMD.value
+
+    @property
+    def file_ext(self) -> str:
+        return FileType.VMD.name.lower()
 
     @property
     def file_type(self) -> FileType:

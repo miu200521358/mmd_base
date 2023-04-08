@@ -50,8 +50,12 @@ class PmxReader(BaseReader[PmxModel]):
         super().__init__()
 
     @property
-    def file_ext(self) -> str:
+    def file_wildcard(self) -> str:
         return FileType.PMX.value
+
+    @property
+    def file_ext(self) -> str:
+        return FileType.PMX.name.lower()
 
     @property
     def file_type(self) -> FileType:

@@ -82,7 +82,7 @@ class MFilePickerCtrl:
             self.parent,
             wx.ID_ANY,
             path=wx.EmptyString,
-            wildcard=self.reader.file_ext,
+            wildcard=self.reader.file_wildcard,
             style=file_ctrl_style,
         )
         self.file_ctrl.GetPickerCtrl().SetLabel(__("開く"))

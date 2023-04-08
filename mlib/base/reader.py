@@ -29,6 +29,11 @@ class StructUnpackType:
 
 class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
     @property
+    def file_wildcard(self) -> str:
+        """ファイル選択用ワイルドカードを返す"""
+        raise NotImplementedError()
+
+    @property
     def file_ext(self) -> str:
         """ファイル拡張子を返す"""
         raise NotImplementedError()
@@ -135,7 +140,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         # モデルを新規作成
         model: TBaseHashModel = self.create_model(path)
 
-        if not (os.path.exists(path) and os.path.isfile(path)):
+        if not (os.path.exists(path) and os.path.isfile(path) and self.file_ext in path):
             raise MParseException(__("指定されたパスに読み取り対象がいないため、処理を中断します"))
 
         # バイナリを解凍してモデルに展開
