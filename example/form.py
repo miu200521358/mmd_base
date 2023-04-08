@@ -44,7 +44,7 @@ class FilePanel(BasePanel):
             name_spacer=20,
             is_save=False,
             tooltip="PMXモデル",
-            event=self.on_change_model_pmx,
+            file_change_event=self.on_change_model_pmx,
         )
         self.model_ctrl.set_parent_sizer(self.root_sizer)
 
@@ -58,7 +58,7 @@ class FilePanel(BasePanel):
             name_spacer=20,
             is_save=False,
             tooltip="PMX衣装モデル",
-            event=self.on_change_dress_pmx,
+            file_change_event=self.on_change_dress_pmx,
         )
         self.dress_ctrl.set_parent_sizer(self.root_sizer)
 
@@ -72,7 +72,7 @@ class FilePanel(BasePanel):
             name_spacer=20,
             is_save=False,
             tooltip="VMDモーションデータ",
-            event=self.on_change_motion,
+            file_change_event=self.on_change_motion,
         )
         self.motion_ctrl.set_parent_sizer(self.root_sizer)
 
@@ -94,6 +94,7 @@ class FilePanel(BasePanel):
         self.fit()
 
     def on_change_model_pmx(self, event: wx.Event):
+        self.model_ctrl.unwrap()
         if self.model_ctrl.read_name():
             self.model_ctrl.read_digest()
             dir_path, file_name, file_ext = separate_path(self.model_ctrl.path)
@@ -101,10 +102,12 @@ class FilePanel(BasePanel):
             self.output_pmx_ctrl.path = model_path
 
     def on_change_dress_pmx(self, event: wx.Event):
+        self.dress_ctrl.unwrap()
         if self.dress_ctrl.read_name():
             self.dress_ctrl.read_digest()
 
     def on_change_motion(self, event: wx.Event):
+        self.motion_ctrl.unwrap()
         if self.motion_ctrl.read_name():
             self.motion_ctrl.read_digest()
 

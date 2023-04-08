@@ -21,12 +21,6 @@ class LoggingMode(IntEnum):
     MODE_UPDATE = 1
 
 
-class LoggingDecoration(Enum):
-    DECORATION_IN_BOX = "in_box"
-    DECORATION_BOX = "box"
-    DECORATION_LINE = "line"
-
-
 class LoggingLevel(Enum):
     DEBUG_FULL = 2
     TEST = 5
@@ -41,6 +35,11 @@ class LoggingLevel(Enum):
 
 
 class MLogger:
+    class Decoration(Enum):
+        IN_BOX = "in_box"
+        BOX = "box"
+        LINE = "line"
+
     DEFAULT_FORMAT = "%(message)s"
     STREAM_FORMAT = "%(message)s [%(call_file)s:%(call_func)s:%(call_lno)s][P-%(process)s](%(asctime)s)"
 
@@ -109,7 +108,7 @@ class MLogger:
         self,
         msg,
         *args,
-        decoration: Optional[LoggingDecoration] = None,
+        decoration: Optional[Decoration] = None,
         func: Optional[str] = "",
         lno: Optional[int] = 0,
         **kwargs,
@@ -125,7 +124,7 @@ class MLogger:
         msg,
         *args,
         title: Optional[str] = None,
-        decoration: Optional[LoggingDecoration] = None,
+        decoration: Optional[Decoration] = None,
         func: Optional[str] = "",
         lno: Optional[int] = 0,
         **kwargs,
@@ -145,7 +144,7 @@ class MLogger:
         display_block: float,
         *args,
         title: Optional[str] = None,
-        decoration: Optional[LoggingDecoration] = None,
+        decoration: Optional[Decoration] = None,
         func: Optional[str] = "",
         lno: Optional[int] = 0,
         **kwargs,
@@ -167,7 +166,7 @@ class MLogger:
         msg,
         *args,
         title: Optional[str] = None,
-        decoration: Optional[LoggingDecoration] = None,
+        decoration: Optional[Decoration] = None,
         func: Optional[str] = "",
         lno: Optional[int] = 0,
         **kwargs,
@@ -183,7 +182,7 @@ class MLogger:
         msg,
         *args,
         title: Optional[str] = None,
-        decoration: Optional[LoggingDecoration] = None,
+        decoration: Optional[Decoration] = None,
         func: Optional[str] = "",
         lno: Optional[int] = 0,
         **kwargs,
@@ -199,7 +198,7 @@ class MLogger:
         msg,
         *args,
         title: Optional[str] = None,
-        decoration: Optional[LoggingDecoration] = None,
+        decoration: Optional[Decoration] = None,
         func: Optional[str] = "",
         lno: Optional[int] = 0,
         **kwargs,
@@ -255,18 +254,18 @@ class MLogger:
         msg,
         level: int,
         title: Optional[str] = None,
-        decoration: Optional[LoggingDecoration] = None,
+        decoration: Optional["MLogger.Decoration"] = None,
         **kwargs,
     ) -> str:
         # 翻訳結果を取得する
         trans_msg = self.get_text(msg, **kwargs)
 
         if decoration:
-            if decoration == LoggingDecoration.DECORATION_BOX:
+            if decoration == MLogger.Decoration.BOX:
                 output_msg = self.create_box_message(trans_msg, level, title)
-            elif decoration == LoggingDecoration.DECORATION_LINE:
+            elif decoration == MLogger.Decoration.LINE:
                 output_msg = self.create_line_message(trans_msg, level, title)
-            elif decoration == LoggingDecoration.DECORATION_IN_BOX:
+            elif decoration == MLogger.Decoration.IN_BOX:
                 output_msg = self.create_in_box_message(trans_msg, level, title)
             else:
                 output_msg = trans_msg

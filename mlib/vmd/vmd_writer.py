@@ -1,7 +1,8 @@
+import os
 import struct
 
 from mlib.base.base import BaseModel
-from mlib.base.logger import LoggingDecoration, MLogger
+from mlib.base.logger import MLogger
 from mlib.vmd.vmd_collection import VmdMotion
 
 logger = MLogger(os.path.basename(__file__))
@@ -26,7 +27,7 @@ class VmdWriter(BaseModel):
                 logger.warning(
                     "モデル名に日本語・英語で判読できない文字が含まれているため、仮モデル名を設定します。 %s",
                     self.model_name,
-                    decoration=LoggingDecoration.DECORATION_BOX,
+                    decoration=MLogger.Decoration.BOX,
                 )
                 model_bname = "Vmd Sized Model".encode("shift_jis")[:20]
 

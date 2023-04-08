@@ -6,7 +6,7 @@ from glob import glob
 from pathlib import Path
 
 from mlib.base.base import FileType
-from mlib.base.logger import LoggingDecoration, MLogger
+from mlib.base.logger import MLogger
 
 logger = MLogger(os.path.basename(__file__))
 
@@ -78,7 +78,7 @@ def save_histories(histories: dict[str, list[str]]):
         with open(os.path.join(root_dir, "history.json"), "w", encoding="utf-8") as f:
             json.dump(limited_histories, f, ensure_ascii=False)
     except Exception as e:
-        logger.error("履歴ファイルの保存に失敗しました", e, decoration=LoggingDecoration.DECORATION_BOX)
+        logger.error("履歴ファイルの保存に失敗しました", e, decoration=MLogger.Decoration.BOX)
 
 
 def get_dir_path(path: str) -> str:
@@ -112,6 +112,21 @@ def validate_file(
         return False
 
     return True
+
+
+def unwrapped_path(path: str):
+    if 4 > len(path):
+        return path
+
+    while path[0] in ['"', "'"]:
+        # カッコで括られている場合、カッコを外す
+        path = path[1:-1]
+
+    if path[1] != ":" and path[1] == "\\":
+        # : が外れている場合、追加
+        path = path[0] + ":" + path[1:]
+
+    return path
 
 
 def validate_save_file(path: str, title: str) -> bool:
