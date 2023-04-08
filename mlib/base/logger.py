@@ -154,7 +154,7 @@ class MLogger:
 
         if 0 < total_index_count and 0 < index and (0 == index % display_block or index == total_index_count):
             percentage = (index / total_index_count) * 100
-            log_msg = f"-- {self.get_text(msg)} [{index} ({percentage:.2f}%)]"
+            log_msg = "-- " + self.get_text(msg) + " [{index} ({percentage:.2f}%)]"
             count_msg = self.create_message(log_msg, logging.INFO, title, decoration, percentage=percentage, index=index, **kwargs)
 
             self.logger.info(
