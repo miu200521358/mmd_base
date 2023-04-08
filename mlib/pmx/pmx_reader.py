@@ -211,7 +211,8 @@ class PmxReader(BaseReader[PmxModel]):
 
     def read_vertices(self, model: PmxModel):
         """頂点データ読み込み"""
-        for i in range(self.read_int()):
+        total_index_count = self.read_int()
+        for i in range(total_index_count):
             vertex = Vertex(index=i)
             (
                 vertex.position.x,
@@ -253,6 +254,14 @@ class PmxReader(BaseReader[PmxModel]):
                 )
             vertex.edge_factor = self.read_float()
             model.vertices.append(vertex, is_sort=False)
+
+            logger.count(
+                "頂点データ読み取り",
+                index=vertex.index,
+                total_index_count=total_index_count,
+                display_block=100000,
+            )
+
         model.vertices.sort_indexes()
 
     def read_faces(self, model: PmxModel):
@@ -266,18 +275,36 @@ class PmxReader(BaseReader[PmxModel]):
         for i, (v0, v1, v2) in enumerate(zip(faces_vertices[:-2:3], faces_vertices[1:-1:3], faces_vertices[2::3])):
             face = Face(i, v0, v1, v2)
             model.faces.append(face, is_sort=False)
+
+            logger.count(
+                "面データ読み取り",
+                index=i,
+                total_index_count=faces_vertex_count,
+                display_block=100000,
+            )
+
         model.faces.sort_indexes()
 
     def read_textures(self, model: PmxModel):
         """テクスチャデータ読み込み"""
-        for i in range(self.read_int()):
+        total_index_count = self.read_int()
+        for i in range(total_index_count):
             texture = Texture(i, self.read_text())
             model.textures.append(texture, is_sort=False)
+
+            logger.count(
+                "テクスチャデータ読み取り",
+                index=i,
+                total_index_count=total_index_count,
+                display_block=1000,
+            )
+
         model.textures.sort_indexes()
 
     def read_materials(self, model: PmxModel):
         """材質データ読み込み"""
-        for i in range(self.read_int()):
+        total_index_count = self.read_int()
+        for i in range(total_index_count):
             material = Material(index=i)
             material.name = self.read_text()
             material.english_name = self.read_text()
@@ -317,11 +344,20 @@ class PmxReader(BaseReader[PmxModel]):
             material.comment = self.read_text()
             material.vertices_count = self.read_int()
             model.materials.append(material, is_sort=False)
+
+            logger.count(
+                "テクスチャデータ読み取り",
+                index=i,
+                total_index_count=total_index_count,
+                display_block=1000,
+            )
+
         model.materials.sort_indexes()
 
     def read_bones(self, model: PmxModel):
         """ボーンデータ読み込み"""
-        for i in range(self.read_int()):
+        total_index_count = self.read_int()
+        for i in range(total_index_count):
             bone = Bone(index=i)
             bone.name = self.read_text()
             bone.english_name = self.read_text()
@@ -365,11 +401,20 @@ class PmxReader(BaseReader[PmxModel]):
                 bone.ik = ik
 
             model.bones.append(bone, is_sort=False)
+
+            logger.count(
+                "ボーンデータ読み取り",
+                index=i,
+                total_index_count=total_index_count,
+                display_block=1000,
+            )
+
         model.bones.sort_indexes()
 
     def read_morphs(self, model: PmxModel):
         """モーフデータ読み込み"""
-        for i in range(self.read_int()):
+        total_index_count = self.read_int()
+        for i in range(total_index_count):
             morph = Morph(index=i)
             morph.name = self.read_text()
             morph.english_name = self.read_text()
@@ -415,11 +460,20 @@ class PmxReader(BaseReader[PmxModel]):
                     )
 
             model.morphs.append(morph, is_sort=False)
+
+            logger.count(
+                "モーフデータ読み取り",
+                index=i,
+                total_index_count=total_index_count,
+                display_block=500,
+            )
+
         model.morphs.sort_indexes()
 
     def read_display_slots(self, model: PmxModel):
         """表示枠データ読み込み"""
-        for i in range(self.read_int()):
+        total_index_count = self.read_int()
+        for i in range(total_index_count):
             display_slot = DisplaySlot(index=i)
             display_slot.name = self.read_text()
             display_slot.english_name = self.read_text()
@@ -434,11 +488,20 @@ class PmxReader(BaseReader[PmxModel]):
                 display_slot.references.append(reference)
 
             model.display_slots.append(display_slot, is_sort=False)
+
+            logger.count(
+                "表示枠データ読み取り",
+                index=i,
+                total_index_count=total_index_count,
+                display_block=1000,
+            )
+
         model.display_slots.sort_indexes()
 
     def read_rigidbodies(self, model: PmxModel):
         """剛体データ読み込み"""
-        for i in range(self.read_int()):
+        total_index_count = self.read_int()
+        for i in range(total_index_count):
             rigidbody = RigidBody(index=i)
             rigidbody.name = self.read_text()
             rigidbody.english_name = self.read_text()
@@ -474,11 +537,20 @@ class PmxReader(BaseReader[PmxModel]):
             rigidbody.shape_rotation.radians = shape_rotation_radians
 
             model.rigidbodies.append(rigidbody, is_sort=False)
+
+            logger.count(
+                "剛体データ読み取り",
+                index=i,
+                total_index_count=total_index_count,
+                display_block=1000,
+            )
+
         model.rigidbodies.sort_indexes()
 
     def read_joints(self, model: PmxModel):
         """モデルデータ読み込み"""
-        for i in range(self.read_int()):
+        total_index_count = self.read_int()
+        for i in range(total_index_count):
             joint = Joint(index=i)
 
             rotation_radians = MVector3D()
@@ -525,6 +597,14 @@ class PmxReader(BaseReader[PmxModel]):
             joint.param.rotation_limit_max.radians = rotation_limit_max_radians
 
             model.joints.append(joint, is_sort=False)
+
+            logger.count(
+                "ジョイントデータ読み取り",
+                index=i,
+                total_index_count=total_index_count,
+                display_block=1000,
+            )
+
         model.joints.sort_indexes()
 
     def define_read_index(self, count: int, is_vertex=False):

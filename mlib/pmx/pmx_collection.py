@@ -137,14 +137,22 @@ class Bones(BaseIndexNameDictModel[Bone]):
         """
         # ボーンツリー
         bone_trees = BoneTrees()
+        total_index_count = len(self)
 
         # 計算ボーンリスト
-        for end_bone in self:
+        for i, end_bone in enumerate(self):
             # レイヤー込みのINDEXリスト取得を末端ボーンをキーとして保持
             bone_tree = BoneTree(name=end_bone.name)
             for _, bidx in sorted(self.create_bone_link_indexes(end_bone.index)):
                 bone_tree.append(self.data[bidx].copy())
             bone_trees.append(bone_tree, name=end_bone.name)
+
+            logger.count(
+                "モデルセットアップ：ボーンツリー",
+                index=i,
+                total_index_count=total_index_count,
+                display_block=1000,
+            )
 
         return bone_trees
 
@@ -441,15 +449,8 @@ class PmxModel(BaseHashModel):
                 "モデルセットアップ：ボーン",
                 index=bone.index,
                 total_index_count=total_index_count,
-                display_block=100,
+                display_block=1000,
             )
-
-        logger.count(
-            "モデルセットアップ：ボーン",
-            index=bone.index,
-            total_index_count=total_index_count,
-            display_block=100,
-        )
 
         # ボーンツリー生成
         self.bone_trees = self.bones.create_bone_links()

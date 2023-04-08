@@ -126,7 +126,8 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
         return read_text
 
     def read_bones(self, motion: VmdMotion):
-        for _ in range(self.read_uint()):
+        total_index_count = self.read_uint()
+        for i in range(total_index_count):
             bf = VmdBoneFrame(register=True, read=True)
 
             bf.name = self.read_text(15)
@@ -210,11 +211,19 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
 
             motion.bones[bf.name].append(bf)
 
+            logger.count(
+                "ボーンデータ読み取り",
+                index=i,
+                total_index_count=total_index_count,
+                display_block=10000,
+            )
+
         for bfs in motion.bones:
             bfs.sort_indexes()
 
     def read_morphs(self, motion: VmdMotion):
-        for _ in range(self.read_uint()):
+        total_index_count = self.read_uint()
+        for i in range(total_index_count):
             mf = VmdMorphFrame(register=True, read=True)
 
             mf.name = self.read_text(15)
@@ -228,11 +237,19 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
 
             motion.morphs[mf.name].append(mf)
 
+            logger.count(
+                "モーフデータ読み取り",
+                index=i,
+                total_index_count=total_index_count,
+                display_block=10000,
+            )
+
         for mfs in motion.morphs:
             mfs.sort_indexes()
 
     def read_cameras(self, motion: VmdMotion):
-        for _ in range(self.read_uint()):
+        total_index_count = self.read_uint()
+        for i in range(total_index_count):
             cf = VmdCameraFrame(register=True, read=True)
             degrees = MVector3D()
 
@@ -277,10 +294,18 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
             cf.rotation.degrees = degrees
             motion.cameras.append(cf)
 
+            logger.count(
+                "カメラデータ読み取り",
+                index=i,
+                total_index_count=total_index_count,
+                display_block=10000,
+            )
+
         motion.cameras.sort_indexes()
 
     def read_lights(self, motion: VmdMotion):
-        for _ in range(self.read_uint()):
+        total_index_count = self.read_uint()
+        for i in range(total_index_count):
             lf = VmdLightFrame(register=True, read=True)
 
             (
@@ -298,10 +323,18 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
 
             motion.lights.append(lf)
 
+            logger.count(
+                "照明データ読み取り",
+                index=i,
+                total_index_count=total_index_count,
+                display_block=10000,
+            )
+
         motion.lights.sort_indexes()
 
     def read_shadows(self, motion: VmdMotion):
-        for _ in range(self.read_uint()):
+        total_index_count = self.read_uint()
+        for i in range(total_index_count):
             sf = VmdShadowFrame(register=True, read=True)
 
             (
@@ -315,10 +348,18 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
 
             motion.shadows.append(sf)
 
+            logger.count(
+                "セルフ影データ読み取り",
+                index=i,
+                total_index_count=total_index_count,
+                display_block=10000,
+            )
+
         motion.shadows.sort_indexes()
 
     def read_show_iks(self, motion: VmdMotion):
-        for _ in range(self.read_uint()):
+        total_index_count = self.read_uint()
+        for i in range(total_index_count):
             kf = VmdShowIkFrame(register=True, read=True)
             kf.index = self.read_uint()
             kf.show = bool(self.read_byte())
@@ -327,5 +368,12 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                 kf.iks.append(VmdIkOnOff(self.read_text(20), bool(self.read_byte())))
 
             motion.show_iks.append(kf)
+
+            logger.count(
+                "IKデータ読み取り",
+                index=i,
+                total_index_count=total_index_count,
+                display_block=10000,
+            )
 
         motion.show_iks.sort_indexes()
