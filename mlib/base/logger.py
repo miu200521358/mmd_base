@@ -60,7 +60,7 @@ class MLogger:
     # セーブモード
     saving = True
     # ログ出力モード
-    out_log = False
+    is_out_log = False
 
     console_handler: Optional["ConsoleHandler"] = None
     re_break = re.compile(r"\n")
@@ -85,9 +85,9 @@ class MLogger:
         self.stream_handler.setFormatter(Formatter(self.STREAM_FORMAT))
         self.logger.addHandler(self.stream_handler)
 
-        if out_path:
+        if self.is_out_log and out_path:
             # ファイル出力ハンドラ
-            self.file_handler = logging.FileHandler(out_path)
+            self.file_handler = logging.FileHandler(out_path, encoding="utf-8")
             self.file_handler.setLevel(self.default_level)
             self.file_handler.setFormatter(Formatter(self.STREAM_FORMAT))
             self.logger.addHandler(self.file_handler)
@@ -336,10 +336,10 @@ class MLogger:
         if not out_path:
             os.makedirs(log_dir, exist_ok=True)
             cls.default_out_path = f"{log_dir}/mutool_{output_datetime}.log"
-            cls.out_log = False
+            cls.is_out_log = False
         else:
             cls.default_out_path = out_path
-            cls.out_log = True
+            cls.is_out_log = True
 
         if os.path.exists(f"{log_dir}/quit.log"):
             # 終了ログは初期化時に削除

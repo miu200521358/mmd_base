@@ -22,7 +22,7 @@ class BaseNotebook(wx.Notebook):
         elif not logger.saving:
             # ハイスペック版の場合、色変え
             self.SetBackgroundColour("BLUE")
-        elif logger.out_log:
+        elif logger.is_out_log:
             # ログありの場合、色変え
             self.SetBackgroundColour("AQUAMARINE")
         else:
