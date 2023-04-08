@@ -38,6 +38,15 @@ class Vertices(BaseIndexDictModel[Vertex]):
     def __init__(self) -> None:
         super().__init__()
 
+    def get_scale_by_bone_index(self, bone_index: int) -> dict[int, MVector3D]:
+        vertex_weights: dict[int, MVector3D] = {}
+        for v in self:
+            indexes = v.deform.get_indexes()
+            if bone_index in indexes:
+                weights = v.deform.get_weights()
+                vertex_weights[v.index] = MVector3D(*(v.normal.vector * weights[indexes == bone_index]))
+        return vertex_weights
+
 
 class Faces(BaseIndexDictModel[Face]):
     """
@@ -444,6 +453,9 @@ class PmxModel(BaseHashModel):
             # オフセット行列は自身の位置を原点に戻す行列
             bone.offset_matrix = MMatrix4x4()
             bone.offset_matrix.translate(-bone.position)
+
+            # ウェイト頂点の法線に基づいたスケールを取得
+            bone.weighted_scales = self.vertices.get_scale_by_bone_index(bone.index)
 
             logger.count(
                 "モデルセットアップ：ボーン",

@@ -287,6 +287,9 @@ class MVector(BaseModel):
     def x(self, v):
         self.vector[0] = v
 
+    def __getitem__(self, index: int) -> float:
+        return self.vector[index]
+
 
 class MVector2D(MVector):
     """
