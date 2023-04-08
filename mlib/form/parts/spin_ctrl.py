@@ -4,14 +4,12 @@ import wx
 class WheelSpinCtrl(wx.SpinCtrl):
     def __init__(self, *args, **kw):
         change_event = kw.pop("change_event", None)
-        inc = kw.pop("inc", 1)
         super().__init__(*args, **kw)
         self.change_event = change_event
-        self.inc = inc
 
-        self.Bind(wx.EVT_SPINCTRL, self.on_wheel_spin)
+        self.Bind(wx.EVT_SPINCTRL, self.on_spin)
 
-    def on_wheel_spin(self, event: wx.SpinEvent):
+    def on_spin(self, event: wx.Event):
         if self.GetValue() >= 0:
             self.SetBackgroundColour("WHITE")
         else:
@@ -23,14 +21,21 @@ class WheelSpinCtrl(wx.SpinCtrl):
 class WheelSpinCtrlDouble(wx.SpinCtrlDouble):
     def __init__(self, *args, **kw):
         change_event = kw.pop("change_event", None)
-        inc = kw.pop("inc", 0.1)
         super().__init__(*args, **kw)
         self.change_event = change_event
-        self.inc = inc
 
-        self.Bind(wx.EVT_SPINCTRLDOUBLE, self.on_wheel_spin)
+        self.Bind(wx.EVT_SPINCTRLDOUBLE, self.on_spin)
+        self.Bind(wx.EVT_MOUSEWHEEL, self.on_wheel_spin)
 
-    def on_wheel_spin(self, event: wx.SpinEvent):
+    def on_wheel_spin(self, event: wx.MouseEvent):
+        """マウスホイールによるスピンコントロール"""
+        if event.GetWheelRotation() > 0:
+            self.SetValue(self.GetValue() + self.GetIncrement())
+        else:
+            self.SetValue(self.GetValue() - self.GetIncrement())
+        self.on_spin(event)
+
+    def on_spin(self, event: wx.Event):
         if self.GetValue() >= 0:
             self.SetBackgroundColour("WHITE")
         else:

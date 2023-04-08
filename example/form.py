@@ -7,7 +7,7 @@ import wx
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from mlib.form.parts.spin_ctrl import WheelSpinCtrl
+from mlib.form.parts.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
 from mlib.pmx.canvas import CanvasPanel
 from mlib.base.logger import MLogger
 from mlib.form.base_frame import BaseFrame
@@ -144,6 +144,10 @@ class ConfigPanel(CanvasPanel):
         # キーフレ
         self.frame_ctrl = WheelSpinCtrl(self, change_event=self.on_change_frame, initial=0, min=-100, max=10000, size=wx.Size(80, -1))
         self.btn_sizer.Add(self.frame_ctrl, 0, wx.ALL, 5)
+
+        # キーフレ
+        self.double_ctrl = WheelSpinCtrlDouble(self, change_event=self.on_change_frame, initial=0, min=-100, max=10000, inc=0.01, size=wx.Size(80, -1))
+        self.btn_sizer.Add(self.double_ctrl, 0, wx.ALL, 5)
 
         # 再生
         self.play_btn = wx.Button(self, wx.ID_ANY, "Play", wx.DefaultPosition, wx.Size(100, 50))
