@@ -22,6 +22,7 @@ from mlib.pmx.pmx_part import (
     UvMorphOffset,
     VertexMorphOffset,
 )
+from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
 
 logger = MLogger(__name__, logging.DEBUG)
@@ -909,10 +910,8 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         return materials
 
     def animate_material_morphs(self, fno: int, model: PmxModel) -> list[ShaderMaterial]:
-        light_ambient = MVector4D(154 / 255, 154 / 255, 154 / 255, 1)
-
         # デフォルトの材質情報を保持（シェーダーに合わせて一部入れ替え）
-        materials = [ShaderMaterial(m, light_ambient) for m in model.materials]
+        materials = [ShaderMaterial(m, MShader.LIGHT_AMBIENT4) for m in model.materials]
 
         for morph in model.morphs.filter_by_type(MorphType.MATERIAL):
             if morph.name not in self.data:
@@ -925,7 +924,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             # モーションによる頂点モーフ変動量
             for offset in morph.offsets:
                 if type(offset) is MaterialMorphOffset and offset.material_index in model.materials:
-                    materials = self.animate_material_morph_frame(model, offset, mf.ratio, materials, light_ambient)
+                    materials = self.animate_material_morph_frame(model, offset, mf.ratio, materials, MShader.LIGHT_AMBIENT4)
 
         return materials
 

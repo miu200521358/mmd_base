@@ -9,7 +9,7 @@ from PIL import Image
 from wx import glcanvas
 
 from mlib.base.logger import MLogger
-from mlib.base.math import MQuaternion, MVector3D, MVector4D
+from mlib.base.math import MQuaternion, MVector3D
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import ShaderMaterial
 from mlib.pmx.shader import MShader
@@ -47,7 +47,7 @@ class MotionSet:
             self.vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])
             self.uv_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
             self.uv1_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
-            self.material_morphs = [ShaderMaterial(m, MVector4D()) for m in model.materials]
+            self.material_morphs = [ShaderMaterial(m, MShader.LIGHT_AMBIENT4) for m in model.materials]
 
 
 class PmxCanvas(glcanvas.GLCanvas):

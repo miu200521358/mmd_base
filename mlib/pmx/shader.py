@@ -99,6 +99,7 @@ class MShader:
     INITIAL_CAMERA_POSITION_Z = -40.0
     INITIAL_LOOK_AT_CENTER_Y = INITIAL_CAMERA_POSITION_Y * 1.1
     INITIAL_CAMERA_POSITION_X = 40.0
+    LIGHT_AMBIENT4 = MVector4D(154 / 255, 154 / 255, 154 / 255, 1)
 
     def __init__(self, width: int, height: int) -> None:
         self.width = width
@@ -219,15 +220,9 @@ class MShader:
         # MMD Light Diffuse は必ず0
         self.light_diffuse = MVector3D()
         # MMDの照明色そのまま
-        self.light_ambient = MVector3D(154 / 255, 154 / 255, 154 / 255)
-        self.light_specular = self.light_ambient
+        self.light_specular = self.LIGHT_AMBIENT4.xyz
         # light_diffuse == MMDのambient
-        self.light_ambient4 = MVector4D(
-            self.light_ambient.x,
-            self.light_ambient.y,
-            self.light_ambient.z,
-            1,
-        )
+        self.light_ambient4 = self.LIGHT_AMBIENT4
 
         # モデルビュー行列
         self.model_view_matrix_uniform[edge] = gl.glGetUniformLocation(program, "modelViewMatrix")
