@@ -132,15 +132,16 @@ def unwrapped_path(path: str):
 def validate_save_file(path: str, title: str) -> bool:
     """保存可能なファイルであるか"""
     try:
+        dir_path = os.path.dirname(path)
         is_makedir = False
-        if not os.path.exists(os.path.basename(path)):
+        if not os.path.exists(dir_path):
             # ディレクトリが無い場合、一旦作る
-            os.makedirs(os.path.basename(path), exist_ok=True)
+            os.makedirs(dir_path)
             is_makedir = True
         open(path, "w")
         os.remove(path)
         if is_makedir:
-            os.rmdir(os.path.basename(path))
+            os.rmdir(dir_path)
     except Exception:
         logger.warning(
             f"{title}のチェックに失敗しました。以下の原因が考えられます。\n"
