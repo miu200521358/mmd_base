@@ -1,26 +1,28 @@
 import os
-from typing import Optional
+from typing import Generic, Optional
 
 import wx
 
-from mlib.base.collection import BaseHashModel
 from mlib.base.logger import MLogger
-from mlib.base.reader import BaseReader
+from mlib.base.reader import TBaseHashModel, TBaseReader
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
 from mlib.pmx.pmx_collection import PmxModel
+from mlib.pmx.pmx_reader import PmxReader
 from mlib.utils.file_utils import get_dir_path, insert_history, unwrapped_path, validate_file, validate_save_file
+from mlib.vmd.vmd_collection import VmdMotion
+from mlib.vmd.vmd_reader import VmdReader
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
 
-class MFilePickerCtrl:
+class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
     def __init__(
         self,
         frame: BaseFrame,
         parent: BasePanel,
-        reader: BaseReader,
+        reader: TBaseReader,
         title: str,
         key: Optional[str] = None,
         is_show_name: bool = True,
@@ -32,7 +34,7 @@ class MFilePickerCtrl:
         self.frame = frame
         self.parent = parent
         self.reader = reader
-        self.data: Optional[BaseHashModel] = None
+        self.data: Optional[TBaseHashModel] = None
         self.key = key
         self.title = __(title)
         self.is_save = is_save
@@ -239,3 +241,35 @@ class MFileDropTarget(wx.FileDropTarget):
 
         # 許容拡張子外の場合、不許可
         return False
+
+
+class MPmxFilePickerCtrl(MFilePickerCtrl[PmxModel, PmxReader]):
+    def __init__(
+        self,
+        frame: BaseFrame,
+        parent: BasePanel,
+        title: str,
+        key: Optional[str] = None,
+        is_show_name: bool = True,
+        name_spacer: int = 0,
+        is_save: bool = False,
+        tooltip: str = "",
+        file_change_event=None,
+    ) -> None:
+        super().__init__(frame, parent, PmxReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)
+
+
+class MVmdFilePickerCtrl(MFilePickerCtrl[VmdMotion, VmdReader]):
+    def __init__(
+        self,
+        frame: BaseFrame,
+        parent: BasePanel,
+        title: str,
+        key: Optional[str] = None,
+        is_show_name: bool = True,
+        name_spacer: int = 0,
+        is_save: bool = False,
+        tooltip: str = "",
+        file_change_event=None,
+    ) -> None:
+        super().__init__(frame, parent, VmdReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)

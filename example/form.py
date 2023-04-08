@@ -7,20 +7,17 @@ import wx
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from mlib.base.collection import BaseHashModel
 from mlib.base.logger import MLogger
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
 from mlib.form.base_worker import BaseWorker
 from mlib.form.parts.console_ctrl import ConsoleCtrl
-from mlib.form.parts.file_ctrl import MFilePickerCtrl
+from mlib.form.parts.file_ctrl import MPmxFilePickerCtrl, MVmdFilePickerCtrl
 from mlib.form.parts.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
 from mlib.pmx.canvas import CanvasPanel
 from mlib.pmx.pmx_collection import PmxModel
-from mlib.pmx.pmx_reader import PmxReader
 from mlib.utils.file_utils import save_histories, separate_path
 from mlib.vmd.vmd_collection import VmdMotion
-from mlib.vmd.vmd_reader import VmdReader
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -30,16 +27,12 @@ class FilePanel(BasePanel):
     def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
         super().__init__(frame, tab_idx, *args, **kw)
 
-        self.pmx_reader = PmxReader()
-        self.vmd_reader = VmdReader()
-
         self._initialize_ui()
 
     def _initialize_ui(self):
-        self.model_ctrl = MFilePickerCtrl(
+        self.model_ctrl = MPmxFilePickerCtrl(
             self.frame,
             self,
-            self.pmx_reader,
             key="model_pmx",
             title="表示モデル",
             is_show_name=True,
@@ -50,10 +43,9 @@ class FilePanel(BasePanel):
         )
         self.model_ctrl.set_parent_sizer(self.root_sizer)
 
-        self.dress_ctrl = MFilePickerCtrl(
+        self.dress_ctrl = MPmxFilePickerCtrl(
             self.frame,
             self,
-            self.pmx_reader,
             key="dress_pmx",
             title="衣装モデル",
             is_show_name=True,
@@ -64,10 +56,9 @@ class FilePanel(BasePanel):
         )
         self.dress_ctrl.set_parent_sizer(self.root_sizer)
 
-        self.motion_ctrl = MFilePickerCtrl(
+        self.motion_ctrl = MVmdFilePickerCtrl(
             self.frame,
             self,
-            self.vmd_reader,
             key="motion_vmd",
             title="表示モーション",
             is_show_name=True,
@@ -78,10 +69,9 @@ class FilePanel(BasePanel):
         )
         self.motion_ctrl.set_parent_sizer(self.root_sizer)
 
-        self.output_pmx_ctrl = MFilePickerCtrl(
+        self.output_pmx_ctrl = MPmxFilePickerCtrl(
             self.frame,
             self,
-            self.pmx_reader,
             title="出力先",
             is_show_name=False,
             is_save=True,
@@ -120,12 +110,12 @@ class PmxLoadWorker(BaseWorker):
 
     def thread_execute(self):
         file_panel: FilePanel = self.panel
-        data1: Optional[BaseHashModel] = None
-        data2: Optional[BaseHashModel] = None
-        data3: Optional[BaseHashModel] = None
+        model: Optional[PmxModel] = None
+        dress: Optional[PmxModel] = None
+        motion: Optional[VmdMotion] = None
 
         if not file_panel.model_ctrl.data and file_panel.model_ctrl.valid():
-            model: PmxModel = file_panel.model_ctrl.reader.read_by_filepath(file_panel.model_ctrl.path)
+            model = file_panel.model_ctrl.reader.read_by_filepath(file_panel.model_ctrl.path)
 
             for bone in model.bones:
                 # ウェイト頂点の法線に基づいたスケールを取得
@@ -137,15 +127,13 @@ class PmxLoadWorker(BaseWorker):
                     total_index_count=len(model.bones),
                     display_block=20,
                 )
-
-            data1 = model
         elif file_panel.model_ctrl.data:
-            data1 = file_panel.model_ctrl.data
+            model = file_panel.model_ctrl.data
         else:
-            data1 = PmxModel()
+            model = PmxModel()
 
         if not file_panel.dress_ctrl.data and file_panel.dress_ctrl.valid():
-            dress: PmxModel = file_panel.dress_ctrl.reader.read_by_filepath(file_panel.dress_ctrl.path)
+            dress = file_panel.dress_ctrl.reader.read_by_filepath(file_panel.dress_ctrl.path)
 
             for bone in dress.bones:
                 # ウェイト頂点の法線に基づいたスケールを取得
@@ -158,20 +146,19 @@ class PmxLoadWorker(BaseWorker):
                     display_block=20,
                 )
 
-            data2 = dress
         elif file_panel.dress_ctrl.data:
-            data2 = file_panel.dress_ctrl.data
+            dress = file_panel.dress_ctrl.data
         else:
-            data2 = PmxModel()
+            dress = PmxModel()
 
         if not file_panel.motion_ctrl.data and file_panel.motion_ctrl.valid():
-            data3 = file_panel.motion_ctrl.reader.read_by_filepath(file_panel.motion_ctrl.path)
+            motion = file_panel.motion_ctrl.reader.read_by_filepath(file_panel.motion_ctrl.path)
         elif file_panel.motion_ctrl.data:
-            data3 = file_panel.motion_ctrl.data
+            motion = file_panel.motion_ctrl.data
         else:
-            data3 = VmdMotion()
+            motion = VmdMotion()
 
-        self.result_data = (data1, data2, data3)
+        self.result_data = (model, dress, motion)
 
 
 class ConfigPanel(CanvasPanel):

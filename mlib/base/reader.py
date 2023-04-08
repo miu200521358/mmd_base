@@ -524,3 +524,6 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             return b[0]
 
         return b
+
+
+TBaseReader = TypeVar("TBaseReader", bound=BaseReader)
