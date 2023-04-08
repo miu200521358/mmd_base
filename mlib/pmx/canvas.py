@@ -153,7 +153,11 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
 
     def clear_model_set(self):
-        self.model_sets.clear()
+        if self.model_sets:
+            del self.model_sets
+            del self.animations
+        self.model_sets = []
+        self.animations = []
 
     def draw(self):
         self.set_context()

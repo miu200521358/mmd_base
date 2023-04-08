@@ -345,8 +345,8 @@ class Texture(BaseIndexNameModel):
         "for_draw",
         "image",
         "texture_type",
-        "texture",
         "texture_id",
+        "texture_idx",
         "valid",
     ]
 
@@ -354,6 +354,17 @@ class Texture(BaseIndexNameModel):
         super().__init__(index=index, name=name)
         self.for_draw = False
         self.valid = True
+
+    def delete_draw(self):
+        if not self.for_draw:
+            # 描画フラグが立ってなければスルー
+            return
+
+        gl.glDeleteTextures(1, [self.texture_id])
+
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"glDeleteTextures Failure\n{self.name}: {error_code}")
 
     def init_draw(self, model_path: str, texture_type: TextureType, is_individual: bool = True):
         if self.for_draw:
@@ -379,13 +390,13 @@ class Texture(BaseIndexNameModel):
                 self.texture_type = texture_type
 
                 # テクスチャオブジェクト生成
-                self.texture = gl.glGenTextures(1)
+                self.texture_id = gl.glGenTextures(1)
                 error_code = gl.glGetError()
                 if error_code != gl.GL_NO_ERROR:
-                    raise MViewerException(f"glGenTextures Failure\n{error_code}")
+                    raise MViewerException(f"glGenTextures Failure\n{self.name}: {error_code}")
 
                 self.texture_type = texture_type
-                self.texture_id = (
+                self.texture_idx = (
                     gl.GL_TEXTURE0 if texture_type == TextureType.TEXTURE else gl.GL_TEXTURE1 if texture_type == TextureType.TOON else gl.GL_TEXTURE2
                 )
                 self.set_texture()
@@ -409,13 +420,13 @@ class Texture(BaseIndexNameModel):
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
-            raise MViewerException(f"Texture set_texture Failure\n{error_code}")
+            raise MViewerException(f"Texture set_texture Failure\n{self.name}: {error_code}")
 
         self.unbind()
 
     def bind(self) -> None:
-        gl.glActiveTexture(self.texture_id)
-        gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture)
+        gl.glActiveTexture(self.texture_idx)
+        gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture_id)
 
         if self.texture_type == TextureType.TOON:
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
@@ -427,14 +438,14 @@ class Texture(BaseIndexNameModel):
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
-            raise MViewerException(f"Texture bind Failure\n{error_code}")
+            raise MViewerException(f"Texture bind Failure\n{self.name}: {error_code}")
 
     def unbind(self) -> None:
         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
-            raise MViewerException(f"Texture unbind Failure\n{error_code}")
+            raise MViewerException(f"Texture unbind Failure\n{self.name}: {error_code}")
 
 
 @unique

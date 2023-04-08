@@ -15,17 +15,24 @@ class VAO:
     """
 
     def __init__(self) -> None:
-        self.vao = gl.glGenVertexArrays(1)
+        self.vao_id = gl.glGenVertexArrays(1)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
             raise MViewerException(f"VAO glGenVertexArrays Failure\n{error_code}")
 
     def bind(self) -> None:
-        gl.glBindVertexArray(self.vao)
+        gl.glBindVertexArray(self.vao_id)
 
     def unbind(self) -> None:
         gl.glBindVertexArray(0)
+
+    def __del__(self):
+        gl.glDeleteVertexArrays(1, [self.vao_id])
+
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"VAO glDeleteVertexArrays Failure\n{self.vao_id}: {error_code}")
 
 
 class VBO:
@@ -34,7 +41,7 @@ class VBO:
     """
 
     def __init__(self, data: np.ndarray, components: dict[int, dict[str, int]]) -> None:
-        self.vbo = gl.glGenBuffers(1)
+        self.vbo_id = gl.glGenBuffers(1)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
@@ -49,11 +56,14 @@ class VBO:
             v["pointer"] = v["offset"] * self.dsize
 
     def __del__(self) -> None:
-        if self.vbo:
-            gl.glDeleteBuffers(1, [self.vbo])
+        gl.glDeleteBuffers(1, [self.vbo_id])
+
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"VBO glDeleteBuffers Failure\n{self.vbo_id}: {error_code}")
 
     def bind(self) -> None:
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo_id)
         gl.glBufferData(gl.GL_ARRAY_BUFFER, self.data.nbytes, self.data, gl.GL_STATIC_DRAW)
 
     def unbind(self) -> None:
@@ -77,7 +87,7 @@ class IBO:
     """
 
     def __init__(self, data: np.ndarray) -> None:
-        self.ibo = gl.glGenBuffers(1)
+        self.ibo_id = gl.glGenBuffers(1)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
@@ -91,11 +101,14 @@ class IBO:
         self.unbind()
 
     def __del__(self) -> None:
-        if self.ibo:
-            gl.glDeleteBuffers(1, [self.ibo])
+        gl.glDeleteBuffers(1, [self.ibo_id])
+
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.ibo_id}: {error_code}")
 
     def bind(self) -> None:
-        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.ibo)
+        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.ibo_id)
 
     def unbind(self) -> None:
         gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)

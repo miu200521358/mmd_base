@@ -102,11 +102,11 @@ class BaseWorker:
     def run(self):
         try:
             self.thread_execute()
-        except MLibException:
-            logger.error(__("処理を中断しました"))
+        except MLibException as e:
+            logger.error(f"処理を中断しました\n中断理由: {e.message}")
             self.result = False
         except Exception:
-            logger.critical(__("予期せぬエラーが発生しました"))
+            logger.critical("予期せぬエラーが発生しました")
             self.result = False
 
     def thread_execute(self):

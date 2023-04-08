@@ -7,6 +7,7 @@ import wx
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+from mlib.base.collection import BaseHashModel
 from mlib.form.parts.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
 from mlib.pmx.canvas import CanvasPanel
 from mlib.base.logger import MLogger
@@ -119,12 +120,58 @@ class PmxLoadWorker(BaseWorker):
 
     def thread_execute(self):
         file_panel: FilePanel = self.panel
+        data1: Optional[BaseHashModel] = None
+        data2: Optional[BaseHashModel] = None
+        data3: Optional[BaseHashModel] = None
 
-        self.result_data = (
-            file_panel.pmx_reader.read_by_filepath(file_panel.model_ctrl.path),
-            file_panel.pmx_reader.read_by_filepath(file_panel.dress_ctrl.path),
-            file_panel.vmd_reader.read_by_filepath(file_panel.motion_ctrl.path),
-        )
+        if not file_panel.model_ctrl.data and file_panel.model_ctrl.valid():
+            model: PmxModel = file_panel.model_ctrl.reader.read_by_filepath(file_panel.model_ctrl.path)
+
+            for bone in model.bones:
+                # ウェイト頂点の法線に基づいたスケールを取得
+                bone.weighted_scales = model.vertices.get_scale_by_bone_index(bone.index)
+
+                logger.count(
+                    "モデル追加セットアップ：ウェイトボーン分布",
+                    index=bone.index,
+                    total_index_count=len(model.bones),
+                    display_block=20,
+                )
+
+            data1 = model
+        elif file_panel.model_ctrl.data:
+            data1 = file_panel.model_ctrl.data
+        else:
+            data1 = PmxModel()
+
+        if not file_panel.dress_ctrl.data and file_panel.dress_ctrl.valid():
+            dress: PmxModel = file_panel.dress_ctrl.reader.read_by_filepath(file_panel.dress_ctrl.path)
+
+            for bone in dress.bones:
+                # ウェイト頂点の法線に基づいたスケールを取得
+                bone.weighted_scales = dress.vertices.get_scale_by_bone_index(bone.index)
+
+                logger.count(
+                    "モデル追加セットアップ：ウェイトボーン分布",
+                    index=bone.index,
+                    total_index_count=len(dress.bones),
+                    display_block=20,
+                )
+
+            data2 = dress
+        elif file_panel.dress_ctrl.data:
+            data2 = file_panel.dress_ctrl.data
+        else:
+            data2 = PmxModel()
+
+        if not file_panel.motion_ctrl.data and file_panel.motion_ctrl.valid():
+            data3 = file_panel.motion_ctrl.reader.read_by_filepath(file_panel.motion_ctrl.path)
+        elif file_panel.motion_ctrl.data:
+            data3 = file_panel.motion_ctrl.data
+        else:
+            data3 = VmdMotion()
+
+        self.result_data = (data1, data2, data3)
 
 
 class ConfigPanel(CanvasPanel):
@@ -200,7 +247,13 @@ class TestFrame(BaseFrame):
         if self.notebook.GetSelection() == self.config_panel.tab_idx:
             self.notebook.ChangeSelection(self.file_panel.tab_idx)
             if not self.worker.started:
-                if not self.file_panel.model_ctrl.data:
+                if not self.file_panel.model_ctrl.valid():
+                    logger.warning("モデル欄に有効なパスが設定されていない為、タブ遷移を中断します。")
+                    return
+                if not self.file_panel.dress_ctrl.valid():
+                    logger.warning("衣装欄に有効なパスが設定されていない為、タブ遷移を中断します。")
+                    return
+                if not self.file_panel.model_ctrl.data or not self.file_panel.dress_ctrl.data:
                     # 設定タブにうつった時に読み込む
                     self.config_panel.canvas.clear_model_set()
                     self.save_histories()
@@ -238,7 +291,7 @@ class TestFrame(BaseFrame):
             self.config_panel.canvas.Refresh()
             self.notebook.ChangeSelection(self.config_panel.tab_idx)
         except:
-            logger.critical(__("モデル描画初期化処理失敗"))
+            logger.critical("モデル描画初期化処理失敗")
 
 
 class MuApp(wx.App):

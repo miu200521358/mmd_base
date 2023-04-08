@@ -8,6 +8,7 @@ from mlib.base.logger import MLogger
 from mlib.base.reader import BaseReader
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
+from mlib.pmx.pmx_collection import PmxModel
 from mlib.utils.file_utils import get_dir_path, insert_history, validate_file, validate_save_file, unwrapped_path
 
 logger = MLogger(os.path.basename(__file__))
@@ -148,7 +149,7 @@ class MFilePickerCtrl:
 
     def valid(self, v: Optional[str] = None):
         path = v if v else self.file_ctrl.GetPath()
-        if not path:
+        if not path.strip():
             return False
         return (not self.is_save and validate_file(path, self.reader.file_type)) or (self.is_save and validate_save_file(path, self.title))
 
@@ -156,7 +157,7 @@ class MFilePickerCtrl:
         self.file_ctrl.SetPath(unwrapped_path(self.file_ctrl.GetPath()))
 
     def save_path(self):
-        if not self.key:
+        if not self.key or not self.valid():
             return
         insert_history(self.file_ctrl.GetPath(), self.frame.histories[self.key])
 
@@ -187,6 +188,9 @@ class MFilePickerCtrl:
             digest = self.reader.read_hash_by_filepath(self.file_ctrl.GetPath())
             if self.data and self.data.digest != digest:
                 # 読み取り対象データが変わっている場合、オブジェクトをクリアしておく
+                if isinstance(self.data, PmxModel):
+                    # PMXデータの場合、GLオブジェクトも削除
+                    self.data.delete_draw()
                 self.data = None
 
 

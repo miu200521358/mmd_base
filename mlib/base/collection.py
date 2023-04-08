@@ -339,6 +339,10 @@ class BaseHashModel(BaseModel):
 
         self.digest = sha1.hexdigest()
 
+    def delete(self):
+        """削除する準備"""
+        pass
+
     def __bool__(self) -> bool:
         # パスが定義されていたら、中身入り
         return 0 < len(self.path)

@@ -396,8 +396,6 @@ class PmxModel(BaseHashModel):
             # 既にフラグが立ってたら描画初期化済み
             return
 
-        # 描画初期化
-        self.for_draw = True
         # 共有Toon読み込み
         for tidx, tpath in enumerate(
             glob(
@@ -413,6 +411,15 @@ class PmxModel(BaseHashModel):
             self.toon_textures.append(Texture(tidx, os.path.abspath(tpath)))
 
         self.meshes = Meshes(shader, self)
+        # 描画初期化
+        self.for_draw = True
+
+    def delete_draw(self):
+        if not self.for_draw or not self.meshes:
+            # 描画初期化してなければスルー
+            return
+        self.meshes.delete_draw()
+        self.for_draw = False
 
     def draw(
         self,
@@ -454,14 +461,11 @@ class PmxModel(BaseHashModel):
             bone.offset_matrix = MMatrix4x4()
             bone.offset_matrix.translate(-bone.position)
 
-            # ウェイト頂点の法線に基づいたスケールを取得
-            bone.weighted_scales = self.vertices.get_scale_by_bone_index(bone.index)
-
             logger.count(
                 "モデルセットアップ：ボーン",
                 index=bone.index,
                 total_index_count=total_index_count,
-                display_block=50,
+                display_block=100,
             )
 
         # ボーンツリー生成
@@ -639,3 +643,32 @@ class Meshes(BaseIndexDictModel[Mesh]):
             self.ibo_faces.unbind()
             self.vbo_vertices.unbind()
             self.vao.unbind()
+
+    def delete_draw(self):
+        for material in self.model.materials:
+            texture: Optional[Texture] = None
+            if 0 <= material.texture_index:
+                texture = self.model.textures[material.texture_index]
+                texture.delete_draw()
+
+            toon_texture: Optional[Texture] = None
+            if ToonSharing.SHARING == material.toon_sharing_flg:
+                # 共有Toon
+                toon_texture = self.model.toon_textures[material.toon_texture_index]
+                toon_texture.delete_draw()
+            elif ToonSharing.INDIVIDUAL == material.toon_sharing_flg and 0 <= material.toon_texture_index:
+                # 個別Toon
+                toon_texture = self.model.textures[material.toon_texture_index]
+                toon_texture.delete_draw()
+
+            sphere_texture: Optional[Texture] = None
+            if 0 <= material.sphere_texture_index:
+                sphere_texture = self.model.textures[material.sphere_texture_index]
+                sphere_texture.delete_draw()
+        del self.vao
+        del self.vbo_components
+        del self.morph_pos_comps
+        del self.morph_uv_comps
+        del self.morph_uv1_comps
+        del self.vbo_vertices
+        del self.ibo_faces
