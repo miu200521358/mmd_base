@@ -397,7 +397,7 @@ class PmxModel(BaseHashModel):
                     "ウェイトボーン分布",
                     index=vertex.index,
                     total_index_count=total_index_count,
-                    display_block=1000,
+                    display_block=10000,
                 )
         return vertex_bone_scales
 
