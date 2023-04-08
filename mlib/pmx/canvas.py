@@ -23,14 +23,19 @@ logger = MLogger(os.path.basename(__file__))
 class CanvasPanel(BasePanel):
     def __init__(self, frame: BaseFrame, tab_idx: int, width: int, height: int, *args, **kw):
         super().__init__(frame, tab_idx)
-        self.fno = 0
+        self.index = 0
         self.canvas = PmxCanvas(self, width, height)
 
-    def frame_forward(self):
-        self.fno += 1
+    @property
+    def fno(self):
+        return self.index
 
-    def frame_back(self):
-        self.fno = max(0, self.fno - 1)
+    @fno.setter
+    def fno(self, v: int):
+        self.index = v
+
+    def play_stop(self):
+        pass
 
 
 def animate(queue: Queue, fno: int, model_sets: list["ModelSet"]):
@@ -181,19 +186,23 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.shader.msaa.unbind()
 
     def on_frame_forward(self, event: wx.Event):
-        self.parent.frame_forward()
+        self.parent.fno = self.parent.fno + 1
         self.change_motion(event)
 
     def on_frame_back(self, event: wx.Event):
-        self.parent.frame_back()
+        self.parent.fno = max(0, self.parent.fno - 1)
         self.change_motion(event)
 
     def change_motion(self, event: wx.Event):
-        now_fno = self.parent.fno
         animations: list[MotionSet] = []
         for model_set in self.model_sets:
-            animations.append(MotionSet(model_set.model, model_set.motion, now_fno))
+            animations.append(MotionSet(model_set.model, model_set.motion, self.parent.fno))
         self.animations = animations
+
+        if self.max_fno <= self.parent.fno:
+            # 最後まで行ったら止まる
+            self.on_play(event)
+
         self.Refresh()
 
     def on_play(self, event: wx.Event, record: bool = False):
@@ -214,6 +223,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             #     self.process.terminate()
             self.play_timer.Stop()
             self.recording = False
+            self.parent.play_stop()
 
     def on_play_timer(self, event: wx.Event):
         self.on_frame_forward(event)

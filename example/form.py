@@ -180,19 +180,22 @@ class ConfigPanel(CanvasPanel):
 
     def on_play(self, event: wx.Event):
         self.canvas.on_play(event)
-        self.play_btn.SetLabelText("Stop" if self.canvas.playing else "Play")
+        self.play_btn.SetLabel("Stop" if self.canvas.playing else "Play")
+
+    @property
+    def fno(self):
+        return self.frame_ctrl.GetValue()
+
+    @fno.setter
+    def fno(self, v: int):
+        self.frame_ctrl.SetValue(v)
+
+    def play_stop(self):
+        self.play_btn.SetLabel("Play")
 
     def on_change_frame(self, event: wx.Event):
         self.fno = self.frame_ctrl.GetValue()
         self.canvas.change_motion(event)
-
-    def frame_forward(self):
-        self.fno += 1
-        self.frame_ctrl.SetValue(self.fno)
-
-    def frame_back(self):
-        self.fno = max(0, self.fno - 1)
-        self.frame_ctrl.SetValue(self.fno)
 
 
 class TestFrame(BaseFrame):
