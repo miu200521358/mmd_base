@@ -164,47 +164,47 @@ class PmxReader(BaseReader[PmxModel]):
         # 頂点
         self.read_vertices(model)
 
-        logger.info("頂点データ読み取り完了: {count}", count=len(model.vertices))
+        logger.info("頂点データ読み取り完了: {c}", c=len(model.vertices))
 
         # 面
         self.read_faces(model)
 
-        logger.info("面データ読み取り完了: {count}", count=len(model.faces))
+        logger.info("面データ読み取り完了: {c}", c=len(model.faces))
 
         # テクスチャ
         self.read_textures(model)
 
-        logger.info("テクスチャデータ読み取り完了: {count}", count=len(model.textures))
+        logger.info("テクスチャデータ読み取り完了: {c}", c=len(model.textures))
 
         # 材質
         self.read_materials(model)
 
-        logger.info("材質データ読み取り完了: {count}", count=len(model.materials))
+        logger.info("材質データ読み取り完了: {c}", c=len(model.materials))
 
         # ボーン
         self.read_bones(model)
 
-        logger.info("ボーンデータ読み取り完了: {count}", count=len(model.bones))
+        logger.info("ボーンデータ読み取り完了: {c}", c=len(model.bones))
 
         # モーフ
         self.read_morphs(model)
 
-        logger.info("モーフデータ読み取り完了: {count}", count=len(model.morphs))
+        logger.info("モーフデータ読み取り完了: {c}", c=len(model.morphs))
 
         # 表示枠
         self.read_display_slots(model)
 
-        logger.info("表示枠データ読み取り完了: {count}", count=len(model.display_slots))
+        logger.info("表示枠データ読み取り完了: {c}", c=len(model.display_slots))
 
         # 剛体
         self.read_rigidbodies(model)
 
-        logger.info("剛体データ読み取り完了: {count}", count=len(model.rigidbodies))
+        logger.info("剛体データ読み取り完了: {c}", c=len(model.rigidbodies))
 
         # ジョイント
         self.read_joints(model)
 
-        logger.info("ジョイントデータ読み取り完了: {count}", count=len(model.joints))
+        logger.info("ジョイントデータ読み取り完了: {c}", c=len(model.joints))
 
         logger.info("モデルセットアップ開始")
 

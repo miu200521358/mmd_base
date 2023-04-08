@@ -70,7 +70,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
                 wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS,
             )
             self.name_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
-            self.name_ctrl.SetToolTip(__("{title}に記録されているモデル名です。\n文字列は選択およびコピー可能です。", title=self.title))
+            self.name_ctrl.SetToolTip(__("{t}に記録されているモデル名です。\n文字列は選択およびコピー可能です。", t=self.title))
             self.title_sizer.Add(self.name_ctrl, 1, wx.EXPAND | wx.ALL, 3)
 
         self.root_sizer.Add(self.title_sizer, 0, wx.ALL, 3)
@@ -102,7 +102,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
                 wx.ID_ANY,
                 label=__("履歴"),
             )
-            self.history_ctrl.SetToolTip(__("これまでに指定された事のある{title}を再指定することができます。", title=self.title))
+            self.history_ctrl.SetToolTip(__("これまでに指定された事のある{t}を再指定することができます。", t=self.title))
             self.file_sizer.Add(self.history_ctrl, 0, wx.ALL, 3)
 
         self.root_sizer.Add(self.file_sizer, 0, wx.GROW | wx.ALL, 0)
@@ -238,11 +238,11 @@ class MFileDropTarget(wx.FileDropTarget):
         #                 return True
 
         logger.warning(
-            "{file_title}に入力されたファイル拡張子を受け付けられませんでした。{file_type}拡張子のファイルを入力してください。\n入力ファイルパス: {file_path}",
+            "{t}に入力されたファイル拡張子を受け付けられませんでした。{y}拡張子のファイルを入力してください。\n入力ファイルパス: {p}",
             decoration=MLogger.Decoration.BOX,
-            file_title=self.parent.title,
-            file_type=self.parent.reader.file_type.name.lower(),
-            file_path=files[0],
+            t=self.parent.title,
+            y=self.parent.reader.file_type.name.lower(),
+            p=files[0],
         )
 
         # 許容拡張子外の場合、不許可
