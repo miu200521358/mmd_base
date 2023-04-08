@@ -10,12 +10,27 @@ from wx import glcanvas
 
 from mlib.base.logger import MLogger
 from mlib.base.math import MQuaternion, MVector3D
+from mlib.form.base_frame import BaseFrame
+from mlib.form.base_panel import BasePanel
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import ShaderMaterial
 from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_collection import VmdMotion
 
 logger = MLogger(os.path.basename(__file__))
+
+
+class CanvasPanel(BasePanel):
+    def __init__(self, frame: BaseFrame, tab_idx: int, width: int, height: int, *args, **kw):
+        super().__init__(frame, tab_idx)
+        self.fno = 0
+        self.canvas = PmxCanvas(self, width, height)
+
+    def frame_forward(self):
+        self.fno += 1
+
+    def frame_back(self):
+        self.fno = max(0, self.fno - 1)
 
 
 def animate(queue: Queue, fno: int, model_sets: list["ModelSet"]):
@@ -51,7 +66,7 @@ class MotionSet:
 
 
 class PmxCanvas(glcanvas.GLCanvas):
-    def __init__(self, parent: wx.Panel, width: int, height: int, *args, **kw):
+    def __init__(self, parent: CanvasPanel, width: int, height: int, *args, **kw):
         attribList = (
             glcanvas.WX_GL_RGBA,
             glcanvas.WX_GL_DOUBLEBUFFER,
@@ -70,7 +85,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         self.set_context()
 
-        self._initialize_ui(parent)
+        self._initialize_ui()
         self._initialize_event()
 
         self.shader = MShader(width, height)
@@ -89,11 +104,8 @@ class PmxCanvas(glcanvas.GLCanvas):
         # 録画中かどうかを示すフラグ
         self.recording = False
 
-    def _initialize_ui(self, parent):
+    def _initialize_ui(self):
         gl.glClearColor(0.7, 0.7, 0.7, 1)
-
-        self.frame_ctrl = wx.SpinCtrl(parent, value="0", min=0, max=10000, size=wx.Size(80, 30))
-        self.frame_ctrl.Bind(wx.EVT_SPINCTRL, self.change_motion)
 
         # 再生タイマー
         self.play_timer = wx.Timer(self)
@@ -165,19 +177,18 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.shader.msaa.unbind()
 
     def on_frame_forward(self, event: wx.Event):
-        self.frame_ctrl.SetValue(min(self.max_fno, self.frame_ctrl.GetValue() + 1))
+        self.parent.frame_forward()
         self.change_motion(event)
 
     def on_frame_back(self, event: wx.Event):
-        self.frame_ctrl.SetValue(max(0, self.frame_ctrl.GetValue() - 1))
+        self.parent.frame_back()
         self.change_motion(event)
 
     def change_motion(self, event: wx.Event):
-        now_fno = self.frame_ctrl.GetValue()
+        now_fno = self.parent.fno
         animations: list[MotionSet] = []
         for model_set in self.model_sets:
-            if model_set.model and model_set.motion:
-                animations.append(MotionSet(model_set.model, model_set.motion, now_fno))
+            animations.append(MotionSet(model_set.model, model_set.motion, now_fno))
         self.animations = animations
         self.Refresh()
 
@@ -185,7 +196,6 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.playing = not self.playing
         if self.playing:
             self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
-            # print(f"{self.frame_ctrl.GetValue():05d}: {datetime.now()}")
             self.recording = record
             # self.queue = Queue()
             # self.process = Process(
@@ -232,7 +242,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         #     self.Refresh()
 
     def on_reset(self, event: wx.Event):
-        self.frame_ctrl.SetValue(0)
+        self.parent.fno = 0
         self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
         self.shader.look_at_center = MVector3D(0, self.shader.INITIAL_LOOK_AT_CENTER_Y, 0)
         self.shader.camera_rotation = MQuaternion()
@@ -351,7 +361,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         pil_image.frombytes(bytes(bitmap.ConvertToImage().GetData()))
 
         # ImageをPNGファイルとして保存する
-        file_path = os.path.join(os.path.dirname(self.motion.path), "capture", f"{self.frame_ctrl.GetValue():08d}.png")
+        file_path = os.path.join(os.path.dirname(self.motion.path), "capture", f"{self.parent.fno:06d}.png")
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
         # 画像をファイルに保存
