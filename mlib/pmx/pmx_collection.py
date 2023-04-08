@@ -461,7 +461,7 @@ class PmxModel(BaseHashModel):
                 "モデルセットアップ：ボーン",
                 index=bone.index,
                 total_index_count=total_index_count,
-                display_block=1000,
+                display_block=50,
             )
 
         # ボーンツリー生成
