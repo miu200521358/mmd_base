@@ -48,6 +48,20 @@ class FilePanel(BasePanel):
         )
         self.model_ctrl.set_parent_sizer(self.root_sizer)
 
+        self.dress_ctrl = MFilePickerCtrl(
+            self.frame,
+            self,
+            self.pmx_reader,
+            key="dress_pmx",
+            title="衣装モデル",
+            is_show_name=True,
+            name_spacer=20,
+            is_save=False,
+            tooltip="PMX衣装モデル",
+            event=self.on_change_dress_pmx,
+        )
+        self.dress_ctrl.set_parent_sizer(self.root_sizer)
+
         self.motion_ctrl = MFilePickerCtrl(
             self.frame,
             self,
@@ -86,6 +100,10 @@ class FilePanel(BasePanel):
             model_path = os.path.join(dir_path, f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
             self.output_pmx_ctrl.path = model_path
 
+    def on_change_dress_pmx(self, event: wx.Event):
+        if self.dress_ctrl.read_name():
+            self.dress_ctrl.read_digest()
+
     def on_change_motion(self, event: wx.Event):
         if self.motion_ctrl.read_name():
             self.motion_ctrl.read_digest()
@@ -100,6 +118,7 @@ class PmxLoadWorker(BaseWorker):
 
         self.result_data = (
             file_panel.pmx_reader.read_by_filepath(file_panel.model_ctrl.path),
+            file_panel.pmx_reader.read_by_filepath(file_panel.dress_ctrl.path),
             file_panel.vmd_reader.read_by_filepath(file_panel.motion_ctrl.path),
         )
 
@@ -143,7 +162,7 @@ class TestFrame(BaseFrame):
     def __init__(self, app) -> None:
         super().__init__(
             app,
-            history_keys=["model_pmx", "motion_vmd"],
+            history_keys=["model_pmx", "dress_pmx", "motion_vmd"],
             title="Mu Test Frame",
             size=wx.Size(1000, 800),
         )
@@ -173,6 +192,7 @@ class TestFrame(BaseFrame):
 
     def save_histories(self):
         self.file_panel.model_ctrl.save_path()
+        self.file_panel.dress_ctrl.save_path()
         self.file_panel.motion_ctrl.save_path()
 
         save_histories(self.histories)
@@ -183,15 +203,18 @@ class TestFrame(BaseFrame):
         if not (result and data):
             return
 
-        data1, data2 = data
+        data1, data2, data3 = data
         model: PmxModel = data1
-        motion: VmdMotion = data2
+        dress: PmxModel = data2
+        motion: VmdMotion = data3
         self.file_panel.model_ctrl.data = model
+        self.file_panel.dress_ctrl.data = dress
         self.file_panel.motion_ctrl.data = motion
 
         try:
             self.config_panel.canvas.set_context()
             self.config_panel.canvas.append_model_set(self.file_panel.model_ctrl.data, self.file_panel.motion_ctrl.data)
+            self.config_panel.canvas.append_model_set(self.file_panel.dress_ctrl.data, VmdMotion())
             self.config_panel.canvas.Refresh()
             self.notebook.ChangeSelection(self.config_panel.tab_idx)
         except:

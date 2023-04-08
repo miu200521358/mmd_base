@@ -34,14 +34,12 @@ def animate(queue: Queue, fno: int, model_sets: list["ModelSet"]):
 class ModelSet:
     def __init__(self, shader: MShader, model: PmxModel, motion: VmdMotion):
         self.model = model
-        model.init_draw(shader)
-
         self.motion = motion
-        self.animation = MotionSet(model, motion)
+        model.init_draw(shader)
 
 
 class MotionSet:
-    def __init__(self, model: PmxModel, motion: VmdMotion, fno: int = 0) -> None:
+    def __init__(self, model: PmxModel, motion: VmdMotion, fno: int) -> None:
         if motion:
             self.bone_matrixes, self.vertex_morph_poses, self.uv_morph_poses, self.uv1_morph_poses, self.material_morphs = motion.animate(fno, model)
         else:
@@ -154,9 +152,9 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.shader.update_camera(is_edge)
             self.shader.unuse()
 
+        self.shader.msaa.bind()
         for model_set, animation in zip(self.model_sets, self.animations):
             if model_set.model:
-                self.shader.msaa.bind()
                 model_set.model.draw(
                     animation.bone_matrixes,
                     animation.vertex_morph_poses,
@@ -164,7 +162,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                     animation.uv1_morph_poses,
                     animation.material_morphs,
                 )
-                self.shader.msaa.unbind()
+        self.shader.msaa.unbind()
 
     def on_frame_forward(self, event: wx.Event):
         self.frame_ctrl.SetValue(min(self.max_fno, self.frame_ctrl.GetValue() + 1))
