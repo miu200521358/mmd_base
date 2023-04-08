@@ -132,15 +132,22 @@ def unwrapped_path(path: str):
 def validate_save_file(path: str, title: str) -> bool:
     """保存可能なファイルであるか"""
     try:
+        is_makedir = False
+        if not os.path.exists(os.path.basename(path)):
+            # ディレクトリが無い場合、一旦作る
+            os.makedirs(os.path.basename(path), exist_ok=True)
+            is_makedir = True
         open(path, "w")
         os.remove(path)
+        if is_makedir:
+            os.rmdir(os.path.basename(path))
     except Exception:
         logger.warning(
             f"{title}のチェックに失敗しました。以下の原因が考えられます。\n"
-            + f"{title}が255文字を超えている\n"
-            + f'{title}に使えない文字列が含まれている（例) \\ / : * ? " < > |）'
-            + f"{title}の親フォルダに書き込み権限がない"
-            + f"{title}に書き込み権限がない"
+            + f"・{title}が255文字を超えている\n"
+            + f'・{title}に使えない文字列が含まれている（例) \\ / : * ? " < > |）\n'
+            + f"・{title}の親フォルダに書き込み権限がない\n"
+            + f"・{title}に書き込み権限がない\n"
         )
         return False
     return True
