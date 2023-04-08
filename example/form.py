@@ -223,7 +223,7 @@ class TestFrame(BaseFrame):
                 if not self.file_panel.dress_ctrl.valid():
                     logger.warning("衣装欄に有効なパスが設定されていない為、タブ遷移を中断します。")
                     return
-                if not self.file_panel.model_ctrl.data or not self.file_panel.dress_ctrl.data:
+                if not self.file_panel.model_ctrl.data or not self.file_panel.dress_ctrl.data or not self.file_panel.motion_ctrl.data:
                     # 設定タブにうつった時に読み込む
                     self.config_panel.canvas.clear_model_set()
                     self.save_histories()

@@ -172,8 +172,9 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         bool
             読み取り出来るパスか否か
         """
-        if not self.file_ctrl.GetPath():
+        if not self.file_ctrl.GetPath().strip():
             self.name_ctrl.SetValue(__("(未設定)"))
+            self.clear_data()
             return False
 
         if self.is_show_name and not self.is_save:
@@ -182,6 +183,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
                 self.name_ctrl.SetValue(f"({name[:20]})")
                 return True
         self.name_ctrl.SetValue(__("(読取失敗)"))
+        self.clear_data()
         return False
 
     def read_digest(self):
@@ -189,11 +191,15 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         if self.is_show_name and not self.is_save and validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
             digest = self.reader.read_hash_by_filepath(self.file_ctrl.GetPath())
             if self.data and self.data.digest != digest:
-                # 読み取り対象データが変わっている場合、オブジェクトをクリアしておく
-                if isinstance(self.data, PmxModel):
-                    # PMXデータの場合、GLオブジェクトも削除
-                    self.data.delete_draw()
-                self.data = None
+                self.clear_data()
+
+    def clear_data(self):
+        """リーダー対象オブジェクトをクリア"""
+        if self.data is not None:
+            if isinstance(self.data, PmxModel):
+                # PMXデータの場合、GLオブジェクトも削除
+                self.data.delete_draw()
+            self.data = None
 
 
 class MFileDropTarget(wx.FileDropTarget):
