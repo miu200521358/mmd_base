@@ -731,7 +731,7 @@ class Bone(BaseIndexNameModel):
         "init_matrix",
         "parent_relative_position",
         "tail_relative_position",
-        "weighted_vertices",
+        "weighted_scales",
     ]
 
     def __init__(
