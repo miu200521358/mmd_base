@@ -347,6 +347,7 @@ class Texture(BaseIndexNameModel):
         "texture_type",
         "texture",
         "texture_id",
+        "valid",
     ]
 
     def __init__(self, index: int = -1, name: str = ""):

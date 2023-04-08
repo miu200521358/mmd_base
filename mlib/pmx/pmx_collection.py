@@ -44,7 +44,7 @@ class Vertices(BaseIndexDictModel[Vertex]):
             indexes = v.deform.get_indexes()
             if bone_index in indexes:
                 weights = v.deform.get_weights()
-                vertex_weights[v.index] = MVector3D(*(v.normal.vector * weights[indexes == bone_index]))
+                vertex_weights[v.index] = MVector3D(*(v.normal.vector * weights[indexes == bone_index][0]))
         return vertex_weights
 
 
