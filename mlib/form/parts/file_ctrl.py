@@ -148,6 +148,8 @@ class MFilePickerCtrl:
 
     def valid(self, v: Optional[str] = None):
         path = v if v else self.file_ctrl.GetPath()
+        if not path:
+            return False
         return (not self.is_save and validate_file(path, self.reader.file_type)) or (self.is_save and validate_save_file(path, self.title))
 
     def unwrap(self):
