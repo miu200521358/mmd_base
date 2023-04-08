@@ -743,7 +743,7 @@ class Bone(BaseIndexNameModel):
         "init_matrix",
         "parent_relative_position",
         "tail_relative_position",
-        "weighted_scales",
+        "weighted_vertex_scales",
     ]
 
     def __init__(
@@ -780,7 +780,7 @@ class Bone(BaseIndexNameModel):
 
         self.offset_matrix = MMatrix4x4()
         self.init_matrix = MMatrix4x4()
-        self.weighted_scales: dict[int, MVector3D] = {}
+        self.weighted_vertex_scales: dict[int, MVector3D] = {}
 
     @property
     def is_tail_bone(self) -> bool:

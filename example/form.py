@@ -125,9 +125,9 @@ class PmxLoadWorker(BaseWorker):
             dress = file_panel.dress_ctrl.reader.read_by_filepath(file_panel.dress_ctrl.path)
 
             # ウェイト頂点の法線に基づいたスケールを取得
-            vertex_bone_scales = dress.get_scale_by_bone_index()
+            vertex_bone_scales = dress.get_weighted_vertex_scale()
             for bone in dress.bones:
-                bone.weighted_scales = vertex_bone_scales.get(bone.index, {})
+                bone.weighted_vertex_scales = vertex_bone_scales.get(bone.index, {})
 
         elif file_panel.dress_ctrl.data:
             dress = file_panel.dress_ctrl.data

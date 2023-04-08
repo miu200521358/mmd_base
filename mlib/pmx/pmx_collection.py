@@ -382,7 +382,7 @@ class PmxModel(BaseHashModel):
     def name(self) -> str:
         return self.model_name
 
-    def get_scale_by_bone_index(self) -> dict[int, dict[int, MVector3D]]:
+    def get_weighted_vertex_scale(self) -> dict[int, dict[int, MVector3D]]:
         vertex_bone_scales: dict[int, dict[int, MVector3D]] = {}
         total_index_count = len(self.vertices)
         for vertex in self.vertices:
