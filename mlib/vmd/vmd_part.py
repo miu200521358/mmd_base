@@ -248,8 +248,8 @@ class VmdBoneFrame(BaseVmdNameFrame):
 
     def __init__(
         self,
-        name: str = "",
         index: int = -1,
+        name: str = "",
         register: bool = False,
         read: bool = False,
     ):
