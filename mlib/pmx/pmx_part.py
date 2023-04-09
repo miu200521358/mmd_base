@@ -1156,8 +1156,6 @@ class MorphType(IntEnum):
     """7:追加UV4"""
     MATERIAL = 8
     """"8:材質"""
-    BY_TOOL = 99
-    """99: ツールで追加した仮モーフ"""
 
 
 class Morph(BaseIndexNameModel):
@@ -1176,6 +1174,7 @@ class Morph(BaseIndexNameModel):
         モーフ種類, by default MorphType.GROUP
     offsets : list[TMorphOffset], optional
         モーフオフセット
+    is_system: ツール側で追加したモーフ
     """
 
     __slots__ = (
@@ -1185,6 +1184,7 @@ class Morph(BaseIndexNameModel):
         "panel",
         "morph_type",
         "offsets",
+        "is_system",
     )
 
     def __init__(
@@ -1197,6 +1197,7 @@ class Morph(BaseIndexNameModel):
         self.panel = MorphPanel.EYE_UPPER_LEFT
         self.morph_type = MorphType.GROUP
         self.offsets: list[VertexMorphOffset | UvMorphOffset | BoneMorphOffset | GroupMorphOffset | MaterialMorphOffset] = []
+        self.is_system = False
 
 
 @unique
