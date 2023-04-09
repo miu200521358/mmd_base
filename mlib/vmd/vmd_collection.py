@@ -285,7 +285,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return poses, qqs
 
-    def calc_ik_rotations(self, fno: int, model: PmxModel, bone_names: Optional[list[str]] = None):
+    def calc_ik_rotations(self, fno: int, model: PmxModel, bone_names: Optional[list[str]] = []):
         # IK関係の末端ボーン名
         ik_last_bone_names: set[str] = {model.bones[0].name}
         if bone_names:
