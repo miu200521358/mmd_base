@@ -2,7 +2,7 @@ import logging
 from bisect import bisect_left
 from functools import lru_cache
 from math import acos, degrees, pi
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 
@@ -249,7 +249,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return bone_matrixes
 
-    def animate_bone_matrixes(self, fno: int, model: PmxModel, bone_names: Optional[List[str]] = None) -> Tuple[np.ndarray, np.ndarray]:
+    def animate_bone_matrixes(self, fno: int, model: PmxModel, bone_names: list[str] = []) -> tuple[np.ndarray, np.ndarray]:
         row = 1
         col = len(model.bones)
         poses = np.full((row, col, 3), np.zeros(3))
@@ -285,7 +285,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return poses, qqs
 
-    def calc_ik_rotations(self, fno: int, model: PmxModel, bone_names: Optional[List[str]] = None):
+    def calc_ik_rotations(self, fno: int, model: PmxModel, bone_names: Optional[list[str]] = None):
         # IK関係の末端ボーン名
         ik_last_bone_names: set[str] = {model.bones[0].name}
         if bone_names:
@@ -295,10 +295,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         for bone in model.bones:
             if bone.is_ik and bone.ik:
                 # IKリンクボーン・ターゲットボーンのボーンツリーをすべてチェック対象とする
-                ik_last_bone_names |= {model.bone_trees[bone.index].last_name}
-                ik_last_bone_names |= {model.bone_trees[bone.ik.bone_index].last_name}
+                ik_last_bone_names |= {model.bone_trees[bone.name].last_name}
+                ik_last_bone_names |= {model.bone_trees[model.bones[bone.ik.bone_index].name].last_name}
                 for link_bone in bone.ik.links:
-                    ik_last_bone_names |= {model.bone_trees[link_bone.bone_index].last_name}
+                    ik_last_bone_names |= {model.bone_trees[model.bones[link_bone.bone_index].name].last_name}
         ik_last_bone_names &= target_last_bone_names
         if not ik_last_bone_names:
             # IK計算対象がない場合はそのまま終了
@@ -826,7 +826,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         bf.rotation *= MQuaternion.from_euler_degrees(offset.rotation.degrees * ratio)
         return bf
 
-    def animate_group_morphs(self, fno: int, model: PmxModel, materials: List[ShaderMaterial]) -> Tuple[np.ndarray, VmdBoneFrames, List[ShaderMaterial]]:
+    def animate_group_morphs(self, fno: int, model: PmxModel, materials: list[ShaderMaterial]) -> tuple[np.ndarray, VmdBoneFrames, list[ShaderMaterial]]:
         group_vertex_poses = np.full((len(model.vertices), 3), np.zeros(3))
         bone_frames = VmdBoneFrames()
 
@@ -907,7 +907,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
         return materials
 
-    def animate_material_morphs(self, fno: int, model: PmxModel) -> List[ShaderMaterial]:
+    def animate_material_morphs(self, fno: int, model: PmxModel) -> list[ShaderMaterial]:
         # デフォルトの材質情報を保持（シェーダーに合わせて一部入れ替え）
         materials = [ShaderMaterial(m, MShader.LIGHT_AMBIENT4) for m in model.materials]
 
@@ -1030,7 +1030,7 @@ class VmdMotion(BaseHashModel):
     def name(self) -> str:
         return self.model_name
 
-    def animate(self, fno: int, model: PmxModel) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[ShaderMaterial]]:
+    def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
         # 頂点モーフ
         vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model)
         # UVモーフ
