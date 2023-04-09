@@ -677,51 +677,51 @@ class Meshes(BaseIndexDictModel[Mesh]):
         )
         self.ibo_faces = IBO(self.faces)
 
-        # # ----------
+        # ----------
 
-        # # ボーン位置
-        # self.bones = np.array(
-        #     [
-        #         np.fromiter(
-        #             [
-        #                 -b.position.x,
-        #                 b.position.y,
-        #                 b.position.z,
-        #                 b.index,
-        #             ],
-        #             dtype=np.float32,
-        #             count=3,
-        #         )
-        #         for b in model.bones
-        #     ],
-        # )
+        # ボーン位置
+        self.bones = np.array(
+            [
+                np.fromiter(
+                    [
+                        -b.position.x,
+                        b.position.y,
+                        b.position.z,
+                        b.index,
+                    ],
+                    dtype=np.float32,
+                    count=3,
+                )
+                for b in model.bones
+            ],
+        )
 
-        # bone_face_dtype: type = np.uint8 if model.bone_count == 1 else np.uint16 if model.bone_count == 2 else np.uint32
+        bone_face_dtype: type = np.uint8 if model.bone_count == 1 else np.uint16 if model.bone_count == 2 else np.uint32
 
-        # # ボーン親子関係
-        # self.bone_hierarchies: np.ndarray = np.array(
-        #     [
-        #         np.fromiter(
-        #             [b.index, b.parent_index],
-        #             dtype=bone_face_dtype,
-        #             count=2,
-        #         )
-        #         for b in model.bones
-        #         if 0 <= b.parent_index
-        #     ],
-        # )
+        # ボーン親子関係
+        self.bone_hierarchies: np.ndarray = np.array(
+            [
+                np.fromiter(
+                    [b.index, b.parent_index],
+                    dtype=bone_face_dtype,
+                    count=2,
+                )
+                for b in model.bones
+                if 0 <= b.parent_index
+            ],
+        )
 
-        # # ボーンVAO
-        # self.bone_vao = VAO()
-        # self.bone_vbo_components = {
-        #     0: {"size": 3, "offset": 0},
-        #     1: {"size": 1, "offset": 3},
-        # }
-        # self.bone_vbo_vertices = VBO(
-        #     self.bones,
-        #     self.bone_vbo_components,
-        # )
-        # self.bone_ibo_faces = IBO(self.bone_hierarchies)
+        # ボーンVAO
+        self.bone_vao = VAO()
+        self.bone_vbo_components = {
+            0: {"size": 3, "offset": 0},
+            1: {"size": 1, "offset": 3},
+        }
+        self.bone_vbo_vertices = VBO(
+            self.bones,
+            self.bone_vbo_components,
+        )
+        self.bone_ibo_faces = IBO(self.bone_hierarchies)
 
     def draw(
         self,
@@ -780,93 +780,93 @@ class Meshes(BaseIndexDictModel[Mesh]):
             self.vao.unbind()
 
     def draw_bone(self, bone_matrixes: np.ndarray, bone_color: np.ndarray):
-        # self.shader.use(ProgramType.BONE)
+        self.shader.use(ProgramType.BONE)
 
         # ボーンをモデルメッシュの前面に描画するために深度テストを無効化
         gl.glEnable(gl.GL_DEPTH_TEST)
         gl.glDepthFunc(gl.GL_ALWAYS)
 
-        result_positions = []
+        # result_positions = []
 
-        for bone, matrix in zip(self.model.bones, bone_matrixes):
-            if 0 > bone.parent_index:
-                result_positions.append(np.dot(matrix, np.array([*bone.position.gl.vector, 1]))[:3])
-            else:
-                result_positions.append(np.dot(matrix, np.array([*bone.parent_relative_position.gl.vector, 1]))[:3] + result_positions[bone.parent_index])
+        # for bone, matrix in zip(self.model.bones, bone_matrixes):
+        #     if 0 > bone.parent_index:
+        #         result_positions.append(np.dot(matrix, np.array([*bone.position.gl.vector, 1]))[:3])
+        #     else:
+        #         result_positions.append(np.dot(matrix, np.array([*bone.parent_relative_position.gl.vector, 1]))[:3] + result_positions[bone.parent_index])
 
-        gl.glBegin(gl.GL_LINES)
-        for bone in self.model.bones:
-            if 0 <= bone.parent_index:
-                gl.glColor4f(*bone_color)
-                gl.glVertex3f(*result_positions[bone.parent_index])
-                gl.glColor4f(*bone_color)
-                gl.glVertex3f(*result_positions[bone.index])
-        gl.glEnd()
+        # gl.glBegin(gl.GL_LINES)
+        # for bone in self.model.bones:
+        #     if 0 <= bone.parent_index:
+        #         gl.glColor4f(*bone_color)
+        #         gl.glVertex3f(*result_positions[bone.parent_index])
+        #         gl.glColor4f(*bone_color)
+        #         gl.glVertex3f(*result_positions[bone.index])
+        # gl.glEnd()
 
         # gl.glDepthMask(gl.GL_TRUE)
         # gl.glEnable(gl.GL_DEPTH_TEST)
 
-        # self.bone_vao.bind()
-        # self.bone_vbo_vertices.bind()
-        # self.bone_vbo_vertices.set_slot_by_value(0)
-        # self.bone_vbo_vertices.set_slot_by_value(1)
-        # self.bone_ibo_faces.bind()
+        self.bone_vao.bind()
+        self.bone_vbo_vertices.bind()
+        self.bone_vbo_vertices.set_slot_by_value(0)
+        self.bone_vbo_vertices.set_slot_by_value(1)
+        self.bone_ibo_faces.bind()
 
-        # gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *bone_color)
+        gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *bone_color)
 
-        # # テクスチャをアクティブにする
-        # gl.glActiveTexture(gl.GL_TEXTURE4)
+        # テクスチャをアクティブにする
+        gl.glActiveTexture(gl.GL_TEXTURE4)
 
-        # # テクスチャをバインドする
-        # gl.glBindTexture(gl.GL_TEXTURE_2D, self.shader.bone_matrix_texture_id[ProgramType.BONE.value])
+        # テクスチャをバインドする
+        gl.glBindTexture(gl.GL_TEXTURE_2D, self.shader.bone_matrix_texture_id[ProgramType.BONE.value])
 
-        # # テクスチャのパラメーターの設定
-        # gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAX_LEVEL, 0)
-        # gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
-        # gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
-        # gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
-        # gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
+        # テクスチャのパラメーターの設定
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAX_LEVEL, 0)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
 
-        # # テクスチャをシェーダーに渡す
-        # gl.glTexImage2D(
-        #     gl.GL_TEXTURE_2D,
-        #     0,
-        #     gl.GL_RGBA32F,
-        #     bone_matrixes.shape[1],
-        #     bone_matrixes.shape[0],
-        #     0,
-        #     gl.GL_RGBA,
-        #     gl.GL_FLOAT,
-        #     bone_matrixes.flatten(),
-        # )
+        # テクスチャをシェーダーに渡す
+        gl.glTexImage2D(
+            gl.GL_TEXTURE_2D,
+            0,
+            gl.GL_RGBA32F,
+            bone_matrixes.shape[1],
+            bone_matrixes.shape[0],
+            0,
+            gl.GL_RGBA,
+            gl.GL_FLOAT,
+            bone_matrixes.flatten(),
+        )
 
-        # gl.glUniform1i(self.shader.bone_matrix_texture_uniform[ProgramType.BONE.value], 4)
+        gl.glUniform1i(self.shader.bone_matrix_texture_uniform[ProgramType.BONE.value], 4)
 
-        # error_code = gl.glGetError()
-        # if error_code != gl.GL_NO_ERROR:
-        #     raise MViewerException(f"Mesh bind_bone_matrixes Failure\n{error_code}")
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"Mesh bind_bone_matrixes Failure\n{error_code}")
 
-        # # ---------------------
+        # ---------------------
 
-        # gl.glDrawElements(
-        #     gl.GL_LINES,
-        #     self.bone_hierarchies.size,
-        #     self.bone_ibo_faces.dtype,
-        #     gl.ctypes.c_void_p(0),
-        # )
+        gl.glDrawElements(
+            gl.GL_LINES,
+            self.bone_hierarchies.size,
+            self.bone_ibo_faces.dtype,
+            gl.ctypes.c_void_p(0),
+        )
 
-        # error_code = gl.glGetError()
-        # if error_code != gl.GL_NO_ERROR:
-        #     raise MViewerException(f"Meshes draw_bone Failure\n{error_code}")
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"Meshes draw_bone Failure\n{error_code}")
 
-        # # -------------------
+        # -------------------
 
-        # gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 
-        # self.bone_ibo_faces.unbind()
-        # self.bone_vbo_vertices.unbind()
-        # self.bone_vao.unbind()
-        # self.shader.unuse()
+        self.bone_ibo_faces.unbind()
+        self.bone_vbo_vertices.unbind()
+        self.bone_vao.unbind()
+        self.shader.unuse()
 
     def delete_draw(self):
         for material in self.model.materials:

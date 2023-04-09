@@ -298,7 +298,7 @@ class MShader:
             self.sphere_uniform[program_type.value] = gl.glGetUniformLocation(program, "sphereSampler")
             self.sphere_factor_uniform[program_type.value] = gl.glGetUniformLocation(program, "sphereFactor")
 
-    def update_camera(self, program_type: ProgramType) -> None:
+    def update_camera(self) -> None:
         # 視野領域の決定
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
@@ -317,43 +317,44 @@ class MShader:
         camera_mat.translate(self.camera_position)
         camera_pos: MVector3D = camera_mat * MVector3D()
 
-        if program_type == ProgramType.MODEL:
-            gl.glUniform3f(self.camera_vec_uniform[program_type.value], *camera_pos.vector)
-
         # 視点位置の決定
         gl.glMatrixMode(gl.GL_MODELVIEW)
         gl.glLoadIdentity()
         glu.gluLookAt(*camera_pos.vector, *self.look_at_center.vector, *self.look_at_up.vector)
 
         model_view_matrix = np.array(gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX), dtype=np.float32)
-        gl.glUniformMatrix4fv(
-            self.model_view_matrix_uniform[program_type.value],
-            1,
-            gl.GL_FALSE,
-            model_view_matrix,
-        )
 
-        gl.glUniformMatrix4fv(
-            self.model_view_projection_matrix_uniform[program_type.value],
-            1,
-            gl.GL_FALSE,
-            np.matmul(model_view_matrix, self.projection_matrix),
-        )
+        for program_type in ProgramType:
+            self.use(program_type)
+
+            if program_type == ProgramType.MODEL:
+                gl.glUniform3f(self.camera_vec_uniform[program_type.value], *camera_pos.vector)
+
+            gl.glUniformMatrix4fv(
+                self.model_view_matrix_uniform[program_type.value],
+                1,
+                gl.GL_FALSE,
+                model_view_matrix,
+            )
+
+            gl.glUniformMatrix4fv(
+                self.model_view_projection_matrix_uniform[program_type.value],
+                1,
+                gl.GL_FALSE,
+                np.matmul(model_view_matrix, self.projection_matrix),
+            )
+
+            self.unuse()
 
     def fit(self, width: int, height: int):
         self.width = width
         self.height = height
         self.aspect_ratio = float(self.width) / float(self.height)
 
-        for program_type in ProgramType:
-            self.use(program_type)
+        # ビューポートの設定
+        gl.glViewport(0, 0, self.width, self.height)
 
-            # ビューポートの設定
-            gl.glViewport(0, 0, self.width, self.height)
-
-            self.update_camera(program_type)
-
-            self.unuse()
+        self.update_camera()
 
     def use(self, program_type: ProgramType):
         match program_type:
