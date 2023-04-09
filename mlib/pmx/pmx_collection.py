@@ -371,6 +371,8 @@ class PmxModel(BaseHashModel):
         "joints",
         "for_draw",
         "meshes",
+        "textures",
+        "toon_textures",
     )
 
     def __init__(
