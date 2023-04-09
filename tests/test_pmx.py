@@ -361,6 +361,18 @@ def test_read_by_filepath_ok() -> None:
     ["全ての親", "センター", "グルーブ", "腰", "上半身", "上半身2", "上半身3", "左肩P", "左肩", "左肩C", "左腕", "左腕捩", "左ひじ", "左手捩", "左手首"] == bone_tree.names
 
 
+def test_get_vertices_by_material() -> None:
+    import os
+
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+
+    reader = PmxReader()
+    model: PmxModel = reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
+    vertices_by_material = model.get_vertices_by_material()
+    assert vertices_by_material[0]
+
+
 def test_read_by_filepath_ok_tree() -> None:
     import os
 

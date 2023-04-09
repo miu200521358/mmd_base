@@ -1,6 +1,6 @@
 import hashlib
 from bisect import bisect_left
-from typing import Dict, Generic, List, Optional, Tuple, TypeVar
+from typing import Generic, Optional, TypeVar
 
 from mlib.base.base import BaseModel, Encoding
 from mlib.base.part import TBaseIndexModel, TBaseIndexNameModel
@@ -135,7 +135,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             self.sort_indexes()
 
     @property
-    def names(self) -> List[str]:
+    def names(self) -> list[str]:
         return list(self._names.keys())
 
     @property
@@ -209,7 +209,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     def __bool__(self) -> bool:
         return 0 < len(self.data)
 
-    def range_indexes(self, index: int, indexes: Optional[List[int]] = None) -> Tuple[int, int, int]:
+    def range_indexes(self, index: int, indexes: Optional[list[int]] = None) -> tuple[int, int, int]:
         """
         指定されたINDEXの前後を返す
 
@@ -281,7 +281,7 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
             self.append(self.create(key), name=key)
         return self.data[key]
 
-    def filter(self, *keys: str) -> Dict[str, TBaseIndexNameDictModel]:
+    def filter(self, *keys: str) -> dict[str, TBaseIndexNameDictModel]:
         return dict([(k, v.copy()) for k, v in self.data.items() if k in keys])
 
     def __delitem__(self, key: str) -> None:
@@ -300,7 +300,7 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
         self.data[name] = value
 
     @property
-    def names(self) -> List[str]:
+    def names(self) -> list[str]:
         return self._names
 
     def __len__(self) -> int:

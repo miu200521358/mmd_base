@@ -431,14 +431,15 @@ class PmxModel(BaseHashModel):
         return vertex_bone_scales
 
     def get_vertices_by_material(self) -> dict[int, list[int]]:
-        prev_vertices_count = 0
+        prev_face_count = 0
         vertices_by_materials: dict[int, list[int]] = {}
         for material in self.materials:
             vertices: list[int] = []
-            for face_index in range(prev_vertices_count, prev_vertices_count + material.vertices_count):
+            face_count = material.vertices_count // 3
+            for face_index in range(prev_face_count, prev_face_count + face_count):
                 vertices.extend(self.faces[face_index].vertices)
             vertices_by_materials[material.index] = list(set(vertices))
-            prev_vertices_count += material.vertices_count
+            prev_face_count += face_count
         return vertices_by_materials
 
     def init_draw(self, shader: MShader):
