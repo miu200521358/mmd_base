@@ -46,7 +46,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
 
     def __init__(self, name: str = "") -> None:
         super().__init__(name)
-        self.__ik_indexes: list[int] = []
+        self._ik_indexes: list[int] = []
 
     def __getitem__(self, key: int | str) -> VmdBoneFrame:
         if isinstance(key, str):
@@ -66,9 +66,9 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         )
 
     def append(self, value: VmdBoneFrame, is_sort: bool = True):
-        if value.ik_rotation is not None and value.index not in self.__ik_indexes:
-            self.__ik_indexes.append(value.index)
-            self.__ik_indexes.sort()
+        if value.ik_rotation is not None and value.index not in self._ik_indexes:
+            self._ik_indexes.append(value.index)
+            self._ik_indexes.sort()
         super().append(value, is_sort)
 
     def calc(self, prev_index: int, index: int, next_index: int) -> VmdBoneFrame:
@@ -94,9 +94,9 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         prev_bf = self.data[prev_index] if prev_index in self else VmdBoneFrame(name=self.name, index=prev_index)
         next_bf = self.data[next_index] if next_index in self else VmdBoneFrame(name=self.name, index=next_index)
 
-        slice_idx = bisect_left(self.__ik_indexes, index)
-        prev_ik_indexes = self.__ik_indexes[:slice_idx]
-        next_ik_indexes = self.__ik_indexes[slice_idx:]
+        slice_idx = bisect_left(self._ik_indexes, index)
+        prev_ik_indexes = self._ik_indexes[:slice_idx]
+        next_ik_indexes = self._ik_indexes[slice_idx:]
 
         prev_ik_index = prev_ik_indexes[-1] if prev_ik_indexes else prev_index
         prev_ik_rotation = self.data[prev_ik_index].ik_rotation or MQuaternion()
