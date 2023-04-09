@@ -3,10 +3,11 @@ from glob import glob
 from typing import Optional
 
 import numpy as np
+import OpenGL.GL as gl
 
 from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
 from mlib.base.logger import MLogger
-from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D
+from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D, MVector4D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
     Bone,
@@ -24,7 +25,7 @@ from mlib.pmx.pmx_part import (
     ToonSharing,
     Vertex,
 )
-from mlib.pmx.shader import MShader, VsLayout
+from mlib.pmx.shader import MShader, ProgramType, VsLayout
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -479,10 +480,11 @@ class PmxModel(BaseHashModel):
         uv_morph_poses: np.ndarray,
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
+        bone_line_color: Optional[MVector4D] = None,
     ):
         if not self.for_draw or not self.meshes:
             return
-        self.meshes.draw(bone_matrixes, vertex_morph_poses, uv_morph_poses, uv1_morph_poses, material_morphs)
+        self.meshes.draw(bone_matrixes, vertex_morph_poses, uv_morph_poses, uv1_morph_poses, material_morphs, bone_line_color)
 
     def setup(self) -> None:
         total_index_count = len(self.bones)
@@ -641,8 +643,38 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
             prev_vertices_count += material.vertices_count
 
+        # ボーン位置
+        self.bones = np.array(
+            [
+                np.fromiter(
+                    [
+                        -b.position.x,
+                        b.position.y,
+                        b.position.z,
+                    ],
+                    dtype=np.float32,
+                    count=3,
+                )
+                for b in model.bones
+            ],
+        )
+
+        # ボーン親子関係
+        self.bone_hierarchies: np.ndarray = np.array(
+            [
+                np.fromiter(
+                    [b.index, b.parent_index],
+                    dtype=face_dtype,
+                    count=2,
+                )
+                for b in model.bones
+                if 0 <= b.parent_index
+            ],
+        )
+
         # ---------------------
 
+        # 頂点VAO
         self.vao = VAO()
         self.vbo_components = {
             VsLayout.POSITION_ID.value: {"size": 3, "offset": 0},
@@ -665,6 +697,17 @@ class Meshes(BaseIndexDictModel[Mesh]):
         )
         self.ibo_faces = IBO(self.faces)
 
+        # ボーンVAO
+        self.bone_vao = VAO()
+        self.bone_vbo_components = {
+            0: {"size": 3, "offset": 0},
+        }
+        self.bone_vbo_vertices = VBO(
+            self.bones,
+            self.bone_vbo_components,
+        )
+        self.bone_ibo_faces = IBO(self.bone_hierarchies)
+
     def draw(
         self,
         bone_matrixes: np.ndarray,
@@ -672,6 +715,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         uv_morph_poses: np.ndarray,
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
+        bone_line_color: Optional[MVector4D] = None,
     ):
         # 頂点モーフ変動量を上書き設定してからバインド
         self.vbo_vertices.data[:, self.morph_pos_comps["offset"] : (self.morph_pos_comps["offset"] + self.morph_pos_comps["size"])] = vertex_morph_poses
@@ -697,13 +741,13 @@ class Meshes(BaseIndexDictModel[Mesh]):
             material_morph = material_morphs[mesh.material.index]
 
             # モデル描画
-            self.shader.use()
+            self.shader.use(ProgramType.MODEL)
             mesh.draw_model(bone_matrixes, material_morph, self.shader, self.ibo_faces)
             self.shader.unuse()
 
             if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and 0 < material_morph.diffuse.w:
                 # エッジ描画
-                self.shader.use(edge=True)
+                self.shader.use(ProgramType.EDGE)
                 mesh.draw_edge(bone_matrixes, material_morph, self.shader, self.ibo_faces)
                 self.shader.unuse()
 
@@ -712,6 +756,29 @@ class Meshes(BaseIndexDictModel[Mesh]):
             self.ibo_faces.unbind()
             self.vbo_vertices.unbind()
             self.vao.unbind()
+
+        if bone_line_color:
+            self.bone_vao.bind()
+            self.bone_vbo_vertices.bind()
+            self.bone_vbo_vertices.set_slot(0)
+            self.bone_ibo_faces.bind()
+
+            # ボーン描画
+            self.shader.use(ProgramType.BONE)
+            self.draw_bone(bone_matrixes, bone_line_color)
+            self.shader.unuse()
+
+    def draw_bone(self, bone_matrixes: np.ndarray, bone_line_color: MVector4D):
+        gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *bone_line_color.vector)
+
+        self[0].bind_bone_matrixes(bone_matrixes, self.shader, ProgramType.BONE)
+
+        gl.glDrawElements(
+            gl.GL_LINE,
+            len(self.bones),
+            self.bone_ibo_faces.dtype,
+            gl.ctypes.c_void_p(0),
+        )
 
     def delete_draw(self):
         for material in self.model.materials:

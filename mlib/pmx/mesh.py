@@ -6,7 +6,7 @@ import OpenGL.GL as gl
 from mlib.base.exception import MViewerException
 from mlib.base.part import BaseIndexModel
 from mlib.pmx.pmx_part import DrawFlg, Material, ShaderMaterial, Texture
-from mlib.pmx.shader import MShader, VsLayout
+from mlib.pmx.shader import MShader, ProgramType, VsLayout
 
 
 class VAO:
@@ -171,36 +171,36 @@ class Mesh(BaseIndexModel):
             gl.glCullFace(gl.GL_BACK)
 
         # ボーンデフォームテクスチャ設定
-        self.bind_bone_matrixes(bone_matrixes, shader, False)
+        self.bind_bone_matrixes(bone_matrixes, shader, ProgramType.MODEL)
 
         # ------------------
         # 材質色設定
         # full.fx の AmbientColor相当
-        gl.glUniform4f(shader.diffuse_uniform[False], *material_morphs.diffuse.vector)
-        gl.glUniform3f(shader.ambient_uniform[False], *material_morphs.ambient.vector)
-        gl.glUniform4f(shader.specular_uniform[False], *material_morphs.specular.vector)
+        gl.glUniform4f(shader.diffuse_uniform[ProgramType.MODEL.value], *material_morphs.diffuse.vector)
+        gl.glUniform3f(shader.ambient_uniform[ProgramType.MODEL.value], *material_morphs.ambient.vector)
+        gl.glUniform4f(shader.specular_uniform[ProgramType.MODEL.value], *material_morphs.specular.vector)
 
         # テクスチャ使用有無
-        gl.glUniform1i(shader.use_texture_uniform[False], self.texture is not None and self.texture.valid)
+        gl.glUniform1i(shader.use_texture_uniform[ProgramType.MODEL.value], self.texture is not None and self.texture.valid)
         if self.texture and self.texture.valid:
             self.texture.bind()
-            gl.glUniform1i(shader.texture_uniform[False], self.texture.texture_type.value)
-            gl.glUniform4f(shader.texture_factor_uniform[False], *material_morphs.texture_factor.vector)
+            gl.glUniform1i(shader.texture_uniform[ProgramType.MODEL.value], self.texture.texture_type.value)
+            gl.glUniform4f(shader.texture_factor_uniform[ProgramType.MODEL.value], *material_morphs.texture_factor.vector)
 
         # Toon使用有無
-        gl.glUniform1i(shader.use_toon_uniform[False], self.toon_texture is not None and self.toon_texture.valid)
+        gl.glUniform1i(shader.use_toon_uniform[ProgramType.MODEL.value], self.toon_texture is not None and self.toon_texture.valid)
         if self.toon_texture and self.toon_texture.valid:
             self.toon_texture.bind()
-            gl.glUniform1i(shader.toon_uniform[False], self.toon_texture.texture_type.value)
-            gl.glUniform4f(shader.toon_factor_uniform[False], *material_morphs.toon_texture_factor.vector)
+            gl.glUniform1i(shader.toon_uniform[ProgramType.MODEL.value], self.toon_texture.texture_type.value)
+            gl.glUniform4f(shader.toon_factor_uniform[ProgramType.MODEL.value], *material_morphs.toon_texture_factor.vector)
 
         # Sphere使用有無
-        gl.glUniform1i(shader.use_sphere_uniform[False], self.sphere_texture is not None and self.sphere_texture.valid)
+        gl.glUniform1i(shader.use_sphere_uniform[ProgramType.MODEL.value], self.sphere_texture is not None and self.sphere_texture.valid)
         if self.sphere_texture and self.sphere_texture.valid:
             self.sphere_texture.bind()
-            gl.glUniform1i(shader.sphere_mode_uniform[False], self.material.sphere_mode)
-            gl.glUniform1i(shader.sphere_uniform[False], self.sphere_texture.texture_type.value)
-            gl.glUniform4f(shader.sphere_factor_uniform[False], *material_morphs.sphere_texture_factor.vector)
+            gl.glUniform1i(shader.sphere_mode_uniform[ProgramType.MODEL.value], self.material.sphere_mode)
+            gl.glUniform1i(shader.sphere_uniform[ProgramType.MODEL.value], self.sphere_texture.texture_type.value)
+            gl.glUniform4f(shader.sphere_factor_uniform[ProgramType.MODEL.value], *material_morphs.sphere_texture_factor.vector)
 
         gl.glDrawElements(
             gl.GL_TRIANGLES,
@@ -235,12 +235,12 @@ class Mesh(BaseIndexModel):
         gl.glCullFace(gl.GL_FRONT)
 
         # ボーンデフォームテクスチャ設定
-        self.bind_bone_matrixes(bone_matrixes, shader, True)
+        self.bind_bone_matrixes(bone_matrixes, shader, ProgramType.EDGE)
 
         # ------------------
         # エッジ設定
-        gl.glUniform4f(shader.edge_color_uniform[True], *material_morphs.edge_color.vector)
-        gl.glUniform1f(shader.edge_size_uniform[True], material_morphs.edge_size)
+        gl.glUniform4f(shader.edge_color_uniform[ProgramType.EDGE.value], *material_morphs.edge_color.vector)
+        gl.glUniform1f(shader.edge_size_uniform[ProgramType.EDGE.value], material_morphs.edge_size)
 
         gl.glDrawElements(
             gl.GL_TRIANGLES,
@@ -257,15 +257,15 @@ class Mesh(BaseIndexModel):
 
     def bind_bone_matrixes(
         self,
-        mats: np.ndarray,
+        matrixes: np.ndarray,
         shader: MShader,
-        edge: bool,
+        program_type: ProgramType,
     ):
         # テクスチャをアクティブにする
         gl.glActiveTexture(gl.GL_TEXTURE3)
 
         # テクスチャをバインドする
-        gl.glBindTexture(gl.GL_TEXTURE_2D, shader.bone_matrix_texture_id[edge])
+        gl.glBindTexture(gl.GL_TEXTURE_2D, shader.bone_matrix_texture_id[program_type.value])
 
         # テクスチャのパラメーターの設定
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAX_LEVEL, 0)
@@ -279,15 +279,15 @@ class Mesh(BaseIndexModel):
             gl.GL_TEXTURE_2D,
             0,
             gl.GL_RGBA32F,
-            mats.shape[1],
-            mats.shape[0],
+            matrixes.shape[1],
+            matrixes.shape[0],
             0,
             gl.GL_RGBA,
             gl.GL_FLOAT,
-            mats.flatten(),
+            matrixes.flatten(),
         )
 
-        gl.glUniform1i(shader.bone_matrix_texture_uniform[edge], 3)
+        gl.glUniform1i(shader.bone_matrix_texture_uniform[program_type.value], 3)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:

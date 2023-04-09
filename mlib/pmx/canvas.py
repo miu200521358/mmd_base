@@ -14,7 +14,7 @@ from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import ShaderMaterial
-from mlib.pmx.shader import MShader
+from mlib.pmx.shader import MShader, ProgramType
 from mlib.vmd.vmd_collection import VmdMotion
 
 logger = MLogger(os.path.basename(__file__))
@@ -168,9 +168,9 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.set_context()
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
-        for is_edge in [False, True]:
-            self.shader.use(is_edge)
-            self.shader.update_camera(is_edge)
+        for program_type in ProgramType:
+            self.shader.use(program_type)
+            self.shader.update_camera(program_type)
             self.shader.unuse()
 
         self.shader.msaa.bind()
@@ -182,6 +182,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                     animation.uv_morph_poses,
                     animation.uv1_morph_poses,
                     animation.material_morphs,
+                    None,
                 )
         self.shader.msaa.unbind()
 
