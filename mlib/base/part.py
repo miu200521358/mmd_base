@@ -1,5 +1,5 @@
 from enum import Enum, unique
-from typing import Optional, TypeVar
+from typing import Generic, Optional, TypeVar
 
 import numpy as np
 
@@ -148,4 +148,6 @@ class BaseIndexNameModel(BaseModel):
 
 
 TBaseIndexModel = TypeVar("TBaseIndexModel", bound=BaseIndexModel)
+GTBaseIndexModel = Generic[TBaseIndexModel]
 TBaseIndexNameModel = TypeVar("TBaseIndexNameModel", bound=BaseIndexNameModel)
+GTBaseIndexNameModel = Generic[TBaseIndexNameModel]

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 
 import numpy as np
 import OpenGL.GL as gl
@@ -40,7 +40,7 @@ class VBO:
     VBO（Vertex Buffer Object）･･･ 頂点バッファオブジェクト
     """
 
-    def __init__(self, data: np.ndarray, components: dict[int, dict[str, int]]) -> None:
+    def __init__(self, data: np.ndarray, components: Dict[int, Dict[str, int]]) -> None:
         self.vbo_id = gl.glGenBuffers(1)
 
         error_code = gl.glGetError()

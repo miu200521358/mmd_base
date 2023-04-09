@@ -1,7 +1,7 @@
 import operator
 from functools import lru_cache
 from math import acos, atan2, cos, degrees, radians, sin, sqrt
-from typing import Union
+from typing import List, Union
 
 import numpy as np
 from numpy.linalg import inv, norm
@@ -1249,7 +1249,7 @@ class MMatrix4x4List:
         self.col: int = col
         self.vector: np.ndarray = np.tile(np.eye(4, dtype=np.float64), (row, col, 1, 1))
 
-    def translate(self, vs: list[list[np.ndarray]]):
+    def translate(self, vs: List[List[np.ndarray]]):
         """
         平行移動行列
 
@@ -1261,7 +1261,7 @@ class MMatrix4x4List:
         vmat = self.vector[..., :3] * np.array([v2 for v1 in vs for v2 in v1], dtype=np.float64).reshape(self.row, self.col, 1, 3)
         self.vector[..., 3] += np.sum(vmat, axis=-1)
 
-    def rotate(self, qs: list[list[np.ndarray]]):
+    def rotate(self, qs: List[List[np.ndarray]]):
         """
         回転行列
 
@@ -1273,7 +1273,7 @@ class MMatrix4x4List:
 
         self.vector = self.vector @ np.array([q2 for q1 in qs for q2 in q1], dtype=np.float64).reshape(self.row, self.col, 4, 4)
 
-    def scale(self, vs: list[list[np.ndarray]]):
+    def scale(self, vs: List[List[np.ndarray]]):
         """
         縮尺行列
 

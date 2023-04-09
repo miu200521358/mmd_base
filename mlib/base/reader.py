@@ -7,14 +7,12 @@ from typing import Callable, Generic, TypeVar
 
 import numpy as np
 
-from mlib.base.base import BaseModel, Encoding, FileType
-from mlib.base.collection import BaseHashModel
+from mlib.base.base import TBaseModel, BaseModel, Encoding, FileType
+from mlib.base.collection import GTBaseHashModel, TBaseHashModel
 from mlib.base.exception import MParseException
 from mlib.base.logger import MLogger
 from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
 
-TBaseModel = TypeVar("TBaseModel", bound=BaseModel)
-TBaseHashModel = TypeVar("TBaseHashModel", bound=BaseHashModel)
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -27,7 +25,7 @@ class StructUnpackType:
         self.size = size
 
 
-class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
+class BaseReader(GTBaseHashModel, BaseModel, metaclass=ABCMeta):
     @property
     def file_wildcard(self) -> str:
         """ファイル選択用ワイルドカードを返す"""
@@ -527,3 +525,4 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
 
 
 TBaseReader = TypeVar("TBaseReader", bound=BaseReader)
+GTBaseReader = Generic[TBaseReader]

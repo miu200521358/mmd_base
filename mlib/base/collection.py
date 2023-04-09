@@ -1,12 +1,12 @@
 import hashlib
 from bisect import bisect_left
-from typing import Generic, Optional, TypeVar
+from typing import Dict, Generic, List, Optional, Tuple, TypeVar
 
 from mlib.base.base import BaseModel, Encoding
-from mlib.base.part import TBaseIndexModel, TBaseIndexNameModel
+from mlib.base.part import GTBaseIndexModel, GTBaseIndexNameModel, TBaseIndexModel, TBaseIndexNameModel
 
 
-class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
+class BaseIndexDictModel(GTBaseIndexModel, BaseModel):
     """BaseIndexModelのリスト基底クラス"""
 
     __slots__ = ["data", "indexes", "_iter_index"]
@@ -78,7 +78,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
 TBaseIndexListModel = TypeVar("TBaseIndexListModel", bound=BaseIndexDictModel)
 
 
-class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
+class BaseIndexNameDictModel(GTBaseIndexNameModel, BaseModel):
     """BaseIndexNameModelの辞書基底クラス"""
 
     __slots__ = ["name", "data", "cache", "indexes", "_names", "_iter_index"]
@@ -122,7 +122,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             self.sort_indexes()
 
     @property
-    def names(self) -> list[str]:
+    def names(self) -> List[str]:
         return list(self._names.keys())
 
     @property
@@ -196,7 +196,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     def __bool__(self) -> bool:
         return 0 < len(self.data)
 
-    def range_indexes(self, index: int, indexes: Optional[list[int]] = None) -> tuple[int, int, int]:
+    def range_indexes(self, index: int, indexes: Optional[List[int]] = None) -> Tuple[int, int, int]:
         """
         指定されたINDEXの前後を返す
 
@@ -238,9 +238,10 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
 
 
 TBaseIndexNameDictModel = TypeVar("TBaseIndexNameDictModel", bound=BaseIndexNameDictModel)
+GTBaseIndexNameDictModel = Generic[TBaseIndexNameDictModel]
 
 
-class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel):
+class BaseIndexNameDictWrapperModel(GTBaseIndexNameDictModel, BaseModel):
     """BaseIndexNameDictModelの辞書基底クラス"""
 
     __slots__ = ["data", "cache", "_names", "_iter_index"]
@@ -262,7 +263,7 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
             self.append(self.create(key), name=key)
         return self.data[key]
 
-    def filter(self, *keys: str) -> dict[str, TBaseIndexNameDictModel]:
+    def filter(self, *keys: str) -> Dict[str, TBaseIndexNameDictModel]:
         return dict([(k, v.copy()) for k, v in self.data.items() if k in keys])
 
     def __delitem__(self, key: str) -> None:
@@ -281,7 +282,7 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
         self.data[name] = value
 
     @property
-    def names(self) -> list[str]:
+    def names(self) -> List[str]:
         return self._names
 
     def __len__(self) -> int:
@@ -346,3 +347,7 @@ class BaseHashModel(BaseModel):
     def __bool__(self) -> bool:
         # パスが定義されていたら、中身入り
         return 0 < len(self.path)
+
+
+TBaseHashModel = TypeVar("TBaseHashModel", bound=BaseHashModel)
+GTBaseHashModel = Generic[TBaseHashModel]

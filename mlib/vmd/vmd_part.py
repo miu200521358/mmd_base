@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from mlib.base.base import BaseModel
 from mlib.base.interpolation import Interpolation, evaluate
@@ -133,7 +133,7 @@ class BoneInterpolations(BaseModel):
             0,
         ]
 
-    def evaluate(self, prev_index: int, index: int, next_index: int) -> tuple[float, float, float, float]:
+    def evaluate(self, prev_index: int, index: int, next_index: int) -> Tuple[float, float, float, float]:
         # 補間結果Yは、FKキーフレ内で計算する
         _, ry, _ = evaluate(self.rotation, prev_index, index, next_index)
         _, xy, _ = evaluate(self.translation_x, prev_index, index, next_index)
@@ -142,7 +142,7 @@ class BoneInterpolations(BaseModel):
 
         return ry, xy, yy, zy
 
-    def merge(self) -> list[int]:
+    def merge(self) -> List[int]:
         return [
             int(self.translation_x.start.x),
             self.vals[1],

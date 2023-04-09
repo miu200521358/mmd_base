@@ -1,6 +1,5 @@
 # cSpell:disable
 
-import os
 from glob import glob
 
 from Cython.Build import cythonize
@@ -21,7 +20,7 @@ def get_ext():
     ext = []
 
     for source in glob("mlib\\**\\*.py", recursive=True):
-        if "__init__" in source or "collection" in source or "reader" in source:
+        if "__init__" in source:
             continue
         path = source.replace("\\", ".").replace(".py", "")
         print("%s -> %s" % (source, path))
@@ -36,10 +35,6 @@ def get_ext():
 
     return ext
 
-
-for source in glob("mlib\\**\\*.pyd", recursive=True):
-    print(f"remove {source}")
-    os.remove(source)
 
 print("----------------")
 

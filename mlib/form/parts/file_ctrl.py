@@ -16,8 +16,10 @@ from mlib.vmd.vmd_reader import VmdReader
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
+GTBaseHashModelReader = Generic[TBaseHashModel, TBaseReader]
 
-class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
+
+class MFilePickerCtrl(GTBaseHashModelReader):
     def __init__(
         self,
         frame: BaseFrame,

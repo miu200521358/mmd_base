@@ -3,6 +3,7 @@ import struct
 from enum import Enum
 from io import BufferedWriter
 from math import isinf, isnan
+from typing import Tuple
 
 from mlib.base.base import BaseModel
 from mlib.base.logger import MLogger
@@ -869,7 +870,7 @@ class PmxWriter(BaseModel):
 
         logger.debug("-- ジョイントデータ出力終了({count})", count=len(self.model.joints))
 
-    def define_write_index(self, size: int, is_vertex: bool) -> tuple[int, PmxBinaryType]:
+    def define_write_index(self, size: int, is_vertex: bool) -> Tuple[int, PmxBinaryType]:
         """
         個数による書き込みサイズの判定
 

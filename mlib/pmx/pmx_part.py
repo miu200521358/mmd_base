@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from enum import Flag, IntEnum, unique
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import OpenGL.GL as gl
@@ -41,7 +41,7 @@ class Deform(BaseModel, ABC):
         デフォームボーン個数
     """
 
-    def __init__(self, indexes: list[int], weights: list[float], count: int):
+    def __init__(self, indexes: List[int], weights: List[float], count: int):
         super().__init__()
         self.indexes = np.fromiter(indexes, dtype=np.int32, count=len(indexes))
         self.weights = np.fromiter(weights, dtype=np.float64, count=len(weights))

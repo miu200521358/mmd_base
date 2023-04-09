@@ -4,6 +4,7 @@ import os
 import sys
 from glob import glob
 from pathlib import Path
+from typing import Dict, List, Tuple
 
 from mlib.base.base import FileType
 from mlib.base.logger import MLogger
@@ -32,7 +33,7 @@ def get_path(relative_path: str):
 HISTORY_MAX = 50
 
 
-def read_histories(history_keys: list[str]) -> dict[str, list[str]]:
+def read_histories(history_keys: List[str]) -> Dict[str, List[str]]:
     """ファイル履歴を取得する"""
 
     root_dir = get_root_dir()
@@ -59,14 +60,14 @@ def read_histories(history_keys: list[str]) -> dict[str, list[str]]:
     return file_histories
 
 
-def insert_history(value: str, histories: list[str]):
+def insert_history(value: str, histories: List[str]):
     """ファイル履歴に追加する"""
     if value in histories:
         histories.remove(value)
     histories.insert(0, value)
 
 
-def save_histories(histories: dict[str, list[str]]):
+def save_histories(histories: Dict[str, List[str]]):
     """ファイル履歴を保存する"""
     root_dir = get_root_dir()
 
@@ -154,7 +155,7 @@ def validate_save_file(path: str, title: str) -> bool:
     return True
 
 
-def separate_path(path: str) -> tuple[str, str, str]:
+def separate_path(path: str) -> Tuple[str, str, str]:
     """ファイルパスをディレクトリ・ファイル名・ファイル拡張子に分割する"""
     dir_path = os.path.dirname(path)
     file_name, file_ext = os.path.splitext(os.path.basename(path))

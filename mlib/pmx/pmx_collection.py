@@ -1,6 +1,6 @@
 import os
 from glob import glob
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -157,7 +157,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
         return bone_trees
 
     @property
-    def tail_bone_names(self) -> list[str]:
+    def tail_bone_names(self) -> List[str]:
         """
         親ボーンとして登録されていないボーン名リストを取得する
         """
@@ -172,7 +172,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
 
         return tail_bone_names
 
-    def create_bone_link_indexes(self, child_idx: int, bone_link_indexes=None) -> list[tuple[int, int]]:
+    def create_bone_link_indexes(self, child_idx: int, bone_link_indexes=None) -> List[Tuple[int, int]]:
         """
         指定ボーンの親ボーンを繋げてく
 
@@ -276,7 +276,7 @@ class Morphs(BaseIndexNameDictModel[Morph]):
     def __init__(self) -> None:
         super().__init__()
 
-    def filter_by_type(self, *keys: MorphType) -> list[Morph]:
+    def filter_by_type(self, *keys: MorphType) -> List[Morph]:
         return [v for v in self.data.values() if v.morph_type in keys]
 
 
@@ -382,7 +382,7 @@ class PmxModel(BaseHashModel):
     def name(self) -> str:
         return self.model_name
 
-    def get_weighted_vertex_scale(self) -> dict[int, dict[int, MVector3D]]:
+    def get_weighted_vertex_scale(self) -> Dict[int, Dict[int, MVector3D]]:
         vertex_bone_scales: dict[int, dict[int, MVector3D]] = {}
         total_index_count = len(self.vertices)
         for vertex in self.vertices:

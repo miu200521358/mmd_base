@@ -1,4 +1,5 @@
 import sys
+from typing import List
 
 import wx
 
@@ -7,7 +8,7 @@ from mlib.utils.file_utils import read_histories
 
 
 class BaseFrame(wx.Frame):
-    def __init__(self, app: wx.App, title: str, history_keys: list[str], size: wx.Size, *args, **kw):
+    def __init__(self, app: wx.App, title: str, history_keys: List[str], size: wx.Size, *args, **kw):
         wx.Frame.__init__(
             self,
             None,

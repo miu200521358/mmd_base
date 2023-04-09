@@ -1,3 +1,4 @@
+from typing import List
 import os
 from multiprocessing import Process, Queue
 from typing import Optional
@@ -38,7 +39,7 @@ class CanvasPanel(BasePanel):
         pass
 
 
-def animate(queue: Queue, fno: int, model_sets: list["ModelSet"]):
+def animate(queue: Queue, fno: int, model_sets: List["ModelSet"]):
     max_fno = max([model_set.motion.max_fno for model_set in model_sets])
 
     while fno < max_fno:
