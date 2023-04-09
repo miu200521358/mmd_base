@@ -343,7 +343,7 @@ class Texture(BaseIndexNameModel):
         self.valid = True
 
     def delete_draw(self):
-        if not self.for_draw:
+        if not self.for_draw or not self.texture_id:
             # 描画フラグが立ってなければスルー
             return
 

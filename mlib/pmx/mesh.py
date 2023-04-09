@@ -28,6 +28,9 @@ class VAO:
         gl.glBindVertexArray(0)
 
     def __del__(self):
+        if not self.vao_id:
+            return
+
         gl.glDeleteVertexArrays(1, [self.vao_id])
 
         error_code = gl.glGetError()
@@ -56,6 +59,9 @@ class VBO:
             v["pointer"] = v["offset"] * self.dsize
 
     def __del__(self) -> None:
+        if not self.vbo_id:
+            return
+
         gl.glDeleteBuffers(1, [self.vbo_id])
 
         error_code = gl.glGetError()
@@ -101,6 +107,9 @@ class IBO:
         self.unbind()
 
     def __del__(self) -> None:
+        if not self.ibo_id:
+            return
+
         gl.glDeleteBuffers(1, [self.ibo_id])
 
         error_code = gl.glGetError()
