@@ -143,7 +143,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     __slots__ = (
         "data",
         "cache",
-        "cache_ratios",
+        "cache_poses",
         "cache_qqs",
         "_names",
         "_iter_index",
@@ -152,14 +152,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
     def __init__(self) -> None:
         super().__init__()
-        self.cache_ratios: dict[tuple[int, str, str], MVector3D] = {}
-        self.cache_qqs: dict[tuple[int, str, str], MQuaternion] = {}
+        self.cache_poses: dict[tuple[int, str, int], MVector3D] = {}
+        self.cache_qqs: dict[tuple[int, str, int], MQuaternion] = {}
 
     def create(self, key: str) -> VmdBoneNameFrames:
         return VmdBoneNameFrames(name=key)
 
     def clear(self) -> None:
-        self.cache_ratios = {}
+        self.cache_poses = {}
         self.cache_qqs = {}
 
     @property
@@ -205,19 +205,19 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # ボーンの親から見た相対位置
                     poses[n, m] = bone.parent_relative_position.vector
 
-                    if (fno, model.digest, bone.name) in self.cache_ratios:
-                        poses[n, m] += self.cache_ratios[(fno, model.digest, bone.name)].vector
+                    if (fno, model.digest, bone.index) in self.cache_poses:
+                        poses[n, m] += self.cache_poses[(fno, model.digest, bone.index)].vector
                     else:
                         pos = self.get_position(bone, fno, model)
-                        self.cache_ratios[(fno, model.digest, bone.name)] = pos
+                        self.cache_poses[(fno, model.digest, bone.index)] = pos
                         poses[n, m] += pos.vector
 
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
-                    if (fno, model.digest, bone.name) in self.cache_qqs:
-                        qqs[n, m] = self.cache_qqs[(fno, model.digest, bone.name)].to_matrix4x4().vector
+                    if (fno, model.digest, bone.index) in self.cache_qqs:
+                        qqs[n, m] = self.cache_qqs[(fno, model.digest, bone.index)].to_matrix4x4().vector
                     else:
                         qq = self.get_rotation(bone, fno, model, append_ik=append_ik)
-                        self.cache_qqs[(fno, model.digest, bone.name)] = qq
+                        self.cache_qqs[(fno, model.digest, bone.index)] = qq
                         qqs[n, m] = qq.to_matrix4x4().vector
 
                 # 末端ボーン表示先の位置を計算
@@ -266,19 +266,19 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for bone in model.bone_trees[bone_name]:
                 if bone.index not in bone_indexes:
                     # モーションによる移動量
-                    if (fno, model.digest, bone.name) in self.cache_ratios:
-                        poses[0, bone.index] = self.cache_ratios[(fno, model.digest, bone.name)].vector
+                    if (fno, model.digest, bone.index) in self.cache_poses:
+                        poses[0, bone.index] = self.cache_poses[(fno, model.digest, bone.index)].vector
                     else:
                         pos = self.get_position(bone, fno, model)
                         poses[0, bone.index] = pos.vector
-                        self.cache_ratios[(fno, model.digest, bone.name)] = pos
+                        self.cache_poses[(fno, model.digest, bone.index)] = pos
 
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
-                    if (fno, model.digest, bone.name) in self.cache_qqs:
-                        qqs[0, bone.index] = self.cache_qqs[(fno, model.digest, bone.name)].to_matrix4x4().vector
+                    if (fno, model.digest, bone.index) in self.cache_qqs:
+                        qqs[0, bone.index] = self.cache_qqs[(fno, model.digest, bone.index)].to_matrix4x4().vector
                     else:
                         qq = self.get_rotation(bone, fno, model, append_ik=True)
-                        self.cache_qqs[(fno, model.digest, bone.name)] = qq
+                        self.cache_qqs[(fno, model.digest, bone.index)] = qq
                         qqs[0, bone.index] = qq.to_matrix4x4().vector
                     # 計算済みボーンとして登録
                     bone_indexes.append(bone.index)
