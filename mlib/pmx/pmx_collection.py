@@ -6,6 +6,7 @@ import numpy as np
 import OpenGL.GL as gl
 
 from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
+from mlib.base.exception import MViewerException
 from mlib.base.logger import MLogger
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D, MVector4D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
@@ -659,12 +660,14 @@ class Meshes(BaseIndexDictModel[Mesh]):
             ],
         )
 
+        bone_face_dtype: type = np.uint8 if model.bone_count == 1 else np.uint16 if model.bone_count == 2 else np.uint32
+
         # ボーン親子関係
         self.bone_hierarchies: np.ndarray = np.array(
             [
                 np.fromiter(
                     [b.index, b.parent_index],
-                    dtype=face_dtype,
+                    dtype=bone_face_dtype,
                     count=2,
                 )
                 for b in model.bones
@@ -760,7 +763,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         if bone_line_color:
             self.bone_vao.bind()
             self.bone_vbo_vertices.bind()
-            self.bone_vbo_vertices.set_slot(0)
+            self.bone_vbo_vertices.set_slot_by_value(0)
             self.bone_ibo_faces.bind()
 
             # ボーン描画
@@ -768,17 +771,30 @@ class Meshes(BaseIndexDictModel[Mesh]):
             self.draw_bone(bone_matrixes, bone_line_color)
             self.shader.unuse()
 
+            self.bone_ibo_faces.unbind()
+            self.bone_vbo_vertices.unbind()
+            self.bone_vao.unbind()
+
     def draw_bone(self, bone_matrixes: np.ndarray, bone_line_color: MVector4D):
+        gl.glEnable(gl.GL_CULL_FACE)
+        gl.glCullFace(gl.GL_FRONT)
+
         gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *bone_line_color.vector)
 
         self[0].bind_bone_matrixes(bone_matrixes, self.shader, ProgramType.BONE)
 
         gl.glDrawElements(
-            gl.GL_LINE,
-            len(self.bones),
+            gl.GL_LINES,
+            len(self.bone_hierarchies) * 2,
             self.bone_ibo_faces.dtype,
             gl.ctypes.c_void_p(0),
         )
+
+        error_code = gl.glGetError()
+        if error_code != gl.GL_NO_ERROR:
+            raise MViewerException(f"Meshes draw_bone Failure\n{error_code}")
+
+        self[0].unbind_bone_matrixes()
 
     def delete_draw(self):
         for material in self.model.materials:

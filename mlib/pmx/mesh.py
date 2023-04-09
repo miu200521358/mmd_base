@@ -86,6 +86,17 @@ class VBO:
             gl.ctypes.c_void_p(self.components[slot.value]["pointer"]),
         )
 
+    def set_slot_by_value(self, slot_value: int) -> None:
+        gl.glEnableVertexAttribArray(slot_value)
+        gl.glVertexAttribPointer(
+            slot_value,
+            self.components[slot_value]["size"],
+            gl.GL_FLOAT,
+            gl.GL_FALSE,
+            self.components[slot_value]["stride"],
+            gl.ctypes.c_void_p(self.components[slot_value]["pointer"]),
+        )
+
 
 class IBO:
     """
