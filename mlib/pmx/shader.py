@@ -323,6 +323,7 @@ class MShader:
         glu.gluLookAt(*camera_pos.vector, *self.look_at_center.vector, *self.look_at_up.vector)
 
         model_view_matrix = np.array(gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX), dtype=np.float32)
+        model_view_projection_matrix = np.matmul(model_view_matrix, self.projection_matrix)
 
         for program_type in ProgramType:
             self.use(program_type)
@@ -341,7 +342,7 @@ class MShader:
                 self.model_view_projection_matrix_uniform[program_type.value],
                 1,
                 gl.GL_FALSE,
-                np.matmul(model_view_matrix, self.projection_matrix),
+                model_view_projection_matrix,
             )
 
             self.unuse()
