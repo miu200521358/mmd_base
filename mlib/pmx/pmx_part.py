@@ -1062,8 +1062,8 @@ class ShaderMaterial:
         self.sphere_texture_factor: MVector4D = toon_texture_factor or MVector4D(1, 1, 1, 1)
         self.toon_texture_factor: MVector4D = sphere_texture_factor or MVector4D(1, 1, 1, 1)
 
-    def __imul__(self, v: Union[float, "ShaderMaterial"]):
-        if isinstance(v, float):
+    def __imul__(self, v: Union[float, int, "ShaderMaterial"]):
+        if isinstance(v, (float, int)):
             self.diffuse *= v
             self.ambient *= v
             self.specular *= v
@@ -1083,8 +1083,8 @@ class ShaderMaterial:
             self.toon_texture_factor *= v.toon_texture_factor
         return self
 
-    def __iadd__(self, v: Union[float, "ShaderMaterial"]):
-        if isinstance(v, float):
+    def __iadd__(self, v: Union[float, int, "ShaderMaterial"]):
+        if isinstance(v, (float, int)):
             self.diffuse += v
             self.ambient += v
             self.specular += v
