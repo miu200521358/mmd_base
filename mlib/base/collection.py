@@ -3,10 +3,10 @@ from bisect import bisect_left
 from typing import Dict, Generic, List, Optional, Tuple, TypeVar
 
 from mlib.base.base import BaseModel, Encoding
-from mlib.base.part import GTBaseIndexModel, GTBaseIndexNameModel, TBaseIndexModel, TBaseIndexNameModel
+from mlib.base.part import TBaseIndexModel, TBaseIndexNameModel
 
 
-class BaseIndexDictModel(GTBaseIndexModel, BaseModel):
+class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
     """BaseIndexModelのリスト基底クラス"""
 
     __slots__ = ["data", "indexes", "_iter_index"]
@@ -78,7 +78,7 @@ class BaseIndexDictModel(GTBaseIndexModel, BaseModel):
 TBaseIndexListModel = TypeVar("TBaseIndexListModel", bound=BaseIndexDictModel)
 
 
-class BaseIndexNameDictModel(GTBaseIndexNameModel, BaseModel):
+class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     """BaseIndexNameModelの辞書基底クラス"""
 
     __slots__ = ["name", "data", "cache", "indexes", "_names", "_iter_index"]
@@ -238,10 +238,9 @@ class BaseIndexNameDictModel(GTBaseIndexNameModel, BaseModel):
 
 
 TBaseIndexNameDictModel = TypeVar("TBaseIndexNameDictModel", bound=BaseIndexNameDictModel)
-GTBaseIndexNameDictModel = Generic[TBaseIndexNameDictModel]
 
 
-class BaseIndexNameDictWrapperModel(GTBaseIndexNameDictModel, BaseModel):
+class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel):
     """BaseIndexNameDictModelの辞書基底クラス"""
 
     __slots__ = ["data", "cache", "_names", "_iter_index"]
@@ -350,4 +349,3 @@ class BaseHashModel(BaseModel):
 
 
 TBaseHashModel = TypeVar("TBaseHashModel", bound=BaseHashModel)
-GTBaseHashModel = Generic[TBaseHashModel]
