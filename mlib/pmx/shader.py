@@ -152,6 +152,7 @@ class MShader:
         self.sphere_mode_uniform: dict[int, Any] = {}
         self.sphere_uniform: dict[int, Any] = {}
         self.sphere_factor_uniform: dict[int, Any] = {}
+        self.bone_count_uniform: dict[int, Any] = {}
 
         # モデル描画シェーダー ------------------
         self.model_program = gl.glCreateProgram()
@@ -264,6 +265,7 @@ class MShader:
         if program_type == ProgramType.BONE:
             # ボーン色としてエッジ色を使う
             self.edge_color_uniform[program_type.value] = gl.glGetUniformLocation(program, "edgeColor")
+            self.bone_count_uniform[program_type.value] = gl.glGetUniformLocation(program, "boneCount")
         else:
             # モデルシェーダーへの割り当て
 

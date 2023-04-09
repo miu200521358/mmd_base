@@ -681,7 +681,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
                 np.fromiter(
                     [
                         *b.position.gl.vector,
-                        b.index,
+                        b.index / len(model.bones),
                     ],
                     dtype=np.float32,
                     count=4,
@@ -810,6 +810,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.shader.use(ProgramType.BONE)
 
         gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *bone_color)
+        gl.glUniform1i(self.shader.bone_count_uniform[ProgramType.BONE.value], len(self.model.bones))
 
         self.model.meshes[0].bind_bone_matrixes(bone_matrixes, self.shader, ProgramType.BONE)
 
