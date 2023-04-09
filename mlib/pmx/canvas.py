@@ -52,9 +52,9 @@ def animate(queue: Queue, fno: int, model_sets: List["ModelSet"]):
 
 
 MODEL_BONE_COLORS = [
-    np.array([1, 0, 0, 0]),
-    np.array([0, 0, 1, 0]),
-    np.array([0, 1, 0, 0]),
+    np.array([1, 0, 0, 1]),
+    np.array([0, 0, 1, 1]),
+    np.array([0, 1, 0, 1]),
 ]
 
 
@@ -189,15 +189,15 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.shader.unuse()
 
         self.shader.msaa.bind()
-        # for model_set, animation in zip(self.model_sets, self.animations):
-        #     if model_set.model:
-        #         model_set.model.draw(
-        #             animation.gl_matrixes,
-        #             animation.vertex_morph_poses,
-        #             animation.uv_morph_poses,
-        #             animation.uv1_morph_poses,
-        #             animation.material_morphs,
-        #         )
+        for model_set, animation in zip(self.model_sets, self.animations):
+            if model_set.model:
+                model_set.model.draw(
+                    animation.gl_matrixes,
+                    animation.vertex_morph_poses,
+                    animation.uv_morph_poses,
+                    animation.uv1_morph_poses,
+                    animation.material_morphs,
+                )
         for model_set, animation, color in zip(self.model_sets, self.animations, MODEL_BONE_COLORS):
             if model_set.model:
                 model_set.model.draw_bone(
