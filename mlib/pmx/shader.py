@@ -340,17 +340,6 @@ class MShader:
             np.matmul(model_view_matrix, self.projection_matrix),
         )
 
-        if program_type == ProgramType.BONE:
-            pass
-        else:
-            # 隠面消去
-            # https://learnopengl.com/Advanced-OpenGL/Depth-testing
-            gl.glEnable(gl.GL_DEPTH_TEST)
-            gl.glDepthFunc(gl.GL_LEQUAL)
-
-            gl.glEnable(gl.GL_BLEND)
-            gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
-
     def fit(self, width: int, height: int):
         self.width = width
         self.height = height

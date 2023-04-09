@@ -58,7 +58,7 @@ void main() {
     mat3 normalTransformMatrix = mat3(boneTransformMatrix);
 
     // 頂点位置
-    gl_Position = modelViewProjectionMatrix * (boneTransformMatrix * position4);
+    gl_Position = modelViewProjectionMatrix * boneTransformMatrix * position4;
 
     // 頂点法線
     vetexNormal = normalize(normalTransformMatrix * normalize(normal)).xyz;

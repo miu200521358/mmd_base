@@ -9,7 +9,7 @@ from PIL import Image
 from wx import glcanvas
 
 from mlib.base.logger import MLogger
-from mlib.base.math import MQuaternion, MVector3D, MVector4D
+from mlib.base.math import MQuaternion, MVector3D
 from mlib.form.base_frame import BaseFrame
 from mlib.form.base_panel import BasePanel
 from mlib.pmx.pmx_collection import PmxModel
@@ -51,6 +51,13 @@ def animate(queue: Queue, fno: int, model_sets: List["ModelSet"]):
     queue.put(None)
 
 
+MODEL_BONE_COLORS = [
+    np.array([1, 0, 0, 0]),
+    np.array([0, 0, 1, 0]),
+    np.array([0, 1, 0, 0]),
+]
+
+
 class ModelSet:
     def __init__(self, shader: MShader, model: PmxModel, motion: VmdMotion):
         self.model = model
@@ -61,8 +68,16 @@ class ModelSet:
 class MotionSet:
     def __init__(self, model: PmxModel, motion: VmdMotion, fno: int) -> None:
         if motion is not None:
-            self.bone_matrixes, self.vertex_morph_poses, self.uv_morph_poses, self.uv1_morph_poses, self.material_morphs = motion.animate(fno, model)
+            (
+                self.gl_matrixes,
+                self.bone_matrixes,
+                self.vertex_morph_poses,
+                self.uv_morph_poses,
+                self.uv1_morph_poses,
+                self.material_morphs,
+            ) = motion.animate(fno, model)
         else:
+            self.gl_matrixes = np.array([np.eye(4) for _ in range(len(model.bones))])
             self.bone_matrixes = np.array([np.eye(4) for _ in range(len(model.bones))])
             self.vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])
             self.uv_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
@@ -174,15 +189,20 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.shader.unuse()
 
         self.shader.msaa.bind()
-        for model_set, animation in zip(self.model_sets, self.animations):
+        # for model_set, animation in zip(self.model_sets, self.animations):
+        #     if model_set.model:
+        #         model_set.model.draw(
+        #             animation.gl_matrixes,
+        #             animation.vertex_morph_poses,
+        #             animation.uv_morph_poses,
+        #             animation.uv1_morph_poses,
+        #             animation.material_morphs,
+        #         )
+        for model_set, animation, color in zip(self.model_sets, self.animations, MODEL_BONE_COLORS):
             if model_set.model:
-                model_set.model.draw(
-                    animation.bone_matrixes,
-                    animation.vertex_morph_poses,
-                    animation.uv_morph_poses,
-                    animation.uv1_morph_poses,
-                    animation.material_morphs,
-                    MVector4D(1, 0, 0),
+                model_set.model.draw_bone(
+                    animation.gl_matrixes,
+                    color,
                 )
         self.shader.msaa.unbind()
 

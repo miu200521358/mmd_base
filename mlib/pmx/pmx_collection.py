@@ -6,9 +6,8 @@ import numpy as np
 import OpenGL.GL as gl
 
 from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
-from mlib.base.exception import MViewerException
 from mlib.base.logger import MLogger
-from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D, MVector4D
+from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
     Bone,
@@ -481,11 +480,19 @@ class PmxModel(BaseHashModel):
         uv_morph_poses: np.ndarray,
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
-        bone_line_color: Optional[MVector4D] = None,
     ):
         if not self.for_draw or not self.meshes:
             return
-        self.meshes.draw(bone_matrixes, vertex_morph_poses, uv_morph_poses, uv1_morph_poses, material_morphs, bone_line_color)
+        self.meshes.draw(bone_matrixes, vertex_morph_poses, uv_morph_poses, uv1_morph_poses, material_morphs)
+
+    def draw_bone(
+        self,
+        bone_matrixes: np.ndarray,
+        bone_color: np.ndarray,
+    ):
+        if not self.for_draw or not self.meshes:
+            return
+        self.meshes.draw_bone(bone_matrixes, bone_color)
 
     def setup(self) -> None:
         total_index_count = len(self.bones)
@@ -644,37 +651,6 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
             prev_vertices_count += material.vertices_count
 
-        # ボーン位置
-        self.bones = np.array(
-            [
-                np.fromiter(
-                    [
-                        -b.position.x,
-                        b.position.y,
-                        b.position.z,
-                    ],
-                    dtype=np.float32,
-                    count=3,
-                )
-                for b in model.bones
-            ],
-        )
-
-        bone_face_dtype: type = np.uint8 if model.bone_count == 1 else np.uint16 if model.bone_count == 2 else np.uint32
-
-        # ボーン親子関係
-        self.bone_hierarchies: np.ndarray = np.array(
-            [
-                np.fromiter(
-                    [b.index, b.parent_index],
-                    dtype=bone_face_dtype,
-                    count=2,
-                )
-                for b in model.bones
-                if 0 <= b.parent_index
-            ],
-        )
-
         # ---------------------
 
         # 頂点VAO
@@ -700,17 +676,6 @@ class Meshes(BaseIndexDictModel[Mesh]):
         )
         self.ibo_faces = IBO(self.faces)
 
-        # ボーンVAO
-        self.bone_vao = VAO()
-        self.bone_vbo_components = {
-            0: {"size": 3, "offset": 0},
-        }
-        self.bone_vbo_vertices = VBO(
-            self.bones,
-            self.bone_vbo_components,
-        )
-        self.bone_ibo_faces = IBO(self.bone_hierarchies)
-
     def draw(
         self,
         bone_matrixes: np.ndarray,
@@ -718,8 +683,15 @@ class Meshes(BaseIndexDictModel[Mesh]):
         uv_morph_poses: np.ndarray,
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
-        bone_line_color: Optional[MVector4D] = None,
     ):
+        # 隠面消去
+        # https://learnopengl.com/Advanced-OpenGL/Depth-testing
+        gl.glEnable(gl.GL_DEPTH_TEST)
+        gl.glDepthFunc(gl.GL_LEQUAL)
+
+        gl.glEnable(gl.GL_BLEND)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+
         # 頂点モーフ変動量を上書き設定してからバインド
         self.vbo_vertices.data[:, self.morph_pos_comps["offset"] : (self.morph_pos_comps["offset"] + self.morph_pos_comps["size"])] = vertex_morph_poses
         self.vbo_vertices.data[:, self.morph_uv_comps["offset"] : (self.morph_uv_comps["offset"] + self.morph_uv_comps["size"])] = uv_morph_poses
@@ -760,41 +732,59 @@ class Meshes(BaseIndexDictModel[Mesh]):
             self.vbo_vertices.unbind()
             self.vao.unbind()
 
-        if bone_line_color:
-            self.bone_vao.bind()
-            self.bone_vbo_vertices.bind()
-            self.bone_vbo_vertices.set_slot_by_value(0)
-            self.bone_ibo_faces.bind()
+    def draw_bone(self, bone_matrixes: np.ndarray, bone_color: np.ndarray):
+        # ボーンをモデルメッシュの前面に描画するために深度テストを無効化
+        gl.glEnable(gl.GL_DEPTH_TEST)
+        gl.glDepthFunc(gl.GL_ALWAYS)
 
-            # ボーン描画
-            self.shader.use(ProgramType.BONE)
-            self.draw_bone(bone_matrixes, bone_line_color)
-            self.shader.unuse()
+        result_positions = []
 
-            self.bone_ibo_faces.unbind()
-            self.bone_vbo_vertices.unbind()
-            self.bone_vao.unbind()
+        for bone, matrix in zip(self.model.bones, bone_matrixes):
+            if 0 > bone.parent_index:
+                result_positions.append(np.dot(matrix, np.array([*bone.position.gl.vector, 1]))[:3])
+            else:
+                result_positions.append(np.dot(matrix, np.array([*bone.parent_relative_position.gl.vector, 1]))[:3] + result_positions[bone.parent_index])
 
-    def draw_bone(self, bone_matrixes: np.ndarray, bone_line_color: MVector4D):
-        gl.glEnable(gl.GL_CULL_FACE)
-        gl.glCullFace(gl.GL_FRONT)
+        gl.glBegin(gl.GL_LINES)
+        for bone in self.model.bones:
+            if 0 <= bone.parent_index:
+                gl.glColor4f(*bone_color)
+                gl.glVertex3f(*result_positions[bone.parent_index])
+                gl.glColor4f(*bone_color)
+                gl.glVertex3f(*result_positions[bone.index])
+        gl.glEnd()
 
-        gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *bone_line_color.vector)
+        # gl.glDepthMask(gl.GL_TRUE)
+        # gl.glEnable(gl.GL_DEPTH_TEST)
+        # self.shader.use(ProgramType.BONE)
 
-        self[0].bind_bone_matrixes(bone_matrixes, self.shader, ProgramType.BONE)
+        # self.bone_vao.bind()
+        # self.bone_vbo_vertices.bind()
+        # self.bone_vbo_vertices.set_slot_by_value(0)
+        # self.bone_vbo_vertices.set_slot_by_value(1)
+        # self.bone_ibo_faces.bind()
 
-        gl.glDrawElements(
-            gl.GL_LINES,
-            len(self.bone_hierarchies) * 2,
-            self.bone_ibo_faces.dtype,
-            gl.ctypes.c_void_p(0),
-        )
+        # gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *bone_line_color.vector)
 
-        error_code = gl.glGetError()
-        if error_code != gl.GL_NO_ERROR:
-            raise MViewerException(f"Meshes draw_bone Failure\n{error_code}")
+        # self[0].bind_bone_matrixes(bone_matrixes, self.shader, ProgramType.BONE)
 
-        self[0].unbind_bone_matrixes()
+        # gl.glDrawElements(
+        #     gl.GL_LINES,
+        #     self.bone_hierarchies.size,
+        #     self.bone_ibo_faces.dtype,
+        #     gl.ctypes.c_void_p(0),
+        # )
+
+        # error_code = gl.glGetError()
+        # if error_code != gl.GL_NO_ERROR:
+        #     raise MViewerException(f"Meshes draw_bone Failure\n{error_code}")
+
+        # self[0].unbind_bone_matrixes()
+
+        # self.bone_ibo_faces.unbind()
+        # self.bone_vbo_vertices.unbind()
+        # self.bone_vao.unbind()
+        # self.shader.unuse()
 
     def delete_draw(self):
         for material in self.model.materials:
