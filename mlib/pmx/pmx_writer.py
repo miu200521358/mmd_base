@@ -210,7 +210,7 @@ class PmxWriter(BaseModel):
                 is_positive_only=True,
             )
 
-        logger.debug("-- 頂点データ出力終了({count})", count=len(self.model.vertices))
+        logger.debug("-- 頂点データ出力終了({c})", c=len(self.model.vertices))
 
     def write_faces(self, fout: BufferedWriter, vertex_idx_type: PmxBinaryType):
         """
@@ -235,7 +235,7 @@ class PmxWriter(BaseModel):
             for vidx in face.vertices:
                 self.write_number(fout, vertex_idx_type, vidx, is_positive_only=True)
 
-        logger.debug("-- 面データ出力終了({count})", count=len(self.model.faces))
+        logger.debug("-- 面データ出力終了({c})", c=len(self.model.faces))
 
     def write_textures(self, fout: BufferedWriter):
         """
@@ -257,7 +257,7 @@ class PmxWriter(BaseModel):
         for texture in self.model.textures:
             self.write_text(fout, texture.name, "")
 
-        logger.debug("-- テクスチャデータ出力終了({count})", count=len(self.model.textures))
+        logger.debug("-- テクスチャデータ出力終了({c})", c=len(self.model.textures))
 
     def write_materials(self, fout: BufferedWriter, texture_idx_type: PmxBinaryType):
         """
@@ -404,7 +404,7 @@ class PmxWriter(BaseModel):
             # 材質に対応する面(頂点)数
             self.write_number(fout, PmxBinaryType.INT, material.vertices_count)
 
-        logger.debug("-- 材質データ出力終了({count})", count=len(self.model.materials))
+        logger.debug("-- 材質データ出力終了({c})", c=len(self.model.materials))
 
     def write_bones(self, fout: BufferedWriter, bone_idx_type: PmxBinaryType):
         """
@@ -521,7 +521,7 @@ class PmxWriter(BaseModel):
                             float(link.max_angle_limit.radians.z),
                         )
 
-        logger.debug("-- ボーンデータ出力終了({count})", count=len(self.model.bones))
+        logger.debug("-- ボーンデータ出力終了({c})", c=len(self.model.bones))
 
     def write_morphs(
         self,
@@ -622,7 +622,7 @@ class PmxWriter(BaseModel):
                     self.write_number(fout, morph_idx_type, offset.morph_index)
                     self.write_number(fout, PmxBinaryType.FLOAT, float(offset.morph_factor))
 
-        logger.debug("-- モーフデータ出力終了({count})", count=len(self.model.morphs))
+        logger.debug("-- モーフデータ出力終了({c})", c=len(self.model.morphs))
 
     def write_display_slots(
         self,
@@ -672,7 +672,7 @@ class PmxWriter(BaseModel):
                     # モーフIndex
                     self.write_number(fout, morph_idx_type, reference.display_index)
 
-        logger.debug("-- 表示枠データ出力終了({count})", count=len(self.model.display_slots))
+        logger.debug("-- 表示枠データ出力終了({c})", c=len(self.model.display_slots))
 
     def write_rigidbodies(self, fout: BufferedWriter, bone_idx_type: PmxBinaryType):
         """
@@ -769,7 +769,7 @@ class PmxWriter(BaseModel):
             # 1  : byte	| 剛体の物理演算 - 0:ボーン追従(static) 1:物理演算(dynamic) 2:物理演算 + Bone位置合わせ
             self.write_byte(fout, rigidbody.mode)
 
-        logger.debug("-- 剛体データ出力終了({count})", count=len(self.model.rigidbodies))
+        logger.debug("-- 剛体データ出力終了({c})", c=len(self.model.rigidbodies))
 
     def write_joints(self, fout: BufferedWriter, rigidbody_idx_type: PmxBinaryType):
         """
@@ -868,7 +868,7 @@ class PmxWriter(BaseModel):
             self.write_number(fout, PmxBinaryType.FLOAT, float(joint.param.spring_constant_rotation.y))
             self.write_number(fout, PmxBinaryType.FLOAT, float(joint.param.spring_constant_rotation.z))
 
-        logger.debug("-- ジョイントデータ出力終了({count})", count=len(self.model.joints))
+        logger.debug("-- ジョイントデータ出力終了({c})", c=len(self.model.joints))
 
     def define_write_index(self, size: int, is_vertex: bool) -> Tuple[int, PmxBinaryType]:
         """

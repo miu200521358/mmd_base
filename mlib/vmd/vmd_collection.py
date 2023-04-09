@@ -1046,7 +1046,6 @@ class VmdMotion(BaseHashModel):
         # グループモーフ
         group_vertex_morph_poses, group_morph_bone_frames, group_materials = self.morphs.animate_group_morphs(fno, model, material_morphs)
 
-        bone_names = set([])
         bone_frames = VmdBoneFrames()
         for bf_frames in [morph_bone_frames, group_morph_bone_frames, self.bones]:
             # ボーンモーフ・グループボーンモーフ・ボーンキーフレの順番で重ねていく
@@ -1054,10 +1053,9 @@ class VmdMotion(BaseHashModel):
                 bf = bfs[fno]
                 mbf = bone_frames[bf.name][bf.index]
                 bone_frames[bf.name][bf.index] = mbf + bf
-                bone_names |= {bf.name}
 
         # ボーン操作
-        bone_poses, bone_qqs = bone_frames.animate_bone_matrixes(fno, model, list(bone_names))
+        bone_poses, bone_qqs = bone_frames.animate_bone_matrixes(fno, model)
 
         # ボーン変形行列
         matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
