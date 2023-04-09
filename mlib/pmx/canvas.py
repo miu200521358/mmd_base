@@ -60,7 +60,7 @@ class ModelSet:
 
 class MotionSet:
     def __init__(self, model: PmxModel, motion: VmdMotion, fno: int) -> None:
-        if motion:
+        if motion is not None:
             self.bone_matrixes, self.vertex_morph_poses, self.uv_morph_poses, self.uv1_morph_poses, self.material_morphs = motion.animate(fno, model)
         else:
             self.bone_matrixes = np.array([np.eye(4) for _ in range(len(model.bones))])
