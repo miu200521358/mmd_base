@@ -1481,8 +1481,8 @@ class JointParam(BaseModel):
     __slots__ = (
         "translation_limit_min",
         "translation_limit_max",
-        "rotation_limit_min_radians",
-        "rotation_limit_max_radians",
+        "rotation_limit_min",
+        "rotation_limit_max",
         "spring_constant_translation",
         "spring_constant_rotation",
     )
