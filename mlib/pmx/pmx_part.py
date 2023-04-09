@@ -290,9 +290,7 @@ class Face(BaseIndexModel):
 
     __slots__ = (
         "index",
-        "vertex_index0",
-        "vertex_index1",
-        "vertex_index2",
+        "vertices",
     )
 
     def __init__(
@@ -583,8 +581,8 @@ class IkLink(BaseModel):
     __slots__ = (
         "bone_index",
         "angle_limit",
-        "min_angle_limit_radians",
-        "max_angle_limit_radians",
+        "min_angle_limit",
+        "max_angle_limit",
     )
 
     def __init__(
@@ -607,7 +605,7 @@ class Ik(BaseModel):
         IKターゲットボーンのボーンIndex, by default -1
     loop_count : int, optional
         IKループ回数 (最大255), by default 0
-    unit_radians : float, optional
+    unit_rotation : float, optional
         IKループ計算時の1回あたりの制限角度 -> ラジアン角, by default 0
         unit_rotation の x に値が入っている
     links : list[IkLink], optional
@@ -617,7 +615,7 @@ class Ik(BaseModel):
     __slots__ = (
         "bone_index",
         "loop_count",
-        "unit_radians",
+        "unit_rotation",
         "links",
     )
 
@@ -1158,6 +1156,8 @@ class MorphType(IntEnum):
     """7:追加UV4"""
     MATERIAL = 8
     """"8:材質"""
+    BY_TOOL = 99
+    """99: ツールで追加した仮モーフ"""
 
 
 class Morph(BaseIndexNameModel):
