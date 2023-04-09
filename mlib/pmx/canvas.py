@@ -1,7 +1,6 @@
-from typing import List
 import os
 from multiprocessing import Process, Queue
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 import OpenGL.GL as gl

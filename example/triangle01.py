@@ -6,10 +6,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import numpy as np
 import OpenGL.GL as gl
 import wx
+from mlib.math import MMatrix4x4, MQuaternion
 from OpenGL.GL import shaders
 from wx import glcanvas
-
-from mlib.math import MMatrix4x4, MQuaternion
 
 vertex_shader = """
 # version 330

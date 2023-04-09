@@ -10,11 +10,11 @@ import numpy as np
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
 import wx
+from mlib.math import MMatrix4x4, MQuaternion, MVector3D
 from OpenGL.GL import shaders
 from PIL import Image, ImageOps
 from wx import glcanvas
 
-from mlib.math import MMatrix4x4, MQuaternion, MVector3D
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_reader import PmxReader
 
