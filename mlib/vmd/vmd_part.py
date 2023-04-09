@@ -51,13 +51,13 @@ class BoneInterpolations(BaseModel):
         回転, by default None
     """
 
-    __slots__ = [
+    __slots__ = (
         "translation_x",
         "translation_y",
         "translation_z",
         "rotation",
         "vals",
-    ]
+    )
 
     def __init__(
         self,
@@ -233,7 +233,7 @@ class VmdBoneFrame(BaseVmdNameFrame):
         VMDデータから読み込んだデータか, by default None
     """
 
-    __slots__ = [
+    __slots__ = (
         "name",
         "index",
         "register",
@@ -244,7 +244,7 @@ class VmdBoneFrame(BaseVmdNameFrame):
         "ik_rotation",
         "ik_target_rotation",
         "correct_rotation",
-    ]
+    )
 
     def __init__(
         self,
@@ -322,13 +322,13 @@ class VmdMorphFrame(BaseVmdNameFrame):
         VMDデータから読み込んだデータか, by default None
     """
 
-    __slots__ = [
+    __slots__ = (
         "name",
         "index",
         "register",
         "read",
         "ratio",
-    ]
+    )
 
     def __init__(
         self,
@@ -371,14 +371,14 @@ class CameraInterpolations(BaseModel):
         視野角, by default None
     """
 
-    __slots__ = [
+    __slots__ = (
         "translation_x",
         "translation_y",
         "translation_z",
         "rotation",
         "distance",
         "viewing_angle",
-    ]
+    )
 
     def __init__(
         self,
@@ -423,7 +423,7 @@ class VmdCameraFrame(BaseVmdNameFrame):
         VMDデータから読み込んだデータか, by default None
     """
 
-    __slots__ = [
+    __slots__ = (
         "index",
         "register",
         "read",
@@ -433,7 +433,7 @@ class VmdCameraFrame(BaseVmdNameFrame):
         "viewing_angle",
         "perspective",
         "interpolations",
-    ]
+    )
 
     def __init__(
         self,
@@ -474,13 +474,13 @@ class VmdLightFrame(BaseVmdNameFrame):
         VMDデータから読み込んだデータか, by default None
     """
 
-    __slots__ = [
+    __slots__ = (
         "index",
         "register",
         "read",
         "color",
         "position",
-    ]
+    )
 
     def __init__(
         self,
@@ -513,13 +513,13 @@ class VmdShadowFrame(BaseVmdNameFrame):
         VMDデータから読み込んだデータか, by default None
     """
 
-    __slots__ = [
+    __slots__ = (
         "index",
         "register",
         "read",
         "type",
         "distance",
-    ]
+    )
 
     def __init__(
         self,
@@ -546,10 +546,10 @@ class VmdIkOnOff(BaseModel):
         ON,OFF, by default None
     """
 
-    __slots__ = [
+    __slots__ = (
         "name",
         "onoff",
-    ]
+    )
 
     def __init__(
         self,
@@ -579,13 +579,13 @@ class VmdShowIkFrame(BaseVmdNameFrame):
         VMDデータから読み込んだデータか, by default None
     """
 
-    __slots__ = [
+    __slots__ = (
         "index",
         "register",
         "read",
         "show",
         "iks",
-    ]
+    )
 
     def __init__(
         self,

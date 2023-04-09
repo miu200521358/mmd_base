@@ -109,8 +109,6 @@ class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
     BoneTreeリスト
     """
 
-    __slots__ = ["data", "_names", "_indexes", "_iter_index"]
-
     def __init__(self) -> None:
         """モデル辞書"""
         super().__init__()
@@ -259,7 +257,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
         # 座標変換行列
         matrix = matrixes.vector[0, bone_index] @ matrix
         # 逆BOf行列(初期姿勢行列)
-        matrix = bone.init_matrix.vector @ matrix
+        matrix = bone.parent_revert_matrix.vector @ matrix
 
         if 0 <= bone.index and bone.parent_index in self:
             # 親ボーンがある場合、遡る
@@ -345,6 +343,36 @@ class PmxModel(BaseHashModel):
         JSONデータ（vroidデータ用）, by default {}
     """
 
+    __slots__ = (
+        "path",
+        "digest",
+        "signature",
+        "version",
+        "extended_uv_count",
+        "vertex_count",
+        "texture_count",
+        "material_count",
+        "bone_count",
+        "morph_count",
+        "rigidbody_count",
+        "model_name",
+        "english_name",
+        "comment",
+        "english_comment",
+        "vertices",
+        "faces",
+        "textures" "toon_textures",
+        "materials",
+        "bones",
+        "bone_trees",
+        "morphs",
+        "display_slots",
+        "rigidbodies",
+        "joints",
+        "for_draw",
+        "meshes",
+    )
+
     def __init__(
         self,
         path: str = "",
@@ -363,7 +391,6 @@ class PmxModel(BaseHashModel):
         self.english_name: str = ""
         self.comment: str = ""
         self.english_comment: str = ""
-        self.json_data: dict = {}
         self.vertices: Vertices = Vertices()
         self.faces: Faces = Faces()
         self.textures: Textures = Textures()
@@ -464,8 +491,8 @@ class PmxModel(BaseHashModel):
             bone.local_axis = bone.tail_relative_position.normalized()
 
             # 逆オフセット行列は親ボーンからの相対位置分を戻す
-            bone.init_matrix = MMatrix4x4()
-            bone.init_matrix.translate(bone.parent_relative_position)
+            bone.parent_revert_matrix = MMatrix4x4()
+            bone.parent_revert_matrix.translate(bone.parent_relative_position)
 
             # オフセット行列は自身の位置を原点に戻す行列
             bone.offset_matrix = MMatrix4x4()
@@ -488,6 +515,24 @@ class Meshes(BaseIndexDictModel[Mesh]):
     """
     メッシュリスト
     """
+
+    __slots__ = (
+        "data",
+        "indexes",
+        "_iter_index",
+        "_size",
+        "shader",
+        "model",
+        "vertices",
+        "faces",
+        "vao",
+        "vbo_components",
+        "morph_pos_comps",
+        "morph_uv_comps",
+        "morph_uv1_comps",
+        "vbo_vertices",
+        "ibo_faces",
+    )
 
     def __init__(self, shader: MShader, model: PmxModel) -> None:
         super().__init__()

@@ -33,7 +33,16 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
     ボーン名別キーフレ辞書
     """
 
-    __slots__ = ["data", "name", "cache", "_names", "_indexes", "_iter_index", "_ik_indexes"]
+    __slots__ = (
+        "data",
+        "name",
+        "cache",
+        "_names",
+        "_indexes",
+        "_iter_index",
+        "_ik_indexes",
+        "_size",
+    )
 
     def __init__(self, name: str = "") -> None:
         super().__init__(name)
@@ -131,7 +140,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     ボーンキーフレ辞書
     """
 
-    __slots__ = ["data", "cache", "cache_ratios", "cache_qqs", "_names", "_iter_index"]
+    __slots__ = (
+        "data",
+        "cache",
+        "cache_ratios",
+        "cache_qqs",
+        "_names",
+        "_iter_index",
+        "_size",
+    )
 
     def __init__(self) -> None:
         super().__init__()
@@ -545,11 +562,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # リンクボーンの角度を保持
                     link_bf = self[link_bone.name][fno]
-                    # if "左" in link_bf.name:
-                    #     logger.debug(
-                    #         f"- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}] "
-                    #         + f"rot[{link_bf.ik_rotation.to_euler_degrees_mmd() if link_bf.ik_rotation else '-'}]"
-                    #     )
 
                     # 処理対象IKボーンのグローバル位置と行列を取得
                     col = len(link_bone_tree)
@@ -579,11 +591,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 注目ノードを起点とした、IK目標のローカル位置
                     local_target_pos = link_inverse_matrix * global_target_pos
 
-                    # logger.debug(
-                    #     f"- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}], "
-                    #     + f"global_target_pos: {global_target_pos}, global_effector_pos: {global_effector_pos}"
-                    # )
-
                     if 1e-5 > (local_effector_pos - local_target_pos).length_squared():
                         # 位置の差がほとんどない場合、スルー
                         is_break = True
@@ -604,10 +611,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     rotation_axis = norm_effector_pos.cross(norm_target_pos)
                     # 回転角度
                     rotation_degree = degrees(rotation_radian)
-
-                    # if abs(1 - rotation_dot) < 1e-6:
-                    #     # ほとんど回らない場合、スルー
-                    #     continue
 
                     # 制限角で最大変位量を制限する
                     if 0 < loop:
@@ -645,11 +648,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         ik_qq = MQuaternion.from_euler_degrees(euler_degrees)
 
                     link_bf.ik_rotation = ik_qq
-                    # if "左" in link_bf.name:
-                    #     logger.debug(
-                    #         f"-- ik_rotation: name[{link_bf.name}], index[{link_bf.index}], loop[{loop}], "
-                    #         + f"rot[{link_bf.ik_rotation.to_euler_degrees_mmd() if link_bf.ik_rotation else '-'}]"
-                    #     )
                     self[link_bf.name].append(link_bf)
 
                 if is_break:
@@ -992,6 +990,19 @@ class VmdMotion(BaseHashModel):
     show_iks : VmdShowIkFrames
         IKキーフレリスト, by default []
     """
+
+    __slots__ = (
+        "path",
+        "digest",
+        "signature",
+        "model_name",
+        "bones",
+        "morphs",
+        "cameras",
+        "lights",
+        "shadows",
+        "show_iks",
+    )
 
     def __init__(
         self,

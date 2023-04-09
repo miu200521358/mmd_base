@@ -16,7 +16,11 @@ class Switch(Enum):
 
 
 class BaseRotationModel(BaseModel):
-    __slots__ = ["_radians", "_degrees", "_qq"]
+    __slots__ = (
+        "_radians",
+        "_degrees",
+        "_qq",
+    )
 
     def __init__(self, v_radians: Optional[MVector3D] = None) -> None:
         super().__init__()

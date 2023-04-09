@@ -79,7 +79,7 @@ def calc_v3_by_ratio(
 class MVector(BaseModel):
     """ベクトル基底クラス"""
 
-    __slots__ = ["vector"]
+    __slots__ = ("vector",)
 
     def __init__(self, x: float = 0.0):
         self.vector = np.fromiter([x], dtype=np.float64, count=1)
@@ -450,7 +450,7 @@ class MVector4D(MVector):
 class MVectorDict:
     """ベクトル辞書基底クラス"""
 
-    __slots__ = ["vectors"]
+    __slots__ = ("vectors",)
 
     def __init__(self) -> None:
         """初期化"""
@@ -1232,7 +1232,11 @@ class MMatrix4x4List:
     4x4行列クラスリスト
     """
 
-    __slots__ = ["vector", "row", "col"]
+    __slots__ = (
+        "vector",
+        "row",
+        "col",
+    )
 
     def __init__(self, row: int, col: int):
         """

@@ -9,7 +9,12 @@ from mlib.base.part import TBaseIndexModel, TBaseIndexNameModel
 class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
     """BaseIndexModelのリスト基底クラス"""
 
-    __slots__ = ["data", "indexes", "_iter_index"]
+    __slots__ = (
+        "data",
+        "indexes",
+        "_iter_index",
+        "_size",
+    )
 
     def __init__(self) -> None:
         """モデルリスト"""
@@ -81,7 +86,15 @@ TBaseIndexListModel = TypeVar("TBaseIndexListModel", bound=BaseIndexDictModel)
 class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     """BaseIndexNameModelの辞書基底クラス"""
 
-    __slots__ = ["name", "data", "cache", "indexes", "_names", "_iter_index"]
+    __slots__ = (
+        "name",
+        "data",
+        "cache",
+        "indexes",
+        "_names",
+        "_iter_index",
+        "_size",
+    )
 
     def __init__(self, name: str = "") -> None:
         """モデル辞書"""
@@ -243,7 +256,13 @@ TBaseIndexNameDictModel = TypeVar("TBaseIndexNameDictModel", bound=BaseIndexName
 class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel):
     """BaseIndexNameDictModelの辞書基底クラス"""
 
-    __slots__ = ["data", "cache", "_names", "_iter_index"]
+    __slots__ = (
+        "data",
+        "cache",
+        "_names",
+        "_iter_index",
+        "_size",
+    )
 
     def __init__(self) -> None:
         """モデル辞書"""
@@ -314,6 +333,8 @@ class BaseHashModel(BaseModel):
     path : str, optional
         パス, by default ""
     """
+
+    __slots__ = ("path", "digest")
 
     def __init__(self, path: str = "") -> None:
         super().__init__()

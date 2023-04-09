@@ -12,7 +12,12 @@ IP_MAX = 127
 
 
 class Interpolation(BaseModel):
-    __slots__ = ["begin", "start", "end", "finish"]
+    __slots__ = (
+        "begin",
+        "start",
+        "end",
+        "finish",
+    )
 
     def __init__(self):
         """
