@@ -437,6 +437,7 @@ class PmxModel(BaseHashModel):
                 vertices.extend(self.faces[face_index].vertices)
             vertices_by_materials[material.index] = list(set(vertices))
             prev_vertices_count += material.vertices_count
+        return vertices_by_materials
 
     def init_draw(self, shader: MShader):
         if self.for_draw:
