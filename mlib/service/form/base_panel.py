@@ -1,6 +1,6 @@
 import wx
 
-from mlib.form.base_frame import BaseFrame
+from mlib.service.form.base_frame import BaseFrame
 
 
 class BasePanel(wx.Panel):

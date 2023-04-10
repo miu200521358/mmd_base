@@ -5,8 +5,8 @@ import wx
 
 from mlib.base.logger import MLogger
 from mlib.base.reader import TBaseHashModel, TBaseReader
-from mlib.form.base_frame import BaseFrame
-from mlib.form.base_panel import BasePanel
+from mlib.service.form.base_frame import BaseFrame
+from mlib.service.form.base_panel import BasePanel
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_reader import PmxReader
 from mlib.utils.file_utils import get_dir_path, insert_history, unwrapped_path, validate_file, validate_save_file

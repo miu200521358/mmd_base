@@ -3,8 +3,8 @@ import os
 import wx
 
 from mlib.base.logger import ConsoleHandler, MLogger
-from mlib.form.base_frame import BaseFrame
-from mlib.form.base_panel import BasePanel
+from mlib.service.form.base_frame import BaseFrame
+from mlib.service.form.base_panel import BasePanel
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text

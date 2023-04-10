@@ -3,7 +3,7 @@ from typing import List
 
 import wx
 
-from mlib.form.base_notebook import BaseNotebook
+from mlib.service.form.base_notebook import BaseNotebook
 from mlib.utils.file_utils import read_histories
 
 

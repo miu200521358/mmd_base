@@ -7,13 +7,14 @@ import wx
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+from mlib.base.exception import MApplicationException
 from mlib.base.logger import MLogger
-from mlib.form.base_frame import BaseFrame
-from mlib.form.base_panel import BasePanel
-from mlib.form.base_worker import BaseWorker
-from mlib.form.parts.console_ctrl import ConsoleCtrl
-from mlib.form.parts.file_ctrl import MPmxFilePickerCtrl, MVmdFilePickerCtrl
-from mlib.form.parts.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
+from mlib.service.form.base_frame import BaseFrame
+from mlib.service.form.base_panel import BasePanel
+from mlib.service.base_worker import BaseWorker
+from mlib.service.form.parts.console_ctrl import ConsoleCtrl
+from mlib.service.form.parts.file_ctrl import MPmxFilePickerCtrl, MVmdFilePickerCtrl
+from mlib.service.form.parts.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
 from mlib.pmx.canvas import CanvasPanel
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.utils.file_utils import save_histories, separate_path
@@ -116,6 +117,9 @@ class PmxLoadWorker(BaseWorker):
 
         if not file_panel.model_ctrl.data and file_panel.model_ctrl.valid():
             model = file_panel.model_ctrl.reader.read_by_filepath(file_panel.model_ctrl.path)
+
+            if "首" not in model.bones:
+                raise MApplicationException("{b}ボーン不足", b="首")
         elif file_panel.model_ctrl.data:
             model = file_panel.model_ctrl.data
         else:

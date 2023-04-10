@@ -8,7 +8,7 @@ import wx
 
 from mlib.base.exception import MLibException
 from mlib.base.logger import MLogger
-from mlib.form.base_panel import BasePanel
+from mlib.service.form.base_panel import BasePanel
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -103,7 +103,7 @@ class BaseWorker:
         try:
             self.thread_execute()
         except MLibException as e:
-            logger.error(f"処理を中断しました\n中断理由: {e.message}")
+            logger.error("処理が継続できないため、中断しました\n" + e.message, decoration=MLogger.Decoration.BOX, **e.kwargs)
             self.result = False
         except Exception:
             logger.critical("予期せぬエラーが発生しました")
