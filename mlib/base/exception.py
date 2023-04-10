@@ -1,4 +1,3 @@
-import traceback
 from typing import Optional
 
 
@@ -6,12 +5,13 @@ class MLibException(Exception):
     """ライブラリ内基本エラー"""
 
     def __init__(self, message: str = "", exception: Optional[Exception] = None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args)
         self.message = message
         self.exception = exception
+        self.kwargs = kwargs
 
     def __str__(self) -> str:
-        return traceback.format_exc()
+        return self.message
 
 
 class MApplicationException(MLibException):
