@@ -1085,11 +1085,11 @@ class ShaderMaterial:
             self.sphere_texture_factor *= v
             self.toon_texture_factor *= v
         else:
-            self.material.diffuse *= v.diffuse
-            self.material.ambient *= v.ambient
-            self.material.specular *= v.specular
-            self.material.edge_color *= v.edge_color
-            self.material.edge_size *= v.edge_size
+            self.material.diffuse *= v.material.diffuse
+            self.material.ambient *= v.material.ambient
+            self.material.specular *= v.material.specular
+            self.material.edge_color *= v.material.edge_color
+            self.material.edge_size *= v.material.edge_size
             self.texture_factor *= v.texture_factor
             self.sphere_texture_factor *= v.sphere_texture_factor
             self.toon_texture_factor *= v.toon_texture_factor
@@ -1106,11 +1106,11 @@ class ShaderMaterial:
             self.sphere_texture_factor += v
             self.toon_texture_factor += v
         else:
-            self.material.diffuse += v.diffuse
-            self.material.ambient += v.ambient
-            self.material.specular += v.specular
-            self.material.edge_color += v.edge_color
-            self.material.edge_size += v.edge_size
+            self.material.diffuse += v.material.diffuse
+            self.material.ambient += v.material.ambient
+            self.material.specular += v.material.specular
+            self.material.edge_color += v.material.edge_color
+            self.material.edge_size += v.material.edge_size
             self.texture_factor += v.texture_factor
             self.sphere_texture_factor += v.sphere_texture_factor
             self.toon_texture_factor += v.toon_texture_factor

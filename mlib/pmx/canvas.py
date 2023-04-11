@@ -70,7 +70,6 @@ class MotionSet:
         if motion is not None:
             (
                 self.gl_matrixes,
-                self.bone_matrixes,
                 self.vertex_morph_poses,
                 self.uv_morph_poses,
                 self.uv1_morph_poses,
@@ -78,7 +77,6 @@ class MotionSet:
             ) = motion.animate(fno, model)
         else:
             self.gl_matrixes = np.array([np.eye(4) for _ in range(len(model.bones))])
-            self.bone_matrixes = np.array([np.eye(4) for _ in range(len(model.bones))])
             self.vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])
             self.uv_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
             self.uv1_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
