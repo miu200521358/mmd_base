@@ -14,7 +14,6 @@ from mlib.pmx.pmx_part import (
     Bone,
     BoneMorphOffset,
     GroupMorphOffset,
-    Material,
     MaterialMorphCalcMode,
     MaterialMorphOffset,
     MorphType,
