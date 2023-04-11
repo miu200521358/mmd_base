@@ -1026,25 +1026,25 @@ class ShaderMaterial:
     __slots__ = (
         "light_ambient4",
         "material",
-        "texture_factor",
-        "sphere_texture_factor",
-        "toon_texture_factor",
+        "texture_factor_vector",
+        "sphere_texture_factor_vector",
+        "toon_texture_factor_vector",
     )
 
     def __init__(
         self,
         material: Material,
         light_ambient4: MVector4D,
-        texture_factor: Optional[np.ndarray] = None,
-        toon_texture_factor: Optional[np.ndarray] = None,
-        sphere_texture_factor: Optional[np.ndarray] = None,
+        texture_factor: Optional[MVector4D] = None,
+        toon_texture_factor: Optional[MVector4D] = None,
+        sphere_texture_factor: Optional[MVector4D] = None,
     ):
         super().__init__()
         self.light_ambient4 = light_ambient4
         self.material: Material = material.copy()
-        self.texture_factor = texture_factor or np.zeros(4)
-        self.sphere_texture_factor = toon_texture_factor or np.zeros(4)
-        self.toon_texture_factor = sphere_texture_factor or np.zeros(4)
+        self.texture_factor_vector = texture_factor or MVector4D()
+        self.sphere_texture_factor_vector = toon_texture_factor or MVector4D()
+        self.toon_texture_factor_vector = sphere_texture_factor or MVector4D()
 
     @property
     def diffuse(self) -> np.ndarray:
@@ -1074,6 +1074,18 @@ class ShaderMaterial:
     def edge_size(self) -> float:
         return self.material.edge_size
 
+    @property
+    def texture_factor(self) -> np.ndarray:
+        return self.texture_factor_vector.vector
+
+    @property
+    def sphere_texture_factor(self) -> np.ndarray:
+        return self.sphere_texture_factor_vector.vector
+
+    @property
+    def toon_texture_factor(self) -> np.ndarray:
+        return self.toon_texture_factor_vector.vector
+
     def __imul__(self, v: Union[float, int, "ShaderMaterial"]):
         if isinstance(v, (float, int)):
             self.material.diffuse *= v
@@ -1081,18 +1093,18 @@ class ShaderMaterial:
             self.material.specular *= v
             self.material.edge_color *= v
             self.material.edge_size *= v
-            self.texture_factor *= v
-            self.sphere_texture_factor *= v
-            self.toon_texture_factor *= v
+            self.texture_factor_vector *= v
+            self.sphere_texture_factor_vector *= v
+            self.toon_texture_factor_vector *= v
         else:
             self.material.diffuse *= v.material.diffuse
             self.material.ambient *= v.material.ambient
             self.material.specular *= v.material.specular
             self.material.edge_color *= v.material.edge_color
             self.material.edge_size *= v.material.edge_size
-            self.texture_factor *= v.texture_factor
-            self.sphere_texture_factor *= v.sphere_texture_factor
-            self.toon_texture_factor *= v.toon_texture_factor
+            self.texture_factor_vector *= v.texture_factor_vector
+            self.sphere_texture_factor_vector *= v.sphere_texture_factor_vector
+            self.toon_texture_factor_vector *= v.toon_texture_factor_vector
         return self
 
     def __iadd__(self, v: Union[float, int, "ShaderMaterial"]):
@@ -1102,18 +1114,18 @@ class ShaderMaterial:
             self.material.specular += v
             self.material.edge_color += v
             self.material.edge_size += v
-            self.texture_factor += v
-            self.sphere_texture_factor += v
-            self.toon_texture_factor += v
+            self.texture_factor_vector += v
+            self.sphere_texture_factor_vector += v
+            self.toon_texture_factor_vector += v
         else:
             self.material.diffuse += v.material.diffuse
             self.material.ambient += v.material.ambient
             self.material.specular += v.material.specular
             self.material.edge_color += v.material.edge_color
             self.material.edge_size += v.material.edge_size
-            self.texture_factor += v.texture_factor
-            self.sphere_texture_factor += v.sphere_texture_factor
-            self.toon_texture_factor += v.toon_texture_factor
+            self.texture_factor_vector += v.texture_factor_vector
+            self.sphere_texture_factor_vector += v.sphere_texture_factor_vector
+            self.toon_texture_factor_vector += v.toon_texture_factor_vector
         return self
 
 
