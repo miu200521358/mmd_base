@@ -12,10 +12,12 @@ class FloatSliderCtrl:
         border: int,
         position: wx.Position = wx.DefaultPosition,
         size: wx.Size = wx.DefaultSize,
+        change_event=None,
     ) -> None:
         self._min = min_value
         self._max = max_value
         self._increment = increment
+        self._change_event = change_event
         i_value, i_min, i_max = [round(v / increment) for v in (value, min_value, max_value)]
 
         self._value_ctrl = wx.TextCtrl(parent, wx.ID_ANY, str(value), wx.DefaultPosition, wx.Size(50, -1))
@@ -42,10 +44,14 @@ class FloatSliderCtrl:
 
         self._value_ctrl.ChangeValue(f"{v:.2f}")
 
-        event.Skip()
+        if self._change_event:
+            self._change_event(event)
 
     def SetValue(self, event: wx.Event):
         self._slider.SetValue(round(float(self._value_ctrl.GetValue()) / self._increment))
+
+        if self._change_event:
+            self._change_event(event)
 
     def GetValue(self):
         return self._value_ctrl.GetValue()
