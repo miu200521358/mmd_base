@@ -186,6 +186,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.shader.update_camera()
 
         self.shader.msaa.bind()
+        # 透過度設定なしのメッシュを先に描画する
         for model_set, animation in zip(self.model_sets, self.animations):
             if model_set.model:
                 model_set.model.draw(
@@ -194,8 +195,21 @@ class PmxCanvas(glcanvas.GLCanvas):
                     animation.uv_morph_poses,
                     animation.uv1_morph_poses,
                     animation.material_morphs,
+                    False,
+                )
+        # その後透過度設定ありのメッシュを描画する
+        for model_set, animation in zip(self.model_sets, self.animations):
+            if model_set.model:
+                model_set.model.draw(
+                    animation.gl_matrixes,
+                    animation.vertex_morph_poses,
+                    animation.uv_morph_poses,
+                    animation.uv1_morph_poses,
+                    animation.material_morphs,
+                    True,
                 )
         self.shader.msaa.unbind()
+
         for model_set, animation, color in zip(self.model_sets, self.animations, MODEL_BONE_COLORS):
             if model_set.model:
                 model_set.model.draw_bone(

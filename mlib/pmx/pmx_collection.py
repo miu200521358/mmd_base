@@ -481,10 +481,11 @@ class PmxModel(BaseHashModel):
         uv_morph_poses: np.ndarray,
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
+        is_alpha: bool,
     ):
         if not self.for_draw or not self.meshes:
             return
-        self.meshes.draw(bone_matrixes, vertex_morph_poses, uv_morph_poses, uv1_morph_poses, material_morphs)
+        self.meshes.draw(bone_matrixes, vertex_morph_poses, uv_morph_poses, uv1_morph_poses, material_morphs, is_alpha)
 
     def draw_bone(
         self,
@@ -727,14 +728,21 @@ class Meshes(BaseIndexDictModel[Mesh]):
         uv_morph_poses: np.ndarray,
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
+        is_alpha: bool,
     ):
         # 隠面消去
         # https://learnopengl.com/Advanced-OpenGL/Depth-testing
         gl.glEnable(gl.GL_DEPTH_TEST)
         gl.glDepthFunc(gl.GL_LEQUAL)
 
+        # ブレンディングを有効にする
         gl.glEnable(gl.GL_BLEND)
+        # ブレンドファンクションを設定する
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+        # アルファテストを有効にする
+        gl.glEnable(gl.GL_ALPHA_TEST)
+        # アルファテストの基準値を設定する
+        gl.glAlphaFunc(gl.GL_GREATER, 0.01)
 
         # 頂点モーフ変動量を上書き設定してからバインド
         self.vbo_vertices.data[:, self.morph_pos_comps["offset"] : (self.morph_pos_comps["offset"] + self.morph_pos_comps["size"])] = vertex_morph_poses
@@ -759,6 +767,10 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
             material_morph = material_morphs[mesh.material.index]
 
+            if not ((is_alpha and 1.0 > material_morph.diffuse.w) or (not is_alpha and 1.0 <= material_morph.diffuse.w)):
+                # 「半透明描写かつ材質透過度が1未満、不透明描写かつ材質透過度が1」ではない場合、スルー
+                continue
+
             # モデル描画
             self.shader.use(ProgramType.MODEL)
             mesh.draw_model(bone_matrixes, material_morph, self.shader, self.ibo_faces)
@@ -775,6 +787,9 @@ class Meshes(BaseIndexDictModel[Mesh]):
             self.ibo_faces.unbind()
             self.vbo_vertices.unbind()
             self.vao.unbind()
+
+        gl.glDisable(gl.GL_ALPHA_TEST)
+        gl.glDisable(gl.GL_BLEND)
 
     def draw_bone(self, bone_matrixes: np.ndarray, bone_color: np.ndarray):
         # ボーンをモデルメッシュの前面に描画するために深度テストを無効化

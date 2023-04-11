@@ -27,6 +27,7 @@ uniform int useSphere;
 uniform int sphereMode;
 uniform vec3 lightDirection;
 
+out float alpha;
 out vec4 vertexColor;
 out vec3 vertexSpecular;
 out vec2 vertexUv;
@@ -62,6 +63,9 @@ void main() {
 
     // 頂点法線
     vetexNormal = normalize(normalTransformMatrix * normalize(normal)).xyz;
+
+    // 材質の透過度
+    alpha = diffuse.w;
 
     // 頂点色設定
     vertexColor = clamp(diffuse, 0.0, 1.0);

@@ -20,6 +20,7 @@ uniform vec4 sphereFactor;
 
 uniform vec3 lightDirection;
 
+in float alpha;
 in vec4 vertexColor;
 in vec3 vertexSpecular;
 in vec2 vertexUv;
@@ -36,6 +37,8 @@ void main() {
         // テクスチャ適用
         outColor *= texture(textureSampler, vertexUv);
     }
+    // 透過度設定
+    outColor.a *= alpha;
 
     if (1 == useSphere) {
         // Sphere適用
@@ -59,6 +62,4 @@ void main() {
 
     // スペキュラ適用
     outColor.rgb += vertexSpecular;
-
-    outColor = clamp(outColor, 0.0, 1.0);
 }
