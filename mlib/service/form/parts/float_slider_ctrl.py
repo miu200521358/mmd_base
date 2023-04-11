@@ -32,16 +32,7 @@ class FloatSliderCtrl:
         self.sizer.Add(self._slider, 0, wx.TOP | wx.RIGHT | wx.BOTTOM, border)
 
     def _on_scroll(self, event: wx.Event):
-        i_value = self._slider.GetValue()
-        i_min = self._slider.GetMin()
-        i_max = self._slider.GetMax()
-        if i_value == i_min:
-            v = self._min
-        elif i_value == i_max:
-            v = self._max
-        else:
-            v = i_value * self._increment
-
+        v = max(self._min, min(self._max, self._slider.GetValue() * self._increment))
         self._value_ctrl.ChangeValue(f"{v:.2f}")
 
         if self._change_event:
