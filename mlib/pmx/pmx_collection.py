@@ -765,7 +765,10 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
             material_morph = material_morphs[mesh.material.index]
 
-            if not ((is_alpha and 1.0 > material_morph.diffuse.w) or (not is_alpha and 1.0 <= material_morph.diffuse.w)):
+            if (
+                not ((is_alpha and 1.0 > material_morph.material.diffuse.w) or (not is_alpha and 1.0 <= material_morph.material.diffuse.w))
+                or 0.0 >= material_morph.material.diffuse.w
+            ):
                 # 「半透明描写かつ材質透過度が1未満、不透明描写かつ材質透過度が1」ではない場合、スルー
                 continue
 
@@ -774,7 +777,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
             mesh.draw_model(bone_matrixes, material_morph, self.shader, self.ibo_faces)
             self.shader.unuse()
 
-            if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and 0 < material_morph.diffuse.w:
+            if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and 0 < material_morph.material.diffuse.w:
                 # エッジ描画
                 self.shader.use(ProgramType.EDGE)
                 mesh.draw_edge(bone_matrixes, material_morph, self.shader, self.ibo_faces)
