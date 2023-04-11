@@ -1069,7 +1069,7 @@ class ShaderMaterial:
     @property
     def edge_color(self) -> np.ndarray:
         edge_color = self.material.edge_color.vector
-        edge_color[-1] = self.material.diffuse.w
+        edge_color[-1] *= self.material.diffuse.w
         return edge_color
 
     @property

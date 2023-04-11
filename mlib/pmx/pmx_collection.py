@@ -735,13 +735,6 @@ class Meshes(BaseIndexDictModel[Mesh]):
         gl.glEnable(gl.GL_DEPTH_TEST)
         gl.glDepthFunc(gl.GL_LEQUAL)
 
-        # ブレンディングを有効にする
-        gl.glEnable(gl.GL_BLEND)
-        # ブレンドファンクションを設定する
-        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
-        # アルファテストを有効にする
-        gl.glEnable(gl.GL_ALPHA_TEST)
-
         # 頂点モーフ変動量を上書き設定してからバインド
         self.vbo_vertices.data[:, self.morph_pos_comps["offset"] : (self.morph_pos_comps["offset"] + self.morph_pos_comps["size"])] = vertex_morph_poses
         self.vbo_vertices.data[:, self.morph_uv_comps["offset"] : (self.morph_uv_comps["offset"] + self.morph_uv_comps["size"])] = uv_morph_poses
@@ -772,6 +765,17 @@ class Meshes(BaseIndexDictModel[Mesh]):
                 # 「半透明描写かつ材質透過度が1未満、不透明描写かつ材質透過度が1」ではない場合、スルー
                 continue
 
+            # ブレンディングを有効にする
+            gl.glEnable(gl.GL_BLEND)
+            if not is_alpha:
+                # 出力色 = (前景色のアルファ値 * 前景色) + (背景色のアルファ値 * 背景色 * (1 - 前景色のアルファ値))
+                gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+            else:
+                # 透過度に応じてメッシュが透明になっていく設定
+                gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE)
+            # アルファテストを有効にする
+            gl.glEnable(gl.GL_ALPHA_TEST)
+
             # モデル描画
             self.shader.use(ProgramType.MODEL)
             mesh.draw_model(bone_matrixes, material_morph, self.shader, self.ibo_faces)
@@ -789,8 +793,8 @@ class Meshes(BaseIndexDictModel[Mesh]):
             self.vbo_vertices.unbind()
             self.vao.unbind()
 
-        gl.glDisable(gl.GL_ALPHA_TEST)
-        gl.glDisable(gl.GL_BLEND)
+            gl.glDisable(gl.GL_ALPHA_TEST)
+            gl.glDisable(gl.GL_BLEND)
 
     def draw_bone(self, bone_matrixes: np.ndarray, bone_color: np.ndarray):
         # ボーンをモデルメッシュの前面に描画するために深度テストを無効化
