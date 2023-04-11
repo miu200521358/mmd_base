@@ -7,6 +7,7 @@ import wx
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+from mlib.service.form.parts.float_slider_ctrl import FloatSliderCtrl
 from mlib.base.exception import MApplicationException
 from mlib.base.logger import MLogger
 from mlib.service.form.base_frame import BaseFrame
@@ -173,6 +174,19 @@ class ConfigPanel(CanvasPanel):
         # 再生
         self.play_btn = wx.Button(self, wx.ID_ANY, "Play", wx.DefaultPosition, wx.Size(100, 50))
         self.btn_sizer.Add(self.play_btn, 0, wx.ALL, 5)
+
+        # スライダー
+        self.float_slider = FloatSliderCtrl(
+            self,
+            value=0.5,
+            min_value=0,
+            max_value=3,
+            increment=0.1,
+            border=3,
+            position=wx.DefaultPosition,
+            size=wx.Size(200, -1),
+        )
+        self.btn_sizer.Add(self.float_slider.sizer, 0, wx.ALL, 0)
 
         self.config_sizer.Add(self.btn_sizer, 0, wx.ALL, 0)
         self.root_sizer.Add(self.config_sizer, 0, wx.ALL, 0)
