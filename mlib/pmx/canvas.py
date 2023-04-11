@@ -195,13 +195,13 @@ class PmxCanvas(glcanvas.GLCanvas):
                     animation.uv1_morph_poses,
                     animation.material_morphs,
                 )
+        self.shader.msaa.unbind()
         for model_set, animation, color in zip(self.model_sets, self.animations, MODEL_BONE_COLORS):
             if model_set.model:
                 model_set.model.draw_bone(
                     animation.gl_matrixes,
                     color,
                 )
-        self.shader.msaa.unbind()
 
     def on_frame_forward(self, event: wx.Event):
         self.parent.fno = self.parent.fno + 1
