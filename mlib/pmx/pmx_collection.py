@@ -741,8 +741,6 @@ class Meshes(BaseIndexDictModel[Mesh]):
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
         # アルファテストを有効にする
         gl.glEnable(gl.GL_ALPHA_TEST)
-        # アルファテストの基準値を設定する
-        gl.glAlphaFunc(gl.GL_GREATER, 0.01)
 
         # 頂点モーフ変動量を上書き設定してからバインド
         self.vbo_vertices.data[:, self.morph_pos_comps["offset"] : (self.morph_pos_comps["offset"] + self.morph_pos_comps["size"])] = vertex_morph_poses
