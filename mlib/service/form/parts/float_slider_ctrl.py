@@ -47,11 +47,8 @@ class FloatSliderCtrl:
         if self._change_event:
             self._change_event(event)
 
-    def SetValue(self, event: wx.Event):
-        self._slider.SetValue(round(float(self._value_ctrl.GetValue()) / self._increment))
-
-        if self._change_event:
-            self._change_event(event)
+    def SetValue(self, v: float):
+        self._slider.SetValue(round(v / self._increment))
 
     def GetValue(self):
         return self._value_ctrl.GetValue()
