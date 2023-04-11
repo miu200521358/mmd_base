@@ -21,7 +21,7 @@ class FloatSliderCtrl:
         i_value, i_min, i_max = [round(v / increment) for v in (value, min_value, max_value)]
 
         self._value_ctrl = wx.TextCtrl(parent, wx.ID_ANY, str(value), wx.DefaultPosition, wx.Size(50, -1))
-        self._value_ctrl.Bind(wx.EVT_TEXT, self.SetValue)
+        self._value_ctrl.Bind(wx.EVT_TEXT, self._on_change_value)
 
         self._slider = wx.Slider(parent, wx.ID_ANY, i_value, i_min, i_max, position, size, wx.SL_HORIZONTAL)
         self._slider.Bind(wx.EVT_SCROLL, self._on_scroll)
@@ -43,6 +43,12 @@ class FloatSliderCtrl:
             v = i_value * self._increment
 
         self._value_ctrl.ChangeValue(f"{v:.2f}")
+
+        if self._change_event:
+            self._change_event(event)
+
+    def _on_change_value(self, event: wx.Event):
+        self._slider.SetValue(round(float(self._value_ctrl.GetValue()) / self._increment))
 
         if self._change_event:
             self._change_event(event)
