@@ -874,20 +874,8 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         for target_calc_mode in [MaterialMorphCalcMode.MULTIPLICATION, MaterialMorphCalcMode.ADDITION]:
             # 先に乗算を計算した後に加算を加味する
             for material_index in material_indexes:
-                # シェーダーに合わせてambientとdiffuseを入れ替える
-                mat = model.materials[material_index]
-
-                # オフセットに合わせた材質情報
-                material = Material(
-                    mat.index,
-                    mat.name,
-                    mat.english_name,
-                )
-                material.diffuse = offset.diffuse
-                material.ambient = offset.ambient
-                material.specular = offset.specular
-                material.edge_color = offset.edge_color
-                material.edge_size = offset.edge_size
+                # 元々の材質情報をコピー
+                material = model.materials[material_index].copy()
 
                 material_offset = ShaderMaterial(
                     material,
@@ -896,6 +884,8 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
                     offset.toon_texture_factor,
                     offset.sphere_texture_factor,
                 )
+
+                # オフセットに合わせた材質情報
                 material_offset *= ratio
                 if offset.calc_mode == target_calc_mode:
                     if offset.calc_mode == MaterialMorphCalcMode.ADDITION:
