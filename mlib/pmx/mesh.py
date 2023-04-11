@@ -200,23 +200,23 @@ class Mesh(BaseIndexModel):
         # ------------------
         # 材質色設定
         # full.fx の AmbientColor相当
-        gl.glUniform4f(shader.diffuse_uniform[ProgramType.MODEL.value], *material_morphs.diffuse.vector)
-        gl.glUniform3f(shader.ambient_uniform[ProgramType.MODEL.value], *material_morphs.ambient.vector)
-        gl.glUniform4f(shader.specular_uniform[ProgramType.MODEL.value], *material_morphs.specular.vector)
+        gl.glUniform4f(shader.diffuse_uniform[ProgramType.MODEL.value], *material_morphs.diffuse)
+        gl.glUniform3f(shader.ambient_uniform[ProgramType.MODEL.value], *material_morphs.ambient)
+        gl.glUniform4f(shader.specular_uniform[ProgramType.MODEL.value], *material_morphs.specular)
 
         # テクスチャ使用有無
         gl.glUniform1i(shader.use_texture_uniform[ProgramType.MODEL.value], self.texture is not None and self.texture.valid)
         if self.texture and self.texture.valid:
             self.texture.bind()
             gl.glUniform1i(shader.texture_uniform[ProgramType.MODEL.value], self.texture.texture_type.value)
-            gl.glUniform4f(shader.texture_factor_uniform[ProgramType.MODEL.value], *material_morphs.texture_factor.vector)
+            gl.glUniform4f(shader.texture_factor_uniform[ProgramType.MODEL.value], *material_morphs.texture_factor)
 
         # Toon使用有無
         gl.glUniform1i(shader.use_toon_uniform[ProgramType.MODEL.value], self.toon_texture is not None and self.toon_texture.valid)
         if self.toon_texture and self.toon_texture.valid:
             self.toon_texture.bind()
             gl.glUniform1i(shader.toon_uniform[ProgramType.MODEL.value], self.toon_texture.texture_type.value)
-            gl.glUniform4f(shader.toon_factor_uniform[ProgramType.MODEL.value], *material_morphs.toon_texture_factor.vector)
+            gl.glUniform4f(shader.toon_factor_uniform[ProgramType.MODEL.value], *material_morphs.toon_texture_factor)
 
         # Sphere使用有無
         gl.glUniform1i(shader.use_sphere_uniform[ProgramType.MODEL.value], self.sphere_texture is not None and self.sphere_texture.valid)
@@ -224,7 +224,7 @@ class Mesh(BaseIndexModel):
             self.sphere_texture.bind()
             gl.glUniform1i(shader.sphere_mode_uniform[ProgramType.MODEL.value], self.material.sphere_mode)
             gl.glUniform1i(shader.sphere_uniform[ProgramType.MODEL.value], self.sphere_texture.texture_type.value)
-            gl.glUniform4f(shader.sphere_factor_uniform[ProgramType.MODEL.value], *material_morphs.sphere_texture_factor.vector)
+            gl.glUniform4f(shader.sphere_factor_uniform[ProgramType.MODEL.value], *material_morphs.sphere_texture_factor)
 
         gl.glDrawElements(
             gl.GL_TRIANGLES,
@@ -263,7 +263,7 @@ class Mesh(BaseIndexModel):
 
         # ------------------
         # エッジ設定
-        gl.glUniform4f(shader.edge_color_uniform[ProgramType.EDGE.value], *material_morphs.edge_color.vector)
+        gl.glUniform4f(shader.edge_color_uniform[ProgramType.EDGE.value], *material_morphs.edge_color)
         gl.glUniform1f(shader.edge_size_uniform[ProgramType.EDGE.value], material_morphs.edge_size)
 
         gl.glDrawElements(

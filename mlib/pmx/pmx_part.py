@@ -1024,12 +1024,8 @@ class ShaderMaterial:
     """
 
     __slots__ = (
-        "diffuse",
-        "specular",
-        "specular_factor",
-        "ambient",
-        "edge_color",
-        "edge_size",
+        "light_ambient4",
+        "material",
         "texture_factor",
         "sphere_texture_factor",
         "toon_texture_factor",
@@ -1039,45 +1035,61 @@ class ShaderMaterial:
         self,
         material: Material,
         light_ambient4: MVector4D,
-        texture_factor: Optional[MVector4D] = None,
-        toon_texture_factor: Optional[MVector4D] = None,
-        sphere_texture_factor: Optional[MVector4D] = None,
+        texture_factor: Optional[np.ndarray] = None,
+        toon_texture_factor: Optional[np.ndarray] = None,
+        sphere_texture_factor: Optional[np.ndarray] = None,
     ):
         super().__init__()
-        self.diffuse: MVector4D = material.diffuse * light_ambient4 + MVector4D(
-            material.ambient.x,
-            material.ambient.y,
-            material.ambient.z,
-            material.diffuse.w,
-        )
-        self.ambient: MVector3D = material.diffuse.xyz * light_ambient4.xyz
-        self.specular: MVector4D = MVector4D(
-            *(material.specular * light_ambient4.xyz).vector,
-        )
-        self.specular.w = material.specular_factor
+        self.light_ambient4 = light_ambient4
+        self.material: Material = material.copy()
+        self.texture_factor = texture_factor or np.zeros(4)
+        self.sphere_texture_factor = toon_texture_factor or np.zeros(4)
+        self.toon_texture_factor = sphere_texture_factor or np.zeros(4)
 
-        self.edge_color: MVector4D = material.edge_color
-        self.edge_size = material.edge_size
-        self.texture_factor: MVector4D = texture_factor or MVector4D(1, 1, 1, 1)
-        self.sphere_texture_factor: MVector4D = toon_texture_factor or MVector4D(1, 1, 1, 1)
-        self.toon_texture_factor: MVector4D = sphere_texture_factor or MVector4D(1, 1, 1, 1)
+    @property
+    def diffuse(self) -> np.ndarray:
+        return (
+            self.material.diffuse * self.light_ambient4
+            + MVector4D(
+                self.material.ambient.x,
+                self.material.ambient.y,
+                self.material.ambient.z,
+                self.material.diffuse.w,
+            ).vector
+        )
+
+    @property
+    def ambient(self) -> np.ndarray:
+        return (self.material.diffuse.xyz * self.light_ambient4.xyz).vector
+
+    @property
+    def specular(self) -> np.ndarray:
+        return np.array([*(self.material.specular * self.light_ambient4.xyz).vector, self.material.specular_factor])
+
+    @property
+    def edge_color(self) -> np.ndarray:
+        return self.material.edge_color.vector
+
+    @property
+    def edge_size(self) -> float:
+        return self.material.edge_size
 
     def __imul__(self, v: Union[float, int, "ShaderMaterial"]):
         if isinstance(v, (float, int)):
-            self.diffuse *= v
-            self.ambient *= v
-            self.specular *= v
-            self.edge_color *= v
-            self.edge_size *= v
+            self.material.diffuse *= v
+            self.material.ambient *= v
+            self.material.specular *= v
+            self.material.edge_color *= v
+            self.material.edge_size *= v
             self.texture_factor *= v
             self.sphere_texture_factor *= v
             self.toon_texture_factor *= v
         else:
-            self.diffuse *= v.diffuse
-            self.ambient *= v.ambient
-            self.specular *= v.specular
-            self.edge_color *= v.edge_color
-            self.edge_size *= v.edge_size
+            self.material.diffuse *= v.diffuse
+            self.material.ambient *= v.ambient
+            self.material.specular *= v.specular
+            self.material.edge_color *= v.edge_color
+            self.material.edge_size *= v.edge_size
             self.texture_factor *= v.texture_factor
             self.sphere_texture_factor *= v.sphere_texture_factor
             self.toon_texture_factor *= v.toon_texture_factor
@@ -1085,20 +1097,20 @@ class ShaderMaterial:
 
     def __iadd__(self, v: Union[float, int, "ShaderMaterial"]):
         if isinstance(v, (float, int)):
-            self.diffuse += v
-            self.ambient += v
-            self.specular += v
-            self.edge_color += v
-            self.edge_size += v
+            self.material.diffuse += v
+            self.material.ambient += v
+            self.material.specular += v
+            self.material.edge_color += v
+            self.material.edge_size += v
             self.texture_factor += v
             self.sphere_texture_factor += v
             self.toon_texture_factor += v
         else:
-            self.diffuse += v.diffuse
-            self.ambient += v.ambient
-            self.specular += v.specular
-            self.edge_color += v.edge_color
-            self.edge_size += v.edge_size
+            self.material.diffuse += v.diffuse
+            self.material.ambient += v.ambient
+            self.material.specular += v.specular
+            self.material.edge_color += v.edge_color
+            self.material.edge_size += v.edge_size
             self.texture_factor += v.texture_factor
             self.sphere_texture_factor += v.sphere_texture_factor
             self.toon_texture_factor += v.toon_texture_factor

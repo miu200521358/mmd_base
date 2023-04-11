@@ -874,10 +874,8 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             # 先に乗算を計算した後に加算を加味する
             for material_index in material_indexes:
                 # 元々の材質情報をコピー
-                material = model.materials[material_index].copy()
-
                 material_offset = ShaderMaterial(
-                    material,
+                    model.materials[material_index],
                     light_ambient,
                     offset.texture_factor,
                     offset.toon_texture_factor,
