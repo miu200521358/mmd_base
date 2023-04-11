@@ -16,6 +16,7 @@ from mlib.pmx.pmx_part import (
     GroupMorphOffset,
     MaterialMorphCalcMode,
     MaterialMorphOffset,
+    Material,
     MorphType,
     ShaderMaterial,
     UvMorphOffset,
@@ -874,8 +875,22 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             # 先に乗算を計算した後に加算を加味する
             for material_index in material_indexes:
                 # 元々の材質情報をコピー
+                mat = model.materials[material_index]
+
+                # オフセットに合わせた材質情報
+                material = Material(
+                    mat.index,
+                    mat.name,
+                    mat.english_name,
+                )
+                material.diffuse = offset.diffuse
+                material.ambient = offset.ambient
+                material.specular = offset.specular
+                material.edge_color = offset.edge_color
+                material.edge_size = offset.edge_size
+
                 material_offset = ShaderMaterial(
-                    model.materials[material_index],
+                    material,
                     light_ambient,
                     offset.texture_factor,
                     offset.toon_texture_factor,
