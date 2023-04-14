@@ -5,7 +5,7 @@ import OpenGL.GL as gl
 
 from mlib.base.exception import MViewerException
 from mlib.base.part import BaseIndexModel
-from mlib.pmx.pmx_part import DrawFlg, Material, ShaderMaterial, Texture
+from mlib.pmx.pmx_part import DrawFlg, Material, ShaderMaterial, SphereMode, Texture
 from mlib.pmx.shader import MShader, ProgramType, VsLayout
 
 
@@ -219,7 +219,10 @@ class Mesh(BaseIndexModel):
             gl.glUniform4f(shader.toon_factor_uniform[ProgramType.MODEL.value], *material_morphs.toon_texture_factor)
 
         # Sphere使用有無
-        gl.glUniform1i(shader.use_sphere_uniform[ProgramType.MODEL.value], self.sphere_texture is not None and self.sphere_texture.valid)
+        gl.glUniform1i(
+            shader.use_sphere_uniform[ProgramType.MODEL.value],
+            self.sphere_texture is not None and self.sphere_texture.valid and self.material.sphere_mode != SphereMode.INVALID,
+        )
         if self.sphere_texture and self.sphere_texture.valid:
             self.sphere_texture.bind()
             gl.glUniform1i(shader.sphere_mode_uniform[ProgramType.MODEL.value], self.material.sphere_mode)
