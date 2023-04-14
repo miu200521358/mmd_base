@@ -758,23 +758,23 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
             material_morph = material_morphs[mesh.material.index]
 
-            if (
-                not ((is_alpha and 1.0 > material_morph.material.diffuse.w) or (not is_alpha and 1.0 <= material_morph.material.diffuse.w))
-                or 0.0 >= material_morph.material.diffuse.w
-            ):
-                # 「半透明描写かつ材質透過度が1未満、不透明描写かつ材質透過度が1」ではない場合、スルー
+            if 0.0 >= material_morph.material.diffuse.w:
+                # 非表示材質の場合、常に描写しない
                 continue
+
+            if is_alpha and 1.0 <= material_morph.material.diffuse.w:
+                # 半透明描写かつ非透過度が1.0以上の場合、スルー
+                continue
+            elif not is_alpha and 1.0 > material_morph.material.diffuse.w:
+                # 不透明描写かつ非透過度が1.0未満の場合スルー
+                continue
+
+            # アルファテストを有効にする
+            gl.glEnable(gl.GL_ALPHA_TEST)
 
             # ブレンディングを有効にする
             gl.glEnable(gl.GL_BLEND)
-            if not is_alpha:
-                # 出力色 = (前景色のアルファ値 * 前景色) + (背景色のアルファ値 * 背景色 * (1 - 前景色のアルファ値))
-                gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
-            else:
-                # 透過度に応じてメッシュが透明になっていく設定
-                gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE)
-            # アルファテストを有効にする
-            gl.glEnable(gl.GL_ALPHA_TEST)
+            gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
             # モデル描画
             self.shader.use(ProgramType.MODEL)
@@ -793,8 +793,10 @@ class Meshes(BaseIndexDictModel[Mesh]):
             self.vbo_vertices.unbind()
             self.vao.unbind()
 
-            gl.glDisable(gl.GL_ALPHA_TEST)
             gl.glDisable(gl.GL_BLEND)
+            gl.glDisable(gl.GL_ALPHA_TEST)
+
+        gl.glDisable(gl.GL_DEPTH_TEST)
 
     def draw_bone(self, bone_matrixes: np.ndarray, bone_color: np.ndarray):
         # ボーンをモデルメッシュの前面に描画するために深度テストを無効化

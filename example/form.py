@@ -275,6 +275,9 @@ class TestFrame(BaseFrame):
         self.file_panel.dress_ctrl.data = dress
         self.file_panel.motion_ctrl.data = motion
 
+        model.materials["服"].diffuse.w = 0.7
+        dress.materials["ニーソックス"].diffuse.w = 0.3
+
         try:
             self.config_panel.canvas.set_context()
             self.config_panel.canvas.append_model_set(self.file_panel.model_ctrl.data, self.file_panel.motion_ctrl.data)
