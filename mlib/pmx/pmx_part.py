@@ -1048,14 +1048,18 @@ class ShaderMaterial:
 
     @property
     def diffuse(self) -> np.ndarray:
-        return (
-            self.material.diffuse * self.light_ambient4
-            + MVector4D(
-                self.material.ambient.x,
-                self.material.ambient.y,
-                self.material.ambient.z,
+        return np.array(
+            [
+                *(
+                    self.material.diffuse.xyz * self.light_ambient4.xyz
+                    + MVector3D(
+                        self.material.ambient.x,
+                        self.material.ambient.y,
+                        self.material.ambient.z,
+                    )
+                ).vector,
                 self.material.diffuse.w,
-            ).vector
+            ]
         )
 
     @property
