@@ -803,6 +803,13 @@ class Meshes(BaseIndexDictModel[Mesh]):
         gl.glEnable(gl.GL_DEPTH_TEST)
         gl.glDepthFunc(gl.GL_ALWAYS)
 
+        # アルファテストを有効にする
+        gl.glEnable(gl.GL_ALPHA_TEST)
+
+        # ブレンディングを有効にする
+        gl.glEnable(gl.GL_BLEND)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+
         # result_positions = []
 
         # for bone, matrix in zip(self.model.bones, bone_matrixes):
@@ -853,6 +860,10 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.bone_vbo_vertices.unbind()
         self.bone_vao.unbind()
         self.shader.unuse()
+
+        gl.glDisable(gl.GL_BLEND)
+        gl.glDisable(gl.GL_ALPHA_TEST)
+        gl.glDisable(gl.GL_DEPTH_TEST)
 
     def delete_draw(self):
         for material in self.model.materials:

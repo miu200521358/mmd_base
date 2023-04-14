@@ -59,9 +59,10 @@ MODEL_BONE_COLORS = [
 
 
 class ModelSet:
-    def __init__(self, shader: MShader, model: PmxModel, motion: VmdMotion):
+    def __init__(self, shader: MShader, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0):
         self.model = model
         self.motion = motion
+        self.bone_alpha = bone_alpha
         model.init_draw(shader)
 
 
@@ -165,8 +166,8 @@ class PmxCanvas(glcanvas.GLCanvas):
     def set_context(self):
         self.SetCurrent(self.context)
 
-    def append_model_set(self, model: PmxModel, motion: VmdMotion):
-        self.model_sets.append(ModelSet(self.shader, model, motion))
+    def append_model_set(self, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0):
+        self.model_sets.append(ModelSet(self.shader, model, motion, bone_alpha))
         self.animations.append(MotionSet(model, motion, 0))
         self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
 
@@ -209,10 +210,11 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.shader.msaa.unbind()
 
         for model_set, animation, color in zip(self.model_sets, self.animations, MODEL_BONE_COLORS):
+            # ボーンを表示
             if model_set.model:
                 model_set.model.draw_bone(
                     animation.gl_matrixes,
-                    color,
+                    color * np.fromiter([1, 1, 1, model_set.bone_alpha], count=4, dtype=np.float64),
                 )
 
     def on_frame_forward(self, event: wx.Event):
