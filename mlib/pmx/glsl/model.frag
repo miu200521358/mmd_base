@@ -37,8 +37,6 @@ void main() {
         // テクスチャ適用
         outColor *= texture(textureSampler, vertexUv);
     }
-    // 透過度設定
-    outColor.a *= alpha;
 
     if (1 == useSphere) {
         // Sphere適用
