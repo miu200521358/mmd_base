@@ -187,13 +187,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.shader.msaa.bind()
 
         # 地面を描く
-        gl.glBegin(gl.GL_QUADS)
-        gl.glColor4f(0.5, 0.5, 0.5, 0.5)
-        gl.glVertex3f(-30, 0, 30)
-        gl.glVertex3f(30, 0, -30)
-        gl.glVertex3f(-30, 0, 30)
-        gl.glVertex3f(30, 0, -30)
-        gl.glEnd()
+        self.draw_ground()
 
         # 透過度設定なしのメッシュを先に描画する
         for model_set, animation in zip(self.model_sets, self.animations):
@@ -226,6 +220,37 @@ class PmxCanvas(glcanvas.GLCanvas):
                     animation.gl_matrixes,
                     color * np.fromiter([1, 1, 1, model_set.bone_alpha], count=4, dtype=np.float64),
                 )
+
+    def draw_ground(self):
+        """平面を描画する"""
+
+        # 平面を描画するための頂点データ
+        vertices = [[-30.0, 0.0, -30.0], [30.0, 0.0, -30.0], [30.0, 0.0, 30.0], [-30.0, 0.0, 30.0]]
+
+        # 平面を描画するための面データ
+        faces = [[0, 1, 2, 3]]
+
+        # 頂点配列オブジェクトを作成する
+        vao = gl.glGenVertexArrays(1)
+        gl.glBindVertexArray(vao)
+
+        # 頂点バッファオブジェクトを作成する
+        vbo = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, 12 * len(vertices), (gl.GLfloat * len(vertices))(*vertices), gl.GL_STATIC_DRAW)
+
+        # 頂点属性を有効にする
+        gl.glEnableVertexAttribArray(0)
+        gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+
+        # 描画する
+        gl.glDrawElements(gl.GL_QUADS, len(faces[0]) * 4, gl.GL_UNSIGNED_INT, (gl.GLuint * len(faces[0]))(*faces[0]))
+
+        # 頂点配列オブジェクトを解放する
+        gl.glBindVertexArray(0)
+
+        # 頂点バッファオブジェクトを解放する
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
 
     def on_frame_forward(self, event: wx.Event):
         self.parent.fno = self.parent.fno + 1
