@@ -42,6 +42,12 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         self.append(self.create())
         return self.data[index]
 
+    def range(self, start: int = 0, stop: int = -1, step: int = 1) -> list[TBaseIndexModel]:
+        if 0 > stop:
+            # マイナス指定の場合、後ろからの順番に置き換える
+            stop = len(self.data) + stop + 1
+        return [self.data[self.indexes[n]] for n in range(start, stop, step)]
+
     def __setitem__(self, index: int, v: TBaseIndexModel) -> None:
         self.data[index] = v
 
@@ -51,6 +57,8 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         self.data[value.index] = value
         if is_sort:
             self.sort_indexes()
+        else:
+            self.indexes.append(value.index)
 
     def sort_indexes(self) -> None:
         self.indexes = sorted(self.data.keys()) if self.data else []
@@ -136,6 +144,8 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         self.data[value.index] = value
         if is_sort:
             self.sort_indexes()
+        else:
+            self.indexes.append(value.index)
 
     @property
     def names(self) -> list[str]:
@@ -150,6 +160,12 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         if not self.data:
             return ""
         return self[-1].name
+
+    def range(self, start: int = 0, stop: int = -1, step: int = 1) -> list[TBaseIndexNameModel]:
+        if 0 > stop:
+            # マイナス指定の場合、後ろからの順番に置き換える
+            stop = len(self.data) + stop + 1
+        return [self.data[self.indexes[n]] for n in range(start, stop, step)]
 
     def get_by_index(self, index: int) -> TBaseIndexNameModel:
         """

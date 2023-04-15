@@ -413,6 +413,28 @@ def test_read_by_filepath_ok_tree() -> None:
     assert "全ての親" == new_bone_trees["右人指先"][0].name
     assert "右人指先" == new_bone_trees["右人指先"][-1].name
 
+    range_bone_tree = model.bone_trees["右手首"].filter("上半身", "右手首")
+    assert [
+        "上半身",
+        "上半身2",
+        "右肩P",
+        "右肩",
+        "右肩C",
+        "右腕",
+        "右腕捩",
+        "右ひじ",
+        "右手捩",
+        "右手首",
+    ] == range_bone_tree.names
+
+    slice1_bone_tree = range_bone_tree.range(2, 4)
+    assert 2 == len(slice1_bone_tree)
+    assert ["右肩P", "右肩"] == [b.name for b in slice1_bone_tree]
+
+    slice2_bone_tree = range_bone_tree.range(7)
+    assert 3 == len(slice2_bone_tree)
+    assert ["右ひじ", "右手捩", "右手首"] == [b.name for b in slice2_bone_tree]
+
 
 def test_read_by_filepath_complicated() -> None:
     from mlib.pmx.pmx_collection import PmxModel

@@ -106,8 +106,8 @@ class BoneTree(BaseIndexNameDictModel[Bone]):
         return bone.position - self[bone.parent_index]
 
     def filter(self, start_bone_name: str, end_bone_name: str) -> "BoneTree":
-        start_index = [i for i, b in enumerate(self.data) if b.name == start_bone_name][0]
-        end_index = [i for i, b in enumerate(self.data) if b.name == end_bone_name][0]
+        start_index = [i for i, b in enumerate(self.data.values()) if b.name == start_bone_name][0]
+        end_index = [i for i, b in enumerate(self.data.values()) if b.name == end_bone_name][0]
         new_tree = BoneTree(end_bone_name)
         for i, t in enumerate(self):
             if start_index <= i <= end_index:
@@ -136,7 +136,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
     def __init__(self) -> None:
         super().__init__()
 
-    def create_bone_links(self) -> BoneTrees:
+    def create_bone_trees(self) -> BoneTrees:
         """
         ボーンツリー一括生成
 
@@ -153,7 +153,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
             # レイヤー込みのINDEXリスト取得を末端ボーンをキーとして保持
             bone_tree = BoneTree(name=end_bone.name)
             for _, bidx in sorted(self.create_bone_link_indexes(end_bone.index)):
-                bone_tree.append(self.data[bidx].copy())
+                bone_tree.append(self.data[bidx].copy(), is_sort=False)
             bone_trees.append(bone_tree, name=end_bone.name)
 
             logger.count(
@@ -541,7 +541,7 @@ class PmxModel(BaseHashModel):
             )
 
         # ボーンツリー生成
-        self.bone_trees = self.bones.create_bone_links()
+        self.bone_trees = self.bones.create_bone_trees()
 
         logger.info("-- モデルセットアップ：ボーンツリー")
 
