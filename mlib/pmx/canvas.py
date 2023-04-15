@@ -188,7 +188,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         # 地面を描く
         gl.glBegin(gl.GL_QUADS)
-        gl.glColor4f(np.array([0.5, 0.5, 0.5, 0.5]))
+        gl.glColor4f(0.5, 0.5, 0.5, 0.5)
         gl.glVertex2f(-30, 0, 30)
         gl.glVertex2f(-30, 0, -30)
         gl.glVertex2f(30, 0, 30)
