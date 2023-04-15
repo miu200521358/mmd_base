@@ -185,6 +185,16 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.shader.update_camera()
 
         self.shader.msaa.bind()
+
+        # 地面を描く
+        gl.glBegin(gl.GL_QUADS)
+        gl.glColor4f(np.array([0.5, 0.5, 0.5, 0.5]))
+        gl.glVertex2f(-30, 0, 30)
+        gl.glVertex2f(-30, 0, -30)
+        gl.glVertex2f(30, 0, 30)
+        gl.glVertex2f(30, 0, -30)
+        gl.glEnd()
+
         # 透過度設定なしのメッシュを先に描画する
         for model_set, animation in zip(self.model_sets, self.animations):
             if model_set.model:
