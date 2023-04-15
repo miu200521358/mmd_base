@@ -1,4 +1,6 @@
+import os
 import sys
+from threading import Thread
 from typing import List
 
 import wx
@@ -41,3 +43,16 @@ class BaseFrame(wx.Frame):
     def on_close(self, event: wx.Event):
         self.Destroy()
         sys.exit(0)
+
+    def on_sound(self):
+        Thread(target=self.sound_finish_thread).start()
+
+    def sound_finish_thread(self):
+        """Windowsのみ終了音を鳴らす"""
+        if os.name == "nt":
+            try:
+                from winsound import PlaySound, SND_ALIAS
+
+                PlaySound("SystemAsterisk", SND_ALIAS)
+            except Exception:
+                pass
