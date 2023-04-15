@@ -981,7 +981,7 @@ class MMatrix4x4(MVector):
         """
         逆行列
         """
-        if self.vector:
+        if self:
             return MMatrix4x4(*inv(self.vector).flatten())
         else:
             MMatrix4x4()
