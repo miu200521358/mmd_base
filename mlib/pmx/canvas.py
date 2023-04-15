@@ -123,6 +123,9 @@ class PmxCanvas(glcanvas.GLCanvas):
         # 録画中かどうかを示すフラグ
         self.recording = False
 
+        # 地面を描く
+        self.draw_ground()
+
     def _initialize_ui(self):
         gl.glClearColor(0.7, 0.7, 0.7, 1)
 
@@ -186,9 +189,6 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         self.shader.msaa.bind()
 
-        # 地面を描く
-        self.draw_ground()
-
         # 透過度設定なしのメッシュを先に描画する
         for model_set, animation in zip(self.model_sets, self.animations):
             if model_set.model:
@@ -225,7 +225,14 @@ class PmxCanvas(glcanvas.GLCanvas):
         """平面を描画する"""
 
         # 平面を描画するための頂点データ
-        vertices = [[-30.0, 0.0, -30.0], [30.0, 0.0, -30.0], [30.0, 0.0, 30.0], [-30.0, 0.0, 30.0]]
+        vertices = np.array(
+            [
+                np.array([-30.0, 0.0, -30.0]),
+                np.array([30.0, 0.0, -30.0]),
+                np.array([30.0, 0.0, 30.0]),
+                np.array([-30.0, 0.0, 30.0]),
+            ]
+        )
 
         # 平面を描画するための面データ
         faces = [[0, 1, 2, 3]]
@@ -237,7 +244,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         # 頂点バッファオブジェクトを作成する
         vbo = gl.glGenBuffers(1)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, 12 * len(vertices), (gl.GLfloat * len(vertices))(*vertices), gl.GL_STATIC_DRAW)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, 12 * len(vertices), (gl.GLfloat * len(vertices))(*vertices.flatten()), gl.GL_STATIC_DRAW)
 
         # 頂点属性を有効にする
         gl.glEnableVertexAttribArray(0)
