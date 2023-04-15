@@ -576,6 +576,15 @@ class PmxModel(BaseHashModel):
         # ボーンツリー生成
         self.bone_trees = self.bones.create_bone_trees()
 
+        # 距離が離れている親ボーンINDEXの取得
+        for bone_tree in self.bone_trees:
+            last_bone = self.bones[bone_tree.last_name]
+            for bone_name in reversed(bone_tree.names[:-1]):
+                if last_bone.position.distance(self.bones[bone_name].position) == 0:
+                    # 同じ位置のはスルー
+                    continue
+                last_bone.far_parent_index = self.bones[bone_name].index
+
         logger.info("-- モデルセットアップ：ボーンツリー")
 
         # システム用ボーン追加

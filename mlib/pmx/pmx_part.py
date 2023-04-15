@@ -742,6 +742,7 @@ class Bone(BaseIndexNameModel):
         "parent_revert_matrix",
         "parent_relative_position",
         "tail_relative_position",
+        "far_parent_index",
     )
 
     def __init__(
@@ -778,6 +779,7 @@ class Bone(BaseIndexNameModel):
 
         self.offset_matrix = MMatrix4x4()
         self.parent_revert_matrix = MMatrix4x4()
+        self.far_parent_index = -1
 
     @property
     def is_tail_bone(self) -> bool:
