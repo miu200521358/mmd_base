@@ -971,6 +971,37 @@ def test_MQuaternion_mul():
     ).all()
 
 
+def test_MMatrix4x4_bool():
+    from mlib.base.math import MMatrix4x4
+
+    if MMatrix4x4():
+        assert False
+    else:
+        assert True
+
+    if MMatrix4x4(
+        -0.28213944,
+        0.48809647,
+        0.82592928,
+        0.0,
+        0.69636424,
+        0.69636424,
+        -0.17364818,
+        0.0,
+        -0.65990468,
+        0.52615461,
+        -0.53636474,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+    ):
+        assert True
+    else:
+        assert False
+
+
 def test_MMatrix4x4_inverse():
     import numpy as np
 

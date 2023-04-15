@@ -1223,6 +1223,9 @@ class MMatrix4x4(MVector):
         y, x = index
         self.vector[y, x] = v
 
+    def __bool__(self) -> bool:
+        return bool(not (self.vector == np.eye(4)).all())
+
     def copy(self) -> "MMatrix4x4":
         return self.__class__(*self.vector.flatten())
 
