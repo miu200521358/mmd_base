@@ -1084,14 +1084,17 @@ class MMatrix4x4(MVector):
         """
         縮尺行列
         """
+        vmat = np.eye(4)
         if isinstance(v, MVector3D):
-            self.vector[0, 0] *= v.x
-            self.vector[1, 1] *= v.y
-            self.vector[2, 2] *= v.z
+            vmat[0, 0] = v.x
+            vmat[1, 1] = v.y
+            vmat[2, 2] = v.z
         else:
-            self.vector[0, 0] *= v
-            self.vector[1, 1] *= v
-            self.vector[2, 2] *= v
+            vmat[0, 0] = v
+            vmat[1, 1] = v
+            vmat[2, 2] = v
+
+        self.vector @= vmat
 
     def identity(self):
         """
