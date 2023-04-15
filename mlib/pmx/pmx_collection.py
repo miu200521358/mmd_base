@@ -302,6 +302,15 @@ class Morphs(BaseIndexNameDictModel[Morph]):
     def filter_by_type(self, *keys: MorphType) -> list[Morph]:
         return [v for v in self.data.values() if v.morph_type in keys]
 
+    def writable(self) -> list[Morph]:
+        """出力対象となるモーフ一覧を取得する"""
+        morphs: list[Morph] = []
+        for m in self:
+            if m.is_system:
+                continue
+            morphs.append(m)
+        return morphs
+
 
 class DisplaySlots(BaseIndexNameDictModel[DisplaySlot]):
     """
