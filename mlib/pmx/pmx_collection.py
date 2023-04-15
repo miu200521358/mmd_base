@@ -136,6 +136,15 @@ class Bones(BaseIndexNameDictModel[Bone]):
     def __init__(self) -> None:
         super().__init__()
 
+    def writable(self) -> list[Bone]:
+        """出力対象となるボーン一覧を取得する"""
+        bones: list[Bone] = []
+        for b in self:
+            if b.is_system:
+                continue
+            bones.append(b)
+        return bones
+
     def create_bone_trees(self) -> BoneTrees:
         """
         ボーンツリー一括生成
@@ -544,6 +553,15 @@ class PmxModel(BaseHashModel):
         self.bone_trees = self.bones.create_bone_trees()
 
         logger.info("-- モデルセットアップ：ボーンツリー")
+
+        # システム用ボーン追加
+        if "右腕" in self.bones and "左腕" in self.bones:
+            neck_root_bone = Bone(name="首根元")
+            neck_root_bone.position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
+            neck_root_bone.is_system = True
+            self.bones.append(neck_root_bone)
+
+        logger.info("-- モデルセットアップ：システム用ボーン")
 
 
 class Meshes(BaseIndexDictModel[Mesh]):

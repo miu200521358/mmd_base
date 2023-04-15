@@ -421,9 +421,10 @@ class PmxWriter(BaseModel):
         PmxModel
         """
         # ボーンの数
-        self.write_number(fout, PmxBinaryType.INT, len(self.model.bones), is_positive_only=True)
+        target_bones = self.model.bones.writable()
+        self.write_number(fout, PmxBinaryType.INT, len(target_bones), is_positive_only=True)
 
-        for bidx, bone in enumerate(self.model.bones):
+        for bidx, bone in enumerate(target_bones):
             # ボーン名
             self.write_text(fout, bone.name, f"Bone {bidx}")
             self.write_text(fout, bone.english_name, f"Bone {bidx}")
