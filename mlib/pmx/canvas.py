@@ -189,10 +189,10 @@ class PmxCanvas(glcanvas.GLCanvas):
         # 地面を描く
         gl.glBegin(gl.GL_QUADS)
         gl.glColor4f(0.5, 0.5, 0.5, 0.5)
-        gl.glVertex2f(-30, 0, 30)
-        gl.glVertex2f(-30, 0, -30)
-        gl.glVertex2f(30, 0, 30)
-        gl.glVertex2f(30, 0, -30)
+        gl.glVertex3f(-30, 0, 30)
+        gl.glVertex3f(-30, 0, -30)
+        gl.glVertex3f(30, 0, 30)
+        gl.glVertex3f(30, 0, -30)
         gl.glEnd()
 
         # 透過度設定なしのメッシュを先に描画する
