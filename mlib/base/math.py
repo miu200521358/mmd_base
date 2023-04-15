@@ -981,7 +981,7 @@ class MMatrix4x4(MVector):
         """
         逆行列
         """
-        if self:
+        if not (self.vector == np.eye(4)).all():
             return MMatrix4x4(*inv(self.vector).flatten())
         else:
             MMatrix4x4()
