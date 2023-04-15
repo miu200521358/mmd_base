@@ -9,6 +9,7 @@ class FloatSliderCtrl:
         min_value: float,
         max_value: float,
         increment: float,
+        spin_increment: float,
         border: int,
         position: wx.Position = wx.DefaultPosition,
         size: wx.Size = wx.DefaultSize,
@@ -17,6 +18,7 @@ class FloatSliderCtrl:
         self._min = min_value
         self._max = max_value
         self._increment = increment
+        self._spin_increment = spin_increment
         self._change_event = change_event
         i_value, i_min, i_max = [round(v / increment) for v in (value, min_value, max_value)]
 
@@ -47,9 +49,9 @@ class FloatSliderCtrl:
     def _on_wheel_spin(self, event: wx.MouseEvent):
         """マウスホイールによるスピンコントロール"""
         if event.GetWheelRotation() > 0:
-            self._value_ctrl.SetValue(f"{max(self._min, min(self._max, (float(self._value_ctrl.GetValue()) - self._increment))):.2f}")
+            self._value_ctrl.SetValue(f"{max(self._min, min(self._max, (float(self._value_ctrl.GetValue()) - self._spin_increment))):.2f}")
         else:
-            self._value_ctrl.SetValue(f"{max(self._min, min(self._max, (float(self._value_ctrl.GetValue()) + self._increment))):.2f}")
+            self._value_ctrl.SetValue(f"{max(self._min, min(self._max, (float(self._value_ctrl.GetValue()) + self._spin_increment))):.2f}")
 
     def SetValue(self, v: float):
         self._value_ctrl.ChangeValue(f"{v:.2f}")
