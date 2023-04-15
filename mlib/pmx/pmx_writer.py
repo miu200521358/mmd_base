@@ -27,10 +27,11 @@ class PmxBinaryType(str, Enum):
 
 
 class PmxWriter(BaseModel):
-    def __init__(self, model: PmxModel, output_path: str) -> None:
+    def __init__(self, model: PmxModel, output_path: str, include_system: bool = False) -> None:
         super().__init__()
         self.model = model
         self.output_path = output_path
+        self.include_system = include_system
 
     def save(self):
         with open(self.output_path, "wb") as fout:
@@ -421,7 +422,7 @@ class PmxWriter(BaseModel):
         PmxModel
         """
         # ボーンの数
-        target_bones = self.model.bones.writable()
+        target_bones = self.model.bones if self.include_system else self.model.bones.writable()
         self.write_number(fout, PmxBinaryType.INT, len(target_bones), is_positive_only=True)
 
         for bidx, bone in enumerate(target_bones):
@@ -549,7 +550,7 @@ class PmxWriter(BaseModel):
         PmxModel
         """
         # モーフの数
-        target_morphs = self.model.morphs.writable()
+        target_morphs = self.model.morphs if self.include_system else self.model.morphs.writable()
         self.write_number(fout, PmxBinaryType.INT, len(target_morphs), is_positive_only=True)
 
         for midx, morph in enumerate(target_morphs):
