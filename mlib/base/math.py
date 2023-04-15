@@ -981,10 +981,10 @@ class MMatrix4x4(MVector):
         """
         逆行列
         """
-        if not (self.vector == np.eye(4)).all():
+        if self:
             return MMatrix4x4(*inv(self.vector).flatten())
-        else:
-            MMatrix4x4()
+
+        return MMatrix4x4()
 
     def rotate(self, q: MQuaternion):
         """
