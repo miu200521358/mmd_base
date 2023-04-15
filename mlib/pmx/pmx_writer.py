@@ -549,9 +549,10 @@ class PmxWriter(BaseModel):
         PmxModel
         """
         # モーフの数
-        self.write_number(fout, PmxBinaryType.INT, len(self.model.morphs), is_positive_only=True)
+        target_morphs = self.model.morphs.writable()
+        self.write_number(fout, PmxBinaryType.INT, len(target_morphs), is_positive_only=True)
 
-        for midx, morph in enumerate(self.model.morphs):
+        for midx, morph in enumerate(target_morphs):
             # モーフ名
             self.write_text(fout, morph.name, f"Morph {midx}")
             self.write_text(fout, morph.english_name, f"Morph {midx}")
