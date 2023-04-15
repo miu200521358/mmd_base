@@ -136,6 +136,11 @@ class Bones(BaseIndexNameDictModel[Bone]):
     def __init__(self) -> None:
         super().__init__()
 
+    def get_by_index(self, index: int) -> Bone:
+        if index == -1:
+            return Bone()
+        return super().get_by_index(index)
+
     def writable(self) -> list[Bone]:
         """出力対象となるボーン一覧を取得する"""
         bones: list[Bone] = []
@@ -315,6 +320,11 @@ class RigidBodies(BaseIndexNameDictModel[RigidBody]):
     def __init__(self) -> None:
         super().__init__()
 
+    def get_by_index(self, index: int) -> RigidBody:
+        if index == -1:
+            return RigidBody()
+        return super().get_by_index(index)
+
 
 class Joints(BaseIndexNameDictModel[Joint]):
     """
@@ -323,6 +333,11 @@ class Joints(BaseIndexNameDictModel[Joint]):
 
     def __init__(self) -> None:
         super().__init__()
+
+    def get_by_index(self, index: int) -> Joint:
+        if index == -1:
+            return Joint()
+        return super().get_by_index(index)
 
 
 class PmxModel(BaseHashModel):
