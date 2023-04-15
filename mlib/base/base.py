@@ -1,7 +1,6 @@
 from enum import Enum, unique
 from pickle import dumps, loads
 
-
 from mlib.base.logger import parse2str
 
 

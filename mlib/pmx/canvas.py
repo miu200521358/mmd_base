@@ -10,11 +10,11 @@ from wx import glcanvas
 
 from mlib.base.logger import MLogger
 from mlib.base.math import MQuaternion, MVector3D
-from mlib.service.form.base_frame import BaseFrame
-from mlib.service.form.base_panel import BasePanel
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import ShaderMaterial
 from mlib.pmx.shader import MShader
+from mlib.service.form.base_frame import BaseFrame
+from mlib.service.form.base_panel import BasePanel
 from mlib.vmd.vmd_collection import VmdMotion
 
 logger = MLogger(os.path.basename(__file__))

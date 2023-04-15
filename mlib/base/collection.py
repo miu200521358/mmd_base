@@ -5,7 +5,6 @@ from typing import Generic, Optional, TypeVar
 from mlib.base.base import BaseModel, Encoding
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel
 
-
 TBaseIndexModel = TypeVar("TBaseIndexModel", bound=BaseIndexModel)
 TBaseIndexNameModel = TypeVar("TBaseIndexNameModel", bound=BaseIndexNameModel)
 

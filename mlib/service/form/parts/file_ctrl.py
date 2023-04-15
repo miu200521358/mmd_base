@@ -1,20 +1,24 @@
 import os
-from typing import Generic, Optional
+from typing import Generic, Optional, TypeVar
 
 import wx
 
+from mlib.base.collection import BaseHashModel
 from mlib.base.logger import MLogger
-from mlib.base.reader import TBaseHashModel, TBaseReader
-from mlib.service.form.base_frame import BaseFrame
-from mlib.service.form.base_panel import BasePanel
+from mlib.base.reader import BaseReader
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_reader import PmxReader
+from mlib.service.form.base_frame import BaseFrame
+from mlib.service.form.base_panel import BasePanel
 from mlib.utils.file_utils import get_dir_path, insert_history, unwrapped_path, validate_file, validate_save_file
 from mlib.vmd.vmd_collection import VmdMotion
 from mlib.vmd.vmd_reader import VmdReader
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
+
+TBaseHashModel = TypeVar("TBaseHashModel", bound=BaseHashModel)
+TBaseReader = TypeVar("TBaseReader", bound=BaseReader)
 
 
 class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
