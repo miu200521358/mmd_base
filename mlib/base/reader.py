@@ -7,11 +7,14 @@ from typing import Callable, Generic, TypeVar
 
 import numpy as np
 
-from mlib.base.base import BaseModel, Encoding, FileType, TBaseModel
-from mlib.base.collection import TBaseHashModel
+from mlib.base.base import BaseModel, Encoding, FileType
+from mlib.base.collection import BaseHashModel
 from mlib.base.exception import MParseException
 from mlib.base.logger import MLogger
 from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
+
+TBaseModel = TypeVar("TBaseModel", bound=BaseModel)
+TBaseHashModel = TypeVar("TBaseHashModel", bound=BaseHashModel)
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text

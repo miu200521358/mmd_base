@@ -1,5 +1,5 @@
 from enum import Enum, unique
-from typing import Optional, TypeVar
+from typing import Optional
 
 import numpy as np
 
@@ -149,7 +149,3 @@ class BaseIndexNameModel(BaseModel):
 
     def __add__(self, v):
         raise NotImplementedError()
-
-
-TBaseIndexModel = TypeVar("TBaseIndexModel", bound=BaseIndexModel)
-TBaseIndexNameModel = TypeVar("TBaseIndexNameModel", bound=BaseIndexNameModel)

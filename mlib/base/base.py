@@ -1,6 +1,6 @@
 from enum import Enum, unique
 from pickle import dumps, loads
-from typing import TypeVar
+
 
 from mlib.base.logger import parse2str
 
@@ -35,6 +35,3 @@ class BaseModel:
 
     def copy(self):
         return loads(dumps(self))
-
-
-TBaseModel = TypeVar("TBaseModel", bound=BaseModel)

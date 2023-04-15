@@ -3,7 +3,11 @@ from bisect import bisect_left
 from typing import Generic, Optional, TypeVar
 
 from mlib.base.base import BaseModel, Encoding
-from mlib.base.part import TBaseIndexModel, TBaseIndexNameModel
+from mlib.base.part import BaseIndexModel, BaseIndexNameModel
+
+
+TBaseIndexModel = TypeVar("TBaseIndexModel", bound=BaseIndexModel)
+TBaseIndexNameModel = TypeVar("TBaseIndexNameModel", bound=BaseIndexNameModel)
 
 
 class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
@@ -80,7 +84,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         return max(self.data.keys())
 
 
-TBaseIndexListModel = TypeVar("TBaseIndexListModel", bound=BaseIndexDictModel)
+TBaseIndexDictModel = TypeVar("TBaseIndexDictModel", bound=BaseIndexDictModel)
 
 
 class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
@@ -324,6 +328,9 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
         return 0 < len(self.data)
 
 
+TBaseIndexNameDictWrapperModel = TypeVar("TBaseIndexNameDictWrapperModel", bound=BaseIndexNameDictWrapperModel)
+
+
 class BaseHashModel(BaseModel):
     """
     ハッシュ機能付きモデル
@@ -367,6 +374,3 @@ class BaseHashModel(BaseModel):
     def __bool__(self) -> bool:
         # パスが定義されていたら、中身入り
         return 0 < len(self.path)
-
-
-TBaseHashModel = TypeVar("TBaseHashModel", bound=BaseHashModel)
