@@ -608,6 +608,7 @@ class PmxModel(BaseHashModel):
                     # 同じ位置のはスルー
                     continue
                 last_bone.far_parent_index = self.bones[bone_name].index
+                break
 
         logger.info("-- モデルセットアップ：ボーンツリー")
 
