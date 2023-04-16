@@ -229,12 +229,15 @@ class Mesh(BaseIndexModel):
             gl.glUniform1i(shader.sphere_uniform[ProgramType.MODEL.value], self.sphere_texture.texture_type.value)
             gl.glUniform4f(shader.sphere_factor_uniform[ProgramType.MODEL.value], *material_morphs.sphere_texture_factor)
 
-        gl.glDrawElements(
-            gl.GL_TRIANGLES,
-            self.material.vertices_count,
-            ibo.dtype,
-            gl.ctypes.c_void_p(self.prev_vertices_pointer),
-        )
+        try:
+            gl.glDrawElements(
+                gl.GL_TRIANGLES,
+                self.material.vertices_count,
+                ibo.dtype,
+                gl.ctypes.c_void_p(self.prev_vertices_pointer),
+            )
+        except Exception as e:
+            raise MViewerException("Mesh draw_model Failure", e)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
@@ -269,12 +272,15 @@ class Mesh(BaseIndexModel):
         gl.glUniform4f(shader.edge_color_uniform[ProgramType.EDGE.value], *material_morphs.edge_color)
         gl.glUniform1f(shader.edge_size_uniform[ProgramType.EDGE.value], material_morphs.edge_size)
 
-        gl.glDrawElements(
-            gl.GL_TRIANGLES,
-            self.material.vertices_count,
-            ibo.dtype,
-            gl.ctypes.c_void_p(self.prev_vertices_pointer),
-        )
+        try:
+            gl.glDrawElements(
+                gl.GL_TRIANGLES,
+                self.material.vertices_count,
+                ibo.dtype,
+                gl.ctypes.c_void_p(self.prev_vertices_pointer),
+            )
+        except Exception as e:
+            raise MViewerException("Mesh draw_edge Failure", e)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:

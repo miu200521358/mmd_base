@@ -933,12 +933,15 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
         self.model.meshes[0].bind_bone_matrixes(bone_matrixes, self.shader, ProgramType.BONE)
 
-        gl.glDrawElements(
-            gl.GL_LINES,
-            self.bone_hierarchies.size,
-            self.bone_ibo_faces.dtype,
-            gl.ctypes.c_void_p(0),
-        )
+        try:
+            gl.glDrawElements(
+                gl.GL_LINES,
+                self.bone_hierarchies.size,
+                self.bone_ibo_faces.dtype,
+                gl.ctypes.c_void_p(0),
+            )
+        except Exception as e:
+            raise MViewerException("Meshes draw_bone Failure", e)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:

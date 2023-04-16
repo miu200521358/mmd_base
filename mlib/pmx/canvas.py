@@ -7,6 +7,7 @@ import OpenGL.GL as gl
 import wx
 from PIL import Image
 from wx import glcanvas
+from mlib.base.exception import MViewerException
 
 from mlib.base.logger import MLogger
 from mlib.base.math import MQuaternion, MVector3D
@@ -18,6 +19,7 @@ from mlib.service.form.base_panel import BasePanel
 from mlib.vmd.vmd_collection import VmdMotion
 
 logger = MLogger(os.path.basename(__file__))
+__ = logger.get_text
 
 
 class CanvasPanel(BasePanel):
@@ -160,8 +162,24 @@ class PmxCanvas(glcanvas.GLCanvas):
         event.Skip()
 
     def on_paint(self, event: wx.Event):
-        self.draw()
-        self.SwapBuffers()
+        try:
+            self.draw()
+            self.SwapBuffers()
+        except MViewerException:
+            error_msg = "ビューワーの描画に失敗しました。\n一度ツールを立ち上げ直して再度実行していただき、それでも解決しなかった場合、作者にご連絡下さい。"
+            logger.critical(error_msg)
+
+            self.clear_model_set()
+
+            dialog = wx.MessageDialog(
+                self.parent,
+                __(error_msg),
+                style=wx.OK,
+            )
+            dialog.ShowModal()
+            dialog.Destroy()
+
+            self.SwapBuffers()
 
     def set_context(self):
         self.SetCurrent(self.context)

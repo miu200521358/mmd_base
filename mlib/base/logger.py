@@ -173,7 +173,7 @@ class MLogger:
     ):
         self.add_console_handler()
         self.logger.warning(
-            self.create_message(msg, logging.INFO, title, decoration, **kwargs),
+            self.create_message(msg, logging.WARNING, title, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
         )
 
@@ -189,7 +189,7 @@ class MLogger:
     ):
         self.add_console_handler()
         self.logger.error(
-            self.create_message(msg, logging.INFO, title, decoration, **kwargs),
+            self.create_message(msg, logging.ERROR, title, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
         )
 
@@ -205,7 +205,7 @@ class MLogger:
     ):
         self.add_console_handler()
         self.logger.critical(
-            self.create_message(msg, logging.INFO, title, decoration or MLogger.Decoration.BOX, **kwargs),
+            self.create_message(msg, logging.CRITICAL, title, decoration or MLogger.Decoration.BOX, **kwargs),
             exc_info=True,
             stack_info=True,
             extra=self.get_extra(msg, func, lno),
