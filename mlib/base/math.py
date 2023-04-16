@@ -159,6 +159,12 @@ class MVector(BaseModel):
         """
         return self.__class__(*np.abs(self.vector))
 
+    def one(self):
+        """
+        0を1に変える
+        """
+        return self.__class__(*np.where(self.vector == 0, 1, self.vector))
+
     def cross(self, other):
         """
         外積

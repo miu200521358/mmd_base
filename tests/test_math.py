@@ -1,6 +1,32 @@
 import pytest
 
 
+def test_MVector3D_one():
+    import numpy as np
+
+    from mlib.base.math import MVector3D
+
+    assert np.isclose(
+        MVector3D(1, 2, 3.2).one().vector,
+        MVector3D(1, 2, 3.2).vector,
+    ).all()
+
+    assert np.isclose(
+        MVector3D(0, 2, 3.2).one().vector,
+        MVector3D(1, 2, 3.2).vector,
+    ).all()
+
+    assert np.isclose(
+        MVector3D(1, 0, 3.2).one().vector,
+        MVector3D(1, 1, 3.2).vector,
+    ).all()
+
+    assert np.isclose(
+        MVector3D(2, 0, 0).one().vector,
+        MVector3D(2, 1, 1).vector,
+    ).all()
+
+
 def test_MVector3D_length():
     from mlib.base.math import MVector3D
 
