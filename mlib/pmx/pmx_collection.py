@@ -133,7 +133,7 @@ class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
         if name in STANDARD_BONE_NAMES:
             return True
 
-        for bone_tree in [bt for bt in self if name in bt.names and name != bt.last_name]:
+        for bone_tree in [bt for bt in self.data.values() if name in bt.names and name != bt.last_name]:
             bone_find_index = [i for i, b in enumerate(bone_tree) if b.name == name][0]
             is_parent_standard = False
             is_child_standard = False
