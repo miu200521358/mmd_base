@@ -263,7 +263,7 @@ class PmxReader(BaseReader[PmxModel]):
                 "頂点データ読み取り",
                 index=vertex.index,
                 total_index_count=total_index_count,
-                display_block=100000,
+                display_block=10000,
             )
 
         model.vertices.sort_indexes()
