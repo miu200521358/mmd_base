@@ -435,6 +435,12 @@ def test_read_by_filepath_ok_tree() -> None:
     assert 3 == len(slice2_bone_tree)
     assert ["右ひじ", "右手捩", "右手首"] == [b.name for b in slice2_bone_tree]
 
+    assert model.bone_trees.is_in_standard("右腕")
+    assert model.bone_trees.is_in_standard("左腕捩YZ")
+    assert model.bone_trees.is_in_standard("左腕捩YZ")
+    assert not model.bone_trees.is_in_standard("左エリIK")
+    assert not model.bone_trees.is_in_standard("左ひざ2先")
+
 
 def test_read_by_filepath_complicated() -> None:
     from mlib.pmx.pmx_collection import PmxModel

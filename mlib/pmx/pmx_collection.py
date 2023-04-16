@@ -115,6 +115,101 @@ class BoneTree(BaseIndexNameDictModel[Bone]):
         return new_tree
 
 
+STANDARD_BONE_NAMES = (
+    "全ての親",
+    "センター",
+    "グルーブ",
+    "腰",
+    "上半身",
+    "上半身2",
+    "首",
+    "頭",
+    "左目",
+    "右目",
+    "下半身",
+    "左肩P",
+    "左肩",
+    "左肩C",
+    "左腕",
+    "左腕捩",
+    "左ひじ",
+    "左手捩",
+    "左手首",
+    "左ダミー",
+    "左袖",
+    "左親指０",
+    "左親指１",
+    "左親指２",
+    "左人指１",
+    "左人指２",
+    "左人指３",
+    "左中指１",
+    "左中指２",
+    "左中指３",
+    "左薬指１",
+    "左薬指２",
+    "左薬指３",
+    "左小指１",
+    "左小指２",
+    "左小指３",
+    "腰キャンセル左",
+    "左足",
+    "左ひざ",
+    "左足首",
+    "右肩P",
+    "右肩",
+    "右肩C",
+    "右腕",
+    "右腕捩",
+    "右ひじ",
+    "右手捩",
+    "右手首",
+    "右ダミー",
+    "右親指０",
+    "右親指１",
+    "右親指２",
+    "右人指１",
+    "右人指２",
+    "右人指３",
+    "右中指１",
+    "右中指２",
+    "右中指３",
+    "右薬指１",
+    "右薬指２",
+    "右薬指３",
+    "右小指１",
+    "右小指２",
+    "右小指３",
+    "腰キャンセル右",
+    "右足",
+    "右ひざ",
+    "右足首",
+    "両目",
+    "左つま先",
+    "右つま先",
+    "左足IK親",
+    "左足ＩＫ",
+    "右足IK親",
+    "右足ＩＫ",
+    "左つま先ＩＫ",
+    "右つま先ＩＫ",
+    "左腕捩1",
+    "左腕捩2",
+    "左腕捩3",
+    "右腕捩1",
+    "右腕捩2",
+    "右腕捩3",
+    "右足D",
+    "右ひざD",
+    "右足首D",
+    "右足先EX",
+    "左足D",
+    "左ひざD",
+    "左足首D",
+    "左足先EX",
+)
+
+
 class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
     """
     BoneTreeリスト
@@ -126,6 +221,27 @@ class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
 
     def create(self, key: str) -> BoneTree:
         return BoneTree(key)
+
+    def is_in_standard(self, name: str) -> bool:
+        """準標準までのボーンツリーに含まれるボーンであるか否か"""
+        # チェック対象ボーンが含まれるボーンツリー
+        for bone_tree in [bt for bt in self if name in bt.names and name != bt.last_name]:
+            bone_find_index = [i for i, b in enumerate(bone_tree) if b.name == name][0]
+            is_parent_standard = False
+            is_child_standard = False
+            # 親系統、子系統どちらにも準標準ボーンが含まれている場合、TRUE
+            for parent_name in bone_tree.names[:bone_find_index]:
+                if parent_name in STANDARD_BONE_NAMES:
+                    is_parent_standard = True
+                    break
+            for child_name in bone_tree.names[bone_find_index + 1 :]:
+                if child_name in STANDARD_BONE_NAMES:
+                    is_child_standard = True
+                    break
+            if is_parent_standard and is_child_standard:
+                return True
+
+        return False
 
 
 class Bones(BaseIndexNameDictModel[Bone]):
