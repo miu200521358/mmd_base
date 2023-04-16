@@ -274,13 +274,13 @@ class PmxCanvas(glcanvas.GLCanvas):
         if self.playing:
             self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
             self.recording = record
-            # self.queue = Queue()
-            # self.process = Process(
-            #     target=animate,
-            #     args=(self.queue, self.frame_ctrl.GetValue(), self.model_sets),
-            #     name="CalcProcess",
-            # )
-            # self.process.start()
+            self.queue = Queue()
+            self.process = Process(
+                target=animate,
+                args=(self.queue, self.parent.fno, self.model_sets),
+                name="CalcProcess",
+            )
+            self.process.start()
             self.play_timer.Start(1000 // self.fps)
         else:
             # if self.process:
@@ -290,34 +290,33 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.parent.play_stop()
 
     def on_play_timer(self, event: wx.Event):
-        self.on_frame_forward(event)
-        # self.frame_ctrl.SetValue(self.frame_ctrl.GetValue() + 1)
+        # self.on_frame_forward(event)
+        # self.parent.fno += 1
         # animations: list[MotionSet] = []
         # for model_set in self.model_sets:
         #     if model_set.model and model_set.motion:
-        #         animations.append(MotionSet(model_set.model, model_set.motion, fno))
+        #         animations.append(MotionSet(model_set.model, model_set.motion, self.parent.fno))
         # self.animations = animations
         # self.Refresh()
 
-        # if self.queue and not self.queue.empty():
-        #     animations: Optional[list[MotionSet]] = None
+        if self.queue and not self.queue.empty():
+            animations: Optional[list[MotionSet]] = None
 
-        #     while not self.queue.empty():
-        #         animations = self.queue.get()
+            while not self.queue.empty():
+                animations = self.queue.get()
 
-        #     if animations is None and self.process:
-        #         self.on_play(event)
-        #         return
+            if animations is None and self.process:
+                self.on_play(event)
+                return
 
-        #     if animations is not None:
-        #         self.animations = animations
+            if animations is not None:
+                self.animations = animations
 
-        #     if self.recording:
-        #         self.on_capture(event)
+            if self.recording:
+                self.on_capture(event)
 
-        #     self.frame_ctrl.SetValue(self.frame_ctrl.GetValue() + 1)
-
-        #     self.Refresh()
+            self.parent.fno += 1
+            self.Refresh()
 
     def on_reset(self, event: wx.Event):
         self.parent.fno = 0
