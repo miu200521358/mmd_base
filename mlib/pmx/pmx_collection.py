@@ -1,5 +1,6 @@
 import os
 from glob import glob
+from turtle import rt
 from typing import Optional
 
 import numpy as np
@@ -604,7 +605,7 @@ class PmxModel(BaseHashModel):
         for bone_tree in self.bone_trees:
             last_bone = self.bones[bone_tree.last_name]
             for bone_name in reversed(bone_tree.names[:-1]):
-                if last_bone.position.distance(self.bones[bone_name].position) == 0:
+                if np.isclose([last_bone.position.distance(self.bones[bone_name].position)], 0, atol=0.01, rtol=0.01).any():
                     # 同じ位置のはスルー
                     continue
                 last_bone.far_parent_index = self.bones[bone_name].index

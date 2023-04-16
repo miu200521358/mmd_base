@@ -441,6 +441,8 @@ def test_read_by_filepath_ok_tree() -> None:
     assert not model.bone_trees.is_in_standard("左エリIK")
     assert not model.bone_trees.is_in_standard("左ひざ2先")
 
+    assert model.bones["左肩"].far_parent_index == 8
+
 
 def test_read_by_filepath_complicated() -> None:
     from mlib.pmx.pmx_collection import PmxModel
