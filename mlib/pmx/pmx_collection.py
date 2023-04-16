@@ -1,6 +1,5 @@
 import os
 from glob import glob
-from turtle import rt
 from typing import Optional
 
 import numpy as np
