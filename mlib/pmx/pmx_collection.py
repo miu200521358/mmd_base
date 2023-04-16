@@ -690,7 +690,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
             ],
         )
 
-        face_dtype: type = np.uint8 if model.vertex_count == 1 else np.uint16 if model.vertex_count == 2 else np.int32
+        face_dtype: type = np.uint8 if model.vertex_count == 1 else np.uint16 if model.vertex_count == 2 else np.uint32
 
         # 面情報
         self.faces: np.ndarray = np.array(
