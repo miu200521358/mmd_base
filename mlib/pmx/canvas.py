@@ -7,8 +7,8 @@ import OpenGL.GL as gl
 import wx
 from PIL import Image
 from wx import glcanvas
-from mlib.base.exception import MViewerException
 
+from mlib.base.exception import MViewerException
 from mlib.base.logger import MLogger
 from mlib.base.math import MQuaternion, MVector3D
 from mlib.pmx.pmx_collection import PmxModel

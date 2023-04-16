@@ -51,7 +51,7 @@ class BaseFrame(wx.Frame):
         """Windowsのみ終了音を鳴らす"""
         if os.name == "nt":
             try:
-                from winsound import PlaySound, SND_ALIAS
+                from winsound import SND_ALIAS, PlaySound
 
                 PlaySound("SystemAsterisk", SND_ALIAS)
             except Exception:
