@@ -198,7 +198,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
                 "モデルセットアップ：ボーンツリー",
                 index=i,
                 total_index_count=total_index_count,
-                display_block=1000,
+                display_block=500,
             )
 
         return bone_trees
@@ -594,7 +594,7 @@ class PmxModel(BaseHashModel):
                 "モデルセットアップ：ボーン",
                 index=bone.index,
                 total_index_count=total_index_count,
-                display_block=100,
+                display_block=500,
             )
 
         # ボーンツリー生成
@@ -833,6 +833,8 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.vbo_vertices.bind()
 
         for mesh in self:
+            logger.debug(f"---- アニメーション描画: {mesh.material.name}")
+
             self.vao.bind()
             self.vbo_vertices.bind()
             self.vbo_vertices.set_slot(VsLayout.POSITION_ID)

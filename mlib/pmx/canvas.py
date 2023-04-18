@@ -210,6 +210,8 @@ class PmxCanvas(glcanvas.GLCanvas):
         # 透過度設定なしのメッシュを先に描画する
         for model_set, animation in zip(self.model_sets, self.animations):
             if model_set.model:
+                logger.debug(f"-- アニメーション描画(非透過): {model_set.model.name}")
+
                 model_set.model.draw(
                     animation.gl_matrixes,
                     animation.vertex_morph_poses,
@@ -221,6 +223,8 @@ class PmxCanvas(glcanvas.GLCanvas):
         # その後透過度設定ありのメッシュを描画する
         for model_set, animation in zip(self.model_sets, self.animations):
             if model_set.model:
+                logger.debug(f"-- アニメーション描画(透過): {model_set.model.name}")
+
                 model_set.model.draw(
                     animation.gl_matrixes,
                     animation.vertex_morph_poses,
@@ -234,6 +238,8 @@ class PmxCanvas(glcanvas.GLCanvas):
         for model_set, animation, color in zip(self.model_sets, self.animations, MODEL_BONE_COLORS):
             # ボーンを表示
             if model_set.model:
+                logger.debug(f"-- ボーン描画(透過): {model_set.model.name}")
+
                 model_set.model.draw_bone(
                     animation.gl_matrixes,
                     color * np.fromiter([1, 1, 1, model_set.bone_alpha], count=4, dtype=np.float64),
