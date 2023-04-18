@@ -1071,6 +1071,7 @@ class VmdMotion(BaseHashModel):
                 bf = bfs[fno]
                 mbf = bone_frames[bf.name][bf.index]
                 bone_frames[bf.name][bf.index] = mbf + bf
+        logger.debug(f"-- スキンメッシュアニメーション[{fno:04d}]: キーフレ加算")
 
         # ボーン操作
         bone_poses, bone_qqs = bone_frames.animate_bone_matrixes(fno, model)
