@@ -815,7 +815,7 @@ class MQuaternion(MVector):
         # if dest vector is close to the inverse of source vector, ANY axis of rotation is valid
         if np.isclose(d, 0).all():
             axis = MVector3D(1.0, 0.0, 0.0).cross(v0)
-            if np.isclose(axis.lengthSquared(), 0).all():
+            if np.isclose(axis.length_squared(), 0).all():
                 axis = MVector3D(0.0, 1.0, 0.0).cross(v0)
             axis.normalize()
             # same as MQuaternion.fromAxisAndAngle(axis, 180.0)
