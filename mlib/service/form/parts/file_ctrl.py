@@ -70,7 +70,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
                 wx.ID_ANY,
                 __("(未設定)"),
                 wx.DefaultPosition,
-                wx.DefaultSize,
+                wx.Size(100, -1),
                 wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS,
             )
             self.name_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))

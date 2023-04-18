@@ -18,7 +18,7 @@ from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
 from mlib.vmd.vmd_collection import VmdMotion
 
-logger = MLogger(os.path.basename(__file__))
+logger = MLogger(os.path.basename(__file__), level=1)
 __ = logger.get_text
 
 
@@ -48,7 +48,7 @@ def animate(queue: Queue, fno: int, model_sets: List["ModelSet"]):
         animations: list["MotionSet"] = []
         for model_set in model_sets:
             if model_set.model and model_set.motion:
-                animations.append(MotionSet(model_set.model, model_set.motion, fno))
+                animations.append(MotionSet(model_set.model, model_set.motion, fno, queue))
         queue.put(animations)
     queue.put(None)
 
@@ -69,7 +69,7 @@ class ModelSet:
 
 
 class MotionSet:
-    def __init__(self, model: PmxModel, motion: VmdMotion, fno: int) -> None:
+    def __init__(self, model: PmxModel, motion: VmdMotion, fno: int, queue: Optional[Queue] = None) -> None:
         if motion is not None:
             (
                 self.gl_matrixes,
@@ -77,7 +77,7 @@ class MotionSet:
                 self.uv_morph_poses,
                 self.uv1_morph_poses,
                 self.material_morphs,
-            ) = motion.animate(fno, model)
+            ) = motion.animate(fno, model, queue)
         else:
             self.gl_matrixes = np.array([np.eye(4) for _ in range(len(model.bones))])
             self.vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])

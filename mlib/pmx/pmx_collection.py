@@ -28,7 +28,7 @@ from mlib.pmx.pmx_part import (
 )
 from mlib.pmx.shader import MShader, ProgramType, VsLayout
 
-logger = MLogger(os.path.basename(__file__))
+logger = MLogger(os.path.basename(__file__), level=1)
 __ = logger.get_text
 
 
@@ -833,8 +833,6 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.vbo_vertices.bind()
 
         for mesh in self:
-            logger.debug(f"---- アニメーション描画: {mesh.material.name}")
-
             self.vao.bind()
             self.vbo_vertices.bind()
             self.vbo_vertices.set_slot(VsLayout.POSITION_ID)

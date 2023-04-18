@@ -1,7 +1,8 @@
-import logging
 from bisect import bisect_left
 from functools import lru_cache
 from math import acos, degrees, pi
+from multiprocessing import Queue
+import os
 from typing import Optional
 
 import numpy as np
@@ -24,8 +25,6 @@ from mlib.pmx.pmx_part import (
 )
 from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
-
-logger = MLogger(__name__, logging.DEBUG)
 
 
 class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
@@ -1032,7 +1031,14 @@ class VmdMotion(BaseHashModel):
     def name(self) -> str:
         return self.model_name
 
-    def animate(self, fno: int, model: PmxModel, is_gl: bool = True) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
+    def animate(
+        self, fno: int, model: PmxModel, is_gl: bool = True, queue: Optional[Queue] = None
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
+        logger = MLogger(os.path.basename(__file__), level=1)
+
+        if queue:
+            logger.start_queue_listener(queue)
+
         # 頂点モーフ
         vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model)
         logger.debug(f"-- スキンメッシュアニメーション[{fno:04d}]: 頂点モーフ")
@@ -1097,5 +1103,8 @@ class VmdMotion(BaseHashModel):
         gl_matrixes[..., 0, 1:3] *= -1
         gl_matrixes[..., 1:3, 0] *= -1
         gl_matrixes[..., 3, 0] *= -1
+
+        if queue:
+            logger.stop_queue_listener()
 
         return gl_matrixes, vertex_morph_poses + group_vertex_morph_poses, uv_morph_poses, uv1_morph_poses, group_materials
