@@ -276,7 +276,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
             from_pos = self[bone.parent_index].position
             to_pos = self[bone_index].position
 
-        return to_pos
+        return to_pos - from_pos
 
     def get_parent_relative_position(self, bone_index: int) -> MVector3D:
         """親ボーンから見た相対位置"""
