@@ -48,7 +48,7 @@ def animate(queue: Queue, fno: int, model_sets: List["ModelSet"]):
         animations: list["MotionSet"] = []
         for model_set in model_sets:
             if model_set.model and model_set.motion:
-                animations.append(MotionSet(model_set.model, model_set.motion, fno, queue))
+                animations.append(MotionSet(model_set.model, model_set.motion, fno))
         queue.put(animations)
     queue.put(None)
 
@@ -69,7 +69,7 @@ class ModelSet:
 
 
 class MotionSet:
-    def __init__(self, model: PmxModel, motion: VmdMotion, fno: int, queue: Optional[Queue] = None) -> None:
+    def __init__(self, model: PmxModel, motion: VmdMotion, fno: int) -> None:
         if motion is not None:
             (
                 self.gl_matrixes,
@@ -77,13 +77,19 @@ class MotionSet:
                 self.uv_morph_poses,
                 self.uv1_morph_poses,
                 self.material_morphs,
-            ) = motion.animate(fno, model, queue=queue)
+            ) = motion.animate(fno, model)
         else:
             self.gl_matrixes = np.array([np.eye(4) for _ in range(len(model.bones))])
             self.vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])
             self.uv_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
             self.uv1_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
             self.material_morphs = [ShaderMaterial(m, MShader.LIGHT_AMBIENT4) for m in model.materials]
+
+    def update_morphs(self, model: PmxModel, motion: VmdMotion, fno: int):
+        self.vertex_morph_poses = motion.morphs.animate_vertex_morphs(fno, model)
+        self.uv_morph_poses = motion.morphs.animate_uv_morphs(fno, model, 0)
+        self.uv1_morph_poses = motion.morphs.animate_uv_morphs(fno, model, 1)
+        self.material_morphs = motion.morphs.animate_material_morphs(fno, model)
 
 
 class PmxCanvas(glcanvas.GLCanvas):
@@ -263,11 +269,15 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.parent.fno = max(0, self.parent.fno - 1)
         self.change_motion(event)
 
-    def change_motion(self, event: wx.Event):
-        animations: list[MotionSet] = []
-        for model_set in self.model_sets:
-            animations.append(MotionSet(model_set.model, model_set.motion, self.parent.fno))
-        self.animations = animations
+    def change_motion(self, event: wx.Event, is_bone_deform: bool = True):
+        if is_bone_deform:
+            animations: list[MotionSet] = []
+            for model_set in self.model_sets:
+                animations.append(MotionSet(model_set.model, model_set.motion, self.parent.fno))
+            self.animations = animations
+        else:
+            for model_set, animation in zip(self.model_sets, self.animations):
+                animation.update_morphs(model_set.model, model_set.motion, self.parent.fno)
 
         if self.max_fno <= self.parent.fno:
             # 最後まで行ったら止まる
@@ -289,8 +299,8 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.process.start()
             self.play_timer.Start(1000 // self.fps)
         else:
-            # if self.process:
-            #     self.process.terminate()
+            if self.process:
+                self.process.terminate()
             self.play_timer.Stop()
             self.recording = False
             self.parent.play_stop()

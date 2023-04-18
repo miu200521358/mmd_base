@@ -1,12 +1,11 @@
 import gettext
 import logging
-from multiprocessing import Process, Queue
 import os
 import re
 from datetime import datetime
 from enum import Enum, IntEnum
+from functools import wraps
 from logging import Formatter, Handler, LogRecord, StreamHandler
-from logging.handlers import QueueHandler, QueueListener
 from typing import Optional
 
 import numpy as np
@@ -34,6 +33,20 @@ class LoggingLevel(Enum):
     WARNING = logging.WARNING
     ERROR = logging.ERROR
     CRITICAL = logging.CRITICAL
+
+
+def log_yield(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        v = f(*args, **kwargs)
+        try:
+            if wx.GetApp():
+                wx.YieldIfNeeded()
+        finally:
+            pass
+        return v
+
+    return wrapper
 
 
 class MLogger:
@@ -66,10 +79,6 @@ class MLogger:
 
     console_handler: Optional["ConsoleHandler"] = None
     re_break = re.compile(r"\n")
-
-    queue_handler: Optional[QueueHandler] = None
-    queue_listener: Optional[QueueListener] = None
-    log_process: Optional[Process] = None
 
     def __init__(
         self,
@@ -107,38 +116,10 @@ class MLogger:
                     return
             self.logger.addHandler(self.console_handler)
 
-    def start_queue_listener(self, queue: Queue):
-        self.queue_handler = QueueHandler(queue)
-        self.logger.addHandler(self.queue_handler)
-
-        self.queue_listener = QueueListener(queue, self.queue_handler)
-        self.queue_listener.start()
-
-        self.log_process = Process(target=self._process_logs, args=(queue,))
-        self.log_process.start()
-
-    def stop_queue_listener(self):
-        for h in self.logger.handlers:
-            if isinstance(h, QueueHandler):
-                self.logger.removeHandler(h)
-                break
-
-        if self.queue_listener:
-            self.queue_listener.stop()
-
-        if self.log_process:
-            self.log_process.terminate()
-
-    def _process_logs(self, queue: Queue):
-        while True:
-            try:
-                self.console_handler.emit(queue.get(timeout=0.1))
-            except queue.empty():
-                pass
-
     def get_extra(self, msg: str, func: Optional[str] = "", lno: Optional[int] = 0):
         return {"original_msg": msg, "call_file": self.file_name, "call_func": func, "call_lno": str(lno)}
 
+    @log_yield
     def debug(
         self,
         msg,
@@ -153,8 +134,8 @@ class MLogger:
             self.create_message(msg, logging.DEBUG, None, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
         )
-        wx.YieldIfNeeded()
 
+    @log_yield
     def info(
         self,
         msg,
@@ -170,9 +151,9 @@ class MLogger:
             self.create_message(msg, logging.INFO, title, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
         )
-        wx.YieldIfNeeded()
 
     # ログレベルカウント
+    @log_yield
     def count(
         self,
         msg: str,
@@ -196,8 +177,8 @@ class MLogger:
                 count_msg,
                 extra=self.get_extra(count_msg, func, lno),
             )
-            wx.YieldIfNeeded()
 
+    @log_yield
     def warning(
         self,
         msg,
@@ -213,8 +194,8 @@ class MLogger:
             self.create_message(msg, logging.WARNING, title, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
         )
-        wx.YieldIfNeeded()
 
+    @log_yield
     def error(
         self,
         msg,
@@ -230,8 +211,8 @@ class MLogger:
             self.create_message(msg, logging.ERROR, title, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
         )
-        wx.YieldIfNeeded()
 
+    @log_yield
     def critical(
         self,
         msg,
@@ -249,7 +230,6 @@ class MLogger:
             stack_info=True,
             extra=self.get_extra(msg, func, lno),
         )
-        wx.YieldIfNeeded()
 
     def quit(self):
         # 終了ログ
