@@ -1035,7 +1035,7 @@ class VmdMotion(BaseHashModel):
     def animate(self, fno: int, model: PmxModel, is_gl: bool = True) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
         # 頂点モーフ
         vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model)
-        logger.debug("-- スキンメッシュアニメーション[{fno:04d}]: 頂点モーフ")
+        logger.debug(f"-- スキンメッシュアニメーション[{fno:04d}]: 頂点モーフ")
 
         # UVモーフ
         uv_morph_poses = self.morphs.animate_uv_morphs(fno, model, 0)
