@@ -77,7 +77,7 @@ class MotionSet:
                 self.uv_morph_poses,
                 self.uv1_morph_poses,
                 self.material_morphs,
-            ) = motion.animate(fno, model, queue)
+            ) = motion.animate(fno, model, queue=queue)
         else:
             self.gl_matrixes = np.array([np.eye(4) for _ in range(len(model.bones))])
             self.vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])
