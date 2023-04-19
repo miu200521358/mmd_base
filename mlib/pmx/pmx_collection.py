@@ -494,11 +494,30 @@ class PmxModel(BaseHashModel):
                     "ウェイトボーン分布",
                     index=vertex.index,
                     total_index_count=total_index_count,
-                    display_block=10000,
+                    display_block=5000,
                 )
         return vertex_bone_scales
 
+    def get_vertices_by_bone(self) -> dict[int, list[int]]:
+        """ボーン別頂点INDEXリスト+ウェイトの取得"""
+        vertices_bones: dict[int, list[int]] = {}
+        total_index_count = len(self.vertices)
+        for vertex in self.vertices:
+            for bone_index in vertex.deform.get_indexes():
+                if bone_index not in vertices_bones:
+                    vertices_bones[bone_index] = []
+                vertices_bones[bone_index].append(vertex.index)
+
+                logger.count(
+                    "ウェイトボーン分布",
+                    index=vertex.index,
+                    total_index_count=total_index_count,
+                    display_block=5000,
+                )
+        return vertices_bones
+
     def get_vertices_by_material(self) -> dict[int, list[int]]:
+        """材質別頂点INDEXリストの取得"""
         prev_face_count = 0
         vertices_by_materials: dict[int, list[int]] = {}
         for material in self.materials:
