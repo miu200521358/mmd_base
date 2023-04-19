@@ -18,7 +18,7 @@ from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
 from mlib.vmd.vmd_collection import VmdMotion
 
-logger = MLogger(os.path.basename(__file__), level=1)
+logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
 
