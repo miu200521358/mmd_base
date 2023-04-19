@@ -1035,28 +1035,28 @@ class VmdMotion(BaseHashModel):
     def animate(self, fno: int, model: PmxModel, is_gl: bool = True) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
         # 頂点モーフ
         vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model)
-        logger.debug(f"-- スキンメッシュアニメーション[{fno:04d}]: 頂点モーフ")
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 頂点モーフ")
 
         # UVモーフ
         uv_morph_poses = self.morphs.animate_uv_morphs(fno, model, 0)
-        logger.debug(f"-- スキンメッシュアニメーション[{fno:04d}]: UVモーフ")
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: UVモーフ")
 
         # 追加UVモーフ1
         uv1_morph_poses = self.morphs.animate_uv_morphs(fno, model, 1)
-        logger.debug(f"-- スキンメッシュアニメーション[{fno:04d}]: 追加UVモーフ1")
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 追加UVモーフ1")
 
         # 追加UVモーフ2-4は無視
         # 材質モーフ
         material_morphs = self.morphs.animate_material_morphs(fno, model)
-        logger.debug(f"-- スキンメッシュアニメーション[{fno:04d}]: 材質モーフ")
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 材質モーフ")
 
         # ボーンモーフ
         morph_bone_frames = self.morphs.animate_bone_morphs(fno, model)
-        logger.debug(f"-- スキンメッシュアニメーション[{fno:04d}]: ボーンモーフ")
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーンモーフ")
 
         # グループモーフ
         group_vertex_morph_poses, group_morph_bone_frames, group_materials = self.morphs.animate_group_morphs(fno, model, material_morphs)
-        logger.debug(f"-- スキンメッシュアニメーション[{fno:04d}]: グループモーフ")
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
         bone_frames = VmdBoneFrames()
         for bf_frames in [morph_bone_frames, group_morph_bone_frames, self.bones]:
@@ -1065,11 +1065,11 @@ class VmdMotion(BaseHashModel):
                 bf = bfs[fno]
                 mbf = bone_frames[bf.name][bf.index]
                 bone_frames[bf.name][bf.index] = mbf + bf
-        logger.debug(f"-- スキンメッシュアニメーション[{fno:04d}]: キーフレ加算")
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: キーフレ加算")
 
         # ボーン操作
         bone_poses, bone_qqs = bone_frames.animate_bone_matrixes(fno, model)
-        logger.debug(f"-- スキンメッシュアニメーション[{fno:04d}]: ボーン操作")
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン操作")
 
         # ボーン変形行列
         matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
@@ -1087,7 +1087,7 @@ class VmdMotion(BaseHashModel):
             matrix = model.bones.get_mesh_matrix(matrixes, bone.index, matrix)
 
             bone_matrixes.append(matrix.T)
-        logger.debug(f"-- スキンメッシュアニメーション[{fno:04d}]: ボーン変形行列")
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン変形行列")
 
         if not is_gl:
             # OpenGL座標系変換をしない場合、そのまま返す
