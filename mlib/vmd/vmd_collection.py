@@ -189,10 +189,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         -------
         行列辞書（キー: fno,ボーン名、値：行列リスト）
         """
+        self.clear()
 
-        # IK回転を事前に求めておく
-        for fno in fnos:
-            self.calc_ik_rotations(fno, model, [bone_tree.last_name for bone_tree in bone_trees.values()])
+        if append_ik:
+            # IK回転を事前に求めておく
+            for fno in fnos:
+                self.calc_ik_rotations(fno, model, [bone_tree.last_name for bone_tree in bone_trees.values()])
 
         bone_matrixes: dict[int, dict[str, VmdBoneFrameTree]] = {}
         for bone_tree in bone_trees.values():
@@ -256,6 +258,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         qqs = np.full((row, col, 4, 4), np.eye(4))
         bone_indexes: list[int] = []
 
+        self.clear()
+
         if not bone_names:
             bone_names = model.bones.tail_bone_names
 
@@ -286,6 +290,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         return poses, qqs
 
     def calc_ik_rotations(self, fno: int, model: PmxModel, bone_names: Optional[list[str]] = []):
+        self.clear()
+
         # IK関係の末端ボーン名
         ik_last_bone_names: set[str] = {model.bones[0].name}
         if bone_names:
