@@ -878,6 +878,10 @@ class Bone(BaseIndexNameModel):
             or self.is_leg_d
         )
 
+    def is_twist(self) -> bool:
+        """捩り関連ボーンであるか"""
+        return "捩" in self.name
+
 
 STANDARD_BONE_NAMES = {
     "全ての親": {"tail": MVector3D(0, 1, 0)},
