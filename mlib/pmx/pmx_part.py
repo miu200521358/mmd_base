@@ -846,6 +846,20 @@ class Bone(BaseIndexNameModel):
         """外部親変形であるか"""
         return BoneFlg.IS_EXTERNAL_PARENT_DEFORM in self.bone_flg
 
+    @property
+    def is_leg_d(self) -> bool:
+        """足D系列であるか"""
+        return self.name in [
+            "左足D",
+            "左ひざD",
+            "左足首D",
+            "左足先EX",
+            "右足D",
+            "右ひざD",
+            "右足首D",
+            "右足先EX",
+        ]
+
 
 class MorphOffset(BaseModel):
     """モーフオフセット基底クラス"""
