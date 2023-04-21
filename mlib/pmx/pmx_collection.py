@@ -11,6 +11,7 @@ from mlib.base.logger import MLogger
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
+    STANDARD_BONE_NAMES,
     Bone,
     DisplaySlot,
     DrawFlg,
@@ -150,6 +151,25 @@ class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
                 return True
 
         return False
+
+    def is_standard_tail(self, name: str) -> bool:
+        """準標準までのボーンツリーに含まれるボーンの表示先であるか否か"""
+        bone_tree = self.data[name]
+        bone_find_index = [i for i, b in enumerate(bone_tree) if b.name == name][0]
+        bone = bone_tree[bone_find_index]
+        parent_bone = bone_tree[bone_find_index - 1]
+
+        if not self.is_in_standard(parent_bone.name):
+            # そもそも親ボーンが準標準ボーンの範囲外ならばFalse
+            return False
+
+        for bt in self.data.values():
+            if bt[bt.last_name].parent_index == bone.index:
+                # 自分が親ボーンとして登録されている場合、False
+                return False
+
+        # 自分が準標準ボーンの範囲内の親を持ち、子ボーンがいない場合、表示先とみなす
+        return True
 
 
 class Bones(BaseIndexNameDictModel[Bone]):
@@ -1016,91 +1036,3 @@ class Meshes(BaseIndexDictModel[Mesh]):
         del self.morph_uv1_comps
         del self.vbo_vertices
         del self.ibo_faces
-
-
-STANDARD_BONE_NAMES = {
-    "全ての親": {"tail": MVector3D(0, 1, 0)},
-    "センター": {"tail": MVector3D(0, 1, 0)},
-    "グルーブ": {"tail": MVector3D(0, 1, 0)},
-    "腰": {"tail": MVector3D(0, 1, 0)},
-    "上半身": {"tail": ["上半身2", "首"]},
-    "上半身2": {"tail": ["首"]},
-    "首": {"tail": ["頭"]},
-    "頭": {"tail": MVector3D(0, 1, 0)},
-    "左目": {"tail": MVector3D(0, 1, 0)},
-    "右目": {"tail": MVector3D(0, 1, 0)},
-    "下半身": {"tail": MVector3D(0, -1, 0)},
-    "左肩P": {"tail": MVector3D(0, 1, 0)},
-    "左肩": {"tail": ["左腕"]},
-    "左肩C": {"tail": MVector3D(0, 1, 0)},
-    "左腕": {"tail": ["左ひじ"]},
-    "左腕捩": {"tail": MVector3D(0, 1, 0)},
-    "左ひじ": {"tail": ["左手首"]},
-    "左手捩": {"tail": MVector3D(0, 1, 0)},
-    "左手首": {"tail": ["左中指１"]},
-    "左ダミー": {"tail": MVector3D(0, 1, 0)},
-    "左親指０": {"tail": ["左親指１"]},
-    "左親指１": {"tail": ["左親指２"]},
-    "左親指２": {"tail": MVector3D(0, 1, 0)},
-    "左人指１": {"tail": ["左人指２"]},
-    "左人指２": {"tail": ["左人指３"]},
-    "左人指３": {"tail": MVector3D(0, 1, 0)},
-    "左中指１": {"tail": ["左中指２"]},
-    "左中指２": {"tail": ["左中指３"]},
-    "左中指３": {"tail": MVector3D(0, 1, 0)},
-    "左薬指１": {"tail": ["左薬指２"]},
-    "左薬指２": {"tail": ["左薬指３"]},
-    "左薬指３": {"tail": MVector3D(0, 1, 0)},
-    "左小指１": {"tail": ["左小指２"]},
-    "左小指２": {"tail": ["左小指３"]},
-    "左小指３": {"tail": MVector3D(0, 1, 0)},
-    "腰キャンセル左": {"tail": MVector3D(0, -1, 0)},
-    "左足": {"tail": ["左ひざ"]},
-    "左ひざ": {"tail": ["左足首"]},
-    "左足首": {"tail": ["左つま先"]},
-    "右肩P": {"tail": MVector3D(0, 1, 0)},
-    "右肩": {"tail": ["右腕"]},
-    "右肩C": {"tail": MVector3D(0, 1, 0)},
-    "右腕": {"tail": ["右ひじ"]},
-    "右腕捩": {"tail": MVector3D(0, 1, 0)},
-    "右ひじ": {"tail": ["右手首"]},
-    "右手捩": {"tail": MVector3D(0, 1, 0)},
-    "右手首": {"tail": ["右中指１"]},
-    "右ダミー": {"tail": MVector3D(0, 1, 0)},
-    "右親指０": {"tail": ["右親指１"]},
-    "右親指１": {"tail": ["右親指２"]},
-    "右親指２": {"tail": MVector3D(0, 1, 0)},
-    "右人指１": {"tail": ["右人指２"]},
-    "右人指２": {"tail": ["右人指３"]},
-    "右人指３": {"tail": MVector3D(0, 1, 0)},
-    "右中指１": {"tail": ["右中指２"]},
-    "右中指２": {"tail": ["右中指３"]},
-    "右中指３": {"tail": MVector3D(0, 1, 0)},
-    "右薬指１": {"tail": ["右薬指２"]},
-    "右薬指２": {"tail": ["右薬指３"]},
-    "右薬指３": {"tail": MVector3D(0, 1, 0)},
-    "右小指１": {"tail": ["右小指２"]},
-    "右小指２": {"tail": ["右小指３"]},
-    "右小指３": {"tail": MVector3D(0, 1, 0)},
-    "腰キャンセル右": {"tail": MVector3D(0, -1, 0)},
-    "右足": {"tail": ["右ひざ"]},
-    "右ひざ": {"tail": ["右足首"]},
-    "右足首": {"tail": ["右つま先"]},
-    "両目": {"tail": MVector3D(0, 1, 0)},
-    "左つま先": {"tail": MVector3D(0, 1, 0)},
-    "右つま先": {"tail": MVector3D(0, 1, 0)},
-    "左足IK親": {"tail": MVector3D(0, 1, 0)},
-    "左足ＩＫ": {"tail": ["左つま先ＩＫ"]},
-    "右足IK親": {"tail": MVector3D(0, 1, 0)},
-    "右足ＩＫ": {"tail": ["右つま先ＩＫ"]},
-    "左つま先ＩＫ": {"tail": MVector3D(0, -1, 0)},
-    "右つま先ＩＫ": {"tail": MVector3D(0, -1, 0)},
-    "右足D": {"tail": ["右ひざD"]},
-    "右ひざD": {"tail": ["右足首D"]},
-    "右足首D": {"tail": ["右足先EX"]},
-    "右足先EX": {"tail": MVector3D(0, 1, 0)},
-    "左足D": {"tail": ["左ひざD"]},
-    "左ひざD": {"tail": ["左足首D"]},
-    "左足首D": {"tail": ["左足先EX"]},
-    "左足先EX": {"tail": MVector3D(0, 1, 0)},
-}
