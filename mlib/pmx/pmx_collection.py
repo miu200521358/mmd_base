@@ -156,8 +156,12 @@ class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
         """準標準までのボーンツリーに含まれるボーンの表示先であるか否か"""
         bone_tree = self.data[name]
         bone_find_index = [i for i, b in enumerate(bone_tree) if b.name == name][0]
-        bone = bone_tree[bone_find_index]
-        parent_bone = bone_tree[bone_find_index - 1]
+        if 1 > bone_find_index:
+            # そもそも子でない場合、表示先にはなり得ない
+            return False
+
+        bone = bone_tree[bone_tree.names[bone_find_index]]
+        parent_bone = bone_tree[bone_tree.names[bone_find_index - 1]]
 
         if not self.is_in_standard(parent_bone.name):
             # そもそも親ボーンが準標準ボーンの範囲外ならばFalse
