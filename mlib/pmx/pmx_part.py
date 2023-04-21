@@ -860,6 +860,24 @@ class Bone(BaseIndexNameModel):
             "右足先EX",
         ]
 
+    @property
+    def is_leg_fk(self) -> bool:
+        """足FK系列であるか"""
+        return (
+            self.name
+            in [
+                "左足",
+                "左ひざ",
+                "左足首",
+                "左つま先",
+                "右足",
+                "右ひざ",
+                "右足首",
+                "右つま先",
+            ]
+            or self.is_leg_d
+        )
+
 
 class MorphOffset(BaseModel):
     """モーフオフセット基底クラス"""
