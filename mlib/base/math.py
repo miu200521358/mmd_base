@@ -232,9 +232,19 @@ class MVector(BaseModel):
         return operate_vector(self, other, operator.mul)
 
     def __truediv__(self, other):
+        if isinstance(other, MVector) and np.count_nonzero(other.vector) == 0:
+            return self.__class__()
+        elif np.count_nonzero(other) == 0:
+            return self.__class__()
+
         return operate_vector(self, other, operator.truediv)
 
     def __floordiv__(self, other):
+        if isinstance(other, MVector) and np.count_nonzero(other.vector) == 0:
+            return self.__class__()
+        elif np.count_nonzero(other) == 0:
+            return self.__class__()
+
         return operate_vector(self, other, operator.floordiv)
 
     def __mod__(self, other):
@@ -253,11 +263,21 @@ class MVector(BaseModel):
         return self
 
     def __itruediv__(self, other):
-        self.vector = operate_vector(self, other, operator.truediv).vector
+        if isinstance(other, MVector) and np.count_nonzero(other.vector) == 0:
+            self = self.__class__()
+        elif np.count_nonzero(other) == 0:
+            self = self.__class__()
+        else:
+            self.vector = operate_vector(self, other, operator.truediv).vector
         return self
 
     def __ifloordiv__(self, other):
-        self.vector = operate_vector(self, other, operator.floordiv).vector
+        if isinstance(other, MVector) and np.count_nonzero(other.vector) == 0:
+            self = self.__class__()
+        elif np.count_nonzero(other) == 0:
+            self = self.__class__()
+        else:
+            self.vector = operate_vector(self, other, operator.floordiv).vector
         return self
 
     def __imod__(self, other):
