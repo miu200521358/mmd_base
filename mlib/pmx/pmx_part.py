@@ -878,9 +878,9 @@ class Bone(BaseIndexNameModel):
             or self.is_leg_d
         )
 
-    def is_arm_twist(self) -> bool:
+    def is_twist(self) -> bool:
         """捩りボーンであるか"""
-        return self.has_fixed_axis and self.name in ["左腕捩", "左手捩", "右腕捩", "右手捩"]
+        return "捩" in self.name
 
 
 STANDARD_BONE_NAMES = {
