@@ -275,7 +275,7 @@ class TestFrame(BaseFrame):
         dress_motion = VmdMotion()
 
         # フィッティングモーフは常に適用
-        bmf = VmdMorphFrame(0, "BoneFitting")
+        bmf = VmdMorphFrame(0, "BoneFitting1")
         bmf.ratio = 1
         dress_motion.morphs[bmf.name].append(bmf)
 

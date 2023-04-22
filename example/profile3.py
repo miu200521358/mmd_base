@@ -24,7 +24,7 @@ model = PmxReader().read_by_filepath("E:/MMD/less検証/Test-Dressup/wa_20220424
 motion = VmdMotion()
 
 # フィッティングモーフは常に適用
-bmf = VmdMorphFrame(0, "BoneFitting")
+bmf = VmdMorphFrame(0, "BoneFitting629")
 bmf.ratio = 1
 motion.morphs[bmf.name].append(bmf)
 

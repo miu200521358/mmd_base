@@ -133,6 +133,8 @@ class MShader:
 
         self.bone_matrix_texture_uniform: dict[int, Any] = {}
         self.bone_matrix_texture_id: dict[int, Any] = {}
+        self.bone_matrix_texture_width: dict[int, Any] = {}
+        self.bone_matrix_texture_height: dict[int, Any] = {}
         self.model_view_matrix_uniform: dict[int, Any] = {}
         self.model_view_projection_matrix_uniform: dict[int, Any] = {}
         self.light_direction_uniform: dict[int, Any] = {}
@@ -253,6 +255,8 @@ class MShader:
         # テクスチャを作成する
         self.bone_matrix_texture_id[program_type.value] = gl.glGenTextures(1)
         self.bone_matrix_texture_uniform[program_type.value] = gl.glGetUniformLocation(program, "boneMatrixTexture")
+        self.bone_matrix_texture_width[program_type.value] = gl.glGetUniformLocation(program, "boneMatrixWidth")
+        self.bone_matrix_texture_height[program_type.value] = gl.glGetUniformLocation(program, "boneMatrixHeight")
 
         self.msaa = Msaa(self.width, self.height)
 

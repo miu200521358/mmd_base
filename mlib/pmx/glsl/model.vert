@@ -1,18 +1,20 @@
 # version 440
 
-in layout(location = %d) vec3 position;
-in layout(location = %d) vec3 normal;
-in layout(location = %d) vec2 uv;
-in layout(location = %d) vec2 extendUv;
+in layout(location = %d) vec3  position;
+in layout(location = %d) vec3  normal;
+in layout(location = %d) vec2  uv;
+in layout(location = %d) vec2  extendUv;
 in layout(location = %d) float vertexEdge;
-in layout(location = %d) vec4 boneIdxs;
-in layout(location = %d) vec4 boneWeights;
-in layout(location = %d) vec3 morphPos;
-in layout(location = %d) vec4 morphUv;
-in layout(location = %d) vec4 morphUv1;
+in layout(location = %d) vec4  boneIndexes;
+in layout(location = %d) vec4  boneWeights;
+in layout(location = %d) vec3  morphPos;
+in layout(location = %d) vec4  morphUv;
+in layout(location = %d) vec4  morphUv1;
 
 // ボーン変形行列を格納するテクスチャ
 uniform sampler2D boneMatrixTexture;
+uniform int boneMatrixWidth;
+uniform int boneMatrixHeight;
 
 uniform vec3 cameraPos;
 uniform mat4 modelViewMatrix;
@@ -45,15 +47,41 @@ void main() {
         if (boneWeight <= 0.0) {
             continue;
         }
-        int boneIndex = int(boneIdxs[i]);
+        int boneIndex = int(boneIndexes[i]);
 
-        vec4 row0 = texelFetch(boneMatrixTexture, ivec2(0, boneIndex), 0);
-        vec4 row1 = texelFetch(boneMatrixTexture, ivec2(1, boneIndex), 0);
-        vec4 row2 = texelFetch(boneMatrixTexture, ivec2(2, boneIndex), 0);
-        vec4 row3 = texelFetch(boneMatrixTexture, ivec2(3, boneIndex), 0);
+        // テクスチャからボーン変形行列を取得する
+        int rowIndex = boneIndex * 4 / boneMatrixWidth;
+        int colIndex = (boneIndex * 4) - (boneMatrixWidth * rowIndex);
+
+        vec4 row0 = texelFetch(boneMatrixTexture, ivec2(colIndex + 0, rowIndex), 0);
+        vec4 row1 = texelFetch(boneMatrixTexture, ivec2(colIndex + 1, rowIndex), 0);
+        vec4 row2 = texelFetch(boneMatrixTexture, ivec2(colIndex + 2, rowIndex), 0);
+        vec4 row3 = texelFetch(boneMatrixTexture, ivec2(colIndex + 3, rowIndex), 0);
         mat4 boneMatrix = mat4(row0, row1, row2, row3);
+
+        // ボーン変形行列を乗算する
         boneTransformMatrix += boneMatrix * boneWeight;
     }
+
+    // // 各頂点で使用されるボーン変形行列を計算する
+    // mat4 boneTransformMatrix = mat4(0.0);
+    // for(int i = 0; i < 4; i++) {
+    //     float boneWeight = boneWeights[i];
+    //     if (boneWeight <= 0.0) {
+    //         continue;
+    //     }
+    //     int boneIndex = int(boneIndexes[i]);
+
+    //     int rowIndex = boneIndex / boneMatrixWidth;
+    //     int colIndex = boneIndex - rowIndex * boneMatrixWidth;
+
+    //     vec4 row0 = texelFetch(boneMatrixTexture, ivec2(colIndex, rowIndex), 0);
+    //     vec4 row1 = texelFetch(boneMatrixTexture, ivec2(colIndex, rowIndex), 0);
+    //     vec4 row2 = texelFetch(boneMatrixTexture, ivec2(colIndex, rowIndex), 0);
+    //     vec4 row3 = texelFetch(boneMatrixTexture, ivec2(colIndex, rowIndex), 0);
+    //     mat4 boneMatrix = mat4(row0, row1, row2, row3);
+    //     boneTransformMatrix += boneMatrix * boneWeight;
+    // }
 
     // 各頂点で使用される法線変形行列をボーン変形行列から回転情報のみ抽出して生成する
     mat3 normalTransformMatrix = mat3(boneTransformMatrix);

@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Optional
 
 import numpy as np
 import OpenGL.GL as gl
@@ -43,7 +43,7 @@ class VBO:
     VBO（Vertex Buffer Object）･･･ 頂点バッファオブジェクト
     """
 
-    def __init__(self, data: np.ndarray, components: Dict[int, Dict[str, int]]) -> None:
+    def __init__(self, data: np.ndarray, components: dict[int, dict[str, int]]) -> None:
         self.vbo_id = gl.glGenBuffers(1)
 
         error_code = gl.glGetError()
@@ -307,20 +307,31 @@ class Mesh(BaseIndexModel):
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
 
+        # テクスチャのサイズを計算する
+        num_bones = matrixes.shape[0]
+        tex_size = int(np.ceil(np.sqrt(num_bones)))
+        width = int(np.ceil(tex_size / 4) * 4 * 4)
+        height = int(np.ceil((num_bones * 4) / width))
+
+        padded_matrixes = np.zeros(height * width * 4)
+        padded_matrixes[: matrixes.size] = matrixes.flatten()
+
         # テクスチャをシェーダーに渡す
         gl.glTexImage2D(
             gl.GL_TEXTURE_2D,
             0,
             gl.GL_RGBA32F,
-            matrixes.shape[1],
-            matrixes.shape[0],
+            width,
+            height,
             0,
             gl.GL_RGBA,
             gl.GL_FLOAT,
-            matrixes.flatten(),
+            padded_matrixes.flatten(),
         )
 
         gl.glUniform1i(shader.bone_matrix_texture_uniform[program_type.value], 3)
+        gl.glUniform1i(shader.bone_matrix_texture_width[program_type.value], width)
+        gl.glUniform1i(shader.bone_matrix_texture_height[program_type.value], height)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
