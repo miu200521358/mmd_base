@@ -49,8 +49,8 @@ class Deform(BaseModel, ABC):
 
     def __init__(self, indexes: List[int], weights: List[float], count: int):
         super().__init__()
-        self.indexes = np.fromiter(indexes, dtype=np.int32, count=len(indexes))
-        self.weights = np.fromiter(weights, dtype=np.float64, count=len(weights))
+        self.indexes = np.fromiter(indexes, dtype=np.int64, count=len(indexes))
+        self.weights = np.fromiter(weights, dtype=np.float32, count=len(weights))
         self.count: int = count
 
     def get_indexes(self, weight_threshold: float = 0) -> np.ndarray:
@@ -99,8 +99,8 @@ class Deform(BaseModel, ABC):
         if align:
             # 揃える必要がある場合
             # 数が足りるよう、かさ増しする
-            ilist = np.fromiter(self.indexes.tolist() + [0, 0, 0, 0], count=(len(self.indexes) + 4), dtype=np.int32)
-            wlist = np.fromiter(self.weights.tolist() + [0, 0, 0, 0], count=(len(self.weights) + 4), dtype=np.float64)
+            ilist = np.fromiter(self.indexes.tolist() + [0, 0, 0, 0], count=(len(self.indexes) + 4), dtype=np.int64)
+            wlist = np.fromiter(self.weights.tolist() + [0, 0, 0, 0], count=(len(self.weights) + 4), dtype=np.float32)
             # 正規化
             wlist /= wlist.sum(axis=0, keepdims=True)
 
@@ -111,7 +111,8 @@ class Deform(BaseModel, ABC):
         # ウェイト正規化
         self.weights /= self.weights.sum(axis=0, keepdims=True)
 
-    def normalized_deform(self) -> list:
+    @property
+    def normalized_deform(self) -> list[float]:
         """
         ウェイト正規化して4つのボーンINDEXとウェイトを返す（合計8個）
         """
@@ -120,19 +121,19 @@ class Deform(BaseModel, ABC):
         ilist = np.fromiter(
             np.fromiter(
                 self.indexes.tolist() + [0, 0, 0, 0],
-                dtype=np.int32,
+                dtype=np.float32,
                 count=len(self.indexes) + 4,
             ),
-            dtype=np.int32,
+            dtype=np.float32,
             count=len(self.indexes) + 4,
         )
         wlist = np.fromiter(
             np.fromiter(
                 self.weights.tolist() + [0, 0, 0, 0],
-                dtype=np.float64,
+                dtype=np.float32,
                 count=len(self.weights) + 4,
             ),
-            dtype=np.float64,
+            dtype=np.float32,
             count=len(self.weights) + 4,
         )
         # 正規化
@@ -347,7 +348,10 @@ class Texture(BaseIndexNameModel):
             # 描画フラグが立ってなければスルー
             return
 
-        gl.glDeleteTextures(1, [self.texture_id])
+        try:
+            gl.glDeleteTextures(1, [self.texture_id])
+        except Exception as e:
+            raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.texture_id}", e)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
@@ -377,7 +381,11 @@ class Texture(BaseIndexNameModel):
                 self.texture_type = texture_type
 
                 # テクスチャオブジェクト生成
-                self.texture_id = gl.glGenTextures(1)
+                try:
+                    self.texture_id = gl.glGenTextures(1)
+                except Exception as e:
+                    raise MViewerException(f"glGenTextures Failure\n{self.name}", e)
+
                 error_code = gl.glGetError()
                 if error_code != gl.GL_NO_ERROR:
                     raise MViewerException(f"glGenTextures Failure\n{self.name}: {error_code}")
@@ -394,17 +402,21 @@ class Texture(BaseIndexNameModel):
     def set_texture(self):
         if self.image:
             self.bind()
-            gl.glTexImage2D(
-                gl.GL_TEXTURE_2D,
-                0,
-                gl.GL_RGBA,
-                self.image.size[0],
-                self.image.size[1],
-                0,
-                gl.GL_RGBA,
-                gl.GL_UNSIGNED_BYTE,
-                self.image.tobytes(),
-            )
+
+            try:
+                gl.glTexImage2D(
+                    gl.GL_TEXTURE_2D,
+                    0,
+                    gl.GL_RGBA,
+                    self.image.size[0],
+                    self.image.size[1],
+                    0,
+                    gl.GL_RGBA,
+                    gl.GL_UNSIGNED_BYTE,
+                    self.image.tobytes(),
+                )
+            except Exception as e:
+                raise MViewerException(f"Texture set_texture Failure\n{self.name}", e)
 
             error_code = gl.glGetError()
             if error_code != gl.GL_NO_ERROR:
@@ -424,16 +436,8 @@ class Texture(BaseIndexNameModel):
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
 
-        error_code = gl.glGetError()
-        if error_code != gl.GL_NO_ERROR:
-            raise MViewerException(f"Texture bind Failure\n{self.name}: {error_code}")
-
     def unbind(self) -> None:
         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
-
-        error_code = gl.glGetError()
-        if error_code != gl.GL_NO_ERROR:
-            raise MViewerException(f"Texture unbind Failure\n{self.name}: {error_code}")
 
 
 @unique

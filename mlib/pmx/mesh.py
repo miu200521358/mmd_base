@@ -15,7 +15,10 @@ class VAO:
     """
 
     def __init__(self) -> None:
-        self.vao_id = gl.glGenVertexArrays(1)
+        try:
+            self.vao_id = gl.glGenVertexArrays(1)
+        except Exception as e:
+            raise MViewerException(f"VBO glGenVertexArrays Failure\n{self.vao_id}", e)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
@@ -31,7 +34,10 @@ class VAO:
         if not self.vao_id:
             return
 
-        gl.glDeleteVertexArrays(1, [self.vao_id])
+        try:
+            gl.glDeleteVertexArrays(1, [self.vao_id])
+        except Exception as e:
+            raise MViewerException(f"VBO glDeleteVertexArrays Failure\n{self.vao_id}", e)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
@@ -44,7 +50,10 @@ class VBO:
     """
 
     def __init__(self, data: np.ndarray, components: dict[int, dict[str, int]]) -> None:
-        self.vbo_id = gl.glGenBuffers(1)
+        try:
+            self.vbo_id = gl.glGenBuffers(1)
+        except Exception as e:
+            raise MViewerException("VBO glGenBuffers Failure", e)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
@@ -62,7 +71,10 @@ class VBO:
         if not self.vbo_id:
             return
 
-        gl.glDeleteBuffers(1, [self.vbo_id])
+        try:
+            gl.glDeleteBuffers(1, [self.vbo_id])
+        except Exception as e:
+            raise MViewerException(f"VBO glDeleteBuffers Failure\n{self.vbo_id}", e)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
@@ -104,13 +116,15 @@ class IBO:
     """
 
     def __init__(self, data: np.ndarray) -> None:
-        self.ibo_id = gl.glGenBuffers(1)
+        try:
+            self.ibo_id = gl.glGenBuffers(1)
+        except Exception as e:
+            raise MViewerException("IBO glGenBuffers Failure", e)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
             raise MViewerException(f"IBO glGenBuffers Failure\n{error_code}")
 
-        self.dtype = gl.GL_UNSIGNED_INT
         match data.dtype:
             case np.uint8:
                 self.dtype = gl.GL_UNSIGNED_BYTE
@@ -118,12 +132,6 @@ class IBO:
                 self.dtype = gl.GL_UNSIGNED_SHORT
             case np.uint32:
                 self.dtype = gl.GL_UNSIGNED_INT
-            case np.int8:
-                self.dtype = gl.GL_BYTE
-            case np.int16:
-                self.dtype = gl.GL_SHORT
-            case np.int32:
-                self.dtype = gl.GL_INT
         self.dsize = np.dtype(data.dtype).itemsize
 
         self.bind()
@@ -134,7 +142,10 @@ class IBO:
         if not self.ibo_id:
             return
 
-        gl.glDeleteBuffers(1, [self.ibo_id])
+        try:
+            gl.glDeleteBuffers(1, [self.ibo_id])
+        except Exception as e:
+            raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.ibo_id}", e)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
@@ -317,17 +328,20 @@ class Mesh(BaseIndexModel):
         padded_matrixes[: matrixes.size] = matrixes.flatten()
 
         # テクスチャをシェーダーに渡す
-        gl.glTexImage2D(
-            gl.GL_TEXTURE_2D,
-            0,
-            gl.GL_RGBA32F,
-            width,
-            height,
-            0,
-            gl.GL_RGBA,
-            gl.GL_FLOAT,
-            padded_matrixes.flatten(),
-        )
+        try:
+            gl.glTexImage2D(
+                gl.GL_TEXTURE_2D,
+                0,
+                gl.GL_RGBA32F,
+                width,
+                height,
+                0,
+                gl.GL_RGBA,
+                gl.GL_FLOAT,
+                padded_matrixes.flatten(),
+            )
+        except Exception as e:
+            raise MViewerException("Mesh bind_bone_matrixes Failure", e)
 
         gl.glUniform1i(shader.bone_matrix_texture_uniform[program_type.value], 3)
         gl.glUniform1i(shader.bone_matrix_texture_width[program_type.value], width)

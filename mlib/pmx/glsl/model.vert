@@ -44,9 +44,6 @@ void main() {
     mat4 boneTransformMatrix = mat4(0.0);
     for(int i = 0; i < 4; i++) {
         float boneWeight = boneWeights[i];
-        if (boneWeight <= 0.0) {
-            continue;
-        }
         int boneIndex = int(boneIndexes[i]);
 
         // テクスチャからボーン変形行列を取得する
@@ -62,26 +59,6 @@ void main() {
         // ボーン変形行列を乗算する
         boneTransformMatrix += boneMatrix * boneWeight;
     }
-
-    // // 各頂点で使用されるボーン変形行列を計算する
-    // mat4 boneTransformMatrix = mat4(0.0);
-    // for(int i = 0; i < 4; i++) {
-    //     float boneWeight = boneWeights[i];
-    //     if (boneWeight <= 0.0) {
-    //         continue;
-    //     }
-    //     int boneIndex = int(boneIndexes[i]);
-
-    //     int rowIndex = boneIndex / boneMatrixWidth;
-    //     int colIndex = boneIndex - rowIndex * boneMatrixWidth;
-
-    //     vec4 row0 = texelFetch(boneMatrixTexture, ivec2(colIndex, rowIndex), 0);
-    //     vec4 row1 = texelFetch(boneMatrixTexture, ivec2(colIndex, rowIndex), 0);
-    //     vec4 row2 = texelFetch(boneMatrixTexture, ivec2(colIndex, rowIndex), 0);
-    //     vec4 row3 = texelFetch(boneMatrixTexture, ivec2(colIndex, rowIndex), 0);
-    //     mat4 boneMatrix = mat4(row0, row1, row2, row3);
-    //     boneTransformMatrix += boneMatrix * boneWeight;
-    // }
 
     // 各頂点で使用される法線変形行列をボーン変形行列から回転情報のみ抽出して生成する
     mat3 normalTransformMatrix = mat3(boneTransformMatrix);

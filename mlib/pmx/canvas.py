@@ -248,7 +248,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
                 model_set.model.draw_bone(
                     animation.gl_matrixes,
-                    color * np.fromiter([1, 1, 1, model_set.bone_alpha], count=4, dtype=np.float64),
+                    color * np.fromiter([1, 1, 1, model_set.bone_alpha], count=4, dtype=np.float32),
                 )
 
     def draw_ground(self):

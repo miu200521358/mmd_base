@@ -719,12 +719,10 @@ class Meshes(BaseIndexDictModel[Mesh]):
                         *v.normal.gl.vector,
                         v.uv.x,
                         1 - v.uv.y,
-                        *(v.extended_uvs[0].vector if 0 < len(v.extended_uvs) else [0, 0]),
+                        v.extended_uvs[0].x if 0 < len(v.extended_uvs) else 0.0,
+                        1 - v.extended_uvs[0].y if 0 < len(v.extended_uvs) else 0.0,
                         v.edge_factor,
-                        *v.deform.indexes,
-                        *[0 for _ in range(4 - v.deform.count)],
-                        *v.deform.weights,
-                        *[0.0 for _ in range(4 - v.deform.count)],
+                        *v.deform.normalized_deform,
                         0.0,
                         0.0,
                         0.0,
@@ -883,7 +881,6 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.vbo_vertices.data[:, self.morph_pos_comps["offset"] : (self.morph_pos_comps["offset"] + self.morph_pos_comps["size"])] = vertex_morph_poses
         self.vbo_vertices.data[:, self.morph_uv_comps["offset"] : (self.morph_uv_comps["offset"] + self.morph_uv_comps["size"])] = uv_morph_poses
         self.vbo_vertices.data[:, self.morph_uv1_comps["offset"] : (self.morph_uv1_comps["offset"] + self.morph_uv1_comps["size"])] = uv1_morph_poses
-        self.vbo_vertices.bind()
 
         for mesh in self:
             self.vao.bind()
@@ -953,26 +950,6 @@ class Meshes(BaseIndexDictModel[Mesh]):
         # ブレンディングを有効にする
         gl.glEnable(gl.GL_BLEND)
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
-
-        # result_positions = []
-
-        # for bone, matrix in zip(self.model.bones, bone_matrixes):
-        #     if 0 > bone.parent_index:
-        #         result_positions.append(np.dot(matrix, np.array([*bone.position.gl.vector, 1]))[:3])
-        #     else:
-        #         result_positions.append(np.dot(matrix, np.array([*bone.parent_relative_position.gl.vector, 1]))[:3] + result_positions[bone.parent_index])
-
-        # gl.glBegin(gl.GL_LINES)
-        # for bone in self.model.bones:
-        #     if 0 <= bone.parent_index:
-        #         gl.glColor4f(*bone_color)
-        #         gl.glVertex3f(*result_positions[bone.parent_index])
-        #         gl.glColor4f(*bone_color)
-        #         gl.glVertex3f(*result_positions[bone.index])
-        # gl.glEnd()
-
-        # gl.glDepthMask(gl.GL_TRUE)
-        # gl.glEnable(gl.GL_DEPTH_TEST)
 
         self.bone_vao.bind()
         self.bone_vbo_vertices.bind()

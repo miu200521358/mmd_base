@@ -1,7 +1,5 @@
 # version 440
 
-uniform mat4 boneMatrixes;
-
 uniform int useTexture;
 uniform sampler2D textureSampler;
 uniform vec4 textureFactor;

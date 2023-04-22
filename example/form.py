@@ -275,7 +275,7 @@ class TestFrame(BaseFrame):
         dress_motion = VmdMotion()
 
         # フィッティングモーフは常に適用
-        bmf = VmdMorphFrame(0, "BoneFitting1")
+        bmf = VmdMorphFrame(0, "BoneFitting")
         bmf.ratio = 1
         dress_motion.morphs[bmf.name].append(bmf)
 
@@ -286,7 +286,7 @@ class TestFrame(BaseFrame):
         try:
             self.config_panel.canvas.set_context()
             self.config_panel.canvas.append_model_set(self.file_panel.model_ctrl.data, self.file_panel.motion_ctrl.data)
-            self.config_panel.canvas.append_model_set(self.file_panel.dress_ctrl.data, dress_motion, 0.3)
+            self.config_panel.canvas.append_model_set(self.file_panel.dress_ctrl.data, self.file_panel.motion_ctrl.data, 0.3)
             self.config_panel.canvas.Refresh()
             self.notebook.ChangeSelection(self.config_panel.tab_idx)
         except:
