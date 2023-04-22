@@ -20,6 +20,7 @@ from mlib.service.form.parts.float_slider_ctrl import FloatSliderCtrl
 from mlib.service.form.parts.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
 from mlib.utils.file_utils import save_histories, separate_path
 from mlib.vmd.vmd_collection import VmdMotion
+from mlib.vmd.vmd_part import VmdMorphFrame
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -128,11 +129,6 @@ class PmxLoadWorker(BaseWorker):
 
         if not file_panel.dress_ctrl.data and file_panel.dress_ctrl.valid():
             dress = file_panel.dress_ctrl.reader.read_by_filepath(file_panel.dress_ctrl.path)
-
-            # ウェイト頂点の法線に基づいたスケールを取得
-            vertex_bone_scales = dress.get_weighted_vertex_scale()
-            for bone in dress.bones:
-                bone.weighted_vertex_scales = vertex_bone_scales.get(bone.index, {})
 
         elif file_panel.dress_ctrl.data:
             dress = file_panel.dress_ctrl.data
@@ -276,10 +272,21 @@ class TestFrame(BaseFrame):
         self.file_panel.dress_ctrl.data = dress
         self.file_panel.motion_ctrl.data = motion
 
+        dress_motion = VmdMotion()
+
+        # フィッティングモーフは常に適用
+        bmf = VmdMorphFrame(0, "BoneFitting")
+        bmf.ratio = 1
+        dress_motion.morphs[bmf.name].append(bmf)
+
+        vmf = VmdMorphFrame(0, "VertexFitting")
+        vmf.ratio = 1
+        dress_motion.morphs[vmf.name].append(bmf)
+
         try:
             self.config_panel.canvas.set_context()
             self.config_panel.canvas.append_model_set(self.file_panel.model_ctrl.data, self.file_panel.motion_ctrl.data)
-            self.config_panel.canvas.append_model_set(self.file_panel.dress_ctrl.data, VmdMotion(), 0.3)
+            self.config_panel.canvas.append_model_set(self.file_panel.dress_ctrl.data, dress_motion, 0.3)
             self.config_panel.canvas.Refresh()
             self.notebook.ChangeSelection(self.config_panel.tab_idx)
         except:
