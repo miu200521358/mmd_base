@@ -205,6 +205,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             col = len(bone_tree) + 1
             poses = np.full((row, col, 3), np.zeros(3))
             qqs = np.full((row, col, 4, 4), np.eye(4))
+            scales = np.full((row, col, 3), np.ones(3))
+
             for n, fno in enumerate(fnos):
                 for m, bone in enumerate(bone_tree):
                     # ボーンの親から見た相対位置
@@ -225,13 +227,23 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         self.cache_qqs[(fno, model.digest, bone.index)] = qq
                         qqs[n, m] = qq.to_matrix4x4().vector
 
+                    # モーションによるスケール変化
+                    if (fno, model.digest, bone.index) in self.cache_scales:
+                        scales[n, m] *= self.cache_scales[(fno, model.digest, bone.index)].vector
+                    else:
+                        scale = self.get_scale(bone, fno, model)
+                        self.cache_scales[(fno, model.digest, bone.index)] = scale
+                        scales[n, m] *= scale.vector
+
                 # 末端ボーン表示先の位置を計算
                 poses[n, -1] = bone_tree[-1].tail_relative_position.vector
                 qqs[n, -1] = np.eye(4)
+                scales[n, -1] = np.ones(3)
             # 親ボーンから見たローカル座標行列
             matrixes = MMatrix4x4List(row, col)
             matrixes.translate(poses.tolist())
             matrixes.rotate(qqs.tolist())
+            matrixes.scale(scales.tolist())
             # グローバル座標行列
             global_mats = matrixes.matmul_cols()
             # グローバル位置
