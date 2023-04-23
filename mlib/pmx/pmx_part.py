@@ -748,6 +748,7 @@ class Bone(BaseIndexNameModel):
         "parent_relative_position",
         "tail_relative_position",
         "far_parent_index",
+        "corrected_fixed_axis",
     )
 
     def __init__(
