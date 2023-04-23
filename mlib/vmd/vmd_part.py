@@ -244,7 +244,8 @@ class VmdBoneFrame(BaseVmdNameFrame):
         "interpolations",
         "ik_rotation",
         "ik_target_rotation",
-        "correct_rotation",
+        "corrected_rotation",
+        "corrected_position",
     )
 
     def __init__(
@@ -260,8 +261,8 @@ class VmdBoneFrame(BaseVmdNameFrame):
         self.scale = MVector3D(1, 1, 1)
         self.interpolations = BoneInterpolations()
         self.ik_rotation: Optional[MQuaternion] = None
-        self.correct_position: Optional[MVector3D] = None
-        self.correct_rotation: Optional[MQuaternion] = None
+        self.corrected_position: Optional[MVector3D] = None
+        self.corrected_rotation: Optional[MQuaternion] = None
 
     def __iadd__(self, v: "VmdBoneFrame"):
         self.position += v.position
@@ -273,15 +274,15 @@ class VmdBoneFrame(BaseVmdNameFrame):
                 self.ik_rotation = MQuaternion()
             self.ik_rotation *= v.ik_rotation
 
-        if v.correct_position:
-            if self.correct_position is None:
-                self.correct_position = MVector3D()
-            self.correct_position += v.correct_position
+        if v.corrected_position:
+            if self.corrected_position is None:
+                self.corrected_position = MVector3D()
+            self.corrected_position += v.corrected_position
 
-        if v.correct_rotation:
-            if self.correct_rotation is None:
-                self.correct_rotation = MQuaternion()
-            self.correct_rotation *= v.correct_rotation
+        if v.corrected_rotation:
+            if self.corrected_rotation is None:
+                self.corrected_rotation = MQuaternion()
+            self.corrected_rotation *= v.corrected_rotation
         return self
 
     def __add__(self, v: "VmdBoneFrame"):
@@ -296,15 +297,15 @@ class VmdBoneFrame(BaseVmdNameFrame):
                 vv.ik_rotation = MQuaternion()
             vv.ik_rotation *= v.ik_rotation
 
-        if v.correct_position:
-            if vv.correct_position is None:
-                vv.correct_position = MVector3D()
-            vv.correct_position += v.correct_position
+        if v.corrected_position:
+            if vv.corrected_position is None:
+                vv.corrected_position = MVector3D()
+            vv.corrected_position += v.corrected_position
 
-        if v.correct_rotation:
-            if vv.correct_rotation is None:
-                vv.correct_rotation = MQuaternion()
-            vv.correct_rotation *= v.correct_rotation
+        if v.corrected_rotation:
+            if vv.corrected_rotation is None:
+                vv.corrected_rotation = MQuaternion()
+            vv.corrected_rotation *= v.corrected_rotation
         return vv
 
 

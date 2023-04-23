@@ -773,9 +773,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         """
         if bone.has_fixed_axis:
             qq_axis = MVector3D(qq.x, qq.y, qq.z)
-            theta = acos(max(-1, min(1, bone.fixed_axis.dot(qq_axis))))
+            theta = acos(max(-1, min(1, bone.corrected_fixed_axis.dot(qq_axis))))
 
-            fixed_qq_axis: MVector3D = bone.fixed_axis * qq_axis.length() * (1 if theta < pi / 2 else -1)
+            fixed_qq_axis: MVector3D = bone.corrected_fixed_axis * qq_axis.length() * (1 if theta < pi / 2 else -1)
             return MQuaternion(qq.scalar, fixed_qq_axis.x, fixed_qq_axis.y, fixed_qq_axis.z).normalized()
 
         return qq

@@ -697,11 +697,11 @@ class Bone(BaseIndexNameModel):
         軸固定:1 の場合 軸の方向ベクトル, by default MVector3D()
     local_x_vector : MVector3D, optional
         ローカル軸:1 の場合 X軸の方向ベクトル, by default MVector3D()
-    local_y_vector
+    corrected_local_y_vector
         ローカル軸:1 の場合 Y軸の方向ベクトル, by default MVector3D()
     local_z_vector : MVector3D, optional
         ローカル軸:1 の場合 Z軸の方向ベクトル, by default MVector3D()
-    correct_local_z_vector:
+    corrected_local_z_vector:
         再計算したZ軸の方向ベクトル
     external_key : int, optional
         外部親変形:1 の場合 Key値, by default -1
@@ -737,8 +737,9 @@ class Bone(BaseIndexNameModel):
         "ik",
         "display",
         "is_system",
-        "local_y_vector",
-        "correct_local_z_vector",
+        "corrected_local_y_vector",
+        "corrected_local_z_vector",
+        "corrected_local_x_vector",
         "local_axis",
         "ik_link_indexes",
         "ik_target_indexes",
@@ -764,7 +765,7 @@ class Bone(BaseIndexNameModel):
         self.tail_index = -1
         self.effect_index = -1
         self.effect_factor = 0.0
-        self.fixed_axis = MVector3D()
+        self.fixed_axis = MVector3D(1, 0, 0)
         self.local_x_vector = MVector3D(1, 0, 0)
         self.local_z_vector = MVector3D(0, 0, -1)
         self.external_key = -1
@@ -774,8 +775,10 @@ class Bone(BaseIndexNameModel):
         self.ik_link_indexes: list[int] = []
         self.ik_target_indexes: list[int] = []
 
-        self.local_y_vector = self.local_z_vector.cross(self.local_x_vector)
-        self.correct_local_z_vector = self.local_x_vector.cross(self.local_y_vector)
+        self.corrected_local_x_vector = self.local_x_vector.copy()
+        self.corrected_local_y_vector = self.local_z_vector.cross(self.corrected_local_x_vector)
+        self.corrected_local_z_vector = self.corrected_local_x_vector.cross(self.corrected_local_y_vector)
+        self.corrected_fixed_axis = self.fixed_axis.copy()
 
         self.parent_relative_position = MVector3D()
         self.tail_relative_position = MVector3D()
@@ -784,6 +787,14 @@ class Bone(BaseIndexNameModel):
         self.offset_matrix = MMatrix4x4()
         self.parent_revert_matrix = MMatrix4x4()
         self.far_parent_index = -1
+
+    def correct_fixed_axis(self, corrected_fixed_axis: MVector3D):
+        self.corrected_fixed_axis = corrected_fixed_axis.normalized()
+
+    def correct_local_vector(self, corrected_local_x_vector: MVector3D):
+        self.corrected_local_x_vector = corrected_local_x_vector.normalized()
+        self.corrected_local_y_vector = MVector3D(0, 0, -1).cross(self.corrected_local_x_vector)
+        self.corrected_local_z_vector = self.corrected_local_x_vector.cross(self.corrected_local_y_vector)
 
     @property
     def is_tail_bone(self) -> bool:
@@ -882,6 +893,7 @@ class Bone(BaseIndexNameModel):
             or self.is_leg_d
         )
 
+    @property
     def is_twist(self) -> bool:
         """捩りボーンであるか"""
         return "捩" in self.name

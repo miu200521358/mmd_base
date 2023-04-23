@@ -381,10 +381,12 @@ class PmxReader(BaseReader[PmxModel]):
 
             if bone.has_fixed_axis:
                 bone.fixed_axis = self.read_MVector3D()
+                bone.correct_fixed_axis(bone.fixed_axis)
 
             if bone.has_local_coordinate:
                 bone.local_x_vector = self.read_MVector3D()
                 bone.local_z_vector = self.read_MVector3D()
+                bone.correct_local_vector(bone.local_x_vector)
 
             if bone.is_external_parent_deform:
                 bone.external_key = self.read_int()
