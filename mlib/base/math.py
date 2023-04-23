@@ -99,10 +99,10 @@ class MVector(BaseModel):
         """
         return float(norm(self.vector, ord=2) ** 2)
 
-    def effective(self):
+    def effective(self, rtol: float = 1e-05, atol: float = 1e-08):
         self.vector[np.isinf(self.vector)] = 0
         self.vector[np.isnan(self.vector)] = 0
-        self.vector[np.isclose(self.vector, 0)] = 0
+        self.vector[np.isclose(self.vector, 0, rtol=rtol, atol=atol)] = 0
 
     def round(self, decimals: int):
         """
