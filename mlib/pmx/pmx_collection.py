@@ -154,6 +154,10 @@ class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
 
     def is_standard_tail(self, name: str) -> bool:
         """準標準までのボーンツリーに含まれるボーンの表示先であるか否か"""
+        if name in STANDARD_BONE_NAMES:
+            # そもそも自分が準標準ボーンならばFalse
+            return False
+
         bone_tree = self.data[name]
         bone_find_index = [i for i, b in enumerate(bone_tree) if b.name == name][0]
         if 1 > bone_find_index:
