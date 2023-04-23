@@ -241,9 +241,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 scales[n, -1] = np.ones(3)
             # 親ボーンから見たローカル座標行列
             matrixes = MMatrix4x4List(row, col)
+            matrixes.scale(scales.tolist())
             matrixes.translate(poses.tolist())
             matrixes.rotate(qqs.tolist())
-            matrixes.scale(scales.tolist())
             # グローバル座標行列
             global_mats = matrixes.matmul_cols()
             # グローバル位置
@@ -1170,9 +1170,9 @@ class VmdMotion(BaseHashModel):
 
         # ボーン変形行列
         matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
+        matrixes.scale(bone_scales.tolist())
         matrixes.translate(bone_poses.tolist())
         matrixes.rotate(bone_qqs.tolist())
-        matrixes.scale(bone_scales.tolist())
 
         bone_matrixes: list[np.ndarray] = []
         for bone_index in model.bones.indexes:
