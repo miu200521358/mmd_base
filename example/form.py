@@ -9,6 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from mlib.base.exception import MApplicationException
 from mlib.base.logger import MLogger
+from mlib.base.math import MVector3D
 from mlib.pmx.canvas import CanvasPanel
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.service.base_worker import BaseWorker
@@ -20,7 +21,7 @@ from mlib.service.form.parts.float_slider_ctrl import FloatSliderCtrl
 from mlib.service.form.parts.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
 from mlib.utils.file_utils import save_histories, separate_path
 from mlib.vmd.vmd_collection import VmdMotion
-from mlib.vmd.vmd_part import VmdMorphFrame
+from mlib.vmd.vmd_part import VmdBoneFrame
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -272,21 +273,15 @@ class TestFrame(BaseFrame):
         self.file_panel.dress_ctrl.data = dress
         self.file_panel.motion_ctrl.data = motion
 
-        dress_motion = VmdMotion()
-
-        # フィッティングモーフは常に適用
-        bmf = VmdMorphFrame(0, "BoneFitting")
-        bmf.ratio = 1
-        dress_motion.morphs[bmf.name].append(bmf)
-
-        vmf = VmdMorphFrame(0, "VertexFitting")
-        vmf.ratio = 1
-        dress_motion.morphs[vmf.name].append(bmf)
+        bf = VmdBoneFrame(0, "右腕")
+        bf.scale = MVector3D(0.5, 1, 1)
+        dress_motion: VmdMotion = self.file_panel.motion_ctrl.data.copy()
+        dress_motion.bones["右腕"].append(bf)
 
         try:
             self.config_panel.canvas.set_context()
-            self.config_panel.canvas.append_model_set(self.file_panel.model_ctrl.data, self.file_panel.motion_ctrl.data)
-            self.config_panel.canvas.append_model_set(self.file_panel.dress_ctrl.data, self.file_panel.motion_ctrl.data, 0.3)
+            self.config_panel.canvas.append_model_set(self.file_panel.model_ctrl.data, dress_motion)
+            self.config_panel.canvas.append_model_set(self.file_panel.dress_ctrl.data, dress_motion, 0.3)
             self.config_panel.canvas.Refresh()
             self.notebook.ChangeSelection(self.config_panel.tab_idx)
         except:

@@ -145,6 +145,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         "cache",
         "cache_poses",
         "cache_qqs",
+        "cache_scales",
         "_names",
         "_iter_index",
         "_size",
@@ -154,6 +155,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         super().__init__()
         self.cache_poses: dict[tuple[int, str, int], MVector3D] = {}
         self.cache_qqs: dict[tuple[int, str, int], MQuaternion] = {}
+        self.cache_scales: dict[tuple[int, str, int], MVector3D] = {}
 
     def create(self, key: str) -> VmdBoneNameFrames:
         return VmdBoneNameFrames(name=key)
@@ -161,6 +163,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     def clear(self) -> None:
         self.cache_poses = {}
         self.cache_qqs = {}
+        self.cache_scales = {}
 
     @property
     def max_fno(self) -> int:
@@ -251,11 +254,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return bone_matrixes
 
-    def animate_bone_matrixes(self, fno: int, model: PmxModel, bone_names: list[str] = []) -> tuple[np.ndarray, np.ndarray]:
+    def animate_bone_matrixes(self, fno: int, model: PmxModel, bone_names: list[str] = []) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         row = 1
         col = len(model.bones)
         poses = np.full((row, col, 3), np.zeros(3))
         qqs = np.full((row, col, 4, 4), np.eye(4))
+        scales = np.full((row, col, 3), np.ones(3))
         bone_indexes: list[int] = []
 
         self.clear()
@@ -287,7 +291,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 計算済みボーンとして登録
                     bone_indexes.append(bone.index)
 
-        return poses, qqs
+                    # モーションによるスケール変化
+                    if (fno, model.digest, bone.index) in self.cache_scales:
+                        scales[0, bone.index] = self.cache_scales[(fno, model.digest, bone.index)].vector
+                    else:
+                        scale = self.get_scale(bone, fno, model)
+                        scales[0, bone.index] = scale.vector
+                        self.cache_scales[(fno, model.digest, bone.index)] = scale
+
+        return poses, qqs, scales
 
     def calc_ik_rotations(self, fno: int, model: PmxModel, bone_names: Optional[list[str]] = []):
         self.clear()
@@ -396,6 +408,71 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         pos *= effect_pos
 
         return pos
+
+    def get_scale(self, bone: Bone, fno: int, model: PmxModel) -> MVector3D:
+        """
+        該当キーフレにおけるボーンの縮尺
+
+        Parameters
+        ----------
+        bone : Bone
+            計算対象ボーン
+        fno : int
+            計算対象キーフレ
+        model : PmxModel
+            計算対象モデル
+
+        Returns
+        -------
+        MVector3D
+            相対スケール
+        """
+        # 自身のスケール
+        scale = self[bone.name][fno].scale.copy()
+
+        # 付与親を加味して返す
+        return self.get_effect_scale(bone, fno, scale, model)
+
+    def get_effect_scale(
+        self,
+        bone: Bone,
+        fno: int,
+        scale: MVector3D,
+        model: PmxModel,
+    ) -> MVector3D:
+        """
+        付与親を加味した縮尺を求める
+
+        Parameters
+        ----------
+        bone : Bone
+            計算対象ボーン
+        fno : int
+            計算対象キーフレ
+        scale : MVector3D
+            計算対象縮尺
+        model : PmxModel
+            計算対象モデル
+
+        Returns
+        -------
+        MVector3D
+            計算結果
+        """
+        if not (bone.is_external_translation and bone.effect_index in model.bones):
+            return scale
+
+        if 0 == bone.effect_factor:
+            # 付与率が0の場合、常に1になる
+            return MVector3D(1, 1, 1)
+
+        # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
+        effect_bone = model.bones[bone.effect_index]
+        # effect_scale = model.bones.get_parent_relative_scale(bone.effect_index)
+        effect_scale = self.get_scale(effect_bone, fno, model)
+        scale *= effect_scale
+
+        return scale
 
     def get_rotation(self, bone: Bone, fno: int, model: PmxModel, append_ik: bool = False) -> MQuaternion:
         """
@@ -831,6 +908,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         bf = VmdBoneFrame(name=bone.name, index=fno)
         bf.position += offset.position * ratio
         bf.rotation *= MQuaternion.from_euler_degrees(offset.rotation.degrees * ratio)
+        bf.scale += offset.scale * ratio
         return bf
 
     def animate_group_morphs(self, fno: int, model: PmxModel, materials: list[ShaderMaterial]) -> tuple[np.ndarray, VmdBoneFrames, list[ShaderMaterial]]:
@@ -1075,13 +1153,14 @@ class VmdMotion(BaseHashModel):
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: キーフレ加算")
 
         # ボーン操作
-        bone_poses, bone_qqs = bone_frames.animate_bone_matrixes(fno, model)
+        bone_poses, bone_qqs, bone_scales = bone_frames.animate_bone_matrixes(fno, model)
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン操作")
 
         # ボーン変形行列
         matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
         matrixes.translate(bone_poses.tolist())
         matrixes.rotate(bone_qqs.tolist())
+        matrixes.scale(bone_scales.tolist())
 
         bone_matrixes: list[np.ndarray] = []
         for bone_index in model.bones.indexes:

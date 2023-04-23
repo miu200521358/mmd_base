@@ -240,6 +240,7 @@ class VmdBoneFrame(BaseVmdNameFrame):
         "read",
         "position",
         "rotation",
+        "scale",
         "interpolations",
         "ik_rotation",
         "ik_target_rotation",
@@ -256,6 +257,7 @@ class VmdBoneFrame(BaseVmdNameFrame):
         super().__init__(index, name, register, read)
         self.position = MVector3D()
         self.rotation = MQuaternion()
+        self.scale = MVector3D(1, 1, 1)
         self.interpolations = BoneInterpolations()
         self.ik_rotation: Optional[MQuaternion] = None
         self.correct_position: Optional[MVector3D] = None
@@ -264,6 +266,7 @@ class VmdBoneFrame(BaseVmdNameFrame):
     def __iadd__(self, v: "VmdBoneFrame"):
         self.position += v.position
         self.rotation *= v.rotation
+        self.scale *= v.scale
 
         if v.ik_rotation:
             if self.ik_rotation is None:
@@ -286,6 +289,7 @@ class VmdBoneFrame(BaseVmdNameFrame):
 
         vv.position += v.position
         vv.rotation *= v.rotation
+        vv.scale *= v.scale
 
         if v.ik_rotation:
             if vv.ik_rotation is None:

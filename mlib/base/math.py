@@ -1321,7 +1321,7 @@ class MMatrix4x4List:
         ones = np.ones((self.row, self.col, 1))
         vs4 = np.concatenate((vs, ones), axis=2).reshape(self.row, self.col, 4, 1)
         # スケール行列に変換
-        mat4 = np.empty((self.row, self.col, 4, 4)) * vs4
+        mat4 = np.full((self.row, self.col, 4, 4), np.eye(4)) * vs4
 
         self.vector = self.vector @ mat4
 
