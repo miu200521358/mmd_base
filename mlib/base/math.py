@@ -102,7 +102,7 @@ class MVector(BaseModel):
     def effective(self):
         self.vector[np.isinf(self.vector)] = 0
         self.vector[np.isnan(self.vector)] = 0
-        self.vector[np.isclose(self.vector)] = 0
+        self.vector[np.isclose(self.vector, 0)] = 0
 
     def round(self, decimals: int):
         """
