@@ -791,7 +791,7 @@ class MQuaternion(MVector):
         return MQuaternion(w, x, y, z)
 
     @staticmethod
-    def from_axis_angles(v: MVector3D, a: float):
+    def from_axis_angles(v: MVector3D, degree: float):
         """
         軸と角度からクォータニオンに変換する
         """
@@ -802,8 +802,8 @@ class MQuaternion(MVector):
         if not np.isclose([length - 1.0, length], 0).any():
             xyz /= length
 
-        a = radians(a / 2.0)
-        return MQuaternion(cos(a), *(xyz * sin(a))).normalized()
+        radian = radians(degree / 2.0)
+        return MQuaternion(cos(radian), *(xyz * sin(radian))).normalized()
 
     @staticmethod
     def from_direction(direction: MVector3D, up: MVector3D):

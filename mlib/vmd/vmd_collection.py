@@ -241,9 +241,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 scales[n, -1] = np.ones(3)
             # 親ボーンから見たローカル座標行列
             matrixes = MMatrix4x4List(row, col)
-            matrixes.scale(scales.tolist())
             matrixes.translate(poses.tolist())
             matrixes.rotate(qqs.tolist())
+            matrixes.scale(scales.tolist())
             # グローバル座標行列
             global_mats = matrixes.matmul_cols()
             # グローバル位置
@@ -636,8 +636,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # 現在のIKターゲットボーンのグローバル位置を取得
                     col = len(effector_bone_tree)
-                    poses = np.full((1, col), MVector3D())
-                    qqs = np.full((1, col), MQuaternion())
+                    poses = np.full((1, col, 3), np.zeros(3))
+                    qqs = np.full((1, col, 4, 4), np.eye(4))
+                    scales = np.full((1, col, 3), np.ones(3))
                     for m, it_bone in enumerate(effector_bone_tree):
                         # ボーンの親から見た相対位置を求める
                         if it_bone.index not in bone_positions:
@@ -646,9 +647,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         poses[0, m] = bone_positions[it_bone.index].vector
                         # ボーンの回転
                         qqs[0, m] = self.get_rotation(it_bone, fno, model, append_ik=False).to_matrix4x4().vector
+                        # ボーンのスケール
+                        scales[0, m] = self.get_scale(it_bone, fno, model).vector
                     matrixes = MMatrix4x4List(1, col)
                     matrixes.translate(poses.tolist())
                     matrixes.rotate(qqs.tolist())
+                    matrixes.scale(scales.tolist())
                     effector_result_mats = matrixes.matmul_cols()
                     global_effector_pos = MVector3D(*effector_result_mats.to_positions()[0, -1])
 
@@ -661,8 +665,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # 処理対象IKボーンのグローバル位置と行列を取得
                     col = len(link_bone_tree)
-                    poses = np.full((1, col), MVector3D())
-                    qqs = np.full((1, col), MQuaternion())
+                    poses = np.full((1, col, 3), np.zeros(3))
+                    qqs = np.full((1, col, 4, 4), np.eye(4))
+                    scales = np.full((1, col, 3), np.ones(3))
                     for m, it_bone in enumerate(link_bone_tree):
                         # ボーンの親から見た相対位置を求める
                         if it_bone.index not in bone_positions:
@@ -671,9 +676,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         poses[0, m] = bone_positions[it_bone.index].vector
                         # ボーンの回転
                         qqs[0, m] = self.get_rotation(it_bone, fno, model, append_ik=False).to_matrix4x4().vector
+                        # ボーンのスケール
+                        scales[0, m] = self.get_scale(it_bone, fno, model).vector
                     matrixes = MMatrix4x4List(1, col)
                     matrixes.translate(poses.tolist())
                     matrixes.rotate(qqs.tolist())
+                    matrixes.scale(scales.tolist())
                     link_target_mats = matrixes.matmul_cols()
 
                     # 注目ノード（実際に動かすボーン）
@@ -774,7 +782,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         if bone.has_fixed_axis:
             qq_axis = MVector3D(qq.x, qq.y, qq.z)
             theta = acos(max(-1, min(1, bone.corrected_fixed_axis.dot(qq_axis))))
-
             fixed_qq_axis: MVector3D = bone.corrected_fixed_axis * qq_axis.length() * (1 if theta < pi / 2 else -1)
             return MQuaternion(qq.scalar, fixed_qq_axis.x, fixed_qq_axis.y, fixed_qq_axis.z).normalized()
 
@@ -1170,9 +1177,9 @@ class VmdMotion(BaseHashModel):
 
         # ボーン変形行列
         matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
-        matrixes.scale(bone_scales.tolist())
         matrixes.translate(bone_poses.tolist())
         matrixes.rotate(bone_qqs.tolist())
+        matrixes.scale(bone_scales.tolist())
 
         bone_matrixes: list[np.ndarray] = []
         for bone_index in model.bones.indexes:
