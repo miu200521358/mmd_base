@@ -163,7 +163,7 @@ class MVector(BaseModel):
         """
         0を1に変える
         """
-        return self.__class__(*np.where(self.vector == 0, 1, self.vector))
+        return self.__class__(*np.where(np.isclose(self.vector, 0), 1, self.vector))
 
     def cross(self, other):
         """
