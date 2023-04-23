@@ -19,9 +19,7 @@ Windows用MMDツールライブラリ
      1. `set BEZIER_NO_EXTENSION=true`
      1. `pip install bezier --no-binary=bezier`
  1. wxPython のインストール
-     1. `pip install attrdict3`
-     1. `pip install requests`
-     1. `pip install wxpython`
+     1. `pip install attrdict3 requests wxpython`
 
 
 ## profile

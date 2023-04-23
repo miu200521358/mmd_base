@@ -1,7 +1,7 @@
 import operator
 from functools import lru_cache
 from math import acos, atan2, cos, degrees, radians, sin, sqrt
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 from numpy.linalg import inv, norm
@@ -1112,15 +1112,11 @@ class MMatrix4x4(MVector):
         """
         vmat = np.eye(4)
         if isinstance(v, MVector3D):
-            vmat[0, 0] = v.x
-            vmat[1, 1] = v.y
-            vmat[2, 2] = v.z
+            vmat = vmat * np.array([*v.vector, 1])
         else:
-            vmat[0, 0] = v
-            vmat[1, 1] = v
-            vmat[2, 2] = v
+            vmat = vmat * v
 
-        self.vector @= vmat
+        self.vector = self.vector @ vmat
 
     def identity(self):
         """
@@ -1288,7 +1284,7 @@ class MMatrix4x4List:
         self.col: int = col
         self.vector: np.ndarray = np.tile(np.eye(4, dtype=np.float64), (row, col, 1, 1))
 
-    def translate(self, vs: List[List[np.ndarray]]):
+    def translate(self, vs: list[list[np.ndarray]]):
         """
         平行移動行列
 
@@ -1300,7 +1296,7 @@ class MMatrix4x4List:
         vmat = self.vector[..., :3] * np.array([v2 for v1 in vs for v2 in v1], dtype=np.float64).reshape(self.row, self.col, 1, 3)
         self.vector[..., 3] += np.sum(vmat, axis=-1)
 
-    def rotate(self, qs: List[List[np.ndarray]]):
+    def rotate(self, qs: list[list[np.ndarray]]):
         """
         回転行列
 
@@ -1312,7 +1308,7 @@ class MMatrix4x4List:
 
         self.vector = self.vector @ np.array([q2 for q1 in qs for q2 in q1], dtype=np.float64).reshape(self.row, self.col, 4, 4)
 
-    def scale(self, vs: List[List[np.ndarray]]):
+    def scale(self, vs: list[list[np.ndarray]]):
         """
         縮尺行列
 
@@ -1321,7 +1317,13 @@ class MMatrix4x4List:
         vs : list[list[np.ndarray]]
             ベクトル(v.vector)
         """
-        self.vector[..., :3] *= np.array([v2 for v1 in vs for v2 in v1], dtype=np.float64).reshape(self.row, self.col, 1, 3)
+        # vec4に変換
+        ones = np.ones((self.row, self.col, 1))
+        vs4 = np.concatenate((vs, ones), axis=2).reshape(self.row, self.col, 4, 1)
+        # スケール行列に変換
+        mat4 = np.empty((self.row, self.col, 4, 4)) * vs4
+
+        self.vector = self.vector @ mat4
 
     def inverse(self):
         """

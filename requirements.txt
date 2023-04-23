@@ -1,13 +1,4 @@
-mypy
-black
-isort
-flake8
-pytest
-pytest-cov
-line_profiler
-deepl
 Babel
-
 numpy==1.24.2
 pyinstaller==5.9.0
 numpy-quaternion==2022.4.3
