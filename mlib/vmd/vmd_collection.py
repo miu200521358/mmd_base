@@ -210,7 +210,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for n, fno in enumerate(fnos):
                 for m, bone in enumerate(bone_tree):
                     # ボーンの親から見た相対位置
-                    poses[n, m] = bone.parent_relative_position.vector
+                    poses[n, m] = (bone.position - (MVector3D() if m == 0 else bone_tree[bone_tree.names[m - 1]].position)).vector
 
                     if (fno, model.digest, bone.index) in self.cache_poses:
                         poses[n, m] += self.cache_poses[(fno, model.digest, bone.index)].vector
@@ -642,7 +642,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     for m, it_bone in enumerate(effector_bone_tree):
                         # ボーンの親から見た相対位置を求める
                         if it_bone.index not in bone_positions:
-                            bone_positions[it_bone.index] = model.bones.get_parent_relative_position(it_bone.index)
+                            bone_positions[it_bone.index] = (
+                                it_bone.position - (MVector3D() if m == 0 else effector_bone_tree[effector_bone_tree.names[m - 1]].position)
+                            ).vector
                             bone_positions[it_bone.index] += self.get_position(it_bone, fno, model)
                         poses[0, m] = bone_positions[it_bone.index].vector
                         # ボーンの回転
@@ -671,7 +673,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     for m, it_bone in enumerate(link_bone_tree):
                         # ボーンの親から見た相対位置を求める
                         if it_bone.index not in bone_positions:
-                            bone_positions[it_bone.index] = model.bones.get_parent_relative_position(it_bone.index)
+                            bone_positions[it_bone.index] = (
+                                it_bone.position - (MVector3D() if m == 0 else link_bone_tree[link_bone_tree.names[m - 1]].position)
+                            ).vector
                             bone_positions[it_bone.index] += self.get_position(it_bone, fno, model)
                         poses[0, m] = bone_positions[it_bone.index].vector
                         # ボーンの回転
