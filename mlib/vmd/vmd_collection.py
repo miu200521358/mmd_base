@@ -1,7 +1,7 @@
 import os
 from bisect import bisect_left
 from functools import lru_cache
-from math import acos, degrees, pi
+from math import acos, degrees
 from typing import Optional
 
 import numpy as np
@@ -780,10 +780,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             軸制限された回転
         """
         if bone.has_fixed_axis:
-            qq_axis = MVector3D(qq.x, qq.y, qq.z)
-            theta = acos(max(-1, min(1, bone.corrected_fixed_axis.dot(qq_axis))))
-            fixed_qq_axis: MVector3D = bone.corrected_fixed_axis * qq_axis.length() * (1 if theta < pi / 2 else -1)
-            return MQuaternion(qq.scalar, fixed_qq_axis.x, fixed_qq_axis.y, fixed_qq_axis.z).normalized()
+            return qq.to_fixed_axis_quaternion(bone.corrected_fixed_axis)
 
         return qq
 

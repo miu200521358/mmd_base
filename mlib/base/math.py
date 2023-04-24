@@ -1,6 +1,6 @@
 import operator
 from functools import lru_cache
-from math import acos, atan2, cos, degrees, radians, sin, sqrt
+from math import acos, atan2, cos, degrees, pi, radians, sin, sqrt
 from typing import Union
 
 import numpy as np
@@ -767,6 +767,24 @@ class MQuaternion(MVector):
         if factor == 0:
             return MQuaternion()
         return MQuaternion(self.scalar / factor, self.x, self.y, self.z)
+
+    def to_fixed_axis_quaternion(self, fixed_axis: MVector3D) -> "MQuaternion":
+        """
+        軸制限されたクォータニオンの回転
+
+        Parameters
+        ----------
+        fixed_axis : MVector3D
+            軸制限を表す3次元ベクトル
+
+        Returns
+        -------
+        MQuaternion
+        """
+        normalized_fixed_axis = fixed_axis.normalized()
+        theta = acos(max(-1, min(1, normalized_fixed_axis.dot(self.xyz.normalized()))))
+        fixed_qq_axis: MVector3D = normalized_fixed_axis * (1 if theta < pi / 2 else -1) * self.xyz.length()
+        return MQuaternion(self.scalar, fixed_qq_axis.x, fixed_qq_axis.y, fixed_qq_axis.z).normalized()
 
     @staticmethod
     def from_euler_degrees(a: Union[int, float, MVector3D], b=0, c=0):
