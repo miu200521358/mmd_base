@@ -272,11 +272,15 @@ class TestFrame(BaseFrame):
         self.file_panel.model_ctrl.data = model
         self.file_panel.dress_ctrl.data = dress
         self.file_panel.motion_ctrl.data = motion
+        dress_motion: VmdMotion = self.file_panel.motion_ctrl.data.copy()
 
         bf = VmdBoneFrame(0, "右腕")
         bf.scale = MVector3D(0.5, 1, 1)
-        dress_motion: VmdMotion = self.file_panel.motion_ctrl.data.copy()
         dress_motion.bones["右腕"].append(bf)
+
+        bf2 = VmdBoneFrame(0, "右ひじ")
+        bf2.scale = MVector3D(1 / 0.5, 1, 1)
+        dress_motion.bones["右ひじ"].append(bf2)
 
         try:
             self.config_panel.canvas.set_context()

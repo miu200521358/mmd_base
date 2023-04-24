@@ -89,6 +89,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             # FKのprevと等しい場合、指定INDEX以前がないので、その次のをコピーして返す
             bf.position = self.data[next_index].position.copy()
             bf.rotation = self.data[next_index].rotation.copy()
+            bf.scale = self.data[next_index].scale.copy()
             return bf
 
         prev_bf = self.data[prev_index] if prev_index in self else VmdBoneFrame(name=self.name, index=prev_index)
@@ -115,6 +116,9 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
 
         # 移動
         bf.position = MVector3D.calc_by_ratio(prev_bf.position, next_bf.position, xy, yy, zy)
+
+        # スケール
+        bf.scale = MVector3D.calc_by_ratio(prev_bf.scale, next_bf.scale, xy, yy, zy)
 
         return bf
 
