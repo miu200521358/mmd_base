@@ -97,9 +97,13 @@ class MLogger:
         # ロガー
         self.logger = logging.getLogger("mutool").getChild(self.file_name)
 
-        self.stream_handler = StreamHandler(sys.stdout)
-        self.stream_handler.setFormatter(Formatter(self.STREAM_FORMAT))
-        self.logger.addHandler(self.stream_handler)
+        self.stream_out_handler = StreamHandler(sys.stdout)
+        self.stream_out_handler.setFormatter(Formatter(self.STREAM_FORMAT))
+        self.logger.addHandler(self.stream_out_handler)
+
+        self.stream_err_handler = StreamHandler(sys.stderr)
+        self.stream_err_handler.setFormatter(Formatter(self.STREAM_FORMAT))
+        self.logger.addHandler(self.stream_err_handler)
 
         if self.is_out_log and out_path:
             # ファイル出力ハンドラ
