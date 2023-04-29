@@ -118,7 +118,7 @@ class MLogger:
         for h in self.logger.handlers:
             if isinstance(h, StreamHandler):
                 self.logger.removeHandler(h)
-        self.logger.addHandler(self.stream_out_handler)
+        # self.logger.addHandler(self.stream_out_handler)
         self.logger.addHandler(self.stream_err_handler)
 
         if self.console_handler:
