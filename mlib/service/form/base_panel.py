@@ -1,8 +1,10 @@
 import wx
 
+from mlib.service.form.base_frame import BaseFrame
+
 
 class BasePanel(wx.Panel):
-    def __init__(self, frame: wx.Frame, tab_idx: int, *args, **kw):
+    def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
         self.frame = frame
         self.tab_idx = tab_idx
         super().__init__(self.frame.notebook, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL)
