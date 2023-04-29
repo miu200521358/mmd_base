@@ -2,6 +2,7 @@ import gettext
 import logging
 import os
 import re
+import sys
 from datetime import datetime
 from enum import Enum, IntEnum
 from functools import wraps
@@ -96,7 +97,7 @@ class MLogger:
         # ロガー
         self.logger = logging.getLogger("mutool").getChild(self.file_name)
 
-        self.stream_handler = StreamHandler()
+        self.stream_handler = StreamHandler(sys.stdout)
         self.stream_handler.setFormatter(Formatter(self.STREAM_FORMAT))
         self.logger.addHandler(self.stream_handler)
 
