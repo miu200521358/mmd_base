@@ -29,7 +29,7 @@ from mlib.pmx.pmx_part import (
 )
 from mlib.pmx.shader import MShader, ProgramType, VsLayout
 
-logger = MLogger(os.path.basename(__file__), level=1)
+logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
 
