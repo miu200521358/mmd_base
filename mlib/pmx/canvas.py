@@ -50,10 +50,7 @@ def animate(queue: Queue, fno: int, model_sets: List["ModelSet"]):
             if model_set.model and model_set.motion:
                 animations.append(MotionSet(model_set.model, model_set.motion, fno))
         queue.put(animations)
-    try:
-        queue.put(None)
-    except:
-        pass
+    queue.put(None)
 
 
 MODEL_BONE_COLORS = [
