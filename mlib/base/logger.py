@@ -7,7 +7,6 @@ from datetime import datetime
 from enum import Enum, IntEnum
 from functools import wraps
 from logging import Formatter, Handler, LogRecord, StreamHandler
-from logging.handlers import QueueHandler
 from typing import Optional
 from multiprocessing import get_logger
 
@@ -99,9 +98,6 @@ class MLogger:
         # ロガー
         # self.logger = logging.getLogger("mutool").getChild(self.file_name)
         self.logger = get_logger()
-
-        self.queue_handler = QueueHandler()
-        self.logger.addHandler(self.queue_handler)
 
         self.stream_out_handler = StreamHandler(sys.stdout)
         self.stream_out_handler.setFormatter(Formatter(self.STREAM_FORMAT))
