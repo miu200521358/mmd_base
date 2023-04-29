@@ -86,30 +86,15 @@ class MLogger:
         self,
         module_name,
         level=logging.INFO,
-        out_path: Optional[str] = None,
     ):
         self.file_name = module_name
         self.default_level = level
 
-        if not out_path:
-            # クラス単位の出力パスがない場合、デフォルトパス
-            out_path = self.default_out_path
-
         # ロガー
         self.logger = logging.getLogger("mutool").getChild(self.file_name)
 
-        # self.stream_out_handler = StreamHandler(sys.stdout)
-        # self.stream_out_handler.setFormatter(Formatter(self.STREAM_FORMAT))
-
         self.stream_err_handler = StreamHandler(sys.stderr)
         self.stream_err_handler.setFormatter(Formatter(self.STREAM_FORMAT))
-
-        if self.is_out_log and out_path:
-            # ファイル出力ハンドラ
-            self.file_handler = logging.FileHandler(out_path, encoding="utf-8")
-            self.file_handler.setLevel(self.default_level)
-            self.file_handler.setFormatter(Formatter(self.FILE_FORMAT))
-            self.logger.addHandler(self.file_handler)
 
         self.logger.setLevel(level)
 
@@ -117,7 +102,6 @@ class MLogger:
         for h in self.logger.handlers:
             if isinstance(h, StreamHandler):
                 self.logger.removeHandler(h)
-        # self.logger.addHandler(self.stream_out_handler)
         self.logger.addHandler(self.stream_err_handler)
 
         if self.console_handler:
