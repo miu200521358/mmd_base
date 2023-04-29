@@ -8,6 +8,7 @@ from enum import Enum, IntEnum
 from functools import wraps
 from logging import Formatter, Handler, LogRecord, StreamHandler
 from typing import Optional
+from multiprocessing import freeze_support
 
 import numpy as np
 import wx
@@ -92,6 +93,9 @@ class MLogger:
 
         # ロガー
         self.logger = logging.getLogger("mutool").getChild(self.file_name)
+
+        # Windowsマルチプロセス対策
+        freeze_support()
 
         self.stream_err_handler = StreamHandler(sys.stderr)
         self.stream_err_handler.setFormatter(Formatter(self.STREAM_FORMAT))
