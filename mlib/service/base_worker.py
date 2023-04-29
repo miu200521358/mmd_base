@@ -108,6 +108,16 @@ class BaseWorker:
         except Exception:
             logger.critical("予期せぬエラーが発生しました")
             self.result = False
+        finally:
+            try:
+                if logger.is_out_log or (not self.result and not self.killed):
+                    # ログ出力
+                    self.output_log()
+            except:
+                pass
 
     def thread_execute(self):
+        raise NotImplementedError
+
+    def output_log(self):
         raise NotImplementedError
