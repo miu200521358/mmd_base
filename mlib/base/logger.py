@@ -8,7 +8,6 @@ from enum import Enum, IntEnum
 from functools import wraps
 from logging import Formatter, Handler, LogRecord, StreamHandler
 from typing import Optional
-from multiprocessing import get_logger
 
 import numpy as np
 import wx
@@ -58,7 +57,8 @@ class MLogger:
         LINE = "line"
 
     DEFAULT_FORMAT = "%(message)s"
-    STREAM_FORMAT = "%(message)s [%(call_file)s:%(call_func)s:%(call_lno)s][P-%(process)s](%(asctime)s)"
+    STREAM_FORMAT = "%(message)s [%(module)s:%(funcName)s][P-%(processName)s](%(asctime)s)"
+    FILE_FORMAT = "%(message)s [%(call_file)s:%(call_func)s:%(call_lno)s][P-%(processName)s](%(asctime)s)"
 
     # システム全体のロギングレベル
     total_level = logging.INFO
@@ -96,11 +96,10 @@ class MLogger:
             out_path = self.default_out_path
 
         # ロガー
-        # self.logger = logging.getLogger("mutool").getChild(self.file_name)
-        self.logger = get_logger()
+        self.logger = logging.getLogger("mutool").getChild(self.file_name)
 
-        self.stream_out_handler = StreamHandler(sys.stdout)
-        self.stream_out_handler.setFormatter(Formatter(self.STREAM_FORMAT))
+        # self.stream_out_handler = StreamHandler(sys.stdout)
+        # self.stream_out_handler.setFormatter(Formatter(self.STREAM_FORMAT))
 
         self.stream_err_handler = StreamHandler(sys.stderr)
         self.stream_err_handler.setFormatter(Formatter(self.STREAM_FORMAT))
@@ -109,7 +108,7 @@ class MLogger:
             # ファイル出力ハンドラ
             self.file_handler = logging.FileHandler(out_path, encoding="utf-8")
             self.file_handler.setLevel(self.default_level)
-            self.file_handler.setFormatter(Formatter(self.STREAM_FORMAT))
+            self.file_handler.setFormatter(Formatter(self.FILE_FORMAT))
             self.logger.addHandler(self.file_handler)
 
         self.logger.setLevel(level)
