@@ -899,6 +899,13 @@ class Bone(BaseIndexNameModel):
         """捩りボーンであるか"""
         return "捩" in self.name
 
+    @property
+    def is_standard_extend(self) -> bool:
+        """準標準の拡張ボーンであるか"""
+        if f"{self.name}先" in STANDARD_BONE_NAMES or self.name[:-1] in STANDARD_BONE_NAMES:
+            return True
+        return False
+
 
 STANDARD_BONE_NAMES = {
     "全ての親": {"tail": MVector3D(0, 1, 0)},
