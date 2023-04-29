@@ -101,11 +101,9 @@ class MLogger:
 
         self.stream_out_handler = StreamHandler(sys.stdout)
         self.stream_out_handler.setFormatter(Formatter(self.STREAM_FORMAT))
-        self.logger.addHandler(self.stream_out_handler)
 
         self.stream_err_handler = StreamHandler(sys.stderr)
         self.stream_err_handler.setFormatter(Formatter(self.STREAM_FORMAT))
-        self.logger.addHandler(self.stream_err_handler)
 
         if self.is_out_log and out_path:
             # ファイル出力ハンドラ
@@ -116,7 +114,13 @@ class MLogger:
 
         self.logger.setLevel(level)
 
-    def add_console_handler(self):
+    def add_handler(self):
+        for h in self.logger.handlers:
+            if isinstance(h, StreamHandler):
+                self.logger.removeHandler(h)
+        self.logger.addHandler(self.stream_out_handler)
+        self.logger.addHandler(self.stream_err_handler)
+
         if self.console_handler:
             for h in self.logger.handlers:
                 if isinstance(h, ConsoleHandler):
@@ -136,7 +140,7 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        self.add_console_handler()
+        self.add_handler()
         self.logger.debug(
             self.create_message(msg, logging.DEBUG, None, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
@@ -153,7 +157,7 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        self.add_console_handler()
+        self.add_handler()
         self.logger.info(
             self.create_message(msg, logging.INFO, title, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
@@ -175,7 +179,7 @@ class MLogger:
         **kwargs,
     ):
         if 0 < total_index_count and 0 < index and (0 == index % display_block or index == total_index_count):
-            self.add_console_handler()
+            self.add_handler()
             percentage = (index / total_index_count) * 100
             log_msg = "-- " + self.get_text(msg) + " [{i} ({p:.2f}%)]"
             count_msg = self.create_message(log_msg, logging.INFO, title, decoration, p=percentage, i=index, **kwargs)
@@ -196,7 +200,7 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        self.add_console_handler()
+        self.add_handler()
         self.logger.warning(
             self.create_message(msg, logging.WARNING, title, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
@@ -213,7 +217,7 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        self.add_console_handler()
+        self.add_handler()
         self.logger.error(
             self.create_message(msg, logging.ERROR, title, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
@@ -230,7 +234,7 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        self.add_console_handler()
+        self.add_handler()
         self.logger.critical(
             self.create_message(msg, logging.CRITICAL, title, decoration or MLogger.Decoration.BOX, **kwargs),
             exc_info=True,
