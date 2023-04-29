@@ -331,13 +331,14 @@ class MLogger:
         mode: LoggingMode = LoggingMode.MODE_READONLY,
         saving: bool = True,
         level=logging.INFO,
-        out_path=None,
+        is_out_log: bool = False,
     ):
         logging.basicConfig(level=level, format=cls.DEFAULT_FORMAT)
         cls.total_level = level
         cls.mode = LoggingMode.MODE_READONLY if lang != "ja" else mode
         cls.lang = lang
         cls.saving = saving
+        cls.is_out_log = is_out_log
         cls.lang_dir = f"{root_dir}/i18n"
 
         # 翻訳用クラスの設定
@@ -350,16 +351,12 @@ class MLogger:
 
         output_datetime = "{0:%Y%m%d_%H%M%S}".format(datetime.now())
         cls.output_datetime = output_datetime
-        log_dir = f"{root_dir}/../log"
+        log_dir = f"{root_dir}/log"
 
         # ファイル出力ありの場合、ログファイル名生成
-        if not out_path:
+        if is_out_log:
             os.makedirs(log_dir, exist_ok=True)
             cls.default_out_path = f"{log_dir}/mutool_{output_datetime}.log"
-            cls.is_out_log = False
-        else:
-            cls.default_out_path = out_path
-            cls.is_out_log = True
 
         if os.path.exists(f"{log_dir}/quit.log"):
             # 終了ログは初期化時に削除
