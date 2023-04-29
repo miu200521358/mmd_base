@@ -7,6 +7,7 @@ import OpenGL.GL as gl
 import wx
 from PIL import Image
 from wx import glcanvas
+from multiprocessing import freeze_support
 
 from mlib.base.exception import MViewerException
 from mlib.base.logger import MLogger
@@ -16,6 +17,9 @@ from mlib.pmx.pmx_part import ShaderMaterial
 from mlib.pmx.shader import MShader
 from mlib.service.form.base_panel import BasePanel
 from mlib.vmd.vmd_collection import VmdMotion
+
+# Windowsマルチプロセス対策
+freeze_support()
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
