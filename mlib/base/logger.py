@@ -343,7 +343,7 @@ class MLogger:
         level=logging.INFO,
         is_out_log: bool = False,
     ):
-        logging.basicConfig(level=level, format=cls.DEFAULT_FORMAT)
+        logging.basicConfig(level=level, format=cls.STREAM_FORMAT)
         cls.total_level = level
         cls.mode = LoggingMode.MODE_READONLY if lang != "ja" else mode
         cls.lang = lang
