@@ -14,7 +14,6 @@ from mlib.base.math import MQuaternion, MVector3D
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import ShaderMaterial
 from mlib.pmx.shader import MShader
-from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
 from mlib.vmd.vmd_collection import VmdMotion
 
@@ -23,7 +22,7 @@ __ = logger.get_text
 
 
 class CanvasPanel(BasePanel):
-    def __init__(self, frame: BaseFrame, tab_idx: int, width: int, height: int, *args, **kw):
+    def __init__(self, frame: wx.Frame, tab_idx: int, width: int, height: int, *args, **kw):
         super().__init__(frame, tab_idx)
         self.index = 0
         self.canvas = PmxCanvas(self, width, height)
