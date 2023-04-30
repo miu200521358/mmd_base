@@ -1,6 +1,6 @@
 import os
-from multiprocessing import Process, Queue
-from typing import List, Optional
+from multiprocessing import Queue
+from typing import Optional
 
 import numpy as np
 import OpenGL.GL as gl
@@ -8,6 +8,7 @@ import wx
 from PIL import Image
 from wx import glcanvas
 
+from mlib.base.process import MProcess
 from mlib.base.exception import MViewerException
 from mlib.base.logger import MLogger
 from mlib.base.math import MQuaternion, MVector3D
@@ -40,7 +41,7 @@ class CanvasPanel(BasePanel):
         pass
 
 
-def animate(queue: Queue, fno: int, model_sets: List["ModelSet"]):
+def animate(queue: Queue, fno: int, model_sets: list["ModelSet"]):
     max_fno = max([model_set.motion.max_fno for model_set in model_sets])
 
     while fno < max_fno:
@@ -120,8 +121,8 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.animations: list[MotionSet] = []
 
         self.queue: Optional[Queue] = None
-        self.process: Optional[Process] = None
-        self.capture_process: Optional[Process] = None
+        self.process: Optional[MProcess] = None
+        self.capture_process: Optional[MProcess] = None
 
         # マウスドラッグフラグ
         self.is_drag = False
@@ -291,7 +292,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
             self.recording = record
             self.queue = Queue()
-            self.process = Process(
+            self.process = MProcess(
                 target=animate,
                 args=(self.queue, self.parent.fno, self.model_sets),
                 name="CalcProcess",
