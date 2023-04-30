@@ -89,7 +89,7 @@ class MotionSet:
             self.material_morphs = [ShaderMaterial(m, MShader.LIGHT_AMBIENT4) for m in model.materials]
 
     def update_morphs(self, model: PmxModel, motion: VmdMotion, fno: int):
-        logger.debug("update_morphs")
+        logger.debug(f"update_morphs: {model.name}")
         self.vertex_morph_poses = motion.morphs.animate_vertex_morphs(fno, model)
         logger.debug("animate_vertex_morphs")
         self.uv_morph_poses = motion.morphs.animate_uv_morphs(fno, model, 0)
@@ -288,7 +288,9 @@ class PmxCanvas(glcanvas.GLCanvas):
             for model_set, animation in zip(self.model_sets, self.animations):
                 animation.update_morphs(model_set.model, model_set.motion, self.parent.fno)
 
-        if self.max_fno <= self.parent.fno:
+        if self.playing and self.max_fno <= self.parent.fno:
+            logger.debug(f"on_play: {self.parent.fno}")
+
             # 最後まで行ったら止まる
             self.on_play(event)
 
