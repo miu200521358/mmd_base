@@ -1,7 +1,7 @@
 import os
 import sys
 from multiprocessing import Process
-from multiprocessing.popen_fork import Popen
+from multiprocessing.popen_spawn_win32 import Popen
 
 
 class _Popen(Popen):
