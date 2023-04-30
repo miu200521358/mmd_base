@@ -1,5 +1,5 @@
 import os
-from multiprocessing import Process, Queue, freeze_support
+from multiprocessing import Process, Queue
 from typing import List, Optional
 
 import numpy as np
@@ -7,9 +7,6 @@ import OpenGL.GL as gl
 import wx
 from PIL import Image
 from wx import glcanvas
-
-# Windowsマルチプロセス対策
-freeze_support()
 
 from mlib.base.exception import MViewerException
 from mlib.base.logger import MLogger
@@ -89,15 +86,10 @@ class MotionSet:
             self.material_morphs = [ShaderMaterial(m, MShader.LIGHT_AMBIENT4) for m in model.materials]
 
     def update_morphs(self, model: PmxModel, motion: VmdMotion, fno: int):
-        logger.debug(f"update_morphs: {model.name}")
         self.vertex_morph_poses = motion.morphs.animate_vertex_morphs(fno, model)
-        logger.debug("animate_vertex_morphs")
         self.uv_morph_poses = motion.morphs.animate_uv_morphs(fno, model, 0)
-        logger.debug("animate_uv_morphs")
         self.uv1_morph_poses = motion.morphs.animate_uv_morphs(fno, model, 1)
-        logger.debug("animate_uv_morphs1")
         self.material_morphs = motion.morphs.animate_material_morphs(fno, model)
-        logger.debug("animate_material_morphs")
 
 
 class PmxCanvas(glcanvas.GLCanvas):
@@ -278,7 +270,6 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.change_motion(event)
 
     def change_motion(self, event: wx.Event, is_bone_deform: bool = True):
-        logger.debug(f"change_motion: {is_bone_deform}")
         if is_bone_deform:
             animations: list[MotionSet] = []
             for model_set in self.model_sets:
@@ -289,8 +280,6 @@ class PmxCanvas(glcanvas.GLCanvas):
                 animation.update_morphs(model_set.model, model_set.motion, self.parent.fno)
 
         if self.playing and self.max_fno <= self.parent.fno:
-            logger.debug(f"on_play: {self.parent.fno}")
-
             # 最後まで行ったら止まる
             self.on_play(event)
 
