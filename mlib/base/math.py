@@ -1417,3 +1417,19 @@ def operate_vector(v: MVector, other: Union[MVector, float, int], op):
         v2 = v.__class__(*v1)
     v2.effective()
     return v2
+
+
+def std_mean(values: list[MVector], range: float = 1.5) -> MVector:
+    """標準偏差を加味したmean処理"""
+    np_standard_vectors = np.array([v.vector for v in values])
+    np_standard_lengths = np.array([v.length() for v in values])
+    median_standard_values = np.median(np_standard_lengths)
+    std_standard_values = np.std(np_standard_lengths)
+
+    # 中央値から標準偏差の一定範囲までの値を取得
+    filtered_standard_values = np_standard_vectors[
+        (np_standard_lengths >= median_standard_values - range * std_standard_values)
+        & (np_standard_lengths <= median_standard_values + range * std_standard_values)
+    ]
+
+    return MVector(*np.mean(filtered_standard_values, axis=0))
