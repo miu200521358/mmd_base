@@ -679,6 +679,12 @@ class PmxModel(BaseHashModel):
             neck_root_bone.is_system = True
             self.bones.append(neck_root_bone)
 
+        if "右足" in self.bones and "左足" in self.bones:
+            leg_root_bone = Bone(name="足中心")
+            leg_root_bone.position = (self.bones["右足"].position + self.bones["左足"].position) / 2
+            leg_root_bone.is_system = True
+            self.bones.append(leg_root_bone)
+
         logger.info("-- モデルセットアップ：システム用ボーン")
 
 
