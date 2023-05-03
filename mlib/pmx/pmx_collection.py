@@ -106,9 +106,12 @@ class BoneTree(BaseIndexNameDictModel[Bone]):
 
         return bone.position - self[bone.parent_index]
 
-    def filter(self, start_bone_name: str, end_bone_name: str) -> "BoneTree":
+    def filter(self, start_bone_name: str, end_bone_name: Optional[str] = None) -> "BoneTree":
         start_index = [i for i, b in enumerate(self.data.values()) if b.name == start_bone_name][0]
-        end_index = [i for i, b in enumerate(self.data.values()) if b.name == end_bone_name][0]
+        if end_bone_name:
+            end_index = [i for i, b in enumerate(self.data.values()) if b.name == end_bone_name][0]
+        else:
+            end_index = self.last_index
         new_tree = BoneTree(end_bone_name)
         for i, t in enumerate(self):
             if start_index <= i <= end_index:
