@@ -1,6 +1,22 @@
 import pytest
 
-from mlib.base.math import MQuaternion
+
+def test_MVector3D_std_mean():
+    import numpy as np
+    from mlib.base.math import MVector3D
+
+    values = [
+        MVector3D(1, 2, 3),
+        MVector3D(1.5, 1.2, 20.3),
+        MVector3D(1.8, 0.3, 1.3),
+        MVector3D(15, 0.2, 1.3),
+        MVector3D(1.3, 2.2, 2.3),
+    ]
+
+    assert np.isclose(
+        MVector3D(1.36666667, 1.5, 2.2).one().vector,
+        MVector3D.std_mean(values).vector,
+    ).all()
 
 
 def test_MVector3D_one():
@@ -1203,7 +1219,7 @@ def test_MMatrix4x4_translate():
 def test_MMatrix4x4_scale():
     import numpy as np
 
-    from mlib.base.math import MMatrix4x4, MVector3D
+    from mlib.base.math import MMatrix4x4, MVector3D, MQuaternion
 
     m = MMatrix4x4()
 
@@ -1902,7 +1918,7 @@ def test_MMatrix4x4List_rotate():
 def test_MMatrix4x4List_scale():
     import numpy as np
 
-    from mlib.base.math import MMatrix4x4List, MVector3D
+    from mlib.base.math import MMatrix4x4List, MVector3D, MQuaternion
 
     ms = MMatrix4x4List(2, 3)
 
