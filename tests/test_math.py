@@ -66,32 +66,32 @@ def test_MVector3D_effective():
 
     from mlib.base.math import MVector3D
 
-    v = MVector3D(1, 2, 3.2)
-    v.effective()
+    v1 = MVector3D(1, 2, 3.2)
+    ev1 = v1.effective()
     assert np.isclose(
         MVector3D(1, 2, 3.2).vector,
-        v.vector,
+        ev1.vector,
     ).all()
 
-    v = MVector3D(1.2, nan, 3.2)
-    v.effective()
+    v2 = MVector3D(1.2, nan, 3.2)
+    ev2 = v2.effective()
     assert np.isclose(
         MVector3D(1.2, 0, 3.2).vector,
-        v.vector,
+        ev2.vector,
     ).all()
 
-    v = MVector3D(1.2, 0.45, inf)
-    v.effective()
+    v3 = MVector3D(1.2, 0.45, inf)
+    ev3 = v3.effective()
     assert np.isclose(
         MVector3D(1.2, 0.45, 0).vector,
-        v.vector,
+        ev3.vector,
     ).all()
 
-    v = MVector3D(1.2, 0.45, -inf)
-    v.effective()
+    v4 = MVector3D(1.2, 0.45, -inf)
+    ev4 = v4.effective()
     assert np.isclose(
         MVector3D(1.2, 0.45, 0).vector,
-        v.vector,
+        ev4.vector,
     ).all()
 
 

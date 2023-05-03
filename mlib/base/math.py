@@ -100,9 +100,11 @@ class MVector(BaseModel):
         return float(norm(self.vector, ord=2) ** 2)
 
     def effective(self, rtol: float = 1e-05, atol: float = 1e-08):
-        self.vector[np.isinf(self.vector)] = 0
-        self.vector[np.isnan(self.vector)] = 0
-        self.vector[np.isclose(self.vector, 0, rtol=rtol, atol=atol)] = 0
+        vector = np.copy(self.vector)
+        vector[np.isinf(vector)] = 0
+        vector[np.isnan(vector)] = 0
+        vector[np.isclose(vector, 0, rtol=rtol, atol=atol)] = 0
+        return self.__class__(*vector)
 
     def round(self, decimals: int):
         """
@@ -632,8 +634,10 @@ class MQuaternion(MVector):
         return f"[x={round(self.x, 5)}, y={round(self.y, 5)}, " + f"z={round(self.z, 5)}, scalar={round(self.scalar, 5)}]"
 
     def effective(self):
-        self.vector.components[np.isnan(self.vector.components)] = 0
-        self.vector.components[np.isinf(self.vector.components)] = 0
+        vector = np.copy(self.vector.components)
+        vector[np.isnan(vector)] = 0
+        vector[np.isinf(vector)] = 0
+        return MQuaternion(*vector)
 
     def length(self) -> float:
         """
@@ -660,20 +664,21 @@ class MQuaternion(MVector):
         if not self:
             return MQuaternion()
 
-        self.effective()
-        l2 = norm(self.vector.components, ord=2, axis=-1, keepdims=True)
+        v = self.effective()
+        l2 = norm(v.vector.components, ord=2, axis=-1, keepdims=True)
         l2[l2 == 0] = 1
-        normv = self.vector.components / l2
+        normv = v.vector.components / l2
         return MQuaternion(*normv)
 
     def normalize(self):
         """
         自分自身の正規化
         """
-        self.effective()
-        l2 = norm(self.vector.components, ord=2, axis=-1, keepdims=True)
+        v = self.effective()
+        l2 = norm(v.vector.components, ord=2, axis=-1, keepdims=True)
         l2[l2 == 0] = 1
-        self.vector.components /= l2
+        v.vector.components /= l2
+        self.vector = v.vector
 
     def to_vector4(self) -> MVector4D:
         return MVector4D(self.x, self.y, self.z, self.scalar)
@@ -1431,5 +1436,4 @@ def operate_vector(v: MVector, other: Union[MVector, float, int], op):
         v2 = v.__class__(*v1.components)
     else:
         v2 = v.__class__(*v1)
-    v2.effective()
-    return v2
+    return v2.effective()
