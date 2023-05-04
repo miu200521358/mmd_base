@@ -108,6 +108,8 @@ class MLogger:
             for h in self.logger.handlers:
                 if isinstance(h, ConsoleHandler):
                     return
+            if self.is_out_log:
+                self.console_handler.setFormatter(Formatter(self.STREAM_FORMAT))
             self.logger.addHandler(self.console_handler)
 
     def get_extra(self, msg: str, func: Optional[str] = "", lno: Optional[int] = 0):
