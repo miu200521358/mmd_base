@@ -210,8 +210,8 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
     def set_data(self, v: TBaseHashModel):
         """データを設定"""
         self.clear_data()
-        self.original_data = v.copy()
-        self.data = v
+        self.original_data = v
+        self.data = v.copy()
 
 
 class MFileDropTarget(wx.FileDropTarget):
