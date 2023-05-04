@@ -145,6 +145,9 @@ class PmxLoadWorker(BaseWorker):
 
         self.result_data = (model, dress, motion)
 
+    def output_log(self):
+        pass
+
 
 class ConfigPanel(CanvasPanel):
     def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
@@ -303,7 +306,8 @@ if __name__ == "__main__":
     MLogger.initialize(
         lang="en",
         root_dir=os.path.join(os.path.dirname(__file__), "..", "mlib"),
-        level=20,
+        level=10,
+        is_out_log=True,
     )
 
     app = MuApp()
