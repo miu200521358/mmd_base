@@ -133,9 +133,9 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     def __setitem__(self, index: int, v: TBaseIndexNameModel) -> None:
         self.data[index] = v
 
-    def append(self, value: TBaseIndexNameModel, is_sort: bool = True) -> None:
-        if 0 > value.index:
-            value.index = len(self.data)
+    def append(self, value: TBaseIndexNameModel, is_sort: bool = True, is_positive_index: bool = True) -> None:
+        if 0 > value.index and is_positive_index:
+            value.index = len([k for k in self.data.keys() if k >= 0])
 
         if value.name and value.name not in self._names:
             # 名前は先勝ちで保持
@@ -147,9 +147,9 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         else:
             self.indexes.append(value.index)
 
-    def insert(self, value: TBaseIndexNameModel, is_sort: bool = True) -> dict[int, int]:
-        if 0 > value.index:
-            value.index = len(self.data)
+    def insert(self, value: TBaseIndexNameModel, is_sort: bool = True, is_positive_index: bool = True) -> dict[int, int]:
+        if 0 > value.index and is_positive_index:
+            value.index = len([k for k in self.data.keys() if k >= 0])
 
         replaced_map: dict[int, int] = {}
         if value.index in self.data:
@@ -163,7 +163,9 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
                 self.data[v.index] = v
                 # 名前逆引きもINDEX置き換え
                 self._names[v.name] = v.index
-
+            for i in range(value.index - 1, -2, -1):
+                v = self.data[i]
+                replaced_map[v.index] = v.index
         self.data[value.index] = value
 
         if value.name and value.name not in self._names:

@@ -131,3 +131,6 @@ wheel
 # テスト結果
 *result*
 history.json
+
+*.pmx
+*.vmd

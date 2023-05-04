@@ -596,5 +596,77 @@ def test_insert_bone() -> None:
     PmxWriter(model, output_path).save()
 
 
+def test_insert_standard_bone() -> None:
+    import os
+
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.pmx.pmx_writer import PmxWriter
+
+    input_path = os.path.join("tests", "resources", "サンプル標準モデル.pmx")
+    model: PmxModel = PmxReader().read_by_filepath(input_path)
+
+    parent_names = dict(
+        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+    )
+    model.insert_standard_bone("全ての親")
+
+    assert 0 == model.bones["全ての親"].index
+    assert -1 == model.bones["全ての親"].parent_index
+
+    for b in model.bones:
+        if b.name in [k for k, v in parent_names.items() if not v]:
+            assert model.bones["全ての親"].index == b.parent_index
+        elif b.name in parent_names:
+            assert parent_names[b.name] == model.bones[b.parent_index].name
+
+    parent_names = dict(
+        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+    )
+    model.insert_standard_bone("グルーブ")
+
+    for b in model.bones:
+        if b.name in [k for k, v in parent_names.items() if v == "センター"]:
+            assert model.bones["グルーブ"].index == b.parent_index
+        elif b.name in parent_names:
+            assert parent_names[b.name] == model.bones[b.parent_index].name
+
+    parent_names = dict(
+        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+    )
+    model.insert_standard_bone("腰")
+
+    for b in model.bones:
+        if b.name in [k for k, v in parent_names.items() if v == "グルーブ"]:
+            assert model.bones["腰"].index == b.parent_index
+        elif b.name in parent_names:
+            assert parent_names[b.name] == model.bones[b.parent_index].name
+
+    parent_names = dict(
+        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+    )
+    model.insert_standard_bone("上半身2")
+
+    for b in model.bones:
+        if b.name in [k for k, v in parent_names.items() if v == "上半身"]:
+            assert model.bones["上半身2"].index == b.parent_index
+        elif b.name in parent_names:
+            assert parent_names[b.name] == model.bones[b.parent_index].name
+
+    parent_names = dict(
+        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+    )
+    model.insert_standard_bone("右肩P")
+
+    for b in model.bones:
+        if b.name in ["右肩"]:
+            assert model.bones["右肩P"].index == b.parent_index
+        elif b.name in parent_names:
+            assert parent_names[b.name] == model.bones[b.parent_index].name
+
+    output_path = os.path.join("tests", "resources", "result.pmx")
+    PmxWriter(model, output_path).save()
+
+
 if __name__ == "__main__":
     pytest.main()
