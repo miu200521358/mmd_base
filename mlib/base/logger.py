@@ -108,7 +108,7 @@ class MLogger:
             for h in self.logger.handlers:
                 if isinstance(h, ConsoleHandler):
                     return
-            if self.is_out_log and self.total_level <= logging.DEBUG:
+            if self.is_out_log:
                 self.console_handler.setFormatter(Formatter(self.STREAM_FORMAT))
             self.logger.addHandler(self.console_handler)
 
@@ -254,7 +254,7 @@ class MLogger:
                 messages.append(f'\nmsgid "{new_msg}"\n')
                 messages.append('msgstr ""\n')
                 messages.append("\n")
-                self.logger.debug("add message: ", new_msg)
+                self.logger.debug("add message: %s", new_msg)
 
                 with open(f"{self.lang_dir}/messages.pot", mode="w", encoding="utf-8") as f:
                     f.writelines(messages)
