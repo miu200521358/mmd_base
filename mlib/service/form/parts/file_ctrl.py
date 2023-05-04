@@ -38,6 +38,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         self.frame = frame
         self.parent = parent
         self.reader = reader
+        self.original_data: Optional[TBaseHashModel] = None
         self.data: Optional[TBaseHashModel] = None
         self.key = key
         self.title = __(title)
@@ -194,16 +195,23 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         """リーダー対象オブジェクトのハッシュを読み取る"""
         if self.is_show_name and not self.is_save and validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
             digest = self.reader.read_hash_by_filepath(self.file_ctrl.GetPath())
-            if self.data and self.data.digest != digest:
+            if self.original_data and self.original_data.digest != digest:
                 self.clear_data()
 
     def clear_data(self):
         """リーダー対象オブジェクトをクリア"""
-        if self.data is not None:
+        if self.original_data is not None:
             if isinstance(self.data, PmxModel):
                 # PMXデータの場合、GLオブジェクトも削除
                 self.data.delete_draw()
             self.data = None
+            self.original_data = None
+
+    def set_data(self, v: TBaseHashModel):
+        """データを設定"""
+        self.clear_data()
+        self.original_data = v.copy()
+        self.data = v
 
 
 class MFileDropTarget(wx.FileDropTarget):
