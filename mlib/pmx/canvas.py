@@ -1,6 +1,5 @@
 import os
 from multiprocessing import Queue
-from typing import Optional
 
 import numpy as np
 import OpenGL.GL as gl
@@ -41,16 +40,10 @@ class CanvasPanel(BasePanel):
         pass
 
 
-def animate(queue: Queue, fno: int, model_sets: list["ModelSet"]):
-    max_fno = max([model_set.motion.max_fno for model_set in model_sets])
-
+def animate(queue: Queue, fno: int, max_fno: int, model_set: "ModelSet"):
     while fno < max_fno:
         fno += 1
-        animations: list["MotionSet"] = []
-        for model_set in model_sets:
-            if model_set.model and model_set.motion:
-                animations.append(MotionSet(model_set.model, model_set.motion, fno))
-        queue.put(animations)
+        queue.put(MotionSet(model_set.model, model_set.motion, fno))
     queue.put(None)
 
 
@@ -120,9 +113,8 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.model_sets: list[ModelSet] = []
         self.animations: list[MotionSet] = []
 
-        self.queue: Optional[Queue] = None
-        self.process: Optional[MProcess] = None
-        self.capture_process: Optional[MProcess] = None
+        self.queues: list[Queue] = []
+        self.processes: list[MProcess] = []
 
         # マウスドラッグフラグ
         self.is_drag = False
@@ -205,14 +197,6 @@ class PmxCanvas(glcanvas.GLCanvas):
             del self.animations
         self.model_sets = []
         self.animations = []
-        if self.queue:
-            del self.queue
-            self.queue = None
-        if self.process:
-            if self.process.is_alive():
-                self.process.terminate()
-            del self.process
-            self.process = None
 
     def draw(self):
         self.set_context()
@@ -305,45 +289,54 @@ class PmxCanvas(glcanvas.GLCanvas):
             logger.debug("on_play ----------------------------------------")
             self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
             self.recording = record
-            logger.debug("on_play queue start")
-            self.queue = Queue()
+            for n, model_set in enumerate(self.model_sets):
+                logger.debug(f"on_play queue[{n}] append")
+                self.queues.append(Queue())
+                logger.debug(f"on_play process[{n}] append")
+                self.processes.append(
+                    MProcess(
+                        target=animate,
+                        args=(self.queues[-1], self.parent.fno, self.max_fno, model_set),
+                        name="CalcProcess",
+                    )
+                )
             logger.debug("on_play process start")
-            self.process = MProcess(
-                target=animate,
-                args=(self.queue, self.parent.fno, self.model_sets),
-                name="CalcProcess",
-            )
-            self.process.start()
+            for p in self.processes:
+                p.start()
             logger.debug("on_play timer start")
             self.play_timer.Start(1000 // self.fps)
         else:
-            if self.process:
-                self.process.terminate()
             self.play_timer.Stop()
             self.recording = False
+            self.clear_process()
             self.parent.play_stop()
 
+    def clear_process(self):
+        if self.processes:
+            for p in self.processes:
+                if p.is_alive():
+                    p.terminate()
+                del p
+            self.processes = []
+        if self.queues:
+            for q in self.queues:
+                del q
+            self.queues = []
+
     def on_play_timer(self, event: wx.Event):
-        # self.on_frame_forward(event)
-        # self.parent.fno += 1
-        # animations: list[MotionSet] = []
-        # for model_set in self.model_sets:
-        #     if model_set.model and model_set.motion:
-        #         animations.append(MotionSet(model_set.model, model_set.motion, self.parent.fno))
-        # self.animations = animations
-        # self.Refresh()
+        if self.queues:
+            # 全てのキューが終わったら受け取る
+            animations: list[MotionSet] = []
+            for q in self.queues:
+                animation = q.get()
+                animations.append(animation)
 
-        if self.queue and not self.queue.empty():
-            animations: Optional[list[MotionSet]] = None
-
-            while not self.queue.empty():
-                animations = self.queue.get()
-
-            if animations is None and self.process:
+            if None in animations and self.processes:
+                # アニメーションが終わったら再生をひっくり返す
                 self.on_play(event)
                 return
 
-            if animations is not None:
+            if animations:
                 self.animations = animations
 
             if self.recording:
