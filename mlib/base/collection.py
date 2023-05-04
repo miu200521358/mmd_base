@@ -147,6 +147,36 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         else:
             self.indexes.append(value.index)
 
+    def insert(self, value: TBaseIndexNameModel, is_sort: bool = True) -> dict[int, int]:
+        if 0 > value.index:
+            value.index = len(self.data)
+
+        replaced_map: dict[int, int] = {}
+        if value.index in self.data:
+            # 既に同じINDEXがある場合、後ろからずらす
+            for i in range(self.last_index, value.index - 1, -1):
+                v = self.data[i]
+                # ズラした結果を保持する
+                replaced_map[v.index] = v.index + 1
+                v.index += 1
+                # indexをズラして保持
+                self.data[v.index] = v
+                # 名前逆引きもINDEX置き換え
+                self._names[v.name] = v.index
+
+        self.data[value.index] = value
+
+        if value.name and value.name not in self._names:
+            # 名前は先勝ちで保持
+            self._names[value.name] = value.index
+
+        if is_sort:
+            self.sort_indexes()
+        else:
+            self.indexes.append(value.index)
+
+        return replaced_map
+
     @property
     def names(self) -> list[str]:
         return list(self._names.keys())

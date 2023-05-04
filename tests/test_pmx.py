@@ -520,5 +520,81 @@ def test_save_pmx03() -> None:
     assert input_model == output_model
 
 
+def test_insert_bone() -> None:
+    import os
+
+    from mlib.pmx.pmx_part import Bone, BoneMorphOffset
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.pmx.pmx_writer import PmxWriter
+
+    input_path = os.path.join("tests", "resources", "サンプルモデル.pmx")
+    model: PmxModel = PmxReader().read_by_filepath(input_path)
+
+    insert_bone = Bone(name="追加ボーン", index=6)
+    insert_bone.parent_index = model.bones["上半身"].index
+    model.insert_bone(insert_bone)
+
+    v = model.vertices[15724]
+    assert 10 == v.deform.indexes[0]
+    assert 135 == v.deform.indexes[1]
+
+    lower_bone = model.bones["下半身"]
+    assert 4 == lower_bone.index
+    assert 3 == lower_bone.parent_index
+
+    upper_bone = model.bones["上半身"]
+    assert 5 == upper_bone.index
+    assert 3 == upper_bone.parent_index
+
+    inserted_bone = model.bones["追加ボーン"]
+    assert 6 == inserted_bone.index
+    assert 5 == inserted_bone.parent_index
+
+    upper2_bone = model.bones["上半身2"]
+    assert 7 == upper2_bone.index
+    assert 5 == upper2_bone.parent_index
+    assert 8 == upper2_bone.tail_index
+
+    left_eye_bone = model.bones["左目"]
+    assert 12 == left_eye_bone.index
+    assert 10 == left_eye_bone.parent_index
+    assert -1 == left_eye_bone.tail_index
+
+    left_leg_ik_bone = model.bones["左足ＩＫ"]
+    assert 99 == left_leg_ik_bone.index
+    assert 98 == left_leg_ik_bone.parent_index
+    assert left_leg_ik_bone.ik
+    assert 96 == left_leg_ik_bone.ik.bone_index
+    assert 95 == left_leg_ik_bone.ik.links[0].bone_index
+    assert 94 == left_leg_ik_bone.ik.links[1].bone_index
+
+    e_morph = model.morphs["えボーン"]
+    assert isinstance(e_morph.offsets[0], BoneMorphOffset)
+    assert 17 == e_morph.offsets[0].bone_index
+    assert isinstance(e_morph.offsets[1], BoneMorphOffset)
+    assert 18 == e_morph.offsets[1].bone_index
+    assert isinstance(e_morph.offsets[2], BoneMorphOffset)
+    assert 19 == e_morph.offsets[2].bone_index
+
+    trunk_display_slot = model.display_slots["体幹"]
+    assert 3 == trunk_display_slot.references[0].display_index
+    assert 4 == trunk_display_slot.references[1].display_index
+    assert 5 == trunk_display_slot.references[2].display_index
+    assert 7 == trunk_display_slot.references[3].display_index
+    assert 8 == trunk_display_slot.references[4].display_index
+    assert 9 == trunk_display_slot.references[5].display_index
+    assert 10 == trunk_display_slot.references[6].display_index
+
+    upper_rigidbody = model.rigidbodies["上半身"]
+    assert 5 == upper_rigidbody.bone_index
+
+    head_rigidbody = model.rigidbodies["頭"]
+    assert 10 == head_rigidbody.bone_index
+
+    output_path = os.path.join("tests", "resources", "result.pmx")
+    PmxWriter(model, output_path).save()
+
+
 if __name__ == "__main__":
     pytest.main()

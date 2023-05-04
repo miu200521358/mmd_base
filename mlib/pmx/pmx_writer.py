@@ -421,8 +421,8 @@ class PmxWriter(BaseModel):
         -------
         PmxModel
         """
-        # ボーンの数
-        target_bones = self.model.bones if self.include_system else self.model.bones.writable()
+        # ボーンの数(マイナスは常に出力しない)
+        target_bones = [b for b in self.model.bones if b.index >= 0] if self.include_system else self.model.bones.writable()
         self.write_number(fout, PmxBinaryType.INT, len(target_bones), is_positive_only=True)
 
         for bidx, bone in enumerate(target_bones):

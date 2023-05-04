@@ -359,6 +359,11 @@ class PmxReader(BaseReader[PmxModel]):
         model.materials.sort_indexes()
 
     def read_bones(self, model: PmxModel):
+        # 最初にルートを追加する
+        root_bone = Bone(name="SYSTEM_ROOT", index=-1)
+        root_bone.is_system = True
+        model.bones.append(root_bone)
+
         """ボーンデータ読み込み"""
         total_index_count = self.read_int()
         for i in range(total_index_count):

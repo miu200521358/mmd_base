@@ -13,7 +13,9 @@ from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
     STANDARD_BONE_NAMES,
     Bone,
+    BoneMorphOffset,
     DisplaySlot,
+    DisplayType,
     DrawFlg,
     Face,
     Joint,
@@ -691,6 +693,45 @@ class PmxModel(BaseHashModel):
                 break
 
         logger.info("-- モデルセットアップ：ボーンツリー")
+
+    def insert_bone(self, bone: Bone):
+        """ボーンの追加に伴う諸々のボーンINDEXの置き換え"""
+        replaced_map = self.bones.insert(bone)
+
+        for v in self.vertices:
+            for before_bone_index, after_bone_index in replaced_map.items():
+                v.deform.indexes = np.where(v.deform.indexes == before_bone_index, after_bone_index, v.deform.indexes)
+
+        for b in self.bones:
+            if b.parent_index in replaced_map:
+                b.parent_index = replaced_map[b.parent_index]
+            if b.tail_index in replaced_map:
+                b.tail_index = replaced_map[b.tail_index]
+            if b.effect_index in replaced_map:
+                b.effect_index = replaced_map[b.effect_index]
+            if b.is_ik:
+                if b.ik.bone_index in replaced_map:
+                    b.ik.bone_index = replaced_map[b.ik.bone_index]
+                for link in b.ik.links:
+                    if link.bone_index in replaced_map:
+                        link.bone_index = replaced_map[link.bone_index]
+
+        for m in self.morphs:
+            if m.morph_type == MorphType.BONE:
+                for offset in m.offsets:
+                    bone_offset: BoneMorphOffset = offset
+                    if bone_offset.bone_index in replaced_map:
+                        bone_offset.bone_index = replaced_map[bone_offset.bone_index]
+
+        for d in self.display_slots:
+            for r in d.references:
+                if r.display_type == DisplayType.BONE:
+                    if r.display_index in replaced_map:
+                        r.display_index = replaced_map[r.display_index]
+
+        for r in self.rigidbodies:
+            if r.bone_index in replaced_map:
+                r.bone_index = replaced_map[r.bone_index]
 
 
 class Meshes(BaseIndexDictModel[Mesh]):
