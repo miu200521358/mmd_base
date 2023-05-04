@@ -775,23 +775,29 @@ def test_insert_standard_bone() -> None:
     assert model.bones["右足D"].layer == 1
     assert model.bones["右足D"].parent_index == model.bones["腰キャンセル右"].index
     assert model.bones["右足D"].effect_index == model.bones["右足"].index
+    assert model.bones["右足"].parent_index == model.bones["腰キャンセル右"].index
 
     # -------
     model.insert_standard_bone("右ひざD")
     assert model.bones["右ひざD"].layer == 1
     assert model.bones["右ひざD"].parent_index == model.bones["右足D"].index
     assert model.bones["右ひざD"].effect_index == model.bones["右ひざ"].index
+    assert model.bones["右ひざ"].parent_index == model.bones["右足"].index
 
     # -------
     model.insert_standard_bone("右足首D")
     assert model.bones["右足首D"].layer == 1
     assert model.bones["右足首D"].parent_index == model.bones["右ひざD"].index
     assert model.bones["右足首D"].effect_index == model.bones["右足首"].index
+    assert model.bones["右足首"].parent_index == model.bones["右ひざ"].index
 
     # -------
     model.insert_standard_bone("右足先EX")
     assert model.bones["右足先EX"].layer == 1
     assert model.bones["右足先EX"].parent_index == model.bones["右足首D"].index
+
+    # ウェイト置き換え
+    model.replace_standard_weights(["右足D", "右ひざD", "右足首D"])
 
     output_path = os.path.join("tests", "resources", "result.pmx")
     PmxWriter(model, output_path).save()

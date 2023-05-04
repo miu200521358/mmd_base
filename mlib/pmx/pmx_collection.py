@@ -701,6 +701,9 @@ class PmxModel(BaseHashModel):
         # 挿入
         replaced_map = self.bones.insert(bone)
 
+        if not replaced_map:
+            return
+
         for v in self.vertices:
             v.deform.indexes = np.vectorize(replaced_map.get)(v.deform.indexes)
 
@@ -727,7 +730,10 @@ class PmxModel(BaseHashModel):
                 is_same_direction = bone.name[-1] == b.name[0] or bone.name[0] == b.name[0]
 
             if b.parent_index == bone.index - 1 and is_same_direction:
-                if b.name in STANDARD_BONE_NAMES:
+                if b.name in ["右足", "左足"] and bone.name in ["右足D", "左足D"]:
+                    # 足Dは親に設定しない
+                    b.parent_index = replaced_map[b.parent_index]
+                elif b.name in STANDARD_BONE_NAMES:
                     b.parent_index = bone.index
                 else:
                     b.parent_index = bone.parent_index
@@ -767,6 +773,8 @@ class PmxModel(BaseHashModel):
         if "足D" in bone.name:
             # 足D系列は変形階層を追加
             bone.layer += 1
+            # 場所も出力対象の最後に持ってくる
+            bone.index = max([b.index for b in self.bones if not b.is_system]) + 1
         # 位置
         local_y_vector = MVector3D(0, -1, 0)
         if "全ての親" == bone.name:
@@ -827,7 +835,7 @@ class PmxModel(BaseHashModel):
             bone.effect_index = self.bones[bone.name[:-1]].index
             bone.effect_factor = 1
 
-        # 一旦ボーンを追加
+        # 一旦ボーンを挿入
         self.insert_bone(bone)
 
         if bone.is_twist:
@@ -862,6 +870,19 @@ class PmxModel(BaseHashModel):
         if "上半身2" == bone.name:
             self.bones[bone.parent_index].tail_index = bone.index
             self.bones[bone.parent_index].bone_flg |= BoneFlg.TAIL_IS_BONE
+
+    def replace_standard_weights(self, bone_names: list[str]):
+        replaced_map = dict([(b.index, b.index) for b in self.bones])
+        for bone_name in bone_names:
+            bone = self.bones[bone_name]
+            # ウェイトの一括置換
+            if bone.is_leg_d and "D" == bone.name[-1]:
+                # 足Dはそのまま置き換える
+                replaced_map[self.bones[bone_name[:-1]].index] = bone.index
+
+        # 一括置換系はそのまま置き換える
+        for v in self.vertices:
+            v.deform.indexes = np.vectorize(replaced_map.get)(v.deform.indexes)
 
 
 class Meshes(BaseIndexDictModel[Mesh]):
