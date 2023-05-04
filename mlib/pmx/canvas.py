@@ -450,8 +450,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             x = (self.now_pos.x - self.last_pos.x) * 0.02
             y = (self.now_pos.y - self.last_pos.y) * 0.02
             if event.MiddleIsDown():
-                self.shader.look_at_center.x += x
-                self.shader.look_at_center.y += y
+                self.shader.look_at_center += self.shader.camera_rotation * MVector3D(x, y, 0)
 
                 self.shader.camera_offset_position.x += x
                 self.shader.camera_offset_position.y += y
