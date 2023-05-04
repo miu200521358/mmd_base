@@ -125,7 +125,7 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        if logging.DEBUG <= self.total_level:
+        if logging.DEBUG <= self.total_level and self.total_level <= self.default_level:
             self.add_handler()
             self.logger.debug(
                 self.create_message(msg, logging.DEBUG, None, decoration, **kwargs),
@@ -143,12 +143,11 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        if logging.INFO <= self.total_level:
-            self.add_handler()
-            self.logger.info(
-                self.create_message(msg, logging.INFO, title, decoration, **kwargs),
-                extra=self.get_extra(msg, func, lno),
-            )
+        self.add_handler()
+        self.logger.info(
+            self.create_message(msg, logging.INFO, title, decoration, **kwargs),
+            extra=self.get_extra(msg, func, lno),
+        )
 
     # ログレベルカウント
     @log_yield
@@ -165,7 +164,7 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        if logging.INFO <= self.total_level and 0 < total_index_count and 0 < index and (0 == index % display_block or index == total_index_count):
+        if 0 < total_index_count and 0 < index and (0 == index % display_block or index == total_index_count):
             self.add_handler()
             percentage = (index / total_index_count) * 100
             log_msg = "-- " + self.get_text(msg) + " [{i} ({p:.2f}%)]"
@@ -187,12 +186,11 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        if logging.WARNING <= self.total_level:
-            self.add_handler()
-            self.logger.warning(
-                self.create_message(msg, logging.WARNING, title, decoration, **kwargs),
-                extra=self.get_extra(msg, func, lno),
-            )
+        self.add_handler()
+        self.logger.warning(
+            self.create_message(msg, logging.WARNING, title, decoration, **kwargs),
+            extra=self.get_extra(msg, func, lno),
+        )
 
     @log_yield
     def error(
@@ -205,12 +203,11 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        if logging.ERROR <= self.total_level:
-            self.add_handler()
-            self.logger.error(
-                self.create_message(msg, logging.ERROR, title, decoration, **kwargs),
-                extra=self.get_extra(msg, func, lno),
-            )
+        self.add_handler()
+        self.logger.error(
+            self.create_message(msg, logging.ERROR, title, decoration, **kwargs),
+            extra=self.get_extra(msg, func, lno),
+        )
 
     @log_yield
     def critical(
@@ -223,14 +220,13 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        if logging.CRITICAL <= self.total_level:
-            self.add_handler()
-            self.logger.critical(
-                self.create_message(msg, logging.CRITICAL, title, decoration or MLogger.Decoration.BOX, **kwargs),
-                exc_info=True,
-                stack_info=True,
-                extra=self.get_extra(msg, func, lno),
-            )
+        self.add_handler()
+        self.logger.critical(
+            self.create_message(msg, logging.CRITICAL, title, decoration or MLogger.Decoration.BOX, **kwargs),
+            exc_info=True,
+            stack_info=True,
+            extra=self.get_extra(msg, func, lno),
+        )
 
     def quit(self):
         # 終了ログ
