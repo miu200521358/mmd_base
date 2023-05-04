@@ -125,9 +125,9 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        if logging.DEBUG <= self.total_level and self.total_level <= self.default_level:
+        if self.total_level <= logging.DEBUG and self.default_level <= self.total_level:
             self.add_handler()
-            self.logger.debug(
+            self.logger.info(
                 self.create_message(msg, logging.DEBUG, None, decoration, **kwargs),
                 extra=self.get_extra(msg, func, lno),
             )
