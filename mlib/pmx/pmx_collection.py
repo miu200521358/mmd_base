@@ -12,6 +12,7 @@ from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
     STANDARD_BONE_NAMES,
+    BoneSettings,
     Bone,
     BoneMorphOffset,
     DisplaySlot,
@@ -298,12 +299,13 @@ class Bones(BaseIndexNameDictModel[Bone]):
         to_pos = MVector3D()
 
         from_pos = bone.position
-        if bone.name in STANDARD_BONE_NAMES and isinstance(STANDARD_BONE_NAMES[bone.name]["tail"], MVector3D):
+        bone_setting = STANDARD_BONE_NAMES[bone.name] if bone.name in STANDARD_BONE_NAMES else None
+        if bone_setting and isinstance(bone_setting.tail, MVector3D):
             # 表示先位置が指定されてる場合、そのまま使用
-            return STANDARD_BONE_NAMES[bone.name]["tail"]
-        elif bone.name in STANDARD_BONE_NAMES:
+            return bone_setting.tail
+        elif bone_setting and isinstance(bone_setting.tail, list):
             # 表示先ボーンが指定されており、いずれかある場合、そのまま使用
-            for tail_bone_name in STANDARD_BONE_NAMES[bone.name]["tail"]:
+            for tail_bone_name in bone_setting.tail:
                 if tail_bone_name in self:
                     return self[tail_bone_name].position - from_pos
 
