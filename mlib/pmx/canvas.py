@@ -302,15 +302,19 @@ class PmxCanvas(glcanvas.GLCanvas):
     def on_play(self, event: wx.Event, record: bool = False):
         self.playing = not self.playing
         if self.playing:
+            logger.debug("on_play ----------------------------------------")
             self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
             self.recording = record
+            logger.debug("on_play queue start")
             self.queue = Queue()
+            logger.debug("on_play process start")
             self.process = MProcess(
                 target=animate,
                 args=(self.queue, self.parent.fno, self.model_sets),
                 name="CalcProcess",
             )
             self.process.start()
+            logger.debug("on_play timer start")
             self.play_timer.Start(1000 // self.fps)
         else:
             if self.process:
