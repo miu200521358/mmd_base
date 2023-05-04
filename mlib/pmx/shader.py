@@ -107,6 +107,13 @@ class MShader:
     INITIAL_LOOK_AT_CENTER_Y = INITIAL_CAMERA_POSITION_Y * 1.1
     INITIAL_CAMERA_POSITION_X = 40.0
     LIGHT_AMBIENT4 = MVector4D(154 / 255, 154 / 255, 154 / 255, 1)
+    INITIAL_CAMERA_POSITION = MVector3D(
+        0.0,
+        INITIAL_CAMERA_POSITION_Y,
+        INITIAL_CAMERA_POSITION_Z,
+    )
+    INITIAL_CAMERA_OFFSET_POSITION = MVector3D()
+    INITIAL_LOOK_AT_CENTER_POSITION = MVector3D(0.0, INITIAL_LOOK_AT_CENTER_Y, 0.0)
 
     def __init__(self, width: int, height: int) -> None:
         self.width = width
@@ -115,15 +122,13 @@ class MShader:
         self.aspect_ratio = float(self.width) / float(self.height)
         self.near_plane = 1
         self.far_plane = 100
-        self.look_at_center = MVector3D(0.0, self.INITIAL_LOOK_AT_CENTER_Y, 0.0)
+        self.look_at_center = self.INITIAL_LOOK_AT_CENTER_POSITION.copy()
         self.look_at_up = MVector3D(0.0, 1.0, 0.0)
 
         # カメラの位置
-        self.camera_position = MVector3D(
-            0.0,
-            self.INITIAL_CAMERA_POSITION_Y,
-            self.INITIAL_CAMERA_POSITION_Z,
-        )
+        self.camera_position = self.INITIAL_CAMERA_POSITION.copy()
+        # カメラの補正位置
+        self.camera_offset_position = self.INITIAL_CAMERA_OFFSET_POSITION.copy()
         # カメラの回転
         self.camera_rotation = MQuaternion()
 
@@ -319,6 +324,7 @@ class MShader:
 
         # カメラ位置
         camera_mat = MMatrix4x4()
+        camera_mat.translate(self.camera_offset_position)
         camera_mat.rotate(self.camera_rotation)
         camera_mat.translate(self.camera_position)
         camera_pos: MVector3D = camera_mat * MVector3D()
