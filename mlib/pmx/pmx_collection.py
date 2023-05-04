@@ -798,7 +798,7 @@ class PmxModel(BaseHashModel):
             bone.fixed_axis = (self.bones[f"{direction}手首"].position - self.bones[f"{direction}ひじ"].position).normalized()
         elif "足先EX" in bone.name and f"{direction}足首" in self.bones and f"{direction}つま先ＩＫ" in self.bones:
             toe_target_bone = self.bones[self.bones[f"{direction}つま先ＩＫ"].ik.bone_index]
-            bone.position = (self.bones[f"{direction}足首"].position + toe_target_bone.position) / 2
+            bone.position = MVector3D(*np.average([self.bones[f"{direction}足首"].position.vector, toe_target_bone.position.vector], weights=[0.2, 0.8], axis=0))
             bone.local_x_vector = (toe_target_bone.position - self.bones[f"{direction}足首"].position).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
         elif "親指０" in bone.name and f"{direction}手首" in self.bones and f"{direction}親指１" in self.bones:
