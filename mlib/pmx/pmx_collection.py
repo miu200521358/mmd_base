@@ -845,6 +845,8 @@ class PmxModel(BaseHashModel):
                 twist_bone.effect_factor = ratio
 
                 self.insert_bone(twist_bone)
+                # 親ボーンは捩りの親
+                self.bones[to_name].parent_index = bone.index
 
         # 表示先の切り替え
         if "上半身2" == bone.name:
