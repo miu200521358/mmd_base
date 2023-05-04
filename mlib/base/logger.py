@@ -118,7 +118,7 @@ class MLogger:
     @log_yield
     def debug(
         self,
-        msg,
+        msg: str,
         *args,
         decoration: Optional[Decoration] = None,
         func: Optional[str] = "",
@@ -135,7 +135,7 @@ class MLogger:
     @log_yield
     def info(
         self,
-        msg,
+        msg: str,
         *args,
         title: Optional[str] = None,
         decoration: Optional[Decoration] = None,
@@ -178,7 +178,7 @@ class MLogger:
     @log_yield
     def warning(
         self,
-        msg,
+        msg: str,
         *args,
         title: Optional[str] = None,
         decoration: Optional[Decoration] = None,
@@ -195,7 +195,7 @@ class MLogger:
     @log_yield
     def error(
         self,
-        msg,
+        msg: str,
         *args,
         title: Optional[str] = None,
         decoration: Optional[Decoration] = None,
@@ -212,7 +212,7 @@ class MLogger:
     @log_yield
     def critical(
         self,
-        msg,
+        msg: str,
         *args,
         title: Optional[str] = None,
         decoration: Optional[Decoration] = None,
@@ -241,7 +241,7 @@ class MLogger:
             return text
 
         # 翻訳する
-        if self.mode == LoggingMode.MODE_UPDATE and logging.DEBUG < self.total_level:
+        if self.mode == LoggingMode.MODE_UPDATE:
             # 更新ありの場合、既存データのチェックを行って追記する
             messages = []
             with open(f"{self.lang_dir}/messages.pot", mode="r", encoding="utf-8") as f:
@@ -268,14 +268,18 @@ class MLogger:
     # 実際に出力する実態
     def create_message(
         self,
-        msg,
+        msg: str,
         level: int,
         title: Optional[str] = None,
         decoration: Optional["MLogger.Decoration"] = None,
         **kwargs,
     ) -> str:
         # 翻訳結果を取得する
-        trans_msg = self.get_text(msg, **kwargs)
+        if logging.DEBUG < level:
+            trans_msg = self.get_text(msg, **kwargs)
+        else:
+            # デバッグメッセージはそのまま変換だけ
+            trans_msg = str(msg.format(**kwargs)) if kwargs else msg
 
         if decoration:
             if decoration == MLogger.Decoration.BOX:
