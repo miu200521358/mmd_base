@@ -19,7 +19,7 @@ from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
 from mlib.vmd.vmd_collection import VmdMotion
 
-logger = MLogger(os.path.basename(__file__))
+logger = MLogger(os.path.basename(__file__), level=1)
 __ = logger.get_text
 
 
@@ -192,8 +192,11 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.SetCurrent(self.context)
 
     def append_model_set(self, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0):
+        logger.debug("append_model_set: model_sets")
         self.model_sets.append(ModelSet(self.shader, model, motion, bone_alpha))
+        logger.debug("append_model_set: animations")
         self.animations.append(MotionSet(model, motion, 0))
+        logger.debug("append_model_set: max_fno")
         self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
 
     def clear_model_set(self):
@@ -274,10 +277,12 @@ class PmxCanvas(glcanvas.GLCanvas):
         if is_bone_deform:
             animations: list[MotionSet] = []
             for model_set in self.model_sets:
+                logger.debug(f"change_motion: MotionSet: {model_set.model.name}")
                 animations.append(MotionSet(model_set.model, model_set.motion, self.parent.fno))
             self.animations = animations
         else:
             for model_set, animation in zip(self.model_sets, self.animations):
+                logger.debug(f"change_motion: update_morphs: {model_set.model.name}")
                 animation.update_morphs(model_set.model, model_set.motion, self.parent.fno)
 
         if self.playing and self.max_fno <= self.parent.fno:
