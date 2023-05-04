@@ -116,6 +116,23 @@ class MLogger:
         return {"original_msg": msg, "call_file": self.file_name, "call_func": func, "call_lno": str(lno)}
 
     @log_yield
+    def test(
+        self,
+        msg: str,
+        *args,
+        decoration: Optional[Decoration] = None,
+        func: Optional[str] = "",
+        lno: Optional[int] = 0,
+        **kwargs,
+    ):
+        if self.default_level == 1:
+            self.add_handler()
+            self.logger.info(
+                self.create_message(msg, logging.DEBUG, None, decoration, **kwargs),
+                extra=self.get_extra(msg, func, lno),
+            )
+
+    @log_yield
     def debug(
         self,
         msg: str,

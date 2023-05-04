@@ -1,3 +1,4 @@
+import logging
 import os
 from multiprocessing import Queue
 
@@ -18,7 +19,7 @@ from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
 from mlib.vmd.vmd_collection import VmdMotion
 
-logger = MLogger(os.path.basename(__file__), level=1)
+logger = MLogger(os.path.basename(__file__), level=logging.DEBUG)
 __ = logger.get_text
 
 
@@ -212,7 +213,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         # 透過度設定なしのメッシュを先に描画する
         for model_set, animation in zip(self.model_sets, self.animations):
             if model_set.model:
-                logger.debug(f"-- アニメーション描画(非透過): {model_set.model.name}")
+                logger.test(f"-- アニメーション描画(非透過): {model_set.model.name}")
 
                 model_set.model.draw(
                     animation.gl_matrixes,
@@ -225,7 +226,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         # その後透過度設定ありのメッシュを描画する
         for model_set, animation in zip(self.model_sets, self.animations):
             if model_set.model:
-                logger.debug(f"-- アニメーション描画(透過): {model_set.model.name}")
+                logger.test(f"-- アニメーション描画(透過): {model_set.model.name}")
 
                 model_set.model.draw(
                     animation.gl_matrixes,
@@ -240,7 +241,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         for model_set, animation, color in zip(self.model_sets, self.animations, MODEL_BONE_COLORS):
             # ボーンを表示
             if model_set.model:
-                logger.debug(f"-- ボーン描画(透過): {model_set.model.name}")
+                logger.test(f"-- ボーン描画(透過): {model_set.model.name}")
 
                 model_set.model.draw_bone(
                     animation.gl_matrixes,
