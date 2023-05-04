@@ -770,6 +770,15 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    # -------
+    parent_names = dict(
+        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+    )
+    tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
+    model.insert_standard_bone("右足D")
+    assert model.bones["右足D"].layer == 1
+    assert model.bones["右足D"].effect_index == model.bones["右足"].index
+
     output_path = os.path.join("tests", "resources", "result.pmx")
     PmxWriter(model, output_path).save()
 

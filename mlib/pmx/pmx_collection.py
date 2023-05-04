@@ -705,6 +705,19 @@ class PmxModel(BaseHashModel):
             v.deform.indexes = np.vectorize(replaced_map.get)(v.deform.indexes)
 
         for b in self.bones:
+            if b.tail_index in replaced_map:
+                b.tail_index = replaced_map[b.tail_index]
+
+            if b.effect_index in replaced_map:
+                b.effect_index = replaced_map[b.effect_index]
+
+            if b.is_ik:
+                if b.ik.bone_index in replaced_map:
+                    b.ik.bone_index = replaced_map[b.ik.bone_index]
+                for link in b.ik.links:
+                    if link.bone_index in replaced_map:
+                        link.bone_index = replaced_map[link.bone_index]
+
             if b.name == bone.name:
                 continue
 
@@ -720,19 +733,6 @@ class PmxModel(BaseHashModel):
                     b.parent_index = bone.parent_index
             elif b.parent_index in replaced_map:
                 b.parent_index = replaced_map[b.parent_index]
-
-            if b.tail_index in replaced_map:
-                b.tail_index = replaced_map[b.tail_index]
-
-            if b.effect_index in replaced_map:
-                b.effect_index = replaced_map[b.effect_index]
-
-            if b.is_ik:
-                if b.ik.bone_index in replaced_map:
-                    b.ik.bone_index = replaced_map[b.ik.bone_index]
-                for link in b.ik.links:
-                    if link.bone_index in replaced_map:
-                        link.bone_index = replaced_map[link.bone_index]
 
         for m in self.morphs:
             if m.morph_type == MorphType.BONE:
@@ -753,7 +753,7 @@ class PmxModel(BaseHashModel):
 
     def insert_standard_bone(self, bone_name: str):
         bone_setting = STANDARD_BONE_NAMES[bone_name]
-        if not [bname for bname in bone_setting.tails if bname in self.bones]:
+        if not [bname for bname in bone_setting.tails if bname in self.bones] and "D" != bone_name[-1]:
             # 先に接続可能なボーンが無い場合、作成しない
             return
         parent_bone = self.bones[bone_setting.parent]
@@ -813,8 +813,9 @@ class PmxModel(BaseHashModel):
         # 表示先
         if isinstance(bone_setting.relative, MVector3D):
             bone.tail_position = bone_setting.relative.copy()
-        elif isinstance(bone_setting.relative, list):
+        elif isinstance(bone_setting.relative, list) and bone_setting.relative[0] in self.bones:
             bone.tail_index = self.bones[bone_setting.relative[0]].index
+
         # 回転付与
         if "肩C" in bone.name and f"{direction}肩P" in self.bones:
             bone.effect_index = self.bones[f"{direction}肩P"].index
