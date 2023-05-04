@@ -205,6 +205,14 @@ class PmxCanvas(glcanvas.GLCanvas):
             del self.animations
         self.model_sets = []
         self.animations = []
+        if self.queue:
+            del self.queue
+            self.queue = None
+        if self.process:
+            if self.process.is_alive():
+                self.process.terminate()
+            del self.process
+            self.process = None
 
     def draw(self):
         self.set_context()
