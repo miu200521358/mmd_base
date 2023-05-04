@@ -12,7 +12,6 @@ from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
     STANDARD_BONE_NAMES,
-    BoneSettings,
     Bone,
     BoneMorphOffset,
     DisplaySlot,
