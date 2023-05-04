@@ -1030,7 +1030,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
             # モーションによる頂点モーフ変動量
             for offset in morph.offsets:
-                if type(offset) is MaterialMorphOffset and offset.material_index in model.materials:
+                if type(offset) is MaterialMorphOffset and (offset.material_index in model.materials or 0 > offset.material_index):
                     materials = self.animate_material_morph_frame(model, offset, mf.ratio, materials, MShader.LIGHT_AMBIENT4)
 
         return materials
