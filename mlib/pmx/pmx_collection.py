@@ -714,7 +714,10 @@ class PmxModel(BaseHashModel):
                 is_same_direction = bone.name[-1] == b.name[0] or bone.name[0] == b.name[0]
 
             if b.parent_index == bone.index - 1 and is_same_direction:
-                b.parent_index = bone.index
+                if b.name in STANDARD_BONE_NAMES:
+                    b.parent_index = bone.index
+                else:
+                    b.parent_index = bone.parent_index
             elif b.parent_index in replaced_map:
                 b.parent_index = replaced_map[b.parent_index]
 
