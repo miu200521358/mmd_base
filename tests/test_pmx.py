@@ -771,24 +771,27 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     # -------
-    parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
-    )
-    tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     model.insert_standard_bone("右足D")
     assert model.bones["右足D"].layer == 1
     assert model.bones["右足D"].parent_index == model.bones["腰キャンセル右"].index
     assert model.bones["右足D"].effect_index == model.bones["右足"].index
 
     # -------
-    parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
-    )
-    tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     model.insert_standard_bone("右ひざD")
     assert model.bones["右ひざD"].layer == 1
     assert model.bones["右ひざD"].parent_index == model.bones["右足D"].index
     assert model.bones["右ひざD"].effect_index == model.bones["右ひざ"].index
+
+    # -------
+    model.insert_standard_bone("右足首D")
+    assert model.bones["右足首D"].layer == 1
+    assert model.bones["右足首D"].parent_index == model.bones["右ひざD"].index
+    assert model.bones["右足首D"].effect_index == model.bones["右足首"].index
+
+    # -------
+    model.insert_standard_bone("右足先EX")
+    assert model.bones["右足先EX"].layer == 1
+    assert model.bones["右足先EX"].parent_index == model.bones["右足首D"].index
 
     output_path = os.path.join("tests", "resources", "result.pmx")
     PmxWriter(model, output_path).save()

@@ -753,7 +753,7 @@ class PmxModel(BaseHashModel):
 
     def insert_standard_bone(self, bone_name: str):
         bone_setting = STANDARD_BONE_NAMES[bone_name]
-        if not [bname for bname in bone_setting.tails if bname in self.bones] and "D" != bone_name[-1]:
+        if not [bname for bname in bone_setting.tails if bname in self.bones] and "D" != bone_name[-1] and "EX" != bone_name[-2:]:
             # 先に接続可能なボーンが無い場合、作成しない
             return
         parent_bone = self.bones[bone_setting.parent]
