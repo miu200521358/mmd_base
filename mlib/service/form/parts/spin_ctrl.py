@@ -4,10 +4,13 @@ import wx
 class WheelSpinCtrl(wx.SpinCtrl):
     def __init__(self, *args, **kw):
         change_event = kw.pop("change_event", None)
-        super().__init__(*args, **kw)
+        style = wx.TE_PROCESS_ENTER | kw.pop("style", 0)
+
+        super().__init__(*args, **kw, style=style)
         self.change_event = change_event
 
         self.Bind(wx.EVT_SPINCTRL, self.on_spin)
+        self.Bind(wx.EVT_TEXT_ENTER, self.on_text_enter)
 
     def on_spin(self, event: wx.Event):
         if self.GetValue() >= 0:
@@ -15,17 +18,26 @@ class WheelSpinCtrl(wx.SpinCtrl):
         else:
             self.SetBackgroundColour("TURQUOISE")
 
-        self.change_event(event)
+        if self.change_event:
+            self.change_event(event)
+
+    def on_text_enter(self, event: wx.Event):
+        self.SetFocus()
+        if self.change_event:
+            self.change_event(event)
 
 
 class WheelSpinCtrlDouble(wx.SpinCtrlDouble):
     def __init__(self, *args, **kw):
         change_event = kw.pop("change_event", None)
-        super().__init__(*args, **kw)
+        style = wx.TE_PROCESS_ENTER | kw.pop("style", 0)
+
+        super().__init__(*args, **kw, style=style)
         self.change_event = change_event
 
         self.Bind(wx.EVT_SPINCTRLDOUBLE, self.on_spin)
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_wheel_spin)
+        self.Bind(wx.EVT_TEXT_ENTER, self.on_text_enter)
 
     def on_wheel_spin(self, event: wx.MouseEvent):
         """マウスホイールによるスピンコントロール"""
@@ -41,4 +53,10 @@ class WheelSpinCtrlDouble(wx.SpinCtrlDouble):
         else:
             self.SetBackgroundColour("TURQUOISE")
 
-        self.change_event(event)
+        if self.change_event:
+            self.change_event(event)
+
+    def on_text_enter(self, event: wx.Event):
+        self.SetFocus()
+        if self.change_event:
+            self.change_event(event)
