@@ -1012,7 +1012,7 @@ STANDARD_BONE_LOWER_NAMES = (
 )
 
 STANDARD_BONE_NAMES = {
-    "全ての親": {"tail": MVector3D(0, 1, 0), "parent": None},
+    "全ての親": {"tail": MVector3D(0, 1, 0), "parent": "SYSTEM_ROOT"},
     "センター": {"tail": MVector3D(0, 1, 0), "parent": "全ての親"},
     "グルーブ": {"tail": MVector3D(0, 1, 0), "parent": "センター"},
     "腰": {"tail": MVector3D(0, 1, 0), "parent": "グルーブ"},
