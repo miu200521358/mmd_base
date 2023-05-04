@@ -108,7 +108,7 @@ class MLogger:
             for h in self.logger.handlers:
                 if isinstance(h, ConsoleHandler):
                     return
-            if self.is_out_log:
+            if self.is_out_log and self.total_level <= logging.DEBUG:
                 self.console_handler.setFormatter(Formatter(self.STREAM_FORMAT))
             self.logger.addHandler(self.console_handler)
 
