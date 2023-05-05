@@ -926,8 +926,14 @@ class PmxModel(BaseHashModel):
             self.bones[bone.parent_index].tail_index = bone.index
             self.bones[bone.parent_index].bone_flg |= BoneFlg.TAIL_IS_BONE
 
-        for bone_index in self.bones.indexes[: (bone.index + 1)]:
-            b = self.bones[bone_index]
+        # ボーンツリー追加
+        bone_tree = BoneTree(name=bone.name)
+        for _, bidx in sorted(self.bones.create_bone_link_indexes(bone.index)):
+            bone_tree.append(self.bones.data[bidx].copy(), is_sort=False)
+        self.bone_trees.append(bone_tree, name=bone.name)
+
+        for bt in bone_tree:
+            b = self.bones[bt.name]
             b.parent_relative_position = self.bones.get_parent_relative_position(b.index)
             b.tail_relative_position = self.bones.get_tail_relative_position(b.index)
             # 各ボーンのローカル軸
@@ -941,11 +947,7 @@ class PmxModel(BaseHashModel):
             b.offset_matrix = MMatrix4x4()
             b.offset_matrix.translate(-b.position)
 
-        # ボーンツリー追加
-        bone_tree = BoneTree(name=bone.name)
-        for _, bidx in sorted(self.bones.create_bone_link_indexes(bone.index)):
-            bone_tree.append(self.bones.data[bidx].copy(), is_sort=False)
-        self.bone_trees.append(bone_tree, name=bone.name)
+            bone_tree[bt.name] = b.copy()
 
     def replace_standard_weights(self, bone_names: list[str]):
         vertices_indexes = self.get_vertices_by_bone()
