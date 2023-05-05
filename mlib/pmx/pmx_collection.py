@@ -801,12 +801,6 @@ class PmxModel(BaseHashModel):
                 else:
                     r.bone_index = replaced_map[r.bone_index]
 
-        # ボーンツリー追加
-        bone_tree = BoneTree(name=bone.name)
-        for _, bidx in sorted(self.bones.create_bone_link_indexes(bone.index)):
-            bone_tree.append(self.bones.data[bidx].copy(), is_sort=False)
-        self.bone_trees.data[bone.name] = bone_tree
-
     def insert_standard_bone(self, bone_name: str):
         bone_setting = STANDARD_BONE_NAMES[bone_name]
         if not [bname for bname in bone_setting.tails if bname in self.bones] and "D" != bone_name[-1] and "EX" != bone_name[-2:]:

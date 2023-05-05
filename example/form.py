@@ -139,6 +139,8 @@ class PmxLoadWorker(BaseWorker):
 
         if "グルーブ" not in dress.bones:
             dress.insert_standard_bone("グルーブ")
+            dress.replace_standard_weights(["グルーブ"])
+            dress.bone_trees = dress.bones.create_bone_trees()
 
         if not file_panel.motion_ctrl.data and file_panel.motion_ctrl.valid():
             motion = file_panel.motion_ctrl.reader.read_by_filepath(file_panel.motion_ctrl.path)
