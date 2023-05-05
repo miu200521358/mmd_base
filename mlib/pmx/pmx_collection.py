@@ -12,6 +12,8 @@ from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
     STANDARD_BONE_NAMES,
+    Bdef2,
+    Bdef4,
     Bone,
     BoneFlg,
     BoneMorphOffset,
@@ -24,6 +26,7 @@ from mlib.pmx.pmx_part import (
     Morph,
     MorphType,
     RigidBody,
+    Sdef,
     ShaderMaterial,
     Texture,
     TextureType,
@@ -884,6 +887,40 @@ class PmxModel(BaseHashModel):
         for v in self.vertices:
             v.deform.indexes = np.vectorize(replaced_map.get)(v.deform.indexes)
 
+        vertices_indexes = self.get_vertices_by_bone()
+
+        # 上半身2
+        if "上半身2" in bone_names:
+            upper2_distance = self.bones["上半身2"].position.y - self.bones["上半身"].position.y
+            for vertex_index in vertices_indexes[self.bones["上半身"].index]:
+                v = self.vertices[vertex_index]
+                vertex_distance = v.position.y - self.bones["上半身"].position.y
+                if np.sign(upper2_distance) != np.sign(vertex_distance):
+                    # 上半身ボーンより下
+                    continue
+                # 頂点の距離
+                upper2_factor = vertex_distance / upper2_distance
+                if upper2_factor >= 1:
+                    # 上半身2ボーンより上の場合、上半身ボーンのウェイトをそのまま上半身2に置き換える
+                    v.deform.indexes = np.where(v.deform.indexes == self.bones["上半身"].index, self.bones["上半身2"].index, v.deform.indexes)
+                else:
+                    upper_weight = v.deform.weights[np.where(v.deform.indexes == self.bones["上半身"].index)]
+                    upper2_weight = upper_weight * upper2_factor
+                    # 上半身は上半身2の残り
+                    v.deform.weights = np.where(v.deform.indexes == self.bones["上半身"].index, v.deform.weights - upper2_weight, v.deform.weights)
+                    # 上半身2は
+                    v.deform.weights = np.append(v.deform.weights, upper2_weight)
+                    v.deform.indexes = np.append(v.deform.indexes, self.bones["上半身2"].index)
+                    # 一旦最大値で正規化
+                    v.deform.count = 4
+                    v.deform.normalize()
+                    if np.count_nonzero(v.deform.weights) <= 2:
+                        # Bdef2で再定義
+                        v.deform = Bdef2(v.deform.indexes[0], v.deform.indexes[1], v.deform.weights[0])
+                    elif not isinstance(v.deform, Sdef):
+                        # SdefではなければBdef4で再定義
+                        v.deform = Bdef4(*(v.deform.indexes.tolist() + [0, 0, 0, 0])[:4], *(v.deform.weights.tolist() + [0.0, 0.0, 0.0, 0.0])[:4])
+
 
 class Meshes(BaseIndexDictModel[Mesh]):
     """
@@ -932,7 +969,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
                         v.extended_uvs[0].x if 0 < len(v.extended_uvs) else 0.0,
                         1 - v.extended_uvs[0].y if 0 < len(v.extended_uvs) else 0.0,
                         v.edge_factor,
-                        *v.deform.normalized_deform,
+                        *v.deform.normalized_deform(),
                         0.0,
                         0.0,
                         0.0,

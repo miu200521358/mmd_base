@@ -111,7 +111,6 @@ class Deform(BaseModel, ABC):
         # ウェイト正規化
         self.weights /= self.weights.sum(axis=0, keepdims=True)
 
-    @property
     def normalized_deform(self) -> list[float]:
         """
         ウェイト正規化して4つのボーンINDEXとウェイトを返す（合計8個）
