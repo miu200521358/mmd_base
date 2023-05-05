@@ -801,11 +801,11 @@ class PmxModel(BaseHashModel):
                 else:
                     r.bone_index = replaced_map[r.bone_index]
 
-    def insert_standard_bone(self, bone_name: str):
+    def insert_standard_bone(self, bone_name: str) -> bool:
         bone_setting = STANDARD_BONE_NAMES[bone_name]
         if not [bname for bname in bone_setting.tails if bname in self.bones] and "D" != bone_name[-1] and "EX" != bone_name[-2:]:
             # 先に接続可能なボーンが無い場合、作成しない
-            return
+            return False
         parent_bone = self.bones[bone_setting.parent]
         # 親のひとつ下に作成する
         bone = Bone(name=bone_name, index=parent_bone.index + 1)
@@ -886,7 +886,7 @@ class PmxModel(BaseHashModel):
         elif "両目" == bone.name and "左目" in self.bones and "右目" in self.bones:
             bone.position = (self.bones["左目"].position + self.bones["右目"].position) / 2
         else:
-            return
+            return False
 
         # 表示先
         if isinstance(bone_setting.relative, MVector3D):
@@ -945,6 +945,8 @@ class PmxModel(BaseHashModel):
         if "上半身2" == bone.name:
             self.bones[bone.parent_index].tail_index = bone.index
             self.bones[bone.parent_index].bone_flg |= BoneFlg.TAIL_IS_BONE
+
+        return True
 
     def replace_standard_weights(self, bone_names: list[str]):
         vertices_indexes = self.get_vertices_by_bone()
