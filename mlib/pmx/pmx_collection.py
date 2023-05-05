@@ -928,18 +928,18 @@ class PmxModel(BaseHashModel):
 
         for bone_index in self.bones.indexes[: (bone.index + 1)]:
             b = self.bones[bone_index]
-            b.parent_relative_position = self.bones.get_parent_relative_position(bone.index)
-            b.tail_relative_position = self.bones.get_tail_relative_position(bone.index)
+            b.parent_relative_position = self.bones.get_parent_relative_position(b.index)
+            b.tail_relative_position = self.bones.get_tail_relative_position(b.index)
             # 各ボーンのローカル軸
             b.local_axis = bone.tail_relative_position.normalized()
 
             # 逆オフセット行列は親ボーンからの相対位置分を戻す
             b.parent_revert_matrix = MMatrix4x4()
-            b.parent_revert_matrix.translate(bone.parent_relative_position)
+            b.parent_revert_matrix.translate(b.parent_relative_position)
 
             # オフセット行列は自身の位置を原点に戻す行列
             b.offset_matrix = MMatrix4x4()
-            b.offset_matrix.translate(-bone.position)
+            b.offset_matrix.translate(-b.position)
 
         # ボーンツリー追加
         bone_tree = BoneTree(name=bone.name)
