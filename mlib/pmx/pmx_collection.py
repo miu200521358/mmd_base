@@ -221,6 +221,8 @@ class Bones(BaseIndexNameDictModel[Bone]):
 
         # 計算ボーンリスト
         for i, end_bone in enumerate(self):
+            if 0 >= end_bone.index:
+                continue
             # レイヤー込みのINDEXリスト取得を末端ボーンをキーとして保持
             bone_tree = BoneTree(name=end_bone.name)
             for _, bidx in sorted(self.create_bone_link_indexes(end_bone.index)):
@@ -272,7 +274,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
             bone_link_indexes = [(self.data[child_idx].layer, self.data[child_idx].index)]
 
         for b in reversed(self.data.values()):
-            if b.index == self.data[child_idx].parent_index:
+            if b.index == self.data[child_idx].parent_index and b.index >= 0:
                 bone_link_indexes.append((b.layer, b.index))
                 return self.create_bone_link_indexes(b.index, bone_link_indexes)
 
@@ -741,8 +743,8 @@ class PmxModel(BaseHashModel):
                 in_bone_tree = set(self.bone_trees[b.name].names) | set(self.bone_trees[self.bones[b.ik.links[-1].bone_index].name].names)
                 in_standard |= True in [self.bone_trees.is_in_standard(b.name) for b in self.bone_trees[self.bones[b.ik.links[-1].bone_index].name]]
             in_bone_tree &= set(self.bone_trees[self.bones[replaced_map[bone.parent_index]].name].names)
-            if b.parent_index >= 0:
-                in_bone_tree -= {Bone.SYSTEM_ROOT_NAME}
+            if b.parent_index <= 0:
+                in_bone_tree |= {Bone.SYSTEM_ROOT_NAME}
 
             if b.parent_index == bone.index - 1 and is_same_direction and in_bone_tree and in_standard:
                 if (b.name in ["右足", "左足"] and bone.name in ["右足D", "左足D"]) or not is_same_finger or b.is_standard_extend:
