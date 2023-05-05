@@ -898,7 +898,7 @@ class PmxModel(BaseHashModel):
             # 捩りの場合、分散用ボーンも追加する
             from_name = f"{direction}腕" if "腕捩" in bone.name else f"{direction}ひじ"
             to_name = f"{direction}ひじ" if "腕捩" in bone.name else f"{direction}手首"
-            for no, ratio in ((1, 0.25), (2, 0.5), (3, 0.75)):
+            for no, ratio in ((1, 0.3), (2, 0.6), (3, 0.9)):
                 twist_bone = Bone(name=f"{bone.name}{no}", index=bone.index + no)
                 twist_bone.position = MVector3D(
                     *np.average(
@@ -910,9 +910,7 @@ class PmxModel(BaseHashModel):
                 twist_bone.parent_index = bone.index
                 twist_bone.bone_flg = BoneFlg.CAN_ROTATE | BoneFlg.IS_EXTERNAL_ROTATION
                 twist_bone.effect_index = bone.index
-                twist_bone.effect_factor = (twist_bone.position - self.bones[from_name].position).length() / (
-                    self.bones[to_name].position - self.bones[from_name].position
-                ).length()
+                twist_bone.effect_factor = ratio
 
                 self.insert_bone(twist_bone)
 
@@ -1025,7 +1023,7 @@ class PmxModel(BaseHashModel):
                     # 分割先ボーンより先の場合、元ボーンのウェイトをそのまま分割先に置き換える
                     v.deform.indexes = np.where(v.deform.indexes == self.bones[original_name].index, self.bones[weight_name].index, v.deform.indexes)
                 else:
-                    separate_factor = 1 - abs((vertex_local_pos.z - separate_local_pos.z) / (separate_to_pos.z - separate_local_pos.z))
+                    separate_factor = 1 - abs((vertex_local_pos.z - separate_local_pos.z) / (separate_to_pos.z - separate_local_pos.z)) * 1.5
                     original_weight = v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)]
                     separate_weight = original_weight * separate_factor
                     # 元ボーンは分割先ボーンの残り
