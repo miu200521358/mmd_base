@@ -1188,6 +1188,9 @@ class VmdMotion(BaseHashModel):
 
         bone_matrixes: list[np.ndarray] = []
         for bone_index in model.bones.indexes:
+            if 0 > bone_index:
+                continue
+
             bone = model.bones[bone_index]
 
             # BOf行列: 自身のボーンのボーンオフセット行列

@@ -1275,6 +1275,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
                     count=4,
                 )
                 for b in model.bones
+                if 0 <= b.index
             ],
         )
 
@@ -1292,7 +1293,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
                     count=2,
                 )
                 for b in model.bones
-                if 0 <= b.parent_index
+                if 0 <= b.parent_index and 0 <= b.index
             ],
         )
 

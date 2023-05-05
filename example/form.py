@@ -12,6 +12,7 @@ from mlib.base.logger import MLogger
 from mlib.base.math import MVector3D
 from mlib.pmx.canvas import CanvasPanel
 from mlib.pmx.pmx_collection import PmxModel
+from mlib.pmx.pmx_writer import PmxWriter
 from mlib.service.base_worker import BaseWorker
 from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
@@ -130,18 +131,21 @@ class PmxLoadWorker(BaseWorker):
 
         if not file_panel.dress_ctrl.data and file_panel.dress_ctrl.valid():
             dress = file_panel.dress_ctrl.reader.read_by_filepath(file_panel.dress_ctrl.path)
-
+            PmxWriter(dress, "C:/MMD/mmd_base/tests/resources/result.pmx", include_system=True).save()
         elif file_panel.dress_ctrl.data:
             dress = file_panel.dress_ctrl.data
         else:
             dress = PmxModel()
+
+        if "グルーブ" not in dress.bones:
+            dress.insert_standard_bone("グルーブ")
 
         if not file_panel.motion_ctrl.data and file_panel.motion_ctrl.valid():
             motion = file_panel.motion_ctrl.reader.read_by_filepath(file_panel.motion_ctrl.path)
         elif file_panel.motion_ctrl.data:
             motion = file_panel.motion_ctrl.data
         else:
-            motion = VmdMotion()
+            motion = VmdMotion("empty")
 
         self.result_data = (model, dress, motion)
 

@@ -8,7 +8,19 @@ from typing import Tuple
 from mlib.base.base import BaseModel
 from mlib.base.logger import MLogger
 from mlib.pmx.pmx_collection import PmxModel
-from mlib.pmx.pmx_part import Bdef1, Bdef2, Bdef4, BoneMorphOffset, GroupMorphOffset, MaterialMorphOffset, Sdef, ToonSharing, UvMorphOffset, VertexMorphOffset
+from mlib.pmx.pmx_part import (
+    Bdef1,
+    Bdef2,
+    Bdef4,
+    Bone,
+    BoneMorphOffset,
+    GroupMorphOffset,
+    MaterialMorphOffset,
+    Sdef,
+    ToonSharing,
+    UvMorphOffset,
+    VertexMorphOffset,
+)
 
 logger = MLogger(os.path.basename(__file__))
 
@@ -35,6 +47,8 @@ class PmxWriter(BaseModel):
 
     def save(self):
         with open(self.output_path, "wb") as fout:
+            target_bones = [b for b in self.model.bones if b.index >= 0] if self.include_system else self.model.bones.writable()
+
             # シグニチャ
             fout.write(b"PMX ")
             self.write_number(fout, PmxBinaryType.FLOAT, float(2))
@@ -54,7 +68,7 @@ class PmxWriter(BaseModel):
             material_idx_size, material_idx_type = self.define_write_index(len(self.model.materials), is_vertex=False)
             self.write_byte(fout, material_idx_size)
             # ボーンIndexサイズ | 1,2,4 のいずれか
-            bone_idx_size, bone_idx_type = self.define_write_index(len(self.model.bones), is_vertex=False)
+            bone_idx_size, bone_idx_type = self.define_write_index(len(target_bones), is_vertex=False)
             self.write_byte(fout, bone_idx_size)
             # モーフIndexサイズ | 1,2,4 のいずれか
             morph_idx_size, morph_idx_type = self.define_write_index(len(self.model.morphs), is_vertex=False)
@@ -85,7 +99,7 @@ class PmxWriter(BaseModel):
             self.write_materials(fout, texture_idx_type)
 
             # ボーン出力
-            self.write_bones(fout, bone_idx_type)
+            self.write_bones(fout, bone_idx_type, target_bones)
 
             # モーフ出力
             self.write_morphs(fout, vertex_idx_type, bone_idx_type, material_idx_type, morph_idx_type)
@@ -407,7 +421,7 @@ class PmxWriter(BaseModel):
 
         logger.debug("-- 材質データ出力終了({c})", c=len(self.model.materials))
 
-    def write_bones(self, fout: BufferedWriter, bone_idx_type: PmxBinaryType):
+    def write_bones(self, fout: BufferedWriter, bone_idx_type: PmxBinaryType, target_bones: list[Bone]):
         """
         ボーン出力
 
@@ -422,7 +436,6 @@ class PmxWriter(BaseModel):
         PmxModel
         """
         # ボーンの数(マイナスは常に出力しない)
-        target_bones = [b for b in self.model.bones if b.index >= 0] if self.include_system else self.model.bones.writable()
         self.write_number(fout, PmxBinaryType.INT, len(target_bones), is_positive_only=True)
 
         for bidx, bone in enumerate(target_bones):
