@@ -1180,6 +1180,8 @@ class VmdMotion(BaseHashModel):
 
         # ボーン変形行列
         matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
+        if not is_gl:
+            matrixes.translate([bone.position.vector for bone in model.bones if bone.index >= 0])
         matrixes.translate(bone_poses.tolist())
         matrixes.rotate(bone_qqs.tolist())
         matrixes.scale(bone_scales.tolist())
