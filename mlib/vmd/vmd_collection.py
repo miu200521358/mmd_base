@@ -1188,11 +1188,11 @@ class VmdMotion(BaseHashModel):
 
         # ボーン変形行列
         matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
-        # matrixes.translate(system_bone_poses.tolist())
-        # matrixes.rotate(system_bone_qqs.tolist())
-        # matrixes.scale(system_bone_scales.tolist())
+        matrixes.translate(system_bone_poses.tolist())
+        matrixes.rotate(system_bone_qqs.tolist())
+        matrixes.scale(system_bone_scales.tolist())
         # スケールを通常には適用させない
-        # matrixes.scale((1 / system_bone_scales).tolist())
+        matrixes.scale((1 / system_bone_scales).tolist())
         matrixes.translate(bone_poses.tolist())
         matrixes.rotate(bone_qqs.tolist())
         matrixes.scale(bone_scales.tolist())
