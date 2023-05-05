@@ -1137,7 +1137,7 @@ class VmdMotion(BaseHashModel):
     def name(self) -> str:
         return self.model_name
 
-    def animate(self, fno: int, model: PmxModel, is_gl: bool = True) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
+    def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 開始")
 
         # 頂点モーフ
@@ -1180,9 +1180,6 @@ class VmdMotion(BaseHashModel):
 
         # ボーン変形行列
         matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
-        # if not is_gl:
-        #     bone_relative_positions = dict([(bone.index, (bone.position - model.bones[bone.parent_index].position).vector) for bone in model.bones])
-        #     matrixes.translate([[bone_relative_positions[bone_index] for bone_index in sorted(bone_relative_positions.keys())]])
         matrixes.translate(bone_poses.tolist())
         matrixes.rotate(bone_qqs.tolist())
         matrixes.scale(bone_scales.tolist())
@@ -1200,12 +1197,8 @@ class VmdMotion(BaseHashModel):
             # 全体のボーン変形行列を求める
             matrix = model.bones.get_mesh_matrix(matrixes, bone.index, matrix)
 
-            bone_matrixes.append(matrix.T if is_gl else matrix)
+            bone_matrixes.append(matrix.T)
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン変形行列")
-
-        if not is_gl:
-            # OpenGL座標系変換をしない場合、そのまま返す
-            return np.array(bone_matrixes), vertex_morph_poses + group_vertex_morph_poses, uv_morph_poses, uv1_morph_poses, group_materials
 
         # OpenGL座標系に変換
         gl_matrixes = np.array(bone_matrixes)
