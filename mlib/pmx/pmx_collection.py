@@ -806,6 +806,9 @@ class PmxModel(BaseHashModel):
         if not [bname for bname in bone_setting.tails if bname in self.bones] and "D" != bone_name[-1] and "EX" != bone_name[-2:]:
             # 先に接続可能なボーンが無い場合、作成しない
             return False
+        if bone_setting.parent not in self.bones:
+            # 親ボーンが無い場合、作成しない
+            return False
         parent_bone = self.bones[bone_setting.parent]
         # 親のひとつ下に作成する
         bone = Bone(name=bone_name, index=parent_bone.index + 1)
