@@ -617,7 +617,7 @@ def test_insert_standard_bone() -> None:
     assert -1 == model.bones["全ての親"].parent_index
 
     for b in model.bones:
-        if b.name in [k for k, v in parent_names.items() if not v]:
+        if b.name in ["センター", "左足ＩＫ", "右足ＩＫ"]:
             assert model.bones["全ての親"].index == b.parent_index
         elif b.name in parent_names:
             assert parent_names[b.name] == model.bones[b.parent_index].name
@@ -632,7 +632,7 @@ def test_insert_standard_bone() -> None:
     model.insert_standard_bone("グルーブ")
 
     for b in model.bones:
-        if b.name in ["上半身", "下半身"]:
+        if b.name in ["上半身", "下半身", "ﾈｸﾀｲＩＫ", "左髪ＩＫ", "右髪ＩＫ"]:
             assert model.bones["グルーブ"].index == b.parent_index
         elif b.name in parent_names:
             assert parent_names[b.name] == model.bones[b.parent_index].name
@@ -648,7 +648,7 @@ def test_insert_standard_bone() -> None:
     model.insert_standard_bone("腰")
 
     for b in model.bones:
-        if b.name in ["上半身", "下半身"]:
+        if b.name in ["上半身", "下半身", "ﾈｸﾀｲＩＫ", "左髪ＩＫ", "右髪ＩＫ"]:
             assert model.bones["腰"].index == b.parent_index
         elif b.name in parent_names:
             assert parent_names[b.name] == model.bones[b.parent_index].name
@@ -664,7 +664,7 @@ def test_insert_standard_bone() -> None:
     model.insert_standard_bone("上半身2")
 
     for b in model.bones:
-        if b.name in ["首", "右肩", "左肩"]:
+        if b.name in ["首", "右肩", "左肩", "ﾈｸﾀｲ１", "首根元"]:
             assert model.bones["上半身2"].index == b.parent_index
         elif b.name in parent_names:
             assert parent_names[b.name] == model.bones[b.parent_index].name
@@ -730,7 +730,7 @@ def test_insert_standard_bone() -> None:
     model.insert_standard_bone("右手捩")
 
     for b in model.bones:
-        if b.name in ["右手首"]:
+        if b.name in ["右手首", "右袖"]:
             assert model.bones["右手捩"].index == b.parent_index
         elif b.name in parent_names:
             assert parent_names[b.name] == model.bones[b.parent_index].name
@@ -813,7 +813,7 @@ def test_insert_standard_bone() -> None:
     assert model.bones["右足先EX"].parent_index == model.bones["右足首D"].index
 
     # ウェイト置き換え
-    model.replace_standard_weights(["右足D", "右ひざD", "右足首D", "上半身2", "右足先EX", "右親指０"])
+    model.replace_standard_weights(["右足D", "右ひざD", "右足首D", "上半身2", "右足先EX", "右親指０", "右腕捩", "右手捩"])
 
     output_path = os.path.join("tests", "resources", "result.pmx")
     PmxWriter(model, output_path).save()

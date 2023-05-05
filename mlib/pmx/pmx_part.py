@@ -750,6 +750,8 @@ class Bone(BaseIndexNameModel):
         "corrected_fixed_axis",
     )
 
+    SYSTEM_ROOT_NAME = "SYSTEM_ROOT"
+
     def __init__(
         self,
         index: int = -1,
@@ -1028,7 +1030,7 @@ class BoneSettings(Enum):
     ROOT = BoneSetting(
         "全ての親",
         MVector3D(0, 1, 0),
-        "SYSTEM_ROOT",
+        Bone.SYSTEM_ROOT_NAME,
         ["センター"],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
     )

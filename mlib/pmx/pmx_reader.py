@@ -360,7 +360,7 @@ class PmxReader(BaseReader[PmxModel]):
 
     def read_bones(self, model: PmxModel):
         # 最初にルートを追加する
-        root_bone = Bone(name="SYSTEM_ROOT", index=-1)
+        root_bone = Bone(name=Bone.SYSTEM_ROOT_NAME, index=-1)
         root_bone.parent_index = -9
         root_bone.is_system = True
         model.bones.append(root_bone, is_positive_index=False)
