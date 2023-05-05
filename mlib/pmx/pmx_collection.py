@@ -736,15 +736,15 @@ class PmxModel(BaseHashModel):
                 if "指" == bone.name[:3][-1]:
                     is_same_finger = bone.name[:2][-1] == b.name[:2][-1]
 
-            in_bone_tree = set(self.bone_trees[self.bones[replaced_map[b.parent_index]].name].names)
+            in_bone_tree = set(self.bones.create_bone_link_indexes(replaced_map[b.parent_index]))
             in_standard = self.bone_trees.is_in_standard(b.name)
             if b.is_ik:
                 # IKの場合リンクの起点をボーンツリーの基準とする
-                in_bone_tree = set(self.bone_trees[b.name].names) | set(self.bone_trees[self.bones[b.ik.links[-1].bone_index].name].names)
+                in_bone_tree = set(self.bones.create_bone_link_indexes(b.index)) | set(self.bones.create_bone_link_indexes(b.ik.links[-1].bone_index))
                 in_standard |= True in [self.bone_trees.is_in_standard(b.name) for b in self.bone_trees[self.bones[b.ik.links[-1].bone_index].name]]
-            in_bone_tree &= set(self.bone_trees[self.bones[replaced_map[bone.parent_index]].name].names)
+            in_bone_tree &= set(self.bones.create_bone_link_indexes(replaced_map[bone.parent_index]))
             if b.parent_index <= 0:
-                in_bone_tree |= {Bone.SYSTEM_ROOT_NAME}
+                in_bone_tree |= {(0, -1)}
 
             if b.parent_index == bone.index - 1 and is_same_direction and in_bone_tree and in_standard:
                 if (b.name in ["右足", "左足"] and bone.name in ["右足D", "左足D"]) or not is_same_finger or b.is_standard_extend:
@@ -926,21 +926,26 @@ class PmxModel(BaseHashModel):
             self.bones[bone.parent_index].tail_index = bone.index
             self.bones[bone.parent_index].bone_flg |= BoneFlg.TAIL_IS_BONE
 
-        bone.parent_relative_position = self.bones.get_parent_relative_position(bone.index)
-        bone.tail_relative_position = self.bones.get_tail_relative_position(bone.index)
-        # 各ボーンのローカル軸
-        bone.local_axis = bone.tail_relative_position.normalized()
+        for bone_index in self.bones.indexes[: (bone.index + 1)]:
+            b = self.bones[bone_index]
+            b.parent_relative_position = self.bones.get_parent_relative_position(bone.index)
+            b.tail_relative_position = self.bones.get_tail_relative_position(bone.index)
+            # 各ボーンのローカル軸
+            b.local_axis = bone.tail_relative_position.normalized()
 
-        # 逆オフセット行列は親ボーンからの相対位置分を戻す
-        bone.parent_revert_matrix = MMatrix4x4()
-        bone.parent_revert_matrix.translate(bone.parent_relative_position)
+            # 逆オフセット行列は親ボーンからの相対位置分を戻す
+            b.parent_revert_matrix = MMatrix4x4()
+            b.parent_revert_matrix.translate(bone.parent_relative_position)
 
-        # オフセット行列は自身の位置を原点に戻す行列
-        bone.offset_matrix = MMatrix4x4()
-        bone.offset_matrix.translate(-bone.position)
+            # オフセット行列は自身の位置を原点に戻す行列
+            b.offset_matrix = MMatrix4x4()
+            b.offset_matrix.translate(-bone.position)
 
-        # ボーンツリー生成
-        self.bone_trees = self.bones.create_bone_trees()
+        # ボーンツリー追加
+        bone_tree = BoneTree(name=bone.name)
+        for _, bidx in sorted(self.bones.create_bone_link_indexes(bone.index)):
+            bone_tree.append(self.bones.data[bidx].copy(), is_sort=False)
+        self.bone_trees.append(bone_tree, name=bone.name)
 
     def replace_standard_weights(self, bone_names: list[str]):
         vertices_indexes = self.get_vertices_by_bone()
