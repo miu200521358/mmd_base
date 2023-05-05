@@ -630,6 +630,26 @@ class PmxModel(BaseHashModel):
     def setup(self) -> None:
         total_index_count = len(self.bones)
 
+        # システム用ボーン追加
+        if "右腕" in self.bones and "左腕" in self.bones and "上半身" in self.bones and "首根元" not in self.bones:
+            neck_root_bone = Bone(name="首根元")
+            if "上半身2" in self.bones:
+                neck_root_bone.parent_index = self.bones["上半身2"].index
+            else:
+                neck_root_bone.parent_index = self.bones["上半身"].index
+            neck_root_bone.position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
+            neck_root_bone.is_system = True
+            self.bones.append(neck_root_bone)
+
+        if "右足" in self.bones and "左足" in self.bones and "下半身" in self.bones and "足中心" not in self.bones:
+            leg_root_bone = Bone(name="足中心")
+            leg_root_bone.parent_index = self.bones["下半身"].index
+            leg_root_bone.position = (self.bones["右足"].position + self.bones["左足"].position) / 2
+            leg_root_bone.is_system = True
+            self.bones.append(leg_root_bone)
+
+        logger.info("-- モデルセットアップ：システム用ボーン")
+
         for bone in self.bones:
             # IKのリンクとターゲット
             if bone.is_ik and bone.ik:
@@ -661,26 +681,6 @@ class PmxModel(BaseHashModel):
                 total_index_count=total_index_count,
                 display_block=500,
             )
-
-        # システム用ボーン追加
-        if "右腕" in self.bones and "左腕" in self.bones and "上半身" in self.bones and "首根元" not in self.bones:
-            neck_root_bone = Bone(name="首根元")
-            if "上半身2" in self.bones:
-                neck_root_bone.parent_index = self.bones["上半身2"].index
-            else:
-                neck_root_bone.parent_index = self.bones["上半身"].index
-            neck_root_bone.position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
-            neck_root_bone.is_system = True
-            self.bones.append(neck_root_bone)
-
-        if "右足" in self.bones and "左足" in self.bones and "下半身" in self.bones and "足中心" not in self.bones:
-            leg_root_bone = Bone(name="足中心")
-            leg_root_bone.parent_index = self.bones["下半身"].index
-            leg_root_bone.position = (self.bones["右足"].position + self.bones["左足"].position) / 2
-            leg_root_bone.is_system = True
-            self.bones.append(leg_root_bone)
-
-        logger.info("-- モデルセットアップ：システム用ボーン")
 
         # ボーンツリー生成
         self.bone_trees = self.bones.create_bone_trees()
