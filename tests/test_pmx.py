@@ -695,11 +695,59 @@ def test_insert_standard_bone() -> None:
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
+    model.insert_standard_bone("左肩P")
+
+    for b in model.bones:
+        if b.name in ["左肩"]:
+            assert model.bones["左肩P"].index == b.parent_index
+        elif b.name in parent_names:
+            assert parent_names[b.name] == model.bones[b.parent_index].name
+
+        if b.name in tail_names and b.tail_index >= 0:
+            assert tail_names[b.name] == model.bones[b.tail_index].name
+
+    # -------
+    parent_names = dict(
+        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+    )
+    tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     model.insert_standard_bone("右肩C")
 
     for b in model.bones:
         if b.name in ["右腕"]:
             assert model.bones["右肩C"].index == b.parent_index
+        elif b.name in parent_names:
+            assert parent_names[b.name] == model.bones[b.parent_index].name
+
+        if b.name in tail_names and b.tail_index >= 0:
+            assert tail_names[b.name] == model.bones[b.tail_index].name
+
+    # -------
+    parent_names = dict(
+        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+    )
+    tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
+    model.insert_standard_bone("左肩C")
+
+    for b in model.bones:
+        if b.name in ["左腕"]:
+            assert model.bones["左肩C"].index == b.parent_index
+        elif b.name in parent_names:
+            assert parent_names[b.name] == model.bones[b.parent_index].name
+
+        if b.name in tail_names and b.tail_index >= 0:
+            assert tail_names[b.name] == model.bones[b.tail_index].name
+
+    # -------
+    parent_names = dict(
+        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+    )
+    tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
+    model.insert_standard_bone("左腕捩")
+
+    for b in model.bones:
+        if b.name in ["左ひじ"]:
+            assert model.bones["左腕捩"].index == b.parent_index
         elif b.name in parent_names:
             assert parent_names[b.name] == model.bones[b.parent_index].name
 
@@ -743,11 +791,59 @@ def test_insert_standard_bone() -> None:
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
+    model.insert_standard_bone("左手捩")
+
+    for b in model.bones:
+        if b.name in ["左手首", "左袖"]:
+            assert model.bones["左手捩"].index == b.parent_index
+        elif b.name in parent_names:
+            assert parent_names[b.name] == model.bones[b.parent_index].name
+
+        if b.name in tail_names and b.tail_index >= 0:
+            assert tail_names[b.name] == model.bones[b.tail_index].name
+
+    # -------
+    parent_names = dict(
+        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+    )
+    tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     model.insert_standard_bone("腰キャンセル右")
 
     for b in model.bones:
         if b.name in ["右足"]:
             assert model.bones["腰キャンセル右"].index == b.parent_index
+        elif b.name in parent_names:
+            assert parent_names[b.name] == model.bones[b.parent_index].name
+
+        if b.name in tail_names and b.tail_index >= 0:
+            assert tail_names[b.name] == model.bones[b.tail_index].name
+
+    # -------
+    parent_names = dict(
+        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+    )
+    tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
+    model.insert_standard_bone("腰キャンセル左")
+
+    for b in model.bones:
+        if b.name in ["左足"]:
+            assert model.bones["腰キャンセル左"].index == b.parent_index
+        elif b.name in parent_names:
+            assert parent_names[b.name] == model.bones[b.parent_index].name
+
+        if b.name in tail_names and b.tail_index >= 0:
+            assert tail_names[b.name] == model.bones[b.tail_index].name
+
+    # -------
+    parent_names = dict(
+        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+    )
+    tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
+    model.insert_standard_bone("左足IK親")
+
+    for b in model.bones:
+        if b.name in ["左足ＩＫ"]:
+            assert model.bones["左足IK親"].index == b.parent_index
         elif b.name in parent_names:
             assert parent_names[b.name] == model.bones[b.parent_index].name
 
@@ -780,6 +876,22 @@ def test_insert_standard_bone() -> None:
     for b in model.bones:
         if b.name in ["右親指１"]:
             assert model.bones["右親指０"].index == b.parent_index
+        elif b.name in parent_names:
+            assert parent_names[b.name] == model.bones[b.parent_index].name
+
+        if b.name in tail_names and b.tail_index >= 0:
+            assert tail_names[b.name] == model.bones[b.tail_index].name
+
+    # -------
+    parent_names = dict(
+        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+    )
+    tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
+    model.insert_standard_bone("左親指０")
+
+    for b in model.bones:
+        if b.name in ["左親指１"]:
+            assert model.bones["左親指０"].index == b.parent_index
         elif b.name in parent_names:
             assert parent_names[b.name] == model.bones[b.parent_index].name
 
