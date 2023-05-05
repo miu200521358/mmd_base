@@ -926,6 +926,19 @@ class PmxModel(BaseHashModel):
             self.bones[bone.parent_index].tail_index = bone.index
             self.bones[bone.parent_index].bone_flg |= BoneFlg.TAIL_IS_BONE
 
+        bone.parent_relative_position = self.bones.get_parent_relative_position(bone.index)
+        bone.tail_relative_position = self.bones.get_tail_relative_position(bone.index)
+        # 各ボーンのローカル軸
+        bone.local_axis = bone.tail_relative_position.normalized()
+
+        # 逆オフセット行列は親ボーンからの相対位置分を戻す
+        bone.parent_revert_matrix = MMatrix4x4()
+        bone.parent_revert_matrix.translate(bone.parent_relative_position)
+
+        # オフセット行列は自身の位置を原点に戻す行列
+        bone.offset_matrix = MMatrix4x4()
+        bone.offset_matrix.translate(-bone.position)
+
         # ボーンツリー生成
         self.bone_trees = self.bones.create_bone_trees()
 

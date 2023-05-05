@@ -938,8 +938,6 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         bone_frames = VmdBoneFrames()
 
         # デフォルトの材質情報を保持（シェーダーに合わせて一部入れ替え）
-        light_ambient = MVector4D(154 / 255, 154 / 255, 154 / 255, 1)
-
         for morph in model.morphs.filter_by_type(MorphType.GROUP):
             if morph.name not in self.data:
                 # モーフそのものの定義がなければスルー
@@ -964,7 +962,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
                             bf = self.animate_bone_morph_frame(fno, model, offset, mf_factor)
                             bone_frames[bf.name][fno] = bf
                         elif type(offset) is MaterialMorphOffset and offset.material_index in model.materials:
-                            materials = self.animate_material_morph_frame(model, offset, mf_factor, materials, light_ambient)
+                            materials = self.animate_material_morph_frame(model, offset, mf_factor, materials, MShader.LIGHT_AMBIENT4)
 
         return group_vertex_poses, bone_frames, materials
 
