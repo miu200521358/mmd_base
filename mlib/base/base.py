@@ -1,4 +1,4 @@
-from enum import Enum, unique
+from enum import Enum, IntEnum, unique
 from pickle import dumps, loads
 
 from mlib.base.logger import parse2str
@@ -21,6 +21,15 @@ class FileType(Enum):
     PMX = "PMXファイル (*.pmx)|*.pmx|すべてのファイル (*.*)|*.*"
     CSV = "CSVファイル (*.csv)|*.csv|すべてのファイル (*.*)|*.*"
     VRM = "VRMファイル (*.vrm)|*.vrm|すべてのファイル (*.*)|*.*"
+
+
+@unique
+class VecAxis(IntEnum):
+    """軸"""
+
+    X = 0
+    Y = 1
+    Z = 2
 
 
 class BaseModel:

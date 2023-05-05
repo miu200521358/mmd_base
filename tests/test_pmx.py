@@ -797,7 +797,7 @@ def test_insert_standard_bone() -> None:
     assert model.bones["右足先EX"].parent_index == model.bones["右足首D"].index
 
     # ウェイト置き換え
-    model.replace_standard_weights(["右足D", "右ひざD", "右足首D", "上半身2"])
+    model.replace_standard_weights(["右足D", "右ひざD", "右足首D", "上半身2", "右足先EX"])
 
     output_path = os.path.join("tests", "resources", "result.pmx")
     PmxWriter(model, output_path).save()

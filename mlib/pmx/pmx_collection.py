@@ -4,6 +4,7 @@ from typing import Optional
 
 import numpy as np
 import OpenGL.GL as gl
+from mlib.base.base import VecAxis
 
 from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
 from mlib.base.exception import MViewerException
@@ -809,7 +810,7 @@ class PmxModel(BaseHashModel):
             bone.fixed_axis = (self.bones[f"{direction}手首"].position - self.bones[f"{direction}ひじ"].position).normalized()
         elif "足先EX" in bone.name and f"{direction}足首" in self.bones and f"{direction}つま先ＩＫ" in self.bones:
             toe_target_bone = self.bones[self.bones[f"{direction}つま先ＩＫ"].ik.bone_index]
-            bone.position = MVector3D(*np.average([self.bones[f"{direction}足首"].position.vector, toe_target_bone.position.vector], weights=[0.2, 0.8], axis=0))
+            bone.position = MVector3D(*np.average([self.bones[f"{direction}足首"].position.vector, toe_target_bone.position.vector], weights=[0.3, 0.7], axis=0))
             bone.local_x_vector = (toe_target_bone.position - self.bones[f"{direction}足首"].position).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
         elif "親指０" in bone.name and f"{direction}手首" in self.bones and f"{direction}親指１" in self.bones:
@@ -875,6 +876,17 @@ class PmxModel(BaseHashModel):
             self.bones[bone.parent_index].bone_flg |= BoneFlg.TAIL_IS_BONE
 
     def replace_standard_weights(self, bone_names: list[str]):
+        vertices_indexes = self.get_vertices_by_bone()
+
+        if "上半身2" in bone_names:
+            self.separate_weights("上半身", "上半身2", VecAxis.Y, 0, vertices_indexes[self.bones["上半身"].index])
+        if "右足先EX" in bone_names:
+            self.separate_weights("右足首D", "右足先EX", VecAxis.Z, 0.6, vertices_indexes[self.bones["右足首D"].index])
+            self.separate_weights("右足首", "右足先EX", VecAxis.Z, 0.6, vertices_indexes[self.bones["右足首"].index])
+        if "左足先EX" in bone_names:
+            self.separate_weights("左足首D", "左足先EX", VecAxis.Z, 0.6, vertices_indexes[self.bones["左足首D"].index])
+            self.separate_weights("左足首", "左足先EX", VecAxis.Z, 0.6, vertices_indexes[self.bones["左足首"].index])
+
         replaced_map = dict([(b.index, b.index) for b in self.bones])
         for bone_name in bone_names:
             bone = self.bones[bone_name]
@@ -882,44 +894,39 @@ class PmxModel(BaseHashModel):
             if bone.is_leg_d and "D" == bone.name[-1]:
                 # 足Dはそのまま置き換える
                 replaced_map[self.bones[bone_name[:-1]].index] = bone.index
-
         # 一括置換系はそのまま置き換える
         for v in self.vertices:
             v.deform.indexes = np.vectorize(replaced_map.get)(v.deform.indexes)
 
-        vertices_indexes = self.get_vertices_by_bone()
-
-        # 上半身2
-        if "上半身2" in bone_names:
-            upper2_distance = self.bones["上半身2"].position.y - self.bones["上半身"].position.y
-            for vertex_index in vertices_indexes[self.bones["上半身"].index]:
-                v = self.vertices[vertex_index]
-                vertex_distance = v.position.y - self.bones["上半身"].position.y
-                if np.sign(upper2_distance) != np.sign(vertex_distance):
-                    # 上半身ボーンより下
-                    continue
-                # 頂点の距離
-                upper2_factor = vertex_distance / upper2_distance
-                if upper2_factor >= 1:
-                    # 上半身2ボーンより上の場合、上半身ボーンのウェイトをそのまま上半身2に置き換える
-                    v.deform.indexes = np.where(v.deform.indexes == self.bones["上半身"].index, self.bones["上半身2"].index, v.deform.indexes)
-                else:
-                    upper_weight = v.deform.weights[np.where(v.deform.indexes == self.bones["上半身"].index)]
-                    upper2_weight = upper_weight * upper2_factor
-                    # 上半身は上半身2の残り
-                    v.deform.weights = np.where(v.deform.indexes == self.bones["上半身"].index, v.deform.weights - upper2_weight, v.deform.weights)
-                    # 上半身2は
-                    v.deform.weights = np.append(v.deform.weights, upper2_weight)
-                    v.deform.indexes = np.append(v.deform.indexes, self.bones["上半身2"].index)
-                    # 一旦最大値で正規化
-                    v.deform.count = 4
-                    v.deform.normalize()
-                    if np.count_nonzero(v.deform.weights) <= 2:
-                        # Bdef2で再定義
-                        v.deform = Bdef2(v.deform.indexes[0], v.deform.indexes[1], v.deform.weights[0])
-                    elif not isinstance(v.deform, Sdef):
-                        # SdefではなければBdef4で再定義
-                        v.deform = Bdef4(*(v.deform.indexes.tolist() + [0, 0, 0, 0])[:4], *(v.deform.weights.tolist() + [0.0, 0.0, 0.0, 0.0])[:4])
+    def separate_weights(self, original_name: str, separated_name: str, axis: int, ratio: float, vertex_indexes: list[int]):
+        separate_distance = self.bones[separated_name].position[axis] - self.bones[original_name].position[axis]
+        for vertex_index in vertex_indexes:
+            v = self.vertices[vertex_index]
+            vertex_distance = v.position[axis] - self.bones[original_name].position[axis] - (self.bones[separated_name].position[axis] * ratio)
+            if np.sign(separate_distance) != np.sign(vertex_distance):
+                # 元ボーンより下
+                continue
+            # 頂点の距離
+            separate_factor = vertex_distance / separate_distance
+            if separate_factor >= 1:
+                # 分割先ボーンより上の場合、元ボーンのウェイトをそのまま分割先に置き換える
+                v.deform.indexes = np.where(v.deform.indexes == self.bones[original_name].index, self.bones[separated_name].index, v.deform.indexes)
+            else:
+                upper_weight = v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)]
+                upper2_weight = upper_weight * separate_factor
+                # 元ボーンは分割先ボーンの残り
+                v.deform.weights = np.where(v.deform.indexes == self.bones[original_name].index, v.deform.weights - upper2_weight, v.deform.weights)
+                v.deform.weights = np.append(v.deform.weights, upper2_weight)
+                v.deform.indexes = np.append(v.deform.indexes, self.bones[separated_name].index)
+                # 一旦最大値で正規化
+                v.deform.count = 4
+                v.deform.normalize()
+                if np.count_nonzero(v.deform.weights) <= 2:
+                    # Bdef2で再定義
+                    v.deform = Bdef2(v.deform.indexes[0], v.deform.indexes[1], v.deform.weights[0])
+                elif not isinstance(v.deform, Sdef):
+                    # SdefではなければBdef4で再定義
+                    v.deform = Bdef4(*(v.deform.indexes.tolist() + [0, 0, 0, 0])[:4], *(v.deform.weights.tolist() + [0.0, 0.0, 0.0, 0.0])[:4])
 
 
 class Meshes(BaseIndexDictModel[Mesh]):
