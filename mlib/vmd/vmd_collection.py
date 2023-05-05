@@ -1192,7 +1192,7 @@ class VmdMotion(BaseHashModel):
         matrixes.rotate(system_bone_qqs.tolist())
         matrixes.scale(system_bone_scales.tolist())
         # スケールを通常には適用させない
-        matrixes.scale((1 / system_bone_scales).tolist())
+        # matrixes.scale((1 / system_bone_scales).tolist())
         matrixes.translate(bone_poses.tolist())
         matrixes.rotate(bone_qqs.tolist())
         matrixes.scale(bone_scales.tolist())
