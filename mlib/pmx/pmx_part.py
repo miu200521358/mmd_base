@@ -1324,30 +1324,30 @@ class BoneSettings(Enum):
     )
     RIGHT_LEG_D = BoneSetting(
         "右足D",
-        ["右ひざD"],
+        ["右ひざD", "右ひざ"],
         "腰キャンセル右",
-        ["右ひざD"],
+        ["右ひざD", "右ひざ"],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
     )
     RIGHT_KNEE_D = BoneSetting(
         "右ひざD",
-        ["右足首D"],
+        ["右足首D", "右足首"],
         "右足D",
-        ["右足首D"],
+        ["右足首D", "右足首"],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
     )
     RIGHT_ANKLE_D = BoneSetting(
         "右足首D",
-        ["右足先EX"],
+        ["右足先EX", "右つま先"],
         "右ひざD",
-        [],
+        ["右足先EX", "右つま先"],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
     )
     RIGHT_TOE_EX = BoneSetting(
         "右足先EX",
         MVector3D(0, -1, 0),
         "右足首D",
-        [],
+        ["右つま先"],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
     )
 
@@ -1563,30 +1563,30 @@ class BoneSettings(Enum):
     )
     LEFT_LEG_D = BoneSetting(
         "左足D",
-        ["左ひざD"],
+        ["左ひざD", "左ひざ"],
         "腰キャンセル左",
-        ["左ひざD"],
+        ["左ひざD", "左ひざ"],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
     )
     LEFT_KNEE_D = BoneSetting(
         "左ひざD",
-        ["左足首D"],
+        ["左足首D", "左足首"],
         "左足D",
-        ["左足首D"],
+        ["左足首D", "左足首"],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
     )
     LEFT_ANKLE_D = BoneSetting(
         "左足首D",
-        ["左足先EX"],
+        ["左足先EX", "左つま先"],
         "左ひざD",
-        [],
+        ["左足先EX", "左つま先"],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
     )
     LEFT_TOE_EX = BoneSetting(
         "左足先EX",
         MVector3D(0, -1, 0),
         "左足首D",
-        [],
+        ["左つま先"],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
     )
 

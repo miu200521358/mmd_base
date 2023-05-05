@@ -725,47 +725,45 @@ class PmxModel(BaseHashModel):
                     if link.bone_index in replaced_map:
                         link.bone_index = replaced_map[link.bone_index]
 
-            if b.name == bone.name:
-                continue
+            if b.name != bone.name:
+                # 左右が同じ方向であるか
+                is_same_direction = True
+                is_same_finger = True
+                if bone.name[0] in ["右", "左"] or bone.name[-1] in ["右", "左"]:
+                    is_same_direction = (bone.name[-1] == b.name[0] and "腰キャンセル" in bone.name) or (bone.name[0] == b.name[0] and "腰キャンセル" not in bone.name)
+                    if "指" == bone.name[:3][-1]:
+                        is_same_finger = bone.name[:2][-1] == b.name[:2][-1]
 
-            # 左右が同じ方向であるか
-            is_same_direction = True
-            is_same_finger = True
-            if bone.name[0] in ["右", "左"] or bone.name[-1] in ["右", "左"]:
-                is_same_direction = (bone.name[-1] == b.name[0] and "腰キャンセル" in bone.name) or (bone.name[0] == b.name[0] and "腰キャンセル" not in bone.name)
-                if "指" == bone.name[:3][-1]:
-                    is_same_finger = bone.name[:2][-1] == b.name[:2][-1]
+                in_bone_tree = set(self.bones.create_bone_link_indexes(replaced_map[b.parent_index]))
+                in_standard = self.bone_trees.is_in_standard(b.name)
+                if b.is_ik:
+                    # IKの場合リンクの起点をボーンツリーの基準とする
+                    in_bone_tree = set(self.bones.create_bone_link_indexes(b.index)) | set(self.bones.create_bone_link_indexes(b.ik.links[-1].bone_index))
+                    in_standard |= True in [self.bone_trees.is_in_standard(b.name) for b in self.bone_trees[self.bones[b.ik.links[-1].bone_index].name]]
+                in_bone_tree &= set(self.bones.create_bone_link_indexes(replaced_map[bone.parent_index]))
+                if b.parent_index <= 0:
+                    in_bone_tree |= {(0, -1)}
 
-            in_bone_tree = set(self.bones.create_bone_link_indexes(replaced_map[b.parent_index]))
-            in_standard = self.bone_trees.is_in_standard(b.name)
-            if b.is_ik:
-                # IKの場合リンクの起点をボーンツリーの基準とする
-                in_bone_tree = set(self.bones.create_bone_link_indexes(b.index)) | set(self.bones.create_bone_link_indexes(b.ik.links[-1].bone_index))
-                in_standard |= True in [self.bone_trees.is_in_standard(b.name) for b in self.bone_trees[self.bones[b.ik.links[-1].bone_index].name]]
-            in_bone_tree &= set(self.bones.create_bone_link_indexes(replaced_map[bone.parent_index]))
-            if b.parent_index <= 0:
-                in_bone_tree |= {(0, -1)}
-
-            if b.parent_index == bone.index - 1 and is_same_direction and in_bone_tree and in_standard:
-                if (b.name in ["右足", "左足"] and bone.name in ["右足D", "左足D"]) or not is_same_finger or b.is_standard_extend:
-                    # 足D・準標準の先ボーンは親に設定しない
-                    b.parent_index = replaced_map[b.parent_index]
-                else:
-                    b.parent_index = bone.index
-            elif b.parent_index in replaced_map:
-                original_parent = self.bones[replaced_map[b.parent_index]]
-                original_parent_distance = b.position.distance(original_parent.position)
-                replaced_parent_distance = b.position.distance(bone.position)
-                if (
-                    bone.parent_index == replaced_map[b.parent_index]
-                    and is_same_direction
-                    and original_parent_distance
-                    and 0.5 > replaced_parent_distance / original_parent_distance
-                ):
-                    # 準標準ボーンの範囲外かつ挿入ボーンのと親子関係があり、距離が挿入ボーンの方が近い場合、挿入ボーンで置き換える
-                    b.parent_index = bone.index
-                else:
-                    b.parent_index = replaced_map[b.parent_index]
+                if b.parent_index == bone.index - 1 and is_same_direction and in_bone_tree and in_standard:
+                    if (b.name in ["右足", "左足"] and bone.name in ["右足D", "左足D"]) or not is_same_finger or b.is_standard_extend:
+                        # 足D・準標準の先ボーンは親に設定しない
+                        b.parent_index = replaced_map[b.parent_index]
+                    else:
+                        b.parent_index = bone.index
+                elif b.parent_index in replaced_map:
+                    original_parent = self.bones[replaced_map[b.parent_index]]
+                    original_parent_distance = b.position.distance(original_parent.position)
+                    replaced_parent_distance = b.position.distance(bone.position)
+                    if (
+                        bone.parent_index == replaced_map[b.parent_index]
+                        and is_same_direction
+                        and original_parent_distance
+                        and 0.5 > replaced_parent_distance / original_parent_distance
+                    ):
+                        # 準標準ボーンの範囲外かつ挿入ボーンのと親子関係があり、距離が挿入ボーンの方が近い場合、挿入ボーンで置き換える
+                        b.parent_index = bone.index
+                    else:
+                        b.parent_index = replaced_map[b.parent_index]
 
             b.parent_relative_position = self.bones.get_parent_relative_position(b.index)
             b.tail_relative_position = self.bones.get_tail_relative_position(b.index)
