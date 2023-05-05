@@ -883,6 +883,8 @@ class PmxModel(BaseHashModel):
             bone.local_x_vector = (self.bones[f"{direction}親指１"].position - self.bones[f"{direction}手首"].position).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
+        elif "両目" == bone.name and "左目" in self.bones and "右目" in self.bones:
+            bone.position = (self.bones["左目"].position + self.bones["右目"].position) / 2
         else:
             return
 
@@ -931,6 +933,13 @@ class PmxModel(BaseHashModel):
                 # 親ボーンは捩りの親
                 if self.bones[bname].parent_index == twist_bone.index:
                     self.bones[bname].parent_index = bone.index
+
+        # 付与親の設定
+        if "両目" == bone.name:
+            self.bones["左目"].effect_index = self.bones["両目"].index
+            self.bones["左目"].effect_factor = 1
+            self.bones["右目"].effect_index = self.bones["両目"].index
+            self.bones["右目"].effect_factor = 1
 
         # 表示先の切り替え
         if "上半身2" == bone.name:
