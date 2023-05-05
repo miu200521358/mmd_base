@@ -937,7 +937,7 @@ class PmxModel(BaseHashModel):
             b.parent_relative_position = self.bones.get_parent_relative_position(b.index)
             b.tail_relative_position = self.bones.get_tail_relative_position(b.index)
             # 各ボーンのローカル軸
-            b.local_axis = bone.tail_relative_position.normalized()
+            b.local_axis = b.tail_relative_position.normalized()
 
             # 逆オフセット行列は親ボーンからの相対位置分を戻す
             b.parent_revert_matrix = MMatrix4x4()
