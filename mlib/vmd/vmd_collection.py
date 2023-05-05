@@ -909,7 +909,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
     def animate_bone_morphs(self, fno: int, model: PmxModel, is_system: bool = False) -> VmdBoneFrames:
         bone_frames = VmdBoneFrames()
         for morph in model.morphs.filter_by_type(MorphType.BONE):
-            if morph.name not in self.data and ((is_system and not morph.is_system) or (not is_system and morph.is_system)):
+            if morph.name not in self.data or ((is_system and not morph.is_system) or (not is_system and morph.is_system)):
                 # モーフそのものの定義がなければスルー、システムで分ける
                 continue
             mf = self[morph.name][fno]
