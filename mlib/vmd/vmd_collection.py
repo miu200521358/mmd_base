@@ -906,11 +906,11 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
         return np.array(poses)
 
-    def animate_bone_morphs(self, fno: int, model: PmxModel) -> VmdBoneFrames:
+    def animate_bone_morphs(self, fno: int, model: PmxModel, is_system: bool = False) -> VmdBoneFrames:
         bone_frames = VmdBoneFrames()
         for morph in model.morphs.filter_by_type(MorphType.BONE):
-            if morph.name not in self.data:
-                # モーフそのものの定義がなければスルー
+            if morph.name not in self.data and ((is_system and not morph.is_system) or (not is_system and morph.is_system)):
+                # モーフそのものの定義がなければスルー、システムで分ける
                 continue
             mf = self[morph.name][fno]
             if not mf.ratio:
@@ -1157,8 +1157,8 @@ class VmdMotion(BaseHashModel):
         material_morphs = self.morphs.animate_material_morphs(fno, model)
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 材質モーフ")
 
-        # ボーンモーフ
-        morph_bone_frames = self.morphs.animate_bone_morphs(fno, model)
+        # 通常ボーンモーフ
+        morph_bone_frames = self.morphs.animate_bone_morphs(fno, model, is_system=False)
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーンモーフ")
 
         # グループモーフ
@@ -1178,11 +1178,22 @@ class VmdMotion(BaseHashModel):
         bone_poses, bone_qqs, bone_scales = bone_frames.animate_bone_matrixes(fno, model)
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン操作")
 
+        # システムボーンモーフ
+        system_morph_bone_frames = self.morphs.animate_bone_morphs(fno, model, is_system=True)
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーンモーフ(システム)")
+
+        # システムボーン操作
+        system_bone_poses, system_bone_qqs, system_bone_scales = system_morph_bone_frames.animate_bone_matrixes(fno, model)
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン操作(システム)")
+
         # ボーン変形行列
         matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
         matrixes.translate(bone_poses.tolist())
         matrixes.rotate(bone_qqs.tolist())
         matrixes.scale(bone_scales.tolist())
+        matrixes.translate(system_bone_poses.tolist())
+        matrixes.rotate(system_bone_qqs.tolist())
+        matrixes.scale(system_bone_scales.tolist())
 
         bone_matrixes: list[np.ndarray] = []
         for bone_index in model.bones.indexes:
