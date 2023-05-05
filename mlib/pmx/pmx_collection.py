@@ -1024,7 +1024,7 @@ class PmxModel(BaseHashModel):
                     v.deform.indexes = np.where(v.deform.indexes == self.bones[original_name].index, self.bones[weight_name].index, v.deform.indexes)
                 else:
                     separate_factor = 1 - abs((vertex_local_pos.z - separate_local_pos.z) / (separate_to_pos.z - separate_local_pos.z)) * 1.5
-                    original_weight = v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)]
+                    original_weight = np.sum(v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)])
                     separate_weight = original_weight * separate_factor
                     # 元ボーンは分割先ボーンの残り
                     v.deform.weights = np.where(v.deform.indexes == self.bones[original_name].index, v.deform.weights - separate_weight, v.deform.weights)
@@ -1058,7 +1058,7 @@ class PmxModel(BaseHashModel):
                     v.deform.indexes = np.where(v.deform.indexes == self.bones[original_name].index, self.bones[tail_name].index, v.deform.indexes)
                 continue
             separate_factor = vertex_separate_distance / (tail_distance + abs(vertex_separate_z))
-            original_weight = v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)]
+            original_weight = np.sum(v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)])
             separate_weight = original_weight * separate_factor
             # 元ボーンは分割先ボーンの残り
             v.deform.weights = np.where(v.deform.indexes == self.bones[original_name].index, v.deform.weights - separate_weight, v.deform.weights)
