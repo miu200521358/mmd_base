@@ -663,7 +663,7 @@ class PmxModel(BaseHashModel):
             )
 
         # システム用ボーン追加
-        if "右腕" in self.bones and "左腕" in self.bones and "上半身" in self.bones:
+        if "右腕" in self.bones and "左腕" in self.bones and "上半身" in self.bones and "首根元" not in self.bones:
             neck_root_bone = Bone(name="首根元")
             if "上半身2" in self.bones:
                 neck_root_bone.parent_index = self.bones["上半身2"].index
@@ -673,7 +673,7 @@ class PmxModel(BaseHashModel):
             neck_root_bone.is_system = True
             self.bones.append(neck_root_bone)
 
-        if "右足" in self.bones and "左足" in self.bones and "下半身" in self.bones:
+        if "右足" in self.bones and "左足" in self.bones and "下半身" in self.bones and "足中心" not in self.bones:
             leg_root_bone = Bone(name="足中心")
             leg_root_bone.parent_index = self.bones["下半身"].index
             leg_root_bone.position = (self.bones["右足"].position + self.bones["左足"].position) / 2
@@ -685,6 +685,8 @@ class PmxModel(BaseHashModel):
         # ボーンツリー生成
         self.bone_trees = self.bones.create_bone_trees()
 
+        logger.info("-- モデルセットアップ：ボーンツリー")
+
         # 距離が離れている親ボーンINDEXの取得
         for bone_tree in self.bone_trees:
             last_bone = self.bones[bone_tree.last_name]
@@ -694,8 +696,6 @@ class PmxModel(BaseHashModel):
                     continue
                 last_bone.far_parent_index = self.bones[bone_name].index
                 break
-
-        logger.info("-- モデルセットアップ：ボーンツリー")
 
     def insert_bone(self, bone: Bone):
         """ボーンの追加に伴う諸々のボーンINDEXの置き換え"""
@@ -764,19 +764,6 @@ class PmxModel(BaseHashModel):
                         b.parent_index = bone.index
                     else:
                         b.parent_index = replaced_map[b.parent_index]
-
-            b.parent_relative_position = self.bones.get_parent_relative_position(b.index)
-            b.tail_relative_position = self.bones.get_tail_relative_position(b.index)
-            # 各ボーンのローカル軸
-            b.local_axis = b.tail_relative_position.normalized()
-
-            # 逆オフセット行列は親ボーンからの相対位置分を戻す
-            b.parent_revert_matrix = MMatrix4x4()
-            b.parent_revert_matrix.translate(b.parent_relative_position)
-
-            # オフセット行列は自身の位置を原点に戻す行列
-            b.offset_matrix = MMatrix4x4()
-            b.offset_matrix.translate(-b.position)
 
         for m in self.morphs:
             if m.morph_type == MorphType.BONE:
