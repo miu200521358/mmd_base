@@ -767,6 +767,19 @@ class PmxModel(BaseHashModel):
                 else:
                     b.parent_index = replaced_map[b.parent_index]
 
+            b.parent_relative_position = self.bones.get_parent_relative_position(b.index)
+            b.tail_relative_position = self.bones.get_tail_relative_position(b.index)
+            # 各ボーンのローカル軸
+            b.local_axis = b.tail_relative_position.normalized()
+
+            # 逆オフセット行列は親ボーンからの相対位置分を戻す
+            b.parent_revert_matrix = MMatrix4x4()
+            b.parent_revert_matrix.translate(b.parent_relative_position)
+
+            # オフセット行列は自身の位置を原点に戻す行列
+            b.offset_matrix = MMatrix4x4()
+            b.offset_matrix.translate(-b.position)
+
         for m in self.morphs:
             if m.morph_type == MorphType.BONE:
                 for offset in m.offsets:
@@ -789,19 +802,6 @@ class PmxModel(BaseHashModel):
                     r.bone_index = bone.index
                 else:
                     r.bone_index = replaced_map[r.bone_index]
-
-        bone.parent_relative_position = self.bones.get_parent_relative_position(bone.index)
-        bone.tail_relative_position = self.bones.get_tail_relative_position(bone.index)
-        # 各ボーンのローカル軸
-        bone.local_axis = bone.tail_relative_position.normalized()
-
-        # 逆オフセット行列は親ボーンからの相対位置分を戻す
-        bone.parent_revert_matrix = MMatrix4x4()
-        bone.parent_revert_matrix.translate(bone.parent_relative_position)
-
-        # オフセット行列は自身の位置を原点に戻す行列
-        bone.offset_matrix = MMatrix4x4()
-        bone.offset_matrix.translate(-bone.position)
 
         # ボーンツリー追加
         bone_tree = BoneTree(name=bone.name)
