@@ -1197,7 +1197,7 @@ class VmdMotion(BaseHashModel):
             # 全体のボーン変形行列を求める
             matrix = model.bones.get_mesh_matrix(matrixes, bone.index, matrix)
 
-            bone_matrixes.append(matrix.T)
+            bone_matrixes.append(matrix.T if is_gl else matrix)
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン変形行列")
 
         if not is_gl:
