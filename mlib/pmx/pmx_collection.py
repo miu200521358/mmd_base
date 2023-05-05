@@ -730,11 +730,14 @@ class PmxModel(BaseHashModel):
 
             # 左右が同じ方向であるか
             is_same_direction = True
+            is_same_finger = True
             if bone.name[0] in ["右", "左"] or bone.name[-1] in ["右", "左"]:
                 is_same_direction = bone.name[-1] == b.name[0] or bone.name[0] == b.name[0]
+                if "指" == bone.name[:3][-1]:
+                    is_same_finger = bone.name[:2][-1] == b.name[:2][-1]
 
             if b.parent_index == bone.index - 1 and is_same_direction:
-                if b.name in ["右足", "左足"] and bone.name in ["右足D", "左足D"]:
+                if b.name in ["右足", "左足"] and bone.name in ["右足D", "左足D"] or not is_same_finger:
                     # 足Dは親に設定しない
                     b.parent_index = replaced_map[b.parent_index]
                 elif b.name in STANDARD_BONE_NAMES:
@@ -879,13 +882,17 @@ class PmxModel(BaseHashModel):
         vertices_indexes = self.get_vertices_by_bone()
 
         if "上半身2" in bone_names:
-            self.separate_weights("上半身", "上半身2", VecAxis.Y, 0, vertices_indexes[self.bones["上半身"].index])
+            self.separate_weights("上半身", "上半身2", VecAxis.Y, 0, vertices_indexes.get(self.bones["上半身"].index, []))
         if "右足先EX" in bone_names:
-            self.separate_weights("右足首D", "右足先EX", VecAxis.Z, 0.6, vertices_indexes[self.bones["右足首D"].index])
-            self.separate_weights("右足首", "右足先EX", VecAxis.Z, 0.6, vertices_indexes[self.bones["右足首"].index])
+            self.separate_weights("右足首D", "右足先EX", VecAxis.Z, 0.6, vertices_indexes.get(self.bones["右足首D"].index, []))
+            self.separate_weights("右足首", "右足先EX", VecAxis.Z, 0.6, vertices_indexes.get(self.bones["右足首"].index, []))
         if "左足先EX" in bone_names:
-            self.separate_weights("左足首D", "左足先EX", VecAxis.Z, 0.6, vertices_indexes[self.bones["左足首D"].index])
-            self.separate_weights("左足首", "左足先EX", VecAxis.Z, 0.6, vertices_indexes[self.bones["左足首"].index])
+            self.separate_weights("左足首D", "左足先EX", VecAxis.Z, 0.6, vertices_indexes.get(self.bones["左足首D"].index, []))
+            self.separate_weights("左足首", "左足先EX", VecAxis.Z, 0.6, vertices_indexes.get(self.bones["左足首"].index, []))
+        if "右親指０" in bone_names:
+            self.separate_thumb_weights("右手首", "右親指０", "右親指１", vertices_indexes.get(self.bones["右手首"].index, []))
+        if "左親指０" in bone_names:
+            self.separate_thumb_weights("左手首", "左親指０", "左親指１", vertices_indexes.get(self.bones["左手首"].index, []))
 
         replaced_map = dict([(b.index, b.index) for b in self.bones])
         for bone_name in bone_names:
@@ -898,26 +905,61 @@ class PmxModel(BaseHashModel):
         for v in self.vertices:
             v.deform.indexes = np.vectorize(replaced_map.get)(v.deform.indexes)
 
-    def separate_weights(self, original_name: str, separated_name: str, axis: int, ratio: float, vertex_indexes: list[int]):
-        separate_distance = self.bones[separated_name].position[axis] - self.bones[original_name].position[axis]
+    def separate_thumb_weights(self, original_name: str, separate_name: str, tail_name: str, vertex_indexes: list[int]):
+        # 親指０から親指１への距離
+        tail_distance = self.bones[tail_name].position.distance(self.bones[separate_name].position)
         for vertex_index in vertex_indexes:
             v = self.vertices[vertex_index]
-            vertex_distance = v.position[axis] - self.bones[original_name].position[axis] - (self.bones[separated_name].position[axis] * ratio)
+            vertex_original_distance = v.position.distance(self.bones[original_name].position)
+            vertex_separate_distance = v.position.distance(self.bones[separate_name].position)
+            vertex_tail_distance = v.position.distance(self.bones[tail_name].position)
+            vertex_separate_z = np.mean([self.bones[separate_name].position.vector, self.bones[tail_name].position.vector], axis=0)[2]
+            if vertex_separate_distance > (tail_distance + abs(vertex_separate_z)):
+                # 親指０から頂点への距離が、親指０から親指１の距離の一定倍より離れていたらスルー
+                if v.position.z < vertex_separate_z and vertex_original_distance > vertex_tail_distance:
+                    # 手首より親指１の方が近い場合、親指１に置き換えておく
+                    v.deform.indexes = np.where(v.deform.indexes == self.bones[original_name].index, self.bones[tail_name].index, v.deform.indexes)
+                continue
+            separate_factor = vertex_separate_distance / (tail_distance + abs(vertex_separate_z))
+            original_weight = v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)]
+            separate_weight = original_weight * separate_factor
+            # 元ボーンは分割先ボーンの残り
+            v.deform.weights = np.where(v.deform.indexes == self.bones[original_name].index, v.deform.weights - separate_weight, v.deform.weights)
+            v.deform.weights = np.append(v.deform.weights, separate_weight)
+            v.deform.indexes = np.append(v.deform.indexes, self.bones[separate_name].index)
+            if vertex_original_distance > vertex_separate_distance:
+                # 手首より親指１の方が近い場合、手首のウェイトを親指１に置き換える
+                v.deform.indexes = np.where(v.deform.indexes == self.bones[original_name].index, self.bones[tail_name].index, v.deform.indexes)
+            # 一旦最大値で正規化
+            v.deform.count = 4
+            v.deform.normalize()
+            if np.count_nonzero(v.deform.weights) <= 2:
+                # Bdef2で再定義
+                v.deform = Bdef2(v.deform.indexes[0], v.deform.indexes[1], v.deform.weights[0])
+            elif not isinstance(v.deform, Sdef):
+                # SdefではなければBdef4で再定義
+                v.deform = Bdef4(*(v.deform.indexes.tolist() + [0, 0, 0, 0])[:4], *(v.deform.weights.tolist() + [0.0, 0.0, 0.0, 0.0])[:4])
+
+    def separate_weights(self, original_name: str, separate_name: str, axis: int, ratio: float, vertex_indexes: list[int]):
+        separate_distance = self.bones[separate_name].position[axis] - self.bones[original_name].position[axis]
+        for vertex_index in vertex_indexes:
+            v = self.vertices[vertex_index]
+            vertex_distance = v.position[axis] - self.bones[original_name].position[axis] - (self.bones[separate_name].position[axis] * ratio)
             if np.sign(separate_distance) != np.sign(vertex_distance):
                 # 元ボーンより下
                 continue
             # 頂点の距離
-            separate_factor = vertex_distance / separate_distance
+            separate_factor = abs(vertex_distance / separate_distance)
             if separate_factor >= 1:
                 # 分割先ボーンより上の場合、元ボーンのウェイトをそのまま分割先に置き換える
-                v.deform.indexes = np.where(v.deform.indexes == self.bones[original_name].index, self.bones[separated_name].index, v.deform.indexes)
+                v.deform.indexes = np.where(v.deform.indexes == self.bones[original_name].index, self.bones[separate_name].index, v.deform.indexes)
             else:
-                upper_weight = v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)]
-                upper2_weight = upper_weight * separate_factor
+                original_weight = v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)]
+                separate_weight = original_weight * separate_factor
                 # 元ボーンは分割先ボーンの残り
-                v.deform.weights = np.where(v.deform.indexes == self.bones[original_name].index, v.deform.weights - upper2_weight, v.deform.weights)
-                v.deform.weights = np.append(v.deform.weights, upper2_weight)
-                v.deform.indexes = np.append(v.deform.indexes, self.bones[separated_name].index)
+                v.deform.weights = np.where(v.deform.indexes == self.bones[original_name].index, v.deform.weights - separate_weight, v.deform.weights)
+                v.deform.weights = np.append(v.deform.weights, separate_weight)
+                v.deform.indexes = np.append(v.deform.indexes, self.bones[separate_name].index)
                 # 一旦最大値で正規化
                 v.deform.count = 4
                 v.deform.normalize()

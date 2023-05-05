@@ -771,6 +771,22 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     # -------
+    parent_names = dict(
+        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+    )
+    tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
+    model.insert_standard_bone("右親指０")
+
+    for b in model.bones:
+        if b.name in ["右親指１"]:
+            assert model.bones["右親指０"].index == b.parent_index
+        elif b.name in parent_names:
+            assert parent_names[b.name] == model.bones[b.parent_index].name
+
+        if b.name in tail_names and b.tail_index >= 0:
+            assert tail_names[b.name] == model.bones[b.tail_index].name
+
+    # -------
     model.insert_standard_bone("右足D")
     assert model.bones["右足D"].layer == 1
     assert model.bones["右足D"].parent_index == model.bones["腰キャンセル右"].index
@@ -797,7 +813,7 @@ def test_insert_standard_bone() -> None:
     assert model.bones["右足先EX"].parent_index == model.bones["右足首D"].index
 
     # ウェイト置き換え
-    model.replace_standard_weights(["右足D", "右ひざD", "右足首D", "上半身2", "右足先EX"])
+    model.replace_standard_weights(["右足D", "右ひざD", "右足首D", "上半身2", "右足先EX", "右親指０"])
 
     output_path = os.path.join("tests", "resources", "result.pmx")
     PmxWriter(model, output_path).save()
