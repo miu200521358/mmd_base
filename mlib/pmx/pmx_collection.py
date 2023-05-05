@@ -947,7 +947,7 @@ class PmxModel(BaseHashModel):
             b.offset_matrix = MMatrix4x4()
             b.offset_matrix.translate(-b.position)
 
-            bone_tree[bt.name] = b.copy()
+            bone_tree[bt.index] = b.copy()
 
     def replace_standard_weights(self, bone_names: list[str]):
         vertices_indexes = self.get_vertices_by_bone()
