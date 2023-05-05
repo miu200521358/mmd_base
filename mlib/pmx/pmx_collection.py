@@ -805,7 +805,7 @@ class PmxModel(BaseHashModel):
         bone_tree = BoneTree(name=bone.name)
         for _, bidx in sorted(self.bones.create_bone_link_indexes(bone.index)):
             bone_tree.append(self.bones.data[bidx].copy(), is_sort=False)
-        self.bone_trees.append(bone_tree, name=bone.name)
+        self.bone_trees.data[bone.name] = bone_tree
 
     def insert_standard_bone(self, bone_name: str):
         bone_setting = STANDARD_BONE_NAMES[bone_name]
