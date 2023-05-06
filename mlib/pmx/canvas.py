@@ -37,7 +37,10 @@ class CanvasPanel(BasePanel):
     def fno(self, v: int):
         self.index = v
 
-    def play_stop(self):
+    def stop_play(self):
+        pass
+
+    def start_play(self):
         pass
 
 
@@ -287,38 +290,31 @@ class PmxCanvas(glcanvas.GLCanvas):
     def on_play(self, event: wx.Event, record: bool = False):
         self.playing = not self.playing
         if self.playing:
-            self.start_play(record)
-        else:
-            self.stop_play()
-
-    def start_play(self, record: bool):
-        logger.debug("start play ----------------------------------------")
-        self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
-        self.recording = record
-        for n, model_set in enumerate(self.model_sets):
-            logger.debug(f"on_play queue[{n}] append")
-            self.queues.append(Queue())
-            logger.debug(f"on_play process[{n}] append")
-            self.processes.append(
-                MProcess(
-                    target=animate,
-                    args=(self.queues[-1], self.parent.fno, self.max_fno, model_set),
-                    name="CalcProcess",
+            logger.debug("on_play ----------------------------------------")
+            self.parent.start_play()
+            self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
+            self.recording = record
+            for n, model_set in enumerate(self.model_sets):
+                logger.debug(f"on_play queue[{n}] append")
+                self.queues.append(Queue())
+                logger.debug(f"on_play process[{n}] append")
+                self.processes.append(
+                    MProcess(
+                        target=animate,
+                        args=(self.queues[-1], self.parent.fno, self.max_fno, model_set),
+                        name="CalcProcess",
+                    )
                 )
-            )
-        logger.debug("on_play process start")
-        for p in self.processes:
-            p.start()
-        logger.debug("on_play timer start")
-        self.play_timer.Start(1000 // self.fps)
-
-    def stop_play(self):
-        logger.debug("stop play ----------------------------------------")
-
-        self.play_timer.Stop()
-        self.recording = False
-        self.clear_process()
-        self.parent.play_stop()
+            logger.debug("on_play process start")
+            for p in self.processes:
+                p.start()
+            logger.debug("on_play timer start")
+            self.play_timer.Start(1000 // self.fps)
+        else:
+            self.play_timer.Stop()
+            self.recording = False
+            self.clear_process()
+            self.parent.stop_play()
 
     def clear_process(self):
         if self.processes:

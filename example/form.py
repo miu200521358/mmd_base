@@ -215,7 +215,7 @@ class ConfigPanel(CanvasPanel):
     def fno(self, v: int):
         self.frame_ctrl.SetValue(v)
 
-    def play_stop(self):
+    def stop_play(self):
         self.play_btn.SetLabel("Play")
 
     def on_change_frame(self, event: wx.Event):
