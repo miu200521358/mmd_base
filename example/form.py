@@ -16,10 +16,10 @@ from mlib.pmx.pmx_writer import PmxWriter
 from mlib.service.base_worker import BaseWorker
 from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
-from mlib.service.form.parts.console_ctrl import ConsoleCtrl
-from mlib.service.form.parts.file_ctrl import MPmxFilePickerCtrl, MVmdFilePickerCtrl
-from mlib.service.form.parts.float_slider_ctrl import FloatSliderCtrl
-from mlib.service.form.parts.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
+from mlib.service.form.widgets.console_ctrl import ConsoleCtrl
+from mlib.service.form.widgets.file_ctrl import MPmxFilePickerCtrl, MVmdFilePickerCtrl
+from mlib.service.form.widgets.float_slider_ctrl import FloatSliderCtrl
+from mlib.service.form.widgets.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
 from mlib.utils.file_utils import save_histories, separate_path
 from mlib.vmd.vmd_collection import VmdMotion
 from mlib.vmd.vmd_part import VmdBoneFrame
