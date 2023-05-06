@@ -68,3 +68,7 @@ class FloatSliderCtrl:
         border: int,
     ):
         self.sizer.Add(parent_sizer, proportion, flag, border)
+
+    def enable(self, enable: bool):
+        self._value_ctrl.Enable(enable)
+        self._slider.Enable(enable)
