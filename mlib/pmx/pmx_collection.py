@@ -221,12 +221,12 @@ class Bones(BaseIndexNameDictModel[Bone]):
 
         # 計算ボーンリスト
         for i, end_bone in enumerate(self):
-            if 0 >= end_bone.index:
+            if 0 > end_bone.index:
                 continue
             # レイヤー込みのINDEXリスト取得を末端ボーンをキーとして保持
             bone_tree = BoneTree(name=end_bone.name)
             for _, bidx in sorted(self.create_bone_link_indexes(end_bone.index)):
-                bone_tree.append(self.data[bidx].copy(), is_sort=False)
+                bone_tree.append(self.data[bidx], is_sort=False)
             bone_trees.append(bone_tree, name=end_bone.name)
 
             logger.count(
