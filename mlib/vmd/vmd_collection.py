@@ -2,7 +2,7 @@ import os
 from bisect import bisect_left
 from functools import lru_cache
 from math import acos, degrees
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 
@@ -124,19 +124,45 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
 
 
 class VmdBoneFrameTree:
-    def __init__(self, global_matrix: np.ndarray, local_matrix: np.ndarray, position: np.ndarray) -> None:
+    LAST_NAME = "-1"
+
+    def __init__(self) -> None:
+        self.data: dict[int, dict[str, dict[str, Union[MMatrix4x4, MVector3D]]]] = {}
+
+    def append(self, fno: int, bone_name: str, matrix: MMatrix4x4, position: MVector3D, tail_position: MVector3D):
         """
-        ボーン変形結果
+        ボーン変形結果追加
 
         Parameters
         ----------
-        global_matrix : ワールド座標行列
-        local_matrix : 親ボーンから見たローカル座標行列
+        fno: キーフレ
+        bone_name: ボーン名
+        matrix : 親ボーンから見た行列
         position : ボーン変形後のグローバル位置
         """
-        self.global_matrix = MMatrix4x4(*global_matrix.flatten())
-        self.local_matrix = MMatrix4x4(*local_matrix.flatten())
-        self.position = MVector3D(*position)
+        if fno not in self.data:
+            self.data[fno] = {}
+        if bone_name not in self.data[fno]:
+            self.data[fno][bone_name] = {}
+        self.data[fno][bone_name]["matrix"] = matrix
+        self.data[fno][bone_name]["position"] = position
+        self.data[fno][bone_name]["tail_position"] = tail_position
+
+    def matrix(self, fno: int, bone_name: str) -> MMatrix4x4:
+        """行列の取得"""
+        return self.data[fno][bone_name]["matrix"]
+
+    def position(self, fno: int, bone_name: str) -> MVector3D:
+        """位置の取得"""
+        return self.data[fno][bone_name]["position"]
+
+    def tail_position(self, fno: int, bone_name: str) -> MVector3D:
+        """末端位置（次のボーン）の取得"""
+        return self.data[fno][bone_name]["tail_position"]
+
+    def exists(self, fno: int, bone_name: str) -> bool:
+        """既に該当ボーンの情報が登録されているか"""
+        return fno in self.data and bone_name in self.data[fno]
 
 
 class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
@@ -176,10 +202,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     def get_matrix_by_indexes(
         self,
         fnos: list[int],
-        bone_trees: dict[str, BoneTree],
+        bone_names: list[str],
         model: PmxModel,
         append_ik: bool = True,
-    ) -> dict[int, dict[str, VmdBoneFrameTree]]:
+    ) -> VmdBoneFrameTree:
         """
         指定されたキーフレ番号の行列計算結果を返す
 
@@ -187,8 +213,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         ----------
         fnos : list[int]
             キーフレ番号のリスト
-        bone_trees: list[BoneTree]
-            ボーンツリーリスト
+        bone_names: list[str]
+            取得ボーン名リスト
         model: PmxModel
             モデルデータ
 
@@ -201,9 +227,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         if append_ik:
             # IK回転を事前に求めておく
             for fno in fnos:
-                self.calc_ik_rotations(fno, model, [bone_tree.last_name for bone_tree in bone_trees.values()])
+                self.calc_ik_rotations(fno, model, bone_names)
 
-        bone_matrixes: dict[int, dict[str, VmdBoneFrameTree]] = {}
+        bone_trees = model.bone_trees.filter(*bone_names)
+        bone_matrixes = VmdBoneFrameTree()
+
         for bone_tree in bone_trees.values():
             row = len(fnos)
             col = len(bone_tree) + 1
@@ -254,19 +282,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             positions = global_mats.to_positions()
 
             for i, fno in enumerate(fnos):
-                if fno not in bone_matrixes:
-                    bone_matrixes[fno] = {}
                 for j, bone in enumerate(bone_tree):
-                    bone_matrixes[fno][bone.name] = VmdBoneFrameTree(
-                        global_matrix=global_mats.vector[i, j],
-                        local_matrix=matrixes.vector[i, j],
-                        position=positions[i, j],
+                    bone_matrixes.append(
+                        fno,
+                        bone.name,
+                        MMatrix4x4(*global_mats.vector[i, j].flatten()),
+                        MVector3D(*positions[i, j]),
+                        MVector3D(*positions[i, j + 1]),
                     )
-                bone_matrixes[fno]["-1"] = VmdBoneFrameTree(
-                    global_matrix=global_mats.vector[i, -1],
-                    local_matrix=matrixes.vector[i, -1],
-                    position=positions[i, -1],
-                )
 
         return bone_matrixes
 
@@ -617,8 +640,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             if ik_target_bone_idx not in model.bones or not ik_bone.ik:
                 continue
 
-            ik_matrixes = self.get_matrix_by_indexes([fno], model.bone_trees.filter(ik_bone.name), model, append_ik=False)
-            global_target_pos = ik_matrixes[fno][ik_bone.name].position
+            ik_matrixes = self.get_matrix_by_indexes([fno], [ik_bone.name], model, append_ik=False)
+            global_target_pos = ik_matrixes.position(fno, ik_bone.name)
 
             # IKターゲットボーンツリー
             effector_bone = model.bones[ik_bone.ik.bone_index]
