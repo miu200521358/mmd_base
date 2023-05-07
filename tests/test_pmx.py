@@ -523,8 +523,8 @@ def test_save_pmx03() -> None:
 def test_insert_bone() -> None:
     import os
 
-    from mlib.pmx.pmx_part import Bone, BoneMorphOffset
     from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_part import Bone, BoneMorphOffset
     from mlib.pmx.pmx_reader import PmxReader
     from mlib.pmx.pmx_writer import PmxWriter
 
@@ -602,6 +602,7 @@ def test_insert_standard_bone() -> None:
     from mlib.pmx.pmx_collection import PmxModel
     from mlib.pmx.pmx_reader import PmxReader
     from mlib.pmx.pmx_writer import PmxWriter
+    from mlib.vmd.vmd_collection import VmdMotion
 
     input_path = os.path.join("tests", "resources", "サンプル標準モデル.pmx")
     model: PmxModel = PmxReader().read_by_filepath(input_path)
@@ -611,7 +612,8 @@ def test_insert_standard_bone() -> None:
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("全ての親")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("全ての親", bone_matrixes)
 
     assert 0 == model.bones["全ての親"].index
     assert -1 == model.bones["全ての親"].parent_index
@@ -624,12 +626,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("グルーブ")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("グルーブ", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["上半身", "下半身", "ﾈｸﾀｲＩＫ", "左髪ＩＫ", "右髪ＩＫ"]:
@@ -640,12 +644,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("腰")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("腰", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["上半身", "下半身", "ﾈｸﾀｲＩＫ", "左髪ＩＫ", "右髪ＩＫ"]:
@@ -656,12 +662,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("上半身2")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("上半身2", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["首", "右肩", "左肩", "ﾈｸﾀｲ１", "首根元"]:
@@ -674,12 +682,14 @@ def test_insert_standard_bone() -> None:
         elif b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("右肩P")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("右肩P", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["右肩"]:
@@ -690,12 +700,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("左肩P")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("左肩P", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["左肩"]:
@@ -706,12 +718,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("右肩C")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("右肩C", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["右腕"]:
@@ -722,12 +736,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("左肩C")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("左肩C", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["左腕"]:
@@ -738,12 +754,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("左腕捩")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("左腕捩", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["左ひじ"]:
@@ -754,12 +772,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("右腕捩")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("右腕捩", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["右ひじ"]:
@@ -770,12 +790,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("右手捩")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("右手捩", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["右手首", "右袖"]:
@@ -786,12 +808,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("左手捩")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("左手捩", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["左手首", "左袖"]:
@@ -802,12 +826,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("腰キャンセル右")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("腰キャンセル右", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["右足"]:
@@ -818,12 +844,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("腰キャンセル左")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("腰キャンセル左", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["左足"]:
@@ -834,12 +862,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("左足IK親")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("左足IK親", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["左足ＩＫ"]:
@@ -850,12 +880,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("右足IK親")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("右足IK親", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["右足ＩＫ"]:
@@ -866,12 +898,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("右親指０")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("右親指０", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["右親指１"]:
@@ -882,12 +916,14 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
     parent_names = dict(
         [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    model.insert_standard_bone("左親指０")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("左親指０", bone_matrixes)
 
     for b in model.bones:
         if b.name in ["左親指１"]:
@@ -898,29 +934,37 @@ def test_insert_standard_bone() -> None:
         if b.name in tail_names and b.tail_index >= 0:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
+    model.setup()
     # -------
-    model.insert_standard_bone("右足D")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("右足D", bone_matrixes)
     assert model.bones["右足D"].layer == 1
     assert model.bones["右足D"].parent_index == model.bones["腰キャンセル右"].index
     assert model.bones["右足D"].effect_index == model.bones["右足"].index
     assert model.bones["右足"].parent_index == model.bones["腰キャンセル右"].index
 
+    model.setup()
     # -------
-    model.insert_standard_bone("右ひざD")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("右ひざD", bone_matrixes)
     assert model.bones["右ひざD"].layer == 1
     assert model.bones["右ひざD"].parent_index == model.bones["右足D"].index
     assert model.bones["右ひざD"].effect_index == model.bones["右ひざ"].index
     assert model.bones["右ひざ"].parent_index == model.bones["右足"].index
 
+    model.setup()
     # -------
-    model.insert_standard_bone("右足首D")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("右足首D", bone_matrixes)
     assert model.bones["右足首D"].layer == 1
     assert model.bones["右足首D"].parent_index == model.bones["右ひざD"].index
     assert model.bones["右足首D"].effect_index == model.bones["右足首"].index
     assert model.bones["右足首"].parent_index == model.bones["右ひざ"].index
 
+    model.setup()
     # -------
-    model.insert_standard_bone("右足先EX")
+    bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
+    model.insert_standard_bone("右足先EX", bone_matrixes)
     assert model.bones["右足先EX"].layer == 1
     assert model.bones["右足先EX"].parent_index == model.bones["右足首D"].index
 

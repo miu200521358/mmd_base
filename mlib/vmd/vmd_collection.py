@@ -2,7 +2,7 @@ import os
 from bisect import bisect_left
 from functools import lru_cache
 from math import acos, degrees
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 
@@ -24,6 +24,7 @@ from mlib.pmx.pmx_part import (
 )
 from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
+from mlib.vmd.vmd_tree import VmdBoneFrameTrees
 
 logger = MLogger(os.path.basename(__file__), level=1)
 
@@ -123,48 +124,6 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         return bf
 
 
-class VmdBoneFrameTree:
-    LAST_NAME = "-1"
-
-    def __init__(self) -> None:
-        self.data: dict[int, dict[str, dict[str, Union[MMatrix4x4, MVector3D]]]] = {}
-
-    def append(self, fno: int, bone_name: str, matrix: MMatrix4x4, position: MVector3D, tail_position: MVector3D):
-        """
-        ボーン変形結果追加
-
-        Parameters
-        ----------
-        fno: キーフレ
-        bone_name: ボーン名
-        matrix : 親ボーンから見た行列
-        position : ボーン変形後のグローバル位置
-        """
-        if fno not in self.data:
-            self.data[fno] = {}
-        if bone_name not in self.data[fno]:
-            self.data[fno][bone_name] = {}
-        self.data[fno][bone_name]["matrix"] = matrix
-        self.data[fno][bone_name]["position"] = position
-        self.data[fno][bone_name]["tail_position"] = tail_position
-
-    def matrix(self, fno: int, bone_name: str) -> MMatrix4x4:
-        """行列の取得"""
-        return self.data[fno][bone_name]["matrix"]
-
-    def position(self, fno: int, bone_name: str) -> MVector3D:
-        """位置の取得"""
-        return self.data[fno][bone_name]["position"]
-
-    def tail_position(self, fno: int, bone_name: str) -> MVector3D:
-        """末端位置（次のボーン）の取得"""
-        return self.data[fno][bone_name]["tail_position"]
-
-    def exists(self, fno: int, bone_name: str) -> bool:
-        """既に該当ボーンの情報が登録されているか"""
-        return fno in self.data and bone_name in self.data[fno]
-
-
 class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     """
     ボーンキーフレ辞書
@@ -205,7 +164,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone_names: list[str],
         model: PmxModel,
         append_ik: bool = True,
-    ) -> VmdBoneFrameTree:
+    ) -> VmdBoneFrameTrees:
         """
         指定されたキーフレ番号の行列計算結果を返す
 
@@ -230,7 +189,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 self.calc_ik_rotations(fno, model, bone_names)
 
         bone_trees = model.bone_trees.filter(*bone_names)
-        bone_matrixes = VmdBoneFrameTree()
+        bone_matrixes = VmdBoneFrameTrees()
 
         for bone_tree in bone_trees.values():
             row = len(fnos)
@@ -641,7 +600,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 continue
 
             ik_matrixes = self.get_matrix_by_indexes([fno], [ik_bone.name], model, append_ik=False)
-            global_target_pos = ik_matrixes.position(fno, ik_bone.name)
+            global_target_pos = ik_matrixes[fno, ik_bone.name].position
 
             # IKターゲットボーンツリー
             effector_bone = model.bones[ik_bone.ik.bone_index]
