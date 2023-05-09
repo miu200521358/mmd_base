@@ -858,7 +858,7 @@ class PmxModel(BaseHashModel):
         vertices_indexes = self.get_vertices_by_bone()
 
         if "上半身2" in bone_names:
-            self.separate_weights("上半身", "上半身2", VecAxis.Y, 0.7, vertices_indexes.get(self.bones["上半身"].index, []))
+            self.separate_weights("上半身", "上半身2", VecAxis.Y, 0.4, vertices_indexes.get(self.bones["上半身"].index, []))
         if "右足先EX" in bone_names:
             self.separate_weights("右足首D", "右足先EX", VecAxis.Z, 0.2, vertices_indexes.get(self.bones["右足首D"].index, []))
             self.separate_weights("右足首", "右足先EX", VecAxis.Z, 0.2, vertices_indexes.get(self.bones["右足首"].index, []))
