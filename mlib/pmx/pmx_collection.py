@@ -1183,23 +1183,24 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
         # ----------
 
+        writable_bones = model.bones.writable()
+
         # ボーン位置
         self.bones = np.array(
             [
                 np.fromiter(
                     [
                         *b.position.gl.vector,
-                        b.index / len(model.bones),
+                        b.index / len(writable_bones),
                     ],
                     dtype=np.float32,
                     count=4,
                 )
-                for b in model.bones
-                if 0 <= b.index
+                for b in writable_bones
             ],
         )
 
-        bone_face_dtype: type = np.uint8 if 256 > len(model.bones) else np.uint16 if 65536 > len(model.bones) else np.uint32
+        bone_face_dtype: type = np.uint8 if 256 > len(writable_bones) else np.uint16 if 65536 > len(writable_bones) else np.uint32
 
         # ボーン親子関係
         self.bone_hierarchies: np.ndarray = np.array(
@@ -1212,8 +1213,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
                     dtype=bone_face_dtype,
                     count=2,
                 )
-                for b in model.bones
-                if 0 <= b.parent_index and 0 <= b.index
+                for b in writable_bones
             ],
         )
 
