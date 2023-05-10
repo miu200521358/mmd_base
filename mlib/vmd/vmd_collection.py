@@ -1154,13 +1154,11 @@ class VmdMotion(BaseHashModel):
         group_vertex_morph_poses, group_morph_bone_frames, group_materials = self.morphs.animate_group_morphs(fno, model, material_morphs)
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
-        morph_bone_frames = VmdBoneFrames()
-        for bf_frames in [morph_bone_frames, group_morph_bone_frames]:
-            # ボーンモーフ・グループボーンモーフの順番で重ねていく
-            for bfs in bf_frames:
-                bf = bfs[fno]
-                mbf = morph_bone_frames[bf.name][bf.index]
-                morph_bone_frames[bf.name][bf.index] = mbf + bf
+        for bfs in group_morph_bone_frames:
+            bf = bfs[fno]
+            mbf = morph_bone_frames[bf.name][bf.index]
+            morph_bone_frames[bf.name][bf.index] = mbf + bf
+
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: モーフキーフレ加算")
 
         # モーフボーン操作
