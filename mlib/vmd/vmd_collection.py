@@ -232,9 +232,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 scales[n, -1] = np.ones(3)
             # 親ボーンから見たローカル座標行列
             matrixes = MMatrix4x4List(row, col)
-            matrixes.scale(scales.tolist())
             matrixes.translate(poses.tolist())
             matrixes.rotate(qqs.tolist())
+            matrixes.scale(scales.tolist())
             # グローバル座標行列
             global_mats = matrixes.matmul_cols()
             # グローバル位置
@@ -645,9 +645,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         # ボーンのスケール
                         scales[0, m] = self.get_scale(it_bone, fno, model).vector
                     matrixes = MMatrix4x4List(1, col)
-                    matrixes.scale(scales.tolist())
                     matrixes.translate(poses.tolist())
                     matrixes.rotate(qqs.tolist())
+                    matrixes.scale(scales.tolist())
                     effector_result_mats = matrixes.matmul_cols()
                     global_effector_pos = MVector3D(*effector_result_mats.to_positions()[0, -1])
 
@@ -674,9 +674,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         # ボーンのスケール
                         scales[0, m] = self.get_scale(it_bone, fno, model).vector
                     matrixes = MMatrix4x4List(1, col)
-                    matrixes.scale(scales.tolist())
                     matrixes.translate(poses.tolist())
                     matrixes.rotate(qqs.tolist())
+                    matrixes.scale(scales.tolist())
                     link_target_mats = matrixes.matmul_cols()
 
                     # 注目ノード（実際に動かすボーン）
@@ -1172,13 +1172,13 @@ class VmdMotion(BaseHashModel):
         # ボーン変形行列
         matrixes = MMatrix4x4List(morph_bone_poses.shape[0], morph_bone_poses.shape[1])
         # モーフの適用
-        matrixes.scale(morph_bone_scales.tolist())
         matrixes.translate(morph_bone_poses.tolist())
         matrixes.rotate(morph_bone_qqs.tolist())
+        matrixes.scale(morph_bone_scales.tolist())
         # モーションの適用
-        matrixes.scale(motion_bone_scales.tolist())
         matrixes.translate(motion_bone_poses.tolist())
         matrixes.rotate(motion_bone_qqs.tolist())
+        matrixes.scale(motion_bone_scales.tolist())
 
         bone_matrixes: list[np.ndarray] = []
         for bone_index in model.bones.indexes:
