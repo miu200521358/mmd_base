@@ -252,7 +252,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return bone_matrixes
 
-    def animate_bone_matrixes(self, fno: int, model: PmxModel, bone_names: list[str] = []) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def animate_bone_matrixes(
+        self,
+        fno: int,
+        model: PmxModel,
+        bone_names: list[str] = [],
+        append_ik: bool = True,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         row = 1
         col = len(model.bones)
         poses = np.full((row, col, 3), np.zeros(3))
@@ -265,8 +271,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         if not bone_names:
             bone_names = model.bones.tail_bone_names
 
-        # IK回転を事前に求めておく
-        self.calc_ik_rotations(fno, model)
+        if append_ik:
+            # IK回転を事前に求めておく
+            self.calc_ik_rotations(fno, model)
 
         for bone_name in bone_names:
             for bone in model.bone_trees[bone_name]:
@@ -283,7 +290,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     if (fno, model.digest, bone.index) in self.cache_qqs:
                         qqs[0, bone.index] = self.cache_qqs[(fno, model.digest, bone.index)].to_matrix4x4().vector
                     else:
-                        qq = self.get_rotation(bone, fno, model, append_ik=True)
+                        qq = self.get_rotation(bone, fno, model, append_ik=append_ik)
                         self.cache_qqs[(fno, model.digest, bone.index)] = qq
                         qqs[0, bone.index] = qq.to_matrix4x4().vector
                     # 計算済みボーンとして登録
@@ -1147,24 +1154,33 @@ class VmdMotion(BaseHashModel):
         group_vertex_morph_poses, group_morph_bone_frames, group_materials = self.morphs.animate_group_morphs(fno, model, material_morphs)
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
-        bone_frames = VmdBoneFrames()
-        for bf_frames in [morph_bone_frames, group_morph_bone_frames, self.bones]:
-            # ボーンモーフ・グループボーンモーフ・ボーンキーフレの順番で重ねていく
+        morph_bone_frames = VmdBoneFrames()
+        for bf_frames in [morph_bone_frames, group_morph_bone_frames]:
+            # ボーンモーフ・グループボーンモーフの順番で重ねていく
             for bfs in bf_frames:
                 bf = bfs[fno]
-                mbf = bone_frames[bf.name][bf.index]
-                bone_frames[bf.name][bf.index] = mbf + bf
-        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: キーフレ加算")
+                mbf = morph_bone_frames[bf.name][bf.index]
+                morph_bone_frames[bf.name][bf.index] = mbf + bf
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: モーフキーフレ加算")
 
-        # ボーン操作
-        bone_poses, bone_qqs, bone_scales = bone_frames.animate_bone_matrixes(fno, model)
-        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン操作")
+        # モーフボーン操作
+        morph_bone_poses, morph_bone_qqs, morph_bone_scales = morph_bone_frames.animate_bone_matrixes(fno, model, append_ik=False)
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: モーフボーン操作")
+
+        # モーションボーン操作
+        motion_bone_poses, motion_bone_qqs, motion_bone_scales = self.bones.animate_bone_matrixes(fno, model)
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: モーションボーン操作")
 
         # ボーン変形行列
-        matrixes = MMatrix4x4List(bone_poses.shape[0], bone_poses.shape[1])
-        matrixes.scale(bone_scales.tolist())
-        matrixes.translate(bone_poses.tolist())
-        matrixes.rotate(bone_qqs.tolist())
+        matrixes = MMatrix4x4List(morph_bone_poses.shape[0], morph_bone_poses.shape[1])
+        # モーフの適用
+        matrixes.scale(morph_bone_scales.tolist())
+        matrixes.translate(morph_bone_poses.tolist())
+        matrixes.rotate(morph_bone_qqs.tolist())
+        # モーションの適用
+        matrixes.scale(motion_bone_scales.tolist())
+        matrixes.translate(motion_bone_poses.tolist())
+        matrixes.rotate(motion_bone_qqs.tolist())
 
         bone_matrixes: list[np.ndarray] = []
         for bone_index in model.bones.indexes:

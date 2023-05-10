@@ -287,13 +287,13 @@ class TestFrame(BaseFrame):
 
         dress_motion: VmdMotion = self.file_panel.motion_ctrl.data.copy()
 
-        bf = VmdBoneFrame(0, "右腕")
-        bf.scale = MVector3D(0.5, 1, 1)
-        dress_motion.bones["右腕"].append(bf)
+        # bf = VmdBoneFrame(0, "右腕")
+        # bf.scale = MVector3D(0.5, 1, 1)
+        # dress_motion.bones["右腕"].append(bf)
 
-        bf2 = VmdBoneFrame(0, "右ひじ")
-        bf2.scale = MVector3D(1 / 0.5, 1, 1)
-        dress_motion.bones["右ひじ"].append(bf2)
+        # bf2 = VmdBoneFrame(0, "右ひじ")
+        # bf2.scale = MVector3D(1 / 0.5, 1, 1)
+        # dress_motion.bones["右ひじ"].append(bf2)
 
         try:
             self.config_panel.canvas.set_context()
