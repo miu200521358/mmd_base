@@ -772,6 +772,127 @@ class MQuaternion(MVector):
         m00, m01, m02, m10, m11, m12, m20, m21, m22 = mat3x3.flatten()
         return MMatrix4x4(m00, m01, m02, 0.0, m10, m11, m12, 0.0, m20, m21, m22, 0.0, 0.0, 0.0, 0.0, 1.0)
 
+    def to_matrix4x4_axis(self, local_x_axis: MVector3D, local_z_axis: MVector3D) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        if not self:
+            return np.eye(4), np.eye(4), np.eye(4)
+
+        # クォータニオンを回転行列に変換
+        R = self.to_matrix4x4().vector
+
+        x_axis = local_x_axis.copy().vector
+        z_axis = local_z_axis.copy().vector
+
+        # X軸回転行列を作成
+        x_axis = x_axis / np.linalg.norm(x_axis)
+        y_axis = np.cross(z_axis, x_axis)
+        y_axis = y_axis / np.linalg.norm(y_axis)
+        z_axis = z_axis / np.linalg.norm(z_axis)
+        # X = np.array([[1, 0, 0, 0], [0, y_axis[2], -y_axis[1], 0], [0, y_axis[1], y_axis[2], 0], [0, 0, 0, 1]])
+        theta = np.arctan2(x_axis[1], x_axis[0])
+        RX = np.array([[1, 0, 0, 0], [0, np.cos(theta), np.sin(theta), 0], [0, -np.sin(theta), np.cos(theta), 0], [0, 0, 0, 1]])
+
+        # Z軸回転行列を作成
+        z_axis_X = np.dot(RX, np.concatenate((z_axis, [0])))
+        theta = np.arctan2(z_axis_X[1], z_axis_X[0])
+        RZ = np.array([[np.cos(theta), np.sin(theta), 0, 0], [-np.sin(theta), np.cos(theta), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+
+        # Y軸回転行列を作成
+        RY = np.dot(np.dot(np.linalg.inv(RX), np.linalg.inv(RZ)), np.dot(np.dot(R, RZ), RX))
+
+        return RX, RY, RZ
+
+    # def to_matrix4x4_axis(self, local_axis: MVector3D) -> "MMatrix4x4":
+    #     if not self:
+    #         return MMatrix4x4()
+
+    #     quat = np.array(self.vector.components, dtype=np.float64, copy=True)
+    #     axis = local_axis.vector
+
+    #     # クォータニオンを正規化
+    #     quat /= np.linalg.norm(quat)
+
+    #     # Rodriguesの任意軸回転行列を使用して、回転行列を計算する
+    #     angle = 2 * np.arccos(quat[0])
+    #     r = quat[1:]
+    #     v = axis / np.linalg.norm(axis)
+    #     cross_prod = np.cross(v, r)
+    #     rotation_matrix = np.cos(angle) * np.eye(3) + np.sin(angle) * cross_prod + (1 - np.cos(angle)) * np.outer(cross_prod, cross_prod)
+    #     rotation_matrix4x4 = np.pad(rotation_matrix, [(0, 0), (0, 1)], mode="constant", constant_values=0)
+
+    #     return MMatrix4x4(*rotation_matrix4x4.flatten())
+
+    # def to_matrix4x4_axis(self, local_axis: MVector3D) -> "MMatrix4x4":
+    #     if not self:
+    #         return MMatrix4x4()
+    #     q = np.array(self.vector.components, dtype=np.float64, copy=True)
+    #     n = np.dot(q, q)
+    #     if n < np.finfo(q.dtype).eps:
+    #         return np.identity(4)
+    #     q *= np.sqrt(2.0 / n)
+    #     q = np.outer(q, q)
+    #     axis = local_axis.vector
+    #     R_axis = np.array(
+    #         [
+    #             [axis[0] * axis[0], axis[0] * axis[1], axis[0] * axis[2], 0],
+    #             [axis[1] * axis[0], axis[1] * axis[1], axis[1] * axis[2], 0],
+    #             [axis[2] * axis[0], axis[2] * axis[1], axis[2] * axis[2], 0],
+    #             [0, 0, 0, 1],
+    #         ]
+    #     )
+    #     # 回転行列を計算する
+    #     rotation_matrix = (np.eye(4) + np.sin(np.pi / 2) * (q - np.eye(4))) @ R_axis + np.cos(np.pi / 2) * np.eye(4)
+    #     return MMatrix4x4(*rotation_matrix.flatten())
+    # local_rot_matrix = np.pad(rotation_matrix, [(0, 0), (0, 1)], mode="constant", constant_values=0)
+
+    # return MMatrix4x4(
+    #     m11=local_rot_matrix[0, 0],
+    #     m12=local_rot_matrix[0, 1],
+    #     m13=local_rot_matrix[0, 2],
+    #     m21=local_rot_matrix[1, 0],
+    #     m22=local_rot_matrix[1, 1],
+    #     m23=local_rot_matrix[1, 2],
+    #     m31=local_rot_matrix[2, 0],
+    #     m32=local_rot_matrix[2, 1],
+    #     m33=local_rot_matrix[2, 2],
+    # )
+
+    # def to_matrix4x4_axis(self, local_axis: np.ndarray) -> "MMatrix4x4":
+    #     if not self:
+    #         return MMatrix4x4()
+
+    #     # クォータニオンを回転軸と回転角に変換する
+    #     theta = 2 * np.arccos(self.theta)
+    #     if np.isclose(theta, 0):
+    #         # 回転角が0の場合、回転行列は単位行列となる
+    #         return MMatrix4x4()
+    #     axis = self.xyz.vector / np.sin(theta / 2)
+
+    #     # 回転行列を計算する
+    #     rot_axis = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
+    #     rot_axis_T = rot_axis.T
+    #     rot = (
+    #         np.cos(theta / 2) * np.eye(3)
+    #         + 1j * np.sin(theta / 2) * rot_axis
+    #         - 1j * np.sin(theta / 2) * rot_axis_T
+    #         + (1 - np.cos(theta / 2)) * np.outer(axis, axis)
+    #     )
+
+    #     # 回転行列をローカル軸に合わせて回転させる
+    #     inv_local_axis = np.linalg.inv(local_axis)
+    #     local_rot = inv_local_axis @ rot @ local_axis
+
+    #     return MMatrix4x4(
+    #         m11=local_rot[0, 0],
+    #         m12=local_rot[0, 1],
+    #         m13=local_rot[0, 2],
+    #         m21=local_rot[1, 0],
+    #         m22=local_rot[1, 1],
+    #         m23=local_rot[1, 2],
+    #         m31=local_rot[2, 0],
+    #         m32=local_rot[2, 1],
+    #         m33=local_rot[2, 2],
+    #     )
+
     def __mul__(self, other: Union[float, MVector3D, "MQuaternion"]):
         if isinstance(other, MVector3D):
             # quaternion と vec3 のかけ算は vec3 を返す
