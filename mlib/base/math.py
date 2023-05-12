@@ -1558,3 +1558,38 @@ def operate_vector(v: MVector, other: Union[MVector, float, int], op):
     else:
         v2 = v.__class__(*v1)
     return v2.effective()
+
+
+def intersect_line_plane(line_point: MVector3D, line_direction: MVector3D, plane_point: MVector3D, plane_normal: MVector3D) -> MVector3D:
+    """
+    直線と平面の交点を求める処理
+
+    Parameters
+    ----------
+    line_point : 直線上の任意の1点
+    line_direction : 直線の方向ベクトル
+    plane_point : 平面上の任意の1点
+    plane_normal : 平面の法線ベクトル
+
+    Returns
+    -------
+    交点位置
+    """
+
+    # 直線の方向ベクトルを正規化する
+    line_direction.normalize()
+
+    # 平面の法線ベクトルを正規化する
+    plane_normal.normalize()
+
+    denominator = line_direction.dot(plane_normal)
+
+    # 直線と平面が平行である場合は交点が存在しない
+    if np.abs(denominator) < 1e-6:
+        return MVector3D()
+
+    # 直線と平面が交わる点の位置ベクトルを計算する
+    t = plane_normal.dot(plane_point - line_point) / denominator
+    intersection = line_point + line_direction * t
+
+    return intersection

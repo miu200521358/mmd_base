@@ -2507,5 +2507,29 @@ def test_MMatrix4x4List_matmul_cols():
     ).all()
 
 
+def test_intersect_line_plane():
+    import numpy as np
+
+    from mlib.base.math import MVector3D, intersect_line_plane
+
+    line_point = MVector3D(1, 2, 3.2)
+    line_direction = MVector3D(0, -1, 0)
+    plane_point = MVector3D(0, 0, 0)
+    plane_normal = MVector3D(0, 1, 0)
+    assert np.isclose(
+        MVector3D(1.0, 0.0, 3.2).vector,
+        intersect_line_plane(line_point, line_direction, plane_point, plane_normal).vector,
+    ).all()
+
+    line_point = MVector3D(1, 2, 3.2)
+    line_direction = MVector3D(0, -2.8, -0.2)
+    plane_point = MVector3D(0, 0, 0)
+    plane_normal = MVector3D(0, 1, 0)
+    assert np.isclose(
+        MVector3D(1.0, 0.0, 3.05714286).vector,
+        intersect_line_plane(line_point, line_direction, plane_point, plane_normal).vector,
+    ).all()
+
+
 if __name__ == "__main__":
     pytest.main()
