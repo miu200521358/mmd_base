@@ -878,6 +878,16 @@ class Bone(BaseIndexNameModel):
         ]
 
     @property
+    def is_shoulder_p(self) -> bool:
+        """肩D系列であるか"""
+        return self.name in [
+            "左肩P",
+            "左肩C",
+            "右肩P",
+            "右肩C",
+        ]
+
+    @property
     def is_leg_fk(self) -> bool:
         """足FK系列であるか"""
         return (
