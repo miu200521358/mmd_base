@@ -2531,5 +2531,22 @@ def test_intersect_line_plane():
     ).all()
 
 
+def test_align_triangle():
+    import numpy as np
+
+    from mlib.base.math import MVector3D, align_triangle
+
+    assert np.isclose(
+        MVector3D(-0.00166671, 15.257457750178212, -0.8144445770103483).vector,
+        align_triangle(
+            MVector3D(0, 15.75281, 0.3646003),
+            MVector3D(0, 11.93415, -0.2263783),
+            MVector3D(0, 13.20861, -0.3309),
+            MVector3D(-0.00166671, 18.97112, 0.2007481),
+            MVector3D(5.339733e-07, 13.34194, 0.5546426),
+        ).vector,
+    ).all()
+
+
 if __name__ == "__main__":
     pytest.main()

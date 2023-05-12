@@ -1593,3 +1593,43 @@ def intersect_line_plane(line_point: MVector3D, line_direction: MVector3D, plane
     intersection = line_point + line_direction * t
 
     return intersection
+
+
+import numpy as np
+
+
+def align_triangle(
+    a1: MVector3D,
+    a2: MVector3D,
+    a3: MVector3D,
+    b1: MVector3D,
+    b2: MVector3D,
+) -> MVector3D:
+    """
+    三角形Aに形を合わせた三角形BのためのB3を求める（B1, B2は固定とする）
+
+    Parameters
+    ----------
+    A1 : MVector3D
+    A2 : MVector3D
+    A3 : MVector3D
+    B1 : MVector3D
+    B2 : MVector3D
+
+    Returns
+    -------
+    the new positions of B2 and B3 (3D vectors)
+    """
+    A1, A2, A3, B1, B2 = np.array([a1.vector, a2.vector, a3.vector, b1.vector, b2.vector])
+
+    # A-1, A-2, B-1, B-2を固定したベクトルを作成
+    v1 = A2 - A1
+    v2 = B2 - B1
+
+    # B-3'を求めるためのベクトルを計算
+    v3_prime = (A3 - A1) / np.linalg.norm(v1) * np.linalg.norm(v2)
+
+    # B-3'をB-1, B-2からオフセット
+    B3_prime = B1 + v3_prime
+
+    return MVector3D(*B3_prime)
