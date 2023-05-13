@@ -908,15 +908,13 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             # モーションによるボーンモーフ変動量
             for offset in morph.offsets:
                 if type(offset) is BoneMorphOffset and offset.bone_index in model.bones:
-                    bf = self.animate_bone_morph_frame(fno, model, offset, mf.ratio)
+                    bf = bone_frames[model.bones[offset.bone_index].name][fno]
+                    bf = self.animate_bone_morph_frame(fno, model, bf, offset, mf.ratio)
                     bone_frames[bf.name][fno] = bf
 
         return bone_frames
 
-    def animate_bone_morph_frame(self, fno: int, model: PmxModel, offset: BoneMorphOffset, ratio: float) -> VmdBoneFrame:
-        bone = model.bones[offset.bone_index]
-
-        bf = VmdBoneFrame(name=bone.name, index=fno)
+    def animate_bone_morph_frame(self, fno: int, model: PmxModel, bf: VmdBoneFrame, offset: BoneMorphOffset, ratio: float) -> VmdBoneFrame:
         bf.position += offset.position * ratio
         bf.rotation *= MQuaternion.from_euler_degrees(offset.rotation.degrees * ratio)
         if offset.scale != MVector3D(1, 1, 1):
@@ -949,7 +947,8 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
                             ratio_pos: MVector3D = offset.position_offset * mf_factor
                             group_vertex_poses[offset.vertex_index] += ratio_pos.gl.vector
                         elif type(offset) is BoneMorphOffset and offset.bone_index in model.bones:
-                            bf = self.animate_bone_morph_frame(fno, model, offset, mf_factor)
+                            bf = bone_frames[model.bones[offset.bone_index].name][fno]
+                            bf = self.animate_bone_morph_frame(fno, model, bf, offset, mf_factor)
                             bone_frames[bf.name][fno] = bf
                         elif type(offset) is MaterialMorphOffset and offset.material_index in model.materials:
                             materials = self.animate_material_morph_frame(model, offset, mf_factor, materials, MShader.LIGHT_AMBIENT4)
