@@ -260,7 +260,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
     def exists(self, bone_names: list[str]) -> bool:
         """指定されたボーン名がすべて存在しているか"""
         for bone_name in bone_names:
-            if bone_name not in self.data:
+            if bone_name not in self.names:
                 return False
         return True
 
