@@ -552,7 +552,7 @@ class PmxModel(BaseHashModel):
             leg_root_bone.is_system = True
             self.bones.append(leg_root_bone)
 
-        logger.info("-- モデルセットアップ：システム用ボーン")
+        logger.info("モデルセットアップ：システム用ボーン")
 
         for bone in self.bones:
             # IKのリンクとターゲット
@@ -593,7 +593,7 @@ class PmxModel(BaseHashModel):
         # ボーンツリー生成
         self.bone_trees = self.bones.create_bone_trees()
 
-        logger.info("-- モデルセットアップ：ボーンツリー")
+        logger.info("モデルセットアップ：ボーンツリー")
 
         # 距離が離れている親ボーンINDEXの取得
         for bone_tree in self.bone_trees:
@@ -1290,12 +1290,12 @@ class Meshes(BaseIndexDictModel[Mesh]):
                 # 不透明描写かつ非透過度が1.0未満の場合スルー
                 continue
 
-            # アルファテストを有効にする
-            gl.glEnable(gl.GL_ALPHA_TEST)
+            # # アルファテストを有効にする
+            # gl.glEnable(gl.GL_ALPHA_TEST)
 
-            # ブレンディングを有効にする
-            gl.glEnable(gl.GL_BLEND)
-            gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+            # # ブレンディングを有効にする
+            # gl.glEnable(gl.GL_BLEND)
+            # gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
             # モデル描画
             self.shader.use(ProgramType.MODEL)

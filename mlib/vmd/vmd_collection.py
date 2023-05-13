@@ -1015,7 +1015,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             if not mf.ratio:
                 continue
 
-            # モーションによる頂点モーフ変動量
+            # モーションによる材質モーフ変動量
             for offset in morph.offsets:
                 if type(offset) is MaterialMorphOffset and (offset.material_index in model.materials or 0 > offset.material_index):
                     materials = self.animate_material_morph_frame(model, offset, mf.ratio, materials, MShader.LIGHT_AMBIENT4)
@@ -1142,6 +1142,7 @@ class VmdMotion(BaseHashModel):
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 追加UVモーフ1")
 
         # 追加UVモーフ2-4は無視
+
         # 材質モーフ
         material_morphs = self.morphs.animate_material_morphs(fno, model)
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 材質モーフ")

@@ -1831,7 +1831,12 @@ class ShaderMaterial:
 
     @property
     def specular(self) -> np.ndarray:
-        return np.array([*(self.material.specular * self.light_ambient4.xyz).vector, self.material.specular_factor])
+        return np.array(
+            [
+                *(self.material.specular * self.light_ambient4.xyz).vector,
+                self.material.specular_factor,
+            ]
+        )
 
     @property
     def edge_color(self) -> np.ndarray:
