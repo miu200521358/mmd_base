@@ -716,8 +716,8 @@ class PmxModel(BaseHashModel):
             bone.position = MVector3D()
         elif "グルーブ" == bone.name and "センター" in self.bones:
             bone.position = bone_matrixes[0, "センター"].position * 1.025
-        elif (bone.is_leg_d and "D" == bone.name[-1]) or "肩P" == bone.name[-2:]:
-            bone.position = self.bones[bone.name[:-1]].position.copy()
+        elif ((bone.is_leg_d and "D" == bone.name[-1]) or "肩P" == bone.name[-2:]) and bone.name[:-1] in self.bones:
+            bone.position = bone_matrixes[0, bone.name[:-1]].position.copy()
         elif "肩C" in bone.name and f"{direction}腕" in self.bones:
             bone.position = bone_matrixes[0, f"{direction}腕"].position.copy()
             bone.tail_position = MVector3D()
