@@ -1,3 +1,4 @@
+from typing import Optional
 import wx
 
 
@@ -14,6 +15,7 @@ class FloatSliderCtrl:
         position: wx.Position = wx.DefaultPosition,
         size: wx.Size = wx.DefaultSize,
         change_event=None,
+        tooltip: Optional[str] = None,
     ) -> None:
         self._min = min_value
         self._max = max_value
@@ -24,10 +26,14 @@ class FloatSliderCtrl:
 
         self._value_ctrl = wx.TextCtrl(parent, wx.ID_ANY, str(f"{value:.2f}"), wx.DefaultPosition, wx.Size(50, -1))
         self._value_ctrl.Bind(wx.EVT_TEXT, self._on_change_value)
+        if tooltip:
+            self._value_ctrl.SetToolTip(tooltip)
 
         self._slider = wx.Slider(parent, wx.ID_ANY, i_value, i_min, i_max, position, size, wx.SL_HORIZONTAL)
         self._slider.Bind(wx.EVT_SCROLL_CHANGED, self._on_scroll)
         self._slider.Bind(wx.EVT_MOUSEWHEEL, self._on_wheel_spin)
+        if tooltip:
+            self._slider.SetToolTip(tooltip)
 
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer.Add(self._value_ctrl, 0, wx.LEFT | wx.TOP | wx.BOTTOM, border)
