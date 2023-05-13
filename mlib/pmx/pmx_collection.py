@@ -529,7 +529,7 @@ class PmxModel(BaseHashModel):
 
         # システム用ボーン追加
         if "右腕" in self.bones and "左腕" in self.bones and "上半身" in self.bones and "首根元" not in self.bones:
-            neck_root_bone = Bone(name="首根元", index=10001)
+            neck_root_bone = Bone(name="首根元")
             if "上半身2" in self.bones:
                 neck_root_bone.parent_index = self.bones["上半身2"].index
             else:
@@ -539,7 +539,7 @@ class PmxModel(BaseHashModel):
             self.bones.append(neck_root_bone)
 
         if "右足" in self.bones and "左足" in self.bones and "下半身" in self.bones and "足中心" not in self.bones:
-            leg_root_bone = Bone(name="足中心", index=10002)
+            leg_root_bone = Bone(name="足中心")
             leg_root_bone.parent_index = self.bones["下半身"].index
             leg_root_bone.position = (self.bones["右足"].position + self.bones["左足"].position) / 2
             leg_root_bone.is_system = True
@@ -659,9 +659,9 @@ class PmxModel(BaseHashModel):
                         bone.parent_index == replaced_map[b.parent_index]
                         and is_same_direction
                         and original_parent_distance
-                        and 0.5 > replaced_parent_distance / original_parent_distance
+                        and (0.5 > replaced_parent_distance / original_parent_distance or original_parent.position == bone.position)
                     ):
-                        # 準標準ボーンの範囲外かつ挿入ボーンのと親子関係があり、距離が挿入ボーンの方が近い場合、挿入ボーンで置き換える
+                        # 準標準ボーンの範囲外かつ挿入ボーンのと親子関係があり、距離が挿入ボーンの方が近いか全く同じ位置の場合、挿入ボーンで置き換える
                         b.parent_index = bone.index
                     else:
                         b.parent_index = replaced_map[b.parent_index]
