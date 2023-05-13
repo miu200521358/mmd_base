@@ -919,7 +919,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         bf = VmdBoneFrame(name=bone.name, index=fno)
         bf.position += offset.position * ratio
         bf.rotation *= MQuaternion.from_euler_degrees(offset.rotation.degrees * ratio)
-        if offset.scale:
+        if offset.scale != MVector3D(1, 1, 1):
             bf.scale *= offset.scale * ratio
         return bf
 
