@@ -63,6 +63,10 @@ class FloatSliderCtrl:
     def SetValue(self, v: float):
         self._value_ctrl.SetValue(f"{v:.2f}")
 
+    def ChangeValue(self, v: float):
+        self._value_ctrl.ChangeValue(f"{v:.2f}")
+        self._slider.SetValue(round(v / self._increment))
+
     def GetValue(self):
         return float(self._value_ctrl.GetValue())
 
