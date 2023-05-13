@@ -206,9 +206,9 @@ class MVector(BaseModel):
 
     def __ne__(self, other) -> bool:
         if isinstance(other, MVector):
-            return bool(np.all(np.not_equal(self.vector, other.vector)))
+            return bool(np.any(np.not_equal(self.vector, other.vector)))
         else:
-            return bool(np.all(np.not_equal(self.vector, other)))
+            return bool(np.any(np.not_equal(self.vector, other)))
 
     def __gt__(self, other) -> bool:
         if isinstance(other, MVector):
