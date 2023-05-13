@@ -30,7 +30,7 @@ class FloatSliderCtrl:
             self._value_ctrl.SetToolTip(tooltip)
 
         self._slider = wx.Slider(parent, wx.ID_ANY, i_value, i_min, i_max, position, size, wx.SL_HORIZONTAL)
-        self._slider.Bind(wx.EVT_SCROLL_CHANGED, self._on_scroll)
+        self._slider.Bind(wx.EVT_SCROLL_THUMBRELEASE, self._on_scroll)
         self._slider.Bind(wx.EVT_MOUSEWHEEL, self._on_wheel_spin)
         if tooltip:
             self._slider.SetToolTip(tooltip)
