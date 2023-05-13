@@ -919,7 +919,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         bf = VmdBoneFrame(name=bone.name, index=fno)
         bf.position += offset.position * ratio
         bf.rotation *= MQuaternion.from_euler_degrees(offset.rotation.degrees * ratio)
-        bf.scale *= offset.scale * ratio
+        bf.scale += offset.scale * ratio
         return bf
 
     def animate_group_morphs(self, fno: int, model: PmxModel, materials: list[ShaderMaterial]) -> tuple[np.ndarray, VmdBoneFrames, list[ShaderMaterial]]:
