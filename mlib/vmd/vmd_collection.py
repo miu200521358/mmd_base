@@ -101,10 +101,10 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         next_ik_indexes = self._ik_indexes[slice_idx:]
 
         prev_ik_index = prev_ik_indexes[-1] if prev_ik_indexes else prev_index
-        prev_ik_rotation = self.data[prev_ik_index].ik_rotation or MQuaternion()
+        prev_ik_rotation = self.data[prev_ik_index].ik_rotation or MQuaternion() if prev_ik_index in self.data else MQuaternion()
 
         next_ik_index = next_ik_indexes[0] if next_ik_indexes else next_index
-        next_ik_rotation = self.data[next_ik_index].ik_rotation or prev_ik_rotation
+        next_ik_rotation = self.data[next_ik_index].ik_rotation or MQuaternion() if next_ik_index in self.data else prev_ik_rotation
 
         # 補間結果Yは、FKキーフレ内で計算する
         ry, xy, yy, zy = next_bf.interpolations.evaluate(prev_index, index, next_index)
