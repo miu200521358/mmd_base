@@ -1291,6 +1291,9 @@ class Meshes(BaseIndexDictModel[Mesh]):
                 continue
 
             if 1.0 <= mesh.material.diffuse.w:
+                # 材質自体が不透明時のみアルファテストなどを有効にする
+                # 半透明材質はそもそもアルファテストを有効にしない
+
                 # アルファテストを有効にする
                 gl.glEnable(gl.GL_ALPHA_TEST)
 
