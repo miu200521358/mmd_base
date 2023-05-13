@@ -1290,12 +1290,13 @@ class Meshes(BaseIndexDictModel[Mesh]):
                 # 不透明描写かつ非透過度が1.0未満の場合スルー
                 continue
 
-            # # アルファテストを有効にする
-            # gl.glEnable(gl.GL_ALPHA_TEST)
+            if 1.0 <= mesh.material.diffuse.w:
+                # アルファテストを有効にする
+                gl.glEnable(gl.GL_ALPHA_TEST)
 
-            # # ブレンディングを有効にする
-            # gl.glEnable(gl.GL_BLEND)
-            # gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+                # ブレンディングを有効にする
+                gl.glEnable(gl.GL_BLEND)
+                gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
             # モデル描画
             self.shader.use(ProgramType.MODEL)
