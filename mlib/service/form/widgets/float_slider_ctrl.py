@@ -40,25 +40,17 @@ class FloatSliderCtrl:
         self.sizer.Add(self._slider, 0, wx.TOP | wx.RIGHT | wx.BOTTOM, border)
 
     def _on_scroll(self, event: wx.Event):
-        self.enable(False)
-
         v = max(self._min, min(self._max, self._slider.GetValue() * self._increment))
         self._value_ctrl.ChangeValue(f"{v:.2f}")
 
         if self._change_event:
             self._change_event(event)
 
-        self.enable(True)
-
     def _on_change_value(self, event: wx.Event):
-        self.enable(False)
-
         self._slider.SetValue(round(float(self._value_ctrl.GetValue()) / self._increment))
 
         if self._change_event:
             self._change_event(event)
-
-        self.enable(True)
 
     def _on_wheel_spin(self, event: wx.MouseEvent):
         """マウスホイールによるスピンコントロール"""
