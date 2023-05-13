@@ -698,6 +698,9 @@ class PmxModel(BaseHashModel):
 
     def insert_standard_bone(self, bone_name: str, bone_matrixes: VmdBoneFrameTrees) -> bool:
         bone_setting = STANDARD_BONE_NAMES[bone_name]
+        if bone_name in self.bones:
+            # 既にある場合、作成しない
+            return False
         if not [bname for bname in bone_setting.tails if bname in self.bones] and "D" != bone_name[-1] and "EX" != bone_name[-2:]:
             # 先に接続可能なボーンが無い場合、作成しない
             return False
@@ -1033,7 +1036,7 @@ class PmxModel(BaseHashModel):
                 # 分割先ボーンより上の場合、元ボーンのウェイトをそのまま分割先に置き換える
                 v.deform.indexes = np.where(v.deform.indexes == self.bones[original_name].index, self.bones[separate_name].index, v.deform.indexes)
             else:
-                original_weight = v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)]
+                original_weight = np.sum(v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)])
                 separate_weight = original_weight * separate_factor
                 # 元ボーンは分割先ボーンの残り
                 v.deform.weights = np.where(v.deform.indexes == self.bones[original_name].index, v.deform.weights - separate_weight, v.deform.weights)
