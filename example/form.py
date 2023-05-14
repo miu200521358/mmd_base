@@ -495,9 +495,9 @@ class TestFrame(BaseFrame):
         bf2.scale = MVector3D(-0.5, 0, 0)
         dress_motion.bones["右ひじ"].append(bf2)
 
-        bf = VmdBoneFrame(0, "左腕")
+        bf = VmdBoneFrame(0, "左肩")
         bf.local_scale = MVector3D(0, 0.5, 0)
-        dress_motion.bones["左腕"].append(bf)
+        dress_motion.bones["左肩"].append(bf)
 
         try:
             self.config_panel.canvas.set_context()

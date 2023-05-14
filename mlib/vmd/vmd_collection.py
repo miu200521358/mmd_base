@@ -530,7 +530,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         scale_matrix[:3, :3] += np.diag(local_scale.vector)
 
         # ローカル軸に沿った回転行列
-        rotation_matrix = bone.tail_relative_position.get_local_matrix().vector
+        tail_relative_position = model.bones.get_tail_relative_position(bone.index)
+        rotation_matrix = tail_relative_position.get_local_matrix().vector
 
         # ローカル軸に合わせたスケーリング行列を作成する
         local_scale_matrix = np.linalg.inv(rotation_matrix) @ scale_matrix @ rotation_matrix
