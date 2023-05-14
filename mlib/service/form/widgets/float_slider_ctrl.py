@@ -79,7 +79,9 @@ class FloatSliderCtrl:
         self._slider.SetValue(sv)
 
     def SetValue(self, v: float):
-        self._value_ctrl.SetValue(f"{v:.2f}")
+        tv, sv = self.get_slider_value_in_range(v)
+        self._slider.SetValue(sv)
+        self._value_ctrl.SetValue(tv)
 
     def ChangeValue(self, v: float):
         tv, sv = self.get_slider_value_in_range(v)
