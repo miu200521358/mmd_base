@@ -1,18 +1,20 @@
 import os
+import shutil
 import sys
 from datetime import datetime
 from typing import Any, Optional
+import numpy as np
 
 import wx
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
-from mlib.pmx.pmx_part import Bone
+from mlib.pmx.pmx_part import Bone, Face, Material, SphereMode, Texture, ToonSharing, Vertex
 from mlib.base.exception import MApplicationException
 from mlib.base.logger import MLogger
 from mlib.pmx.canvas import CanvasPanel
-from mlib.pmx.pmx_collection import PmxModel
+from mlib.pmx.pmx_collection import Faces, Materials, PmxModel, Vertices
 from mlib.pmx.pmx_writer import PmxWriter
 from mlib.service.base_worker import BaseWorker
 from mlib.service.form.base_frame import BaseFrame
@@ -122,6 +124,9 @@ class FilePanel(BasePanel):
             "ik_link": [],
         }
 
+        model_bone_map: dict[int, int] = {-1: -1}
+        dress_bone_map: dict[int, int] = {-1: -1}
+
         for bone in model.bones.writable():
             if bone.name in dress_model.bones:
                 continue
@@ -138,7 +143,8 @@ class FilePanel(BasePanel):
                         "ik_target": [dress.bones[dress_bone.ik.bone_index].name if dress_bone.ik else Bone.SYSTEM_ROOT_NAME],
                         "ik_link": [dress.bones[link.bone_index].name for link in dress_bone.ik.links] if dress_bone.ik else [],
                     }
-                    dress_model.bones.append(copy_bone)
+                    dress_model.bones.append(copy_bone, is_sort=False)
+                    dress_bone_map[bone.index] = copy_bone.index
 
             copy_bone = bone.copy()
             copy_bone.index = len(dress_model.bones.writable())
@@ -149,7 +155,8 @@ class FilePanel(BasePanel):
                 "ik_target": [model.bones[bone.ik.bone_index].name if bone.ik else Bone.SYSTEM_ROOT_NAME],
                 "ik_link": [model.bones[link.bone_index].name for link in bone.ik.links] if bone.ik else [],
             }
-            dress_model.bones.append(copy_bone)
+            dress_model.bones.append(copy_bone, is_sort=False)
+            model_bone_map[bone.index] = copy_bone.index
 
         for bone in dress.bones.writable():
             if bone.name in dress_model.bones:
@@ -164,7 +171,8 @@ class FilePanel(BasePanel):
                 "ik_target": [dress.bones[bone.ik.bone_index].name if bone.ik else Bone.SYSTEM_ROOT_NAME],
                 "ik_link": [dress.bones[link.bone_index].name for link in bone.ik.links] if bone.ik else [],
             }
-            dress_model.bones.append(copy_bone)
+            dress_model.bones.append(copy_bone, is_sort=False)
+            dress_bone_map[bone.index] = copy_bone.index
 
         for bone in dress_model.bones:
             bone_setting = bone_map[bone.index]
@@ -176,8 +184,108 @@ class FilePanel(BasePanel):
                 for n in range(len(bone.ik.links)):
                     bone.ik.links[n].bone_index = dress_model.bones[bone_setting["ik_link"][n]].index
 
+        model_vertex_map: dict[int, int] = {-1: -1}
+        dress_vertex_map: dict[int, int] = {-1: -1}
+
+        model_material_map: dict[int, int] = {-1: -1}
+        dress_material_map: dict[int, int] = {-1: -1}
+
+        prev_faces_count = 0
+        for material in model.materials:
+            if "01_Onepiece_02" in material.name:
+                prev_faces_count += material.vertices_count // 3
+                continue
+            copy_material: Material = material.copy()
+            copy_material.index = len(dress_model.materials)
+
+            if 0 <= material.texture_index:
+                copy_texture = self.copy_texture(dress_model, model.textures[material.texture_index], model.path)
+                copy_material.texture_index = copy_texture.index
+
+            if material.toon_sharing_flg == ToonSharing.INDIVIDUAL and 0 <= material.toon_texture_index:
+                copy_texture = self.copy_texture(dress_model, model.textures[material.toon_texture_index], model.path)
+                copy_material.toon_texture_index = copy_texture.index
+
+            if material.sphere_mode != SphereMode.INVALID and 0 < material.sphere_texture_index:
+                copy_texture = self.copy_texture(dress_model, model.textures[material.sphere_texture_index], model.path)
+                copy_material.sphere_texture_index = copy_texture.index
+
+            dress_model.materials.append(copy_material, is_sort=False)
+            model_material_map[material.index] = copy_material.index
+
+            for face_index in range(prev_faces_count, prev_faces_count + copy_material.vertices_count // 3):
+                faces = []
+                for vertex_index in model.faces[face_index].vertices:
+                    if vertex_index not in model_vertex_map:
+                        copy_vertex: Vertex = model.vertices[vertex_index].copy()
+                        copy_vertex.index = -1
+                        copy_vertex.deform.indexes = np.vectorize(model_bone_map.get)(copy_vertex.deform.indexes)
+                        faces.append(len(dress_model.vertices))
+                        model_vertex_map[vertex_index] = len(dress_model.vertices)
+                        dress_model.vertices.append(copy_vertex, is_sort=False)
+                    else:
+                        faces.append(model_vertex_map[vertex_index])
+                dress_model.faces.append(Face(vertex_index0=faces[0], vertex_index1=faces[1], vertex_index2=faces[2]), is_sort=False)
+
+            prev_faces_count += material.vertices_count // 3
+
+        prev_faces_count = 0
+        for material in dress.materials:
+            if "腕" in material.name:
+                prev_faces_count += material.vertices_count // 3
+                continue
+            copy_material = material.copy()
+            copy_material.name = f"Cos:{copy_material.name}"
+            copy_material.index = len(dress_model.materials)
+
+            if 0 <= material.texture_index:
+                copy_texture = self.copy_texture(dress_model, dress.textures[material.texture_index], dress.path)
+                copy_material.texture_index = copy_texture.index
+
+            if material.toon_sharing_flg == ToonSharing.INDIVIDUAL and 0 <= material.toon_texture_index:
+                copy_texture = self.copy_texture(dress_model, dress.textures[material.toon_texture_index], dress.path)
+                copy_material.toon_texture_index = copy_texture.index
+
+            if material.sphere_mode != SphereMode.INVALID and 0 < material.sphere_texture_index:
+                copy_texture = self.copy_texture(dress_model, dress.textures[material.sphere_texture_index], dress.path)
+                copy_material.sphere_texture_index = copy_texture.index
+
+            dress_model.materials.append(copy_material, is_sort=False)
+            dress_material_map[material.index] = copy_material.index
+
+            for face_index in range(prev_faces_count, prev_faces_count + copy_material.vertices_count // 3):
+                faces = []
+                for vertex_index in dress.faces[face_index].vertices:
+                    if vertex_index not in dress_vertex_map:
+                        copy_vertex = dress.vertices[vertex_index].copy()
+                        copy_vertex.index = -1
+                        copy_vertex.deform.indexes = np.vectorize(model_bone_map.get)(copy_vertex.deform.indexes)
+                        faces.append(len(dress_model.vertices))
+                        dress_vertex_map[vertex_index] = len(dress_model.vertices)
+                        dress_model.vertices.append(copy_vertex, is_sort=False)
+                    else:
+                        faces.append(dress_vertex_map[vertex_index])
+                dress_model.faces.append(Face(vertex_index0=faces[0], vertex_index1=faces[1], vertex_index2=faces[2]), is_sort=False)
+
+            prev_faces_count += material.vertices_count // 3
+
         PmxWriter(dress_model, self.output_pmx_ctrl.path).save()
+
+        logger.info(self.output_pmx_ctrl.path, decoration=MLogger.Decoration.BOX)
         self.frame.on_sound()
+
+    def copy_texture(self, dest_model: PmxModel, texture: Texture, src_model_path: str) -> Texture:
+        copy_texture: Texture = texture.copy()
+        copy_texture.index = len(dest_model.textures)
+        texture_path = os.path.abspath(os.path.join(os.path.dirname(src_model_path), copy_texture.name))
+        if copy_texture.name and os.path.exists(texture_path) and os.path.isfile(texture_path):
+            new_texture_path = os.path.join(os.path.dirname(dest_model.path), copy_texture.name)
+            os.makedirs(os.path.dirname(new_texture_path), exist_ok=True)
+            shutil.copyfile(texture_path, new_texture_path)
+        copy_texture.index = len(dest_model.textures)
+        dest_model.textures.append(copy_texture, is_sort=False)
+
+        return copy_texture
 
     def on_change_model_pmx(self, event: wx.Event):
         self.model_ctrl.unwrap()
