@@ -441,22 +441,26 @@ class MVector3D(MVector):
     def get_local_matrix(self) -> "MMatrix4x4":
         """自身をローカル軸とした場合の回転行列を取得"""
 
-        # ローカル軸のZ軸方向を取得
-        z_axis = self.vector / np.linalg.norm(self.vector)
-        # ローカル軸のY軸方向を取得
-        y_axis = np.cross(z_axis, np.array([1, 0, 0]))
-        if np.linalg.norm(y_axis) < 1e-6:
-            y_axis = np.cross(z_axis, np.array([0, 0, 1]))
-        y_axis /= np.linalg.norm(y_axis)
-        # ローカル軸のX軸方向を取得
-        x_axis = np.cross(y_axis, z_axis)
-        x_axis /= np.linalg.norm(x_axis)
-        # 回転行列を構築
-        mat = MMatrix4x4()
-        mat.vector[0, :3] = x_axis
-        mat.vector[1, :3] = y_axis
-        mat.vector[2, :3] = z_axis
-        return mat
+        # ローカル軸の傾きを定義する
+        local_axis = self.normalized().vector
+
+        # ローカル軸の水平方向をローカルX軸とする
+        x_axis = np.array([local_axis[0], local_axis[1], 0.0])
+        x_axis = x_axis / np.linalg.norm(x_axis)
+
+        # ローカルZ軸は vec3(0, 0, -1)とする
+        z_axis = np.array([0.0, 0.0, -1.0])
+
+        # ローカルY軸は ローカルX軸とローカルZ軸の上方向の外積とする
+        y_axis = np.cross(z_axis, x_axis)
+
+        # ローカル軸に合わせたスケーリング行列を作成する
+        rotation_matrix = MMatrix4x4()
+        rotation_matrix.vector[0, :3] = x_axis
+        rotation_matrix.vector[1, :3] = y_axis
+        rotation_matrix.vector[2, :3] = z_axis
+
+        return rotation_matrix
 
 
 class MVector4D(MVector):

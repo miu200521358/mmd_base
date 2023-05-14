@@ -519,16 +519,37 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         np.ndarray
             ローカル軸を加味したスケーリング行列
         """
-        # 自身のスケール
+        # 自身のローカルスケール
         local_scale = self[bone.name][fno].local_scale.copy()
 
         if not local_scale:
             return np.eye(4)
 
-        rotation_matrix = bone.tail_relative_position.get_local_matrix()
-        scaling_matrix = np.diag([*(MVector3D(1, 1, 1) + local_scale).vector, 1])
+        # ローカル軸の傾きを定義する
+        local_axis = bone.tail_relative_position.normalized().vector
 
-        local_scale_matrix = rotation_matrix.vector.T @ scaling_matrix
+        # ローカル軸の水平方向をローカルY軸とする
+        y_axis = np.array([local_axis[0], local_axis[1], 0.0])
+        y_axis = y_axis / np.linalg.norm(y_axis)
+
+        # ローカルZ軸は vec3(0, 0, -1)とする
+        z_axis = np.array([0.0, 0.0, -1.0])
+
+        # ローカルX軸は ローカルY軸とローカルZ軸の上方向の外積とする
+        x_axis = np.cross(z_axis, y_axis)
+
+        # 3Dスケールは、ローカル軸に対してスケールを行う
+        scale_matrix = np.eye(4)
+        scale_matrix[:3, :3] += np.diag(local_scale.vector)
+
+        # ローカル軸に合わせたスケーリング行列を作成する
+        rotation_matrix = np.eye(4)
+        rotation_matrix[0, :3] = x_axis
+        rotation_matrix[1, :3] = y_axis
+        rotation_matrix[2, :3] = z_axis
+
+        # ローカル軸に合わせたスケーリング行列を作成する
+        local_scale_matrix = np.linalg.inv(rotation_matrix) @ scale_matrix @ rotation_matrix
 
         # 付与親を加味して返す
         return self.get_effect_local_scale(bone, fno, local_scale_matrix, model)

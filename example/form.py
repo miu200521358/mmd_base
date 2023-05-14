@@ -10,11 +10,14 @@ import wx
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
+from mlib.base.math import MVector3D
+
+from mlib.vmd.vmd_part import VmdBoneFrame
 from mlib.pmx.pmx_part import Bone, Face, Material, SphereMode, Texture, ToonSharing, Vertex
 from mlib.base.exception import MApplicationException
 from mlib.base.logger import MLogger
 from mlib.pmx.canvas import CanvasPanel
-from mlib.pmx.pmx_collection import Faces, Materials, PmxModel, Vertices
+from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_writer import PmxWriter
 from mlib.service.base_worker import BaseWorker
 from mlib.service.form.base_frame import BaseFrame
@@ -484,13 +487,17 @@ class TestFrame(BaseFrame):
 
         dress_motion: VmdMotion = self.file_panel.motion_ctrl.data.copy()
 
-        # bf = VmdBoneFrame(0, "右腕")
-        # bf.scale = MVector3D(0.5, 1, 1)
-        # dress_motion.bones["右腕"].append(bf)
+        bf = VmdBoneFrame(0, "右腕")
+        bf.scale = MVector3D(0.5, 0, 0)
+        dress_motion.bones["右腕"].append(bf)
 
-        # bf2 = VmdBoneFrame(0, "右ひじ")
-        # bf2.scale = MVector3D(1 / 0.5, 1, 1)
-        # dress_motion.bones["右ひじ"].append(bf2)
+        bf2 = VmdBoneFrame(0, "右ひじ")
+        bf2.scale = MVector3D(-0.5, 0, 0)
+        dress_motion.bones["右ひじ"].append(bf2)
+
+        bf = VmdBoneFrame(0, "左腕")
+        bf.local_scale = MVector3D(0, 0.5, 0)
+        dress_motion.bones["左腕"].append(bf)
 
         try:
             self.config_panel.canvas.set_context()
