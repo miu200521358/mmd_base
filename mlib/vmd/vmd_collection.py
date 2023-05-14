@@ -321,7 +321,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # モーションによるスケール変化
                     if (fno, model.digest, bone.index) in self.cache_local_scales:
-                        local_scales[0, bone.index] = self.cache_local_scales[(fno, model.digest, bone.index)].vector
+                        local_scales[0, bone.index] = self.cache_local_scales[(fno, model.digest, bone.index)]
                     else:
                         local_scale = self.get_local_scale(bone, fno, model)
                         local_scales[0, bone.index] = local_scale
