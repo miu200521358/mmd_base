@@ -1766,8 +1766,8 @@ class BoneMorphOffset(MorphOffset):
         self.position = position
         self.rotation = BaseRotationModel()
         self.rotation.qq = qq
-        self.scale = scale or MVector3D(1, 1, 1)
-        self.local_scale = local_scale or MVector3D(1, 1, 1)
+        self.scale = scale or MVector3D()
+        self.local_scale = local_scale or MVector3D()
 
 
 class GroupMorphOffset(MorphOffset):

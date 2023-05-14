@@ -324,7 +324,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         local_scales[0, bone.index] = self.cache_local_scales[(fno, model.digest, bone.index)].vector
                     else:
                         local_scale = self.get_local_scale(bone, fno, model)
-                        local_scales[0, bone.index] = local_scale.vector
+                        local_scales[0, bone.index] = local_scale
                         self.cache_local_scales[(fno, model.digest, bone.index)] = local_scale
 
         return poses, qqs, scales, local_scales
@@ -456,7 +456,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             相対スケール
         """
         # 自身のスケール
-        scale = self[bone.name][fno].scale.copy()
+        scale = self[bone.name][fno].scale.copy() + MVector3D(1, 1, 1)
 
         # 付与親を加味して返す
         return self.get_effect_scale(bone, fno, scale, model)
@@ -522,11 +522,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # 自身のスケール
         local_scale = self[bone.name][fno].local_scale.copy()
 
-        if local_scale == MVector3D(1, 1, 1):
+        if not local_scale:
             return np.eye(4)
 
         rotation_matrix = bone.tail_relative_position.get_local_matrix()
-        scaling_matrix = np.diag([*local_scale.vector, 1])
+        scaling_matrix = np.diag([*(MVector3D(1, 1, 1) + local_scale).vector, 1])
 
         local_scale_matrix = rotation_matrix.vector.T @ scaling_matrix
 
@@ -1017,10 +1017,8 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
     def animate_bone_morph_frame(self, fno: int, model: PmxModel, bf: VmdBoneFrame, offset: BoneMorphOffset, ratio: float) -> VmdBoneFrame:
         bf.position += offset.position * ratio
         bf.rotation *= MQuaternion.from_euler_degrees(offset.rotation.degrees * ratio)
-        if offset.scale != MVector3D(1, 1, 1):
-            bf.scale *= MVector3D(1, 1, 1) + (offset.scale * ratio)
-        if offset.local_scale != MVector3D(1, 1, 1):
-            bf.local_scale *= MVector3D(1, 1, 1) + (offset.local_scale * ratio)
+        bf.scale += offset.scale * ratio
+        bf.local_scale += offset.local_scale * ratio
         return bf
 
     def animate_group_morphs(self, fno: int, model: PmxModel, materials: list[ShaderMaterial]) -> tuple[np.ndarray, VmdBoneFrames, list[ShaderMaterial]]:
