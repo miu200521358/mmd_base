@@ -42,13 +42,13 @@ class FloatSliderCtrl:
         self.sizer.Add(self._slider, 0, wx.TOP | wx.RIGHT | wx.BOTTOM, border)
 
     def _on_scroll(self, event: wx.Event):
-        tv, sv = self.get_slider_value_in_range(self._slider.GetValue())
+        tv, sv = self.get_value_by_slider(self._slider.GetValue())
         self._value_ctrl.ChangeValue(tv)
 
     def _on_scroll_release(self, event: wx.Event):
         self.Enable(False)
 
-        tv, sv = self.get_slider_value_in_range(self._slider.GetValue())
+        tv, sv = self.get_value_by_slider(self._slider.GetValue())
         self._value_ctrl.ChangeValue(tv)
 
         if self._change_event:
@@ -58,7 +58,7 @@ class FloatSliderCtrl:
 
     def _on_change_value(self, event: wx.Event):
         self.Enable(False)
-        tv, sv = self.get_text_value_in_range(self._value_ctrl.GetValue())
+        tv, sv = self.get_value_by_text(self._value_ctrl.GetValue())
         self._value_ctrl.ChangeValue(tv)
         self._slider.SetValue(sv)
 
@@ -69,22 +69,22 @@ class FloatSliderCtrl:
 
     def _on_wheel_spin(self, event: wx.MouseEvent):
         """マウスホイールによるスピンコントロール"""
-        tv, sv = self.get_slider_value_in_range(self._slider.GetValue())
+        tv, sv = self.get_value_by_slider(self._slider.GetValue())
         if event.GetWheelRotation() > 0:
             v = float(tv) - self._spin_increment
         else:
             v = float(tv) + self._spin_increment
-        tv, sv = self.get_text_value_in_range(str(v))
+        tv, sv = self.get_value_by_text(str(v))
         self._value_ctrl.ChangeValue(tv)
         self._slider.SetValue(sv)
 
     def SetValue(self, v: float):
-        tv, sv = self.get_slider_value_in_range(v)
+        tv, sv = self.get_value_by_text(str(v))
         self._slider.SetValue(sv)
         self._value_ctrl.SetValue(tv)
 
     def ChangeValue(self, v: float):
-        tv, sv = self.get_slider_value_in_range(v)
+        tv, sv = self.get_value_by_text(str(v))
         self._value_ctrl.ChangeValue(tv)
         self._slider.SetValue(sv)
 
@@ -100,7 +100,7 @@ class FloatSliderCtrl:
     ):
         self.sizer.Add(parent_sizer, proportion, flag, border)
 
-    def get_text_value_in_range(self, s: str) -> tuple[str, float]:
+    def get_value_by_text(self, s: str) -> tuple[str, float]:
         """範囲内に収まる数値を返す"""
         try:
             v = float(s)
@@ -111,7 +111,7 @@ class FloatSliderCtrl:
         sv = round(v / self._increment)
         return f"{v:.2f}", sv
 
-    def get_slider_value_in_range(self, f: float) -> tuple[str, float]:
+    def get_value_by_slider(self, f: float) -> tuple[str, float]:
         """範囲内に収まる数値を返す"""
         v = max(self._min, min(self._max, f * self._increment))
         sv = round(v / self._increment)
