@@ -430,6 +430,10 @@ class MVector3D(MVector):
     def gl(self) -> "MVector3D":
         return MVector3D(-self.x, self.y, self.z)
 
+    @property
+    def vector4(self) -> np.ndarray:
+        return np.fromiter([self.vector[0], self.vector[1], self.vector[2], 0], dtype=np.float64, count=4)
+
     @staticmethod
     def calc_by_ratio(prev_v: "MVector3D", next_v: "MVector3D", x: float, y: float, z: float) -> "MVector3D":
         return MVector3D(*calc_v3_by_ratio(*prev_v.vector, *next_v.vector, x, y, z))
