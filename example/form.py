@@ -1,15 +1,16 @@
 import os
 import sys
 from datetime import datetime
+from time import sleep
 from typing import Any, Optional
 
 import wx
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+
 from mlib.base.exception import MApplicationException
 from mlib.base.logger import MLogger
-from mlib.base.math import MVector3D
 from mlib.pmx.canvas import CanvasPanel
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_writer import PmxWriter
@@ -17,12 +18,12 @@ from mlib.service.base_worker import BaseWorker
 from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
 from mlib.service.form.widgets.console_ctrl import ConsoleCtrl
+from mlib.service.form.widgets.exec_btn_ctrl import ExecButton
 from mlib.service.form.widgets.file_ctrl import MPmxFilePickerCtrl, MVmdFilePickerCtrl
 from mlib.service.form.widgets.float_slider_ctrl import FloatSliderCtrl
 from mlib.service.form.widgets.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
 from mlib.utils.file_utils import save_histories, separate_path
 from mlib.vmd.vmd_collection import VmdMotion
-from mlib.vmd.vmd_part import VmdBoneFrame
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -84,11 +85,19 @@ class FilePanel(BasePanel):
         )
         self.output_pmx_ctrl.set_parent_sizer(self.root_sizer)
 
+        self.exec_btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.exec_btn_ctrl = ExecButton(self, "実行", "実行中", self.exec, 200, "実行ボタンだよ")
+        self.exec_btn_sizer.Add(self.exec_btn_ctrl, 0, wx.ALL, 3)
+        self.root_sizer.Add(self.exec_btn_sizer, 0, wx.ALIGN_CENTER | wx.SHAPED, 5)
+
         self.console_ctrl = ConsoleCtrl(self.frame, self, rows=300)
         self.console_ctrl.set_parent_sizer(self.root_sizer)
 
         self.root_sizer.Add(wx.StaticLine(self, wx.ID_ANY), wx.GROW)
         self.fit()
+
+    def exec(self, event: wx.Event):
+        sleep(10)
 
     def on_change_model_pmx(self, event: wx.Event):
         self.model_ctrl.unwrap()
@@ -107,6 +116,11 @@ class FilePanel(BasePanel):
         self.motion_ctrl.unwrap()
         if self.motion_ctrl.read_name():
             self.motion_ctrl.read_digest()
+
+    def Enable(self, enable: bool):
+        self.model_ctrl.Enable(enable)
+        self.dress_ctrl.Enable(enable)
+        self.motion_ctrl.Enable(enable)
 
 
 class PmxLoadWorker(BaseWorker):
@@ -136,11 +150,6 @@ class PmxLoadWorker(BaseWorker):
             dress = file_panel.dress_ctrl.data
         else:
             dress = PmxModel()
-
-        if "グルーブ" not in dress.bones:
-            dress.insert_standard_bone("グルーブ")
-            dress.replace_standard_weights(["グルーブ"])
-            dress.bone_trees = dress.bones.create_bone_trees()
 
         if not file_panel.motion_ctrl.data and file_panel.motion_ctrl.valid():
             motion = file_panel.motion_ctrl.reader.read_by_filepath(file_panel.motion_ctrl.path)
