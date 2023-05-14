@@ -441,18 +441,16 @@ class MVector3D(MVector):
     def get_local_matrix(self) -> "MMatrix4x4":
         """自身をローカル軸とした場合の回転行列を取得"""
 
-        # ローカル軸の傾きを定義する
-        local_axis = self.normalized().vector
-
-        # ローカル軸の水平方向をローカルX軸とする
-        x_axis = np.array([local_axis[0], local_axis[1], 0.0])
+        # ローカルX軸の方向ベクトル
+        x_axis = self.normalized().vector
         x_axis = x_axis / np.linalg.norm(x_axis)
 
-        # ローカルZ軸は vec3(0, 0, -1)とする
+        # ローカルZ軸の方向ベクトル
         z_axis = np.array([0.0, 0.0, -1.0])
 
-        # ローカルY軸は ローカルX軸とローカルZ軸の上方向の外積とする
+        # ローカルY軸の方向ベクトル
         y_axis = np.cross(z_axis, x_axis)
+        y_axis /= np.linalg.norm(y_axis)
 
         # ローカル軸に合わせたスケーリング行列を作成する
         rotation_matrix = MMatrix4x4()
