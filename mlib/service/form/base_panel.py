@@ -16,3 +16,6 @@ class BasePanel(wx.Panel):
     def fit(self):
         self.SetSizer(self.root_sizer)
         self.Layout()
+
+    def Enable(self, enable: bool):
+        pass
