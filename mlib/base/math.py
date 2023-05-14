@@ -438,6 +438,26 @@ class MVector3D(MVector):
     def calc_by_ratio(prev_v: "MVector3D", next_v: "MVector3D", x: float, y: float, z: float) -> "MVector3D":
         return MVector3D(*calc_v3_by_ratio(*prev_v.vector, *next_v.vector, x, y, z))
 
+    def get_local_matrix(self) -> "MMatrix4x4":
+        """自身をローカル軸とした場合の回転行列を取得"""
+
+        # ローカル軸のZ軸方向を取得
+        z_axis = self.vector / np.linalg.norm(self.vector)
+        # ローカル軸のY軸方向を取得
+        y_axis = np.cross(z_axis, np.array([1, 0, 0]))
+        if np.linalg.norm(y_axis) < 1e-6:
+            y_axis = np.cross(z_axis, np.array([0, 0, 1]))
+        y_axis /= np.linalg.norm(y_axis)
+        # ローカル軸のX軸方向を取得
+        x_axis = np.cross(y_axis, z_axis)
+        x_axis /= np.linalg.norm(x_axis)
+        # 回転行列を構築
+        mat = MMatrix4x4()
+        mat.vector[0, :3] = x_axis
+        mat.vector[1, :3] = y_axis
+        mat.vector[2, :3] = z_axis
+        return mat
+
 
 class MVector4D(MVector):
     """
@@ -1489,6 +1509,18 @@ class MMatrix4x4List:
         mat4 = np.full((self.row, self.col, 4, 4), np.eye(4)) * vs4
 
         self.vector = self.vector @ mat4
+
+    def local_scale(self, vs: list[list[np.ndarray]]):
+        """
+        ローカル縮尺行列
+
+        Parameters
+        ----------
+        vs : list[list[np.ndarray]]
+            ローカル縮尺行列
+        """
+
+        self.vector = self.vector @ np.array(vs)
 
     def inverse(self):
         """
