@@ -46,7 +46,7 @@ class FloatSliderCtrl:
         self._value_ctrl.ChangeValue(tv)
 
     def _on_scroll_release(self, event: wx.Event):
-        self.enable(False)
+        self.Enable(False)
 
         tv, sv = self.get_slider_value_in_range(self._slider.GetValue())
         self._value_ctrl.ChangeValue(tv)
@@ -54,10 +54,10 @@ class FloatSliderCtrl:
         if self._change_event:
             self._change_event(event)
 
-        self.enable(True)
+        self.Enable(True)
 
     def _on_change_value(self, event: wx.Event):
-        self.enable(False)
+        self.Enable(False)
         tv, sv = self.get_text_value_in_range(self._value_ctrl.GetValue())
         self._value_ctrl.ChangeValue(tv)
         self._slider.SetValue(sv)
@@ -65,7 +65,7 @@ class FloatSliderCtrl:
         if self._change_event:
             self._change_event(event)
 
-        self.enable(True)
+        self.Enable(True)
 
     def _on_wheel_spin(self, event: wx.MouseEvent):
         """マウスホイールによるスピンコントロール"""
@@ -115,6 +115,6 @@ class FloatSliderCtrl:
         sv = round(v / self._increment)
         return f"{v:.2f}", sv
 
-    def enable(self, enable: bool):
+    def Enable(self, enable: bool):
         self._value_ctrl.Enable(enable)
         self._slider.Enable(enable)
