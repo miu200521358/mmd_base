@@ -10,6 +10,7 @@ from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNam
 from mlib.base.exception import MViewerException
 from mlib.base.logger import MLogger
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
+from mlib.base.part import Switch
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
     STANDARD_BONE_NAMES,
@@ -428,6 +429,15 @@ class PmxModel(BaseHashModel):
     @property
     def name(self) -> str:
         return self.model_name
+
+    def initialize_display_slots(self):
+        dd = DisplaySlots()
+        d01 = DisplaySlot(name="Root", english_name="Root")
+        d01.special_flg = Switch.ON
+        dd.append(d01)
+        d02 = DisplaySlot(name="表情", english_name="Exp")
+        d02.special_flg = Switch.ON
+        dd.append(d02)
 
     def get_weighted_vertex_scale(self) -> dict[int, dict[int, MVector3D]]:
         vertex_bone_scales: dict[int, dict[int, MVector3D]] = {}

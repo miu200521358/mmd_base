@@ -1,7 +1,6 @@
 import os
 import sys
 from datetime import datetime
-from time import sleep
 from typing import Any, Optional
 
 import wx
@@ -9,6 +8,7 @@ import wx
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
+from mlib.pmx.pmx_part import Bone
 from mlib.base.exception import MApplicationException
 from mlib.base.logger import MLogger
 from mlib.pmx.canvas import CanvasPanel
@@ -97,14 +97,94 @@ class FilePanel(BasePanel):
         self.fit()
 
     def exec(self, event: wx.Event):
-        sleep(10)
+        if not (self.model_ctrl.data and self.dress_ctrl.data):
+            return
+
+        os.makedirs(os.path.dirname(self.output_pmx_ctrl.path), exist_ok=True)
+        model = self.model_ctrl.data
+        dress = self.dress_ctrl.data
+        dress_model = PmxModel(self.output_pmx_ctrl.path)
+        dress_model.comment = model.comment + "\n------------------\n" + dress.comment
+        dress_model.initialize_display_slots()
+
+        bone_map: dict[int, dict[str, list[str]]] = {}
+
+        # 最初にルートを追加する
+        root_bone = Bone(name=Bone.SYSTEM_ROOT_NAME, index=-1)
+        root_bone.parent_index = -9
+        root_bone.is_system = True
+        dress_model.bones.append(root_bone, is_positive_index=False)
+        bone_map[-1] = {
+            "parent": [Bone.SYSTEM_ROOT_NAME],
+            "tail": [Bone.SYSTEM_ROOT_NAME],
+            "effect": [Bone.SYSTEM_ROOT_NAME],
+            "ik_target": [Bone.SYSTEM_ROOT_NAME],
+            "ik_link": [],
+        }
+
+        for bone in model.bones.writable():
+            if bone.name in dress_model.bones:
+                continue
+
+            for dress_bone in dress.bones.writable():
+                if 0 <= dress_bone.tail_index and dress_bone.name not in model.bones and dress.bones[dress_bone.tail_index].name == bone.name:
+                    # 衣装だけのボーンが表示先が人物のボーンに繋がってる場合、その前に追加しておく
+                    copy_bone = dress_bone.copy()
+                    copy_bone.index = len(dress_model.bones.writable())
+                    bone_map[copy_bone.index] = {
+                        "parent": [dress.bones[dress_bone.parent_index].name],
+                        "tail": [dress.bones[dress_bone.tail_index].name],
+                        "effect": [dress.bones[dress_bone.effect_index].name],
+                        "ik_target": [dress.bones[dress_bone.ik.bone_index].name if dress_bone.ik else Bone.SYSTEM_ROOT_NAME],
+                        "ik_link": [dress.bones[link.bone_index].name for link in dress_bone.ik.links] if dress_bone.ik else [],
+                    }
+                    dress_model.bones.append(copy_bone)
+
+            copy_bone = bone.copy()
+            copy_bone.index = len(dress_model.bones.writable())
+            bone_map[copy_bone.index] = {
+                "parent": [model.bones[bone.parent_index].name],
+                "tail": [model.bones[bone.tail_index].name],
+                "effect": [model.bones[bone.effect_index].name],
+                "ik_target": [model.bones[bone.ik.bone_index].name if bone.ik else Bone.SYSTEM_ROOT_NAME],
+                "ik_link": [model.bones[link.bone_index].name for link in bone.ik.links] if bone.ik else [],
+            }
+            dress_model.bones.append(copy_bone)
+
+        for bone in dress.bones.writable():
+            if bone.name in dress_model.bones:
+                # 既に登録済みのボーンは追加しない
+                continue
+            copy_bone = bone.copy()
+            copy_bone.index = len(dress_model.bones.writable())
+            bone_map[copy_bone.index] = {
+                "parent": [dress.bones[bone.parent_index].name],
+                "tail": [dress.bones[bone.tail_index].name],
+                "effect": [dress.bones[bone.effect_index].name],
+                "ik_target": [dress.bones[bone.ik.bone_index].name if bone.ik else Bone.SYSTEM_ROOT_NAME],
+                "ik_link": [dress.bones[link.bone_index].name for link in bone.ik.links] if bone.ik else [],
+            }
+            dress_model.bones.append(copy_bone)
+
+        for bone in dress_model.bones:
+            bone_setting = bone_map[bone.index]
+            bone.parent_index = dress_model.bones[bone_setting["parent"][0]].index
+            bone.tail_index = dress_model.bones[bone_setting["tail"][0]].index
+            bone.effect_index = dress_model.bones[bone_setting["effect"][0]].index
+            if bone.is_ik and bone.ik:
+                bone.ik.bone_index = dress_model.bones[bone_setting["ik_target"][0]].index
+                for n in range(len(bone.ik.links)):
+                    bone.ik.links[n].bone_index = dress_model.bones[bone_setting["ik_link"][n]].index
+
+        PmxWriter(dress_model, self.output_pmx_ctrl.path).save()
+        self.frame.on_sound()
 
     def on_change_model_pmx(self, event: wx.Event):
         self.model_ctrl.unwrap()
         if self.model_ctrl.read_name():
             self.model_ctrl.read_digest()
             dir_path, file_name, file_ext = separate_path(self.model_ctrl.path)
-            model_path = os.path.join(dir_path, f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
+            model_path = os.path.join(dir_path, f"{datetime.now():%Y%m%d_%H%M%S}", f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
             self.output_pmx_ctrl.path = model_path
 
     def on_change_dress_pmx(self, event: wx.Event):
