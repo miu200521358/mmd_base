@@ -213,7 +213,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         self.original_data = v
         self.data = v.copy()
 
-    def enable(self, enable: bool):
+    def Enable(self, enable: bool):
         self.file_ctrl.Enable(enable)
         if not self.is_save:
             # 保存じゃなければ履歴ボタンを表示
