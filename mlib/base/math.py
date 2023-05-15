@@ -440,6 +440,8 @@ class MVector3D(MVector):
 
     def get_local_matrix(self) -> "MMatrix4x4":
         """自身をローカル軸とした場合の回転行列を取得"""
+        if not self:
+            return MMatrix4x4()
 
         # ローカルX軸の方向ベクトル
         x_axis = self.normalized().vector

@@ -520,20 +520,26 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             ローカル軸を加味したスケーリング行列
         """
         # 自身のローカルスケール
-        local_scale = self[bone.name][fno].local_scale.copy()
+        local_scale = self[bone.name][fno].local_scale.copy() + MVector3D(1, 1, 1)
+        local_parent_matrix = np.eye(4)
 
-        if not local_scale:
+        for parent_name in model.bone_trees[bone.name].names[:-1]:
+            # 親のキャンセルローカルスケール
+            parent_bone = model.bones[parent_name]
+            local_parent_matrix = local_parent_matrix @ self.cache_local_scales.get((fno, model.digest, parent_bone.index), np.eye(4))
+
+        if local_scale == MVector3D(1, 1, 1) and np.all(np.isclose(local_parent_matrix, np.eye(4))):
             return np.eye(4)
 
         # 3Dスケールは、ローカル軸に対してスケールを行う
         scale_matrix = np.eye(4)
-        scale_matrix[:3, :3] += np.diag(local_scale.vector)
+        scale_matrix[:3, :3] = np.diag(local_scale.vector)
 
         # ローカル軸に沿った回転行列
         rotation_matrix = bone.tail_relative_position.get_local_matrix().vector
 
-        # ローカル軸に合わせたスケーリング行列を作成する
-        local_scale_matrix = np.linalg.inv(rotation_matrix) @ scale_matrix @ rotation_matrix
+        # ローカル軸に合わせたスケーリング行列を作成する(親はキャンセルする)
+        local_scale_matrix = np.linalg.inv(local_parent_matrix) @ np.linalg.inv(rotation_matrix) @ scale_matrix @ rotation_matrix
 
         # 付与親を加味して返す
         return self.get_effect_local_scale(bone, fno, local_scale_matrix, model)

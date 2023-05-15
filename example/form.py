@@ -495,12 +495,12 @@ class TestFrame(BaseFrame):
         # bf2.scale = MVector3D(-0.5, 0, 0)
         # dress_motion.bones["右ひじ"].append(bf2)
 
-        bf = VmdBoneFrame(0, "左肩")
-        bf.local_scale = MVector3D(0, 1, 0)
-        dress_motion.bones["左肩"].append(bf)
+        # bf = VmdBoneFrame(0, "左肩")
+        # bf.local_scale = MVector3D(0, 1.5, 1.5)
+        # dress_motion.bones["左肩"].append(bf)
 
         bf = VmdBoneFrame(0, "左腕")
-        bf.local_scale = MVector3D(0, (1 / 2) - 1, 0)
+        bf.local_scale = MVector3D(0, 1.5, 1.5)
         dress_motion.bones["左腕"].append(bf)
 
         try:
