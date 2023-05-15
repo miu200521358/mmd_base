@@ -91,6 +91,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             bf.position = self.data[next_index].position.copy()
             bf.rotation = self.data[next_index].rotation.copy()
             bf.scale = self.data[next_index].scale.copy()
+            bf.local_scale = self.data[next_index].local_scale.copy()
             return bf
 
         prev_bf = self.data[prev_index] if prev_index in self else VmdBoneFrame(name=self.name, index=prev_index)
@@ -120,6 +121,9 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
 
         # スケール
         bf.scale = MVector3D.calc_by_ratio(prev_bf.scale, next_bf.scale, xy, yy, zy)
+
+        # ローカルスケール
+        bf.local_scale = MVector3D.calc_by_ratio(prev_bf.local_scale, next_bf.local_scale, xy, yy, zy)
 
         return bf
 
