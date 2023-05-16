@@ -238,6 +238,13 @@ def test_MVector3D_get_local_matrix():
         np.array([1.27279221, 0.6, -1.0]),
     ).all()
 
+    local_matrix = MVector3D(0, 0, -0.5).get_local_matrix()
+
+    assert np.isclose(
+        local_matrix.vector,
+        np.array([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, -1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]),
+    ).all()
+
 
 def test_operate_vector():
     import operator
