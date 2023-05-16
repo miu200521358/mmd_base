@@ -1514,17 +1514,29 @@ class MMatrix4x4List:
 
         self.vector = self.vector @ mat4
 
-    def local_scale(self, vs: list[list[np.ndarray]]):
+    def add(self, vs: np.ndarray):
         """
-        ローカル縮尺行列
+        行列をそのまま加算する
 
         Parameters
         ----------
         vs : list[list[np.ndarray]]
-            ローカル縮尺行列
+            ローカル行列
         """
 
-        self.vector = self.vector @ np.array(vs)
+        self.vector = self.vector + vs
+
+    def matmul(self, vs: np.ndarray):
+        """
+        行列をそのままかける
+
+        Parameters
+        ----------
+        vs : list[list[np.ndarray]]
+            ローカル行列
+        """
+
+        self.vector = self.vector @ vs
 
     def inverse(self):
         """

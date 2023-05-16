@@ -10,7 +10,7 @@ import wx
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
-from mlib.base.math import MVector3D
+from mlib.base.math import MQuaternion, MVector3D
 
 from mlib.vmd.vmd_part import VmdBoneFrame
 from mlib.pmx.pmx_part import Bone, Face, Material, SphereMode, Texture, ToonSharing, Vertex
@@ -487,16 +487,18 @@ class TestFrame(BaseFrame):
 
         dress_motion: VmdMotion = self.file_panel.motion_ctrl.data.copy()
 
-        # bf = VmdBoneFrame(0, "右腕")
-        # bf.scale = MVector3D(0.5, 0, 0)
-        # dress_motion.bones["右腕"].append(bf)
+        bf = VmdBoneFrame(0, "右腕")
+        bf.local_position = MVector3D(0, 1, 0)
+        bf.local_rotation = MQuaternion.from_euler_degrees(0, 90, 0)
+        dress_motion.bones["右腕"].append(bf)
 
-        # bf2 = VmdBoneFrame(0, "右ひじ")
-        # bf2.scale = MVector3D(-0.5, 0, 0)
-        # dress_motion.bones["右ひじ"].append(bf2)
+        bf2 = VmdBoneFrame(0, "右ひじ")
+        bf2.local_position = MVector3D(0, 0, 1)
+        dress_motion.bones["右ひじ"].append(bf2)
 
         bf = VmdBoneFrame(0, "左肩")
         bf.local_scale = MVector3D(0, 1.5, 1.5)
+        bf.local_position = MVector3D(0, 1, 0)
         dress_motion.bones["左肩"].append(bf)
 
         for bone_name in ("左腕", "左腕捩1", "左腕捩2", "左腕捩3"):

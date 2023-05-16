@@ -225,9 +225,13 @@ class VmdBoneFrame(BaseVmdNameFrame):
         位置, by default None
     rotation : MQuaternion, optional
         回転, by default None
-    scale : MQuaternion, optional
+    scale : MVector3D, optional
         グローバルスケール, by default None
-    local_scale : MQuaternion, optional
+    local_position : MVector3D, optional
+        ローカル位置（グローバルの後にかける）, by default None
+    local_rotation : MQuaternion, optional
+        ローカル回転（グローバルの後にかける）, by default None
+    local_scale : MVector3D, optional
         ローカルスケール（グローバルの後にかける）, by default None
     interpolations : Interpolations, optional
         補間曲線, by default None
@@ -243,7 +247,9 @@ class VmdBoneFrame(BaseVmdNameFrame):
         "register",
         "read",
         "position",
+        "local_position",
         "rotation",
+        "local_rotation",
         "scale",
         "local_scale",
         "interpolations",
@@ -262,7 +268,9 @@ class VmdBoneFrame(BaseVmdNameFrame):
     ):
         super().__init__(index, name, register, read)
         self.position = MVector3D()
+        self.local_position = MVector3D()
         self.rotation = MQuaternion()
+        self.local_rotation = MQuaternion()
         self.scale = MVector3D()
         self.local_scale = MVector3D()
         self.interpolations = BoneInterpolations()
@@ -272,7 +280,9 @@ class VmdBoneFrame(BaseVmdNameFrame):
 
     def __iadd__(self, v: "VmdBoneFrame"):
         self.position += v.position
+        self.local_position += v.local_position
         self.rotation *= v.rotation
+        self.local_rotation *= v.local_rotation
         self.scale += v.scale
         self.local_scale += v.local_scale
 
@@ -296,7 +306,9 @@ class VmdBoneFrame(BaseVmdNameFrame):
         vv: VmdBoneFrame = self.copy()
 
         vv.position += v.position
+        vv.local_position += v.local_position
         vv.rotation *= v.rotation
+        vv.local_rotation *= v.local_rotation
         vv.scale += v.scale
         vv.local_scale += v.local_scale
 

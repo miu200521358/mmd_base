@@ -671,6 +671,9 @@ def test_insert_standard_bone() -> None:
     bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
     model.insert_standard_bone("上半身2", bone_matrixes)
 
+    output_path = os.path.join("tests", "resources", "result.pmx")
+    PmxWriter(model, output_path).save()
+
     for b in model.bones:
         if b.name in ["首", "右肩", "左肩", "ﾈｸﾀｲ１", "首根元"]:
             assert model.bones["上半身2"].index == b.parent_index

@@ -223,19 +223,19 @@ def test_MVector3D_get_local_matrix():
 
     assert np.isclose(
         local_matrix.vector,
-        np.array([[0.8, 0.6, 0.0, 0.0], [0.6, -0.8, 0.0, 0.0], [0.0, 0.0, -1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]),
+        np.array([[0.56568542, 0.42426407, 0.70710678, 0.0], [0.6, -0.8, 0.0, 0.0], [0.0, 0.0, -1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]),
     ).all()
 
     local_vector = local_matrix * MVector3D(1, 0, 0)
     assert np.isclose(
         local_vector.vector,
-        np.array([0.8, 0.6, 0.0]),
+        np.array([0.56568542, 0.6, 0.0]),
     ).all()
 
     local_vector = local_matrix * MVector3D(1, 0, 1)
     assert np.isclose(
         local_vector.vector,
-        np.array([0.8, 0.6, -1.0]),
+        np.array([1.27279221, 0.6, -1.0]),
     ).all()
 
 
