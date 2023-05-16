@@ -451,12 +451,9 @@ class MVector3D(MVector):
         z_axis = np.array([0.0, 0.0, -1.0])
 
         # ローカルY軸の方向ベクトル
-        if np.all(np.isclose(x_axis, z_axis)):
-            x_axis = np.array([1.0, 0.0, 0.0])
-            y_axis = np.array([0.0, 1.0, 0.0])
-        else:
-            y_axis = np.cross(z_axis, x_axis)
-            y_axis /= np.linalg.norm(y_axis)
+        y_axis = np.cross(z_axis, x_axis)
+        y_axis /= np.linalg.norm(y_axis)
+        y_axis = np.nan_to_num(y_axis)
 
         # ローカル軸に合わせたスケーリング行列を作成する
         rotation_matrix = MMatrix4x4()
