@@ -420,7 +420,7 @@ def test_read_by_filepath_ok_matrix_morph() -> None:
     morph_motion.morphs["底上げ"].append(VmdMorphFrame(0, "底上げ", 1))
 
     # キーフレ
-    bone_matrixes = motion.bones.get_matrix_by_indexes([10, 999], ["グルーブ", "左人指先"], model, morph_motion=morph_motion)
+    bone_matrixes = motion.bones.get_matrix_by_indexes([10, 999], ["グルーブ", "左人指先"], model, morph_motion=morph_motion, append_ik=False)
 
     # キーフレがない場合
     assert np.isclose(

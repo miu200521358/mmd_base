@@ -227,25 +227,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone_trees = model.bone_trees.filter(*bone_names)
         bone_matrixes = VmdBoneFrameTrees()
 
-        if morph_motion is not None:
-            morph_bone_frames = morph_motion.morphs.animate_bone_morphs(fno, model)
-            (
-                morph_all_bone_poses,
-                morph_all_bone_qqs,
-                morph_all_bone_scales,
-                morph_all_bone_local_poses,
-                morph_all_bone_local_qqs,
-                morph_all_bone_local_scales,
-            ) = morph_bone_frames.animate_bone_matrixes(fno, model, append_ik=False)
-        else:
-            morph_col = len(model.bones)
-            morph_all_bone_poses = np.full((1, morph_col, 3), np.zeros(3))
-            morph_all_bone_qqs = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_all_bone_scales = np.full((1, morph_col, 3), np.ones(3))
-            morph_all_bone_local_poses = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_all_bone_local_qqs = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_all_bone_local_scales = np.full((1, morph_col, 4, 4), np.eye(4))
-
         for bone_tree in bone_trees.values():
             row = len(fnos)
             col = len(bone_tree) + 1
@@ -264,6 +245,25 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             morph_local_scales = np.full((row, col, 4, 4), np.eye(4))
 
             for n, fno in enumerate(fnos):
+                if morph_motion is not None:
+                    morph_bone_frames = morph_motion.morphs.animate_bone_morphs(fno, model)
+                    (
+                        morph_all_bone_poses,
+                        morph_all_bone_qqs,
+                        morph_all_bone_scales,
+                        morph_all_bone_local_poses,
+                        morph_all_bone_local_qqs,
+                        morph_all_bone_local_scales,
+                    ) = morph_bone_frames.animate_bone_matrixes(fno, model, append_ik=False)
+                else:
+                    morph_col = len(model.bones)
+                    morph_all_bone_poses = np.full((1, morph_col, 3), np.zeros(3))
+                    morph_all_bone_qqs = np.full((1, morph_col, 4, 4), np.eye(4))
+                    morph_all_bone_scales = np.full((1, morph_col, 3), np.ones(3))
+                    morph_all_bone_local_poses = np.full((1, morph_col, 4, 4), np.eye(4))
+                    morph_all_bone_local_qqs = np.full((1, morph_col, 4, 4), np.eye(4))
+                    morph_all_bone_local_scales = np.full((1, morph_col, 4, 4), np.eye(4))
+
                 for m, bone in enumerate(bone_tree):
                     # ボーンの親から見た相対位置
                     bone_poses[n, m] = (bone.position - (MVector3D() if m == 0 else bone_tree[bone_tree.names[m - 1]].position)).vector
