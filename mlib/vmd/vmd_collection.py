@@ -516,8 +516,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         """
         # 自身のローカル移動量
         local_pos = self[bone.name][fno].local_position
+        local_parent_matrix = np.eye(4)
 
-        if not local_pos:
+        for parent_name in model.bone_trees[bone.name].names[:-1]:
+            # 親のキャンセルローカル移動
+            parent_bone = model.bones[parent_name]
+            local_parent_matrix = local_parent_matrix @ self.cache_local_poses.get((fno, model.digest, parent_bone.index), np.eye(4))
+
+        if not local_pos and np.all(np.isclose(local_parent_matrix, np.eye(4))):
             return np.eye(4)
 
         # 3D移動は、ローカル軸に沿う
@@ -528,7 +534,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         rotation_matrix = bone.tail_relative_position.get_local_matrix().vector
 
         # ローカル軸に合わせた移動行列を作成する
-        return np.linalg.inv(rotation_matrix) @ pos_matrix @ rotation_matrix
+        return np.linalg.inv(local_parent_matrix) @ np.linalg.inv(rotation_matrix) @ pos_matrix @ rotation_matrix
 
     def get_scale(self, bone: Bone, fno: int, model: PmxModel) -> MVector3D:
         """
