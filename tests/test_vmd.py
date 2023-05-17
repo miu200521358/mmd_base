@@ -1,5 +1,7 @@
 import pytest
 
+from mlib.base.math import MQuaternion, MVector3D
+
 
 def test_read_by_filepath_error():
     import os
@@ -384,6 +386,141 @@ def test_read_by_filepath_ok_matrix() -> None:
     ).all()
     assert np.isclose(
         np.array([3.886795, 12.968100, 2.718276]),
+        bone_matrixes[999, "左人指３"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+
+
+def test_read_by_filepath_ok_matrix_morph() -> None:
+    import os
+
+    import numpy as np
+
+    from mlib.pmx.pmx_part import BoneMorphOffset, Morph, MorphType
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.vmd.vmd_collection import VmdMotion
+    from mlib.vmd.vmd_reader import VmdReader
+    from mlib.vmd.vmd_part import VmdMorphFrame
+
+    vmd_reader = VmdReader()
+    motion: VmdMotion = vmd_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション.vmd"))
+
+    pmx_reader = PmxReader()
+    model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
+
+    # モーフ追加
+    morph = Morph(name="底上げ")
+    morph.morph_type = MorphType.BONE
+    morph.offsets.append(BoneMorphOffset(0, MVector3D(0, 1, 0), MQuaternion()))
+    model.morphs.append(morph)
+
+    morph_motion = VmdMotion()
+    morph_motion.morphs["底上げ"].append(VmdMorphFrame(0, "底上げ", 1))
+
+    # キーフレ
+    bone_matrixes = motion.bones.get_matrix_by_indexes([10, 999], ["グルーブ", "左人指先"], model, morph_motion=morph_motion)
+
+    # キーフレがない場合
+    assert np.isclose(
+        np.array([0, 1, 0]),
+        bone_matrixes[999, "全ての親"].position.vector,
+    ).all()
+    assert np.isclose(
+        np.array([-0.508560, 9.218059, 0.791827]),
+        bone_matrixes[999, "センター"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.508560, 10.182008, 0.787357]),
+        bone_matrixes[999, "グルーブ"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+
+    assert np.isclose(
+        np.array([-0.508560, 12.530025, 0.778416]),
+        bone_matrixes[999, "腰"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.508560, 13.180910, 0.621949]),
+        bone_matrixes[999, "上半身"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.437343, 14.588836, 0.523215]),
+        bone_matrixes[999, "上半身2"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    # 付与親
+    assert np.isclose(
+        np.array([-0.552491, 15.941880, 0.528703]),
+        bone_matrixes[999, "上半身3"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.590927, 17.312325, 0.819156]),
+        bone_matrixes[999, "左肩P"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.590927, 17.312325, 0.819156]),
+        bone_matrixes[999, "左肩"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([0.072990, 17.156742, 1.666761]),
+        bone_matrixes[999, "左腕"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([0.043336, 16.182318, 2.635117]),
+        bone_matrixes[999, "左腕捩"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([0.013682, 15.207894, 3.603473]),
+        bone_matrixes[999, "左ひじ"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([1.222444, 14.711100, 3.299384]),
+        bone_matrixes[999, "左手捩"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([2.431205, 14.214306, 2.995294]),
+        bone_matrixes[999, "左手首"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([3.283628, 14.209089, 2.884702]),
+        bone_matrixes[999, "左人指１"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([3.665809, 14.070156, 2.797680]),
+        bone_matrixes[999, "左人指２"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([3.886795, 13.968100, 2.718276]),
         bone_matrixes[999, "左人指３"].position.vector,
         rtol=0.01,
         atol=0.01,
