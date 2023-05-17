@@ -451,13 +451,15 @@ class PmxCanvas(glcanvas.GLCanvas):
         pil_image.save(file_path)
 
     def on_mouse_down(self, event: wx.Event):
-        self.now_pos = self.last_pos = event.GetPosition()
-        self.is_drag = True
-        self.CaptureMouse()
+        if not self.is_drag:
+            self.now_pos = self.last_pos = event.GetPosition()
+            self.is_drag = True
+            self.CaptureMouse()
 
     def on_mouse_up(self, event: wx.Event):
-        self.is_drag = False
-        self.ReleaseMouse()
+        if self.is_drag:
+            self.is_drag = False
+            self.ReleaseMouse()
 
     def on_mouse_motion(self, event: wx.Event):
         if self.is_drag and event.Dragging():
