@@ -487,13 +487,13 @@ class TestFrame(BaseFrame):
 
         dress_motion: VmdMotion = self.file_panel.motion_ctrl.data.copy()
 
-        # bf = VmdBoneFrame(0, "右腕")
-        # bf.local_position = MVector3D(0, 1, 0)
-        # bf.local_rotation = MQuaternion.from_euler_degrees(0, 90, 0)
-        # dress_motion.bones["右腕"].append(bf)
+        bf = VmdBoneFrame(0, "右腕")
+        bf.local_position = MVector3D(0, 1, 0)
+        bf.local_rotation = MQuaternion.from_euler_degrees(0, 20, 0)
+        dress_motion.bones["右腕"].append(bf)
 
         bf2 = VmdBoneFrame(0, "上半身2")
-        bf2.local_position = MVector3D(0, 0, 0.5)
+        bf2.local_position = MVector3D(0, 0, 1)
         dress_motion.bones["上半身2"].append(bf2)
 
         bf = VmdBoneFrame(0, "左肩")

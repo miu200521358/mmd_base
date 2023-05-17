@@ -960,14 +960,21 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # 自身のローカル回転量
         qq_matrix = self[bone.name][fno].local_rotation.to_matrix4x4().vector
 
-        if np.all(np.isclose(qq_matrix, np.eye(4))):
+        local_parent_matrix = np.eye(4)
+
+        for parent_name in model.bone_trees[bone.name].names[:-1]:
+            # 親のキャンセルローカル移動
+            parent_bone = model.bones[parent_name]
+            local_parent_matrix = local_parent_matrix @ self.cache_local_qqs.get((fno, model.digest, parent_bone.index), np.eye(4))
+
+        if np.all(np.isclose(qq_matrix, np.eye(4))) and np.all(np.isclose(local_parent_matrix, np.eye(4))):
             return np.eye(4)
 
         # ローカル軸に沿った回転行列
         rotation_matrix = bone.tail_relative_position.get_local_matrix().vector
 
         # ローカル軸に合わせた回転行列を作成する(親はキャンセルする)
-        return np.linalg.inv(rotation_matrix) @ qq_matrix @ rotation_matrix
+        return np.linalg.inv(local_parent_matrix) @ np.linalg.inv(rotation_matrix) @ qq_matrix @ rotation_matrix
 
 
 @lru_cache(maxsize=None)
