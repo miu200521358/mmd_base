@@ -1407,7 +1407,7 @@ class VmdMotion(BaseHashModel):
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン変形行列")
 
         if not is_gl:
-            return bone_matrixes, vertex_morph_poses + group_vertex_morph_poses, uv_morph_poses, uv1_morph_poses, group_materials
+            return np.array(bone_matrixes), vertex_morph_poses + group_vertex_morph_poses, uv_morph_poses, uv1_morph_poses, group_materials
 
         # OpenGL座標系に変換
         gl_matrixes = np.array(bone_matrixes)
