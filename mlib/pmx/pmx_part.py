@@ -1814,11 +1814,17 @@ class BoneMorphOffset(MorphOffset):
     bone_index : int
         ボーンIndex
     position : MVector3D
-        移動量(x,y,z)
+        グローバル移動量(x,y,z)
     qq : MQuaternion
-        回転量-クォータニオン(x,y,z,w)
+        グローバル回転量-クォータニオン(x,y,z,w)
     scale : MVector3D
-        縮尺量(x,y,z) ※システム独自
+        グローバル縮尺量(x,y,z) ※システム独自
+    position2: MVector3D
+        グローバル第二移動量(x,y,z) ※システム独自
+    qq2: MQuaternion
+        グローバル第二回転量-クォータニオン(x,y,z,w) ※システム独自
+    scale2: MVector3D
+        グローバル第二縮尺量(x,y,z) ※システム独自
     local_position : MVector3D
         ローカル軸に沿った移動量(x,y,z) ※システム独自
     local_qq : MQuaternion
@@ -1827,7 +1833,18 @@ class BoneMorphOffset(MorphOffset):
         ローカル軸に沿った縮尺量(x,y,z) ※システム独自
     """
 
-    __slots__ = ("bone_index", "position", "rotation", "scale", "local_position", "local_rotation", "local_scale")
+    __slots__ = (
+        "bone_index",
+        "position",
+        "rotation",
+        "scale",
+        "position2",
+        "rotation2",
+        "scale2",
+        "local_position",
+        "local_rotation",
+        "local_scale",
+    )
 
     def __init__(
         self,
@@ -1845,6 +1862,9 @@ class BoneMorphOffset(MorphOffset):
         self.rotation = BaseRotationModel()
         self.rotation.qq = qq
         self.scale = scale or MVector3D()
+        self.position2 = MVector3D()
+        self.rotation2 = BaseRotationModel()
+        self.scale2 = MVector3D()
         self.local_position = local_position or MVector3D()
         self.local_rotation = BaseRotationModel()
         if local_qq:
