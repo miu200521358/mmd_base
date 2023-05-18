@@ -1624,23 +1624,23 @@ class VmdMotion(BaseHashModel):
         # モーフの適用
         matrixes.translate(morph_bone_poses.tolist())
         matrixes.matmul(morph_bone_local_poses)
-        matrixes.translate(morph_bone_poses2.tolist())
+        matrixes.matmul(morph_bone_poses2)
         matrixes.rotate(morph_bone_qqs.tolist())
         matrixes.matmul(morph_bone_local_qqs)
-        matrixes.rotate(morph_bone_qqs2.tolist())
+        matrixes.matmul(morph_bone_qqs2)
         matrixes.scale(morph_bone_scales.tolist())
         matrixes.matmul(morph_bone_local_scales)
-        matrixes.scale(morph_bone_scales2.tolist())
+        matrixes.matmul(morph_bone_scales2)
         # モーションの適用
         matrixes.translate(motion_bone_poses.tolist())
         matrixes.matmul(motion_bone_local_poses)
-        matrixes.translate(motion_bone_poses2.tolist())
+        matrixes.matmul(motion_bone_poses2)
         matrixes.rotate(motion_bone_qqs.tolist())
         matrixes.matmul(motion_bone_local_qqs)
-        matrixes.rotate(motion_bone_qqs2.tolist())
+        matrixes.matmul(motion_bone_qqs2)
         matrixes.scale(motion_bone_scales.tolist())
         matrixes.matmul(motion_bone_local_scales)
-        matrixes.scale(motion_bone_scales2.tolist())
+        matrixes.matmul(motion_bone_scales2)
 
         bone_matrixes: list[np.ndarray] = []
         for bone_index in model.bones.indexes:
