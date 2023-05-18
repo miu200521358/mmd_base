@@ -389,25 +389,25 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
             # モーフ変化量
             matrixes.translate(morph_poses.tolist())
+            matrixes.matmul(morph_poses2)
             matrixes.matmul(morph_local_poses)
             matrixes.rotate(morph_qqs.tolist())
+            matrixes.matmul(morph_qqs2)
             matrixes.matmul(morph_local_qqs)
             matrixes.scale(morph_scales.tolist())
-            matrixes.matmul(morph_local_scales)
-            matrixes.matmul(morph_poses2)
-            matrixes.matmul(morph_qqs2)
             matrixes.matmul(morph_scales2)
+            matrixes.matmul(morph_local_scales)
 
             # ボーンモーション変化量
             matrixes.translate(poses.tolist())
+            matrixes.matmul(poses2)
             matrixes.matmul(local_poses)
             matrixes.rotate(qqs.tolist())
+            matrixes.matmul(qqs2)
             matrixes.matmul(local_qqs)
             matrixes.scale(scales.tolist())
-            matrixes.matmul(local_scales)
-            matrixes.matmul(poses2)
-            matrixes.matmul(qqs2)
             matrixes.matmul(scales2)
+            matrixes.matmul(local_scales)
             # グローバル座標行列
             global_mats = matrixes.matmul_cols()
             # グローバル位置
@@ -1623,24 +1623,24 @@ class VmdMotion(BaseHashModel):
         matrixes = MMatrix4x4List(morph_bone_poses.shape[0], morph_bone_poses.shape[1])
         # モーフの適用
         matrixes.translate(morph_bone_poses.tolist())
+        matrixes.matmul(morph_bone_poses2)
         matrixes.matmul(morph_bone_local_poses)
         matrixes.rotate(morph_bone_qqs.tolist())
+        matrixes.matmul(morph_bone_qqs2)
         matrixes.matmul(morph_bone_local_qqs)
         matrixes.scale(morph_bone_scales.tolist())
-        matrixes.matmul(morph_bone_local_scales)
-        matrixes.matmul(morph_bone_poses2)
-        matrixes.matmul(morph_bone_qqs2)
         matrixes.matmul(morph_bone_scales2)
+        matrixes.matmul(morph_bone_local_scales)
         # モーションの適用
         matrixes.translate(motion_bone_poses.tolist())
+        matrixes.matmul(motion_bone_poses2)
         matrixes.matmul(motion_bone_local_poses)
         matrixes.rotate(motion_bone_qqs.tolist())
+        matrixes.matmul(motion_bone_qqs2)
         matrixes.matmul(motion_bone_local_qqs)
         matrixes.scale(motion_bone_scales.tolist())
-        matrixes.matmul(motion_bone_local_scales)
-        matrixes.matmul(motion_bone_poses2)
-        matrixes.matmul(motion_bone_qqs2)
         matrixes.matmul(motion_bone_scales2)
+        matrixes.matmul(motion_bone_local_scales)
 
         bone_matrixes: list[np.ndarray] = []
         for bone_index in model.bones.indexes:
