@@ -788,6 +788,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         np.ndarray
             ローカル軸を加味したスケーリング行列
         """
+        # return self.calc_locale_scale(bone.index, fno, model)
         # 自身のローカルスケール
         local_scale = self[bone.name][fno].local_scale
         local_parent_matrix = np.eye(4)
@@ -801,31 +802,39 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         if not local_scale and np.all(np.isclose(local_parent_matrix, np.eye(4))):
             return np.eye(4)
 
-        # ローカル軸に合わせたスケーリング行列を作成する(親はキャンセルする)
-        return np.linalg.inv(local_parent_matrix) @ self.calc_locale_scale(bone, local_scale)
-
-    def calc_locale_scale(self, bone: Bone, scale: MVector3D) -> np.ndarray:
-        """
-        ローカル軸に沿ったスケール計算
-
-        Parameters
-        ----------
-        bone : Bone
-            ローカル軸計算用ボーン
-        scale : MVector3D
-            スケール
-
-        Returns
-        -------
-        ローカル軸に沿ったスケーリング行列
-        """
         scale_matrix = np.eye(4)
-        scale_matrix[:3, :3] = np.diag((scale + MVector3D(1, 1, 1)).vector)
+        scale_matrix[:3, :3] += np.diag(local_scale.vector)
 
         # ローカル軸に沿った回転行列
         rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
 
-        return np.linalg.inv(rotation_matrix) @ scale_matrix @ rotation_matrix
+        # ローカル軸に合わせたスケーリング行列を作成する(親はキャンセルする)
+        return np.linalg.inv(local_parent_matrix) @ np.linalg.inv(rotation_matrix) @ scale_matrix @ rotation_matrix
+
+    # def calc_locale_scale(self, bone_index: int, fno: int, model: PmxModel) -> np.ndarray:
+    #     """ローカル軸に沿ったスケーリング行列"""
+    #     if 0 > bone_index:
+    #         return np.eye(4)
+
+    #     # 自身のローカルスケール
+    #     bone = model.bones[bone_index]
+    #     local_scale = self[bone.name][fno].local_scale
+    #     local_parent_matrix = self.calc_locale_scale(bone.parent_index, fno, model)
+
+    #     if not local_scale and np.all(np.isclose(local_parent_matrix, np.eye(4))):
+    #         return np.eye(4)
+
+    #     if bone.is_twist:
+    #         return np.eye(4)
+
+    #     scale_matrix = np.eye(4)
+    #     scale_matrix[:3, :3] += np.diag(local_scale.vector)
+
+    #     # ローカル軸に沿った回転行列
+    #     rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
+
+    #     # ローカル軸に合わせたスケーリング行列を作成する(親はキャンセルする)
+    #     return np.linalg.inv(local_parent_matrix) @ np.linalg.inv(rotation_matrix) @ scale_matrix @ rotation_matrix
 
     def get_rotation(self, bone: Bone, fno: int, model: PmxModel, append_ik: bool = False) -> MQuaternion:
         """
