@@ -228,7 +228,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         -------
         行列辞書（キー: fno,ボーン名、値：行列リスト）
         """
-        self.clear()
 
         if append_ik:
             # IK回転を事前に求めておく
@@ -423,8 +422,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         MVector3D(*positions[i, j + 1]),
                     )
 
-        self.clear()
-
         return bone_matrixes
 
     def animate_bone_matrixes(
@@ -448,8 +445,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         if not bone_names:
             bone_names = model.bones.tail_bone_names
-
-        self.clear()
 
         if append_ik:
             # IK回転を事前に求めておく
@@ -510,8 +505,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     local_scale = self.get_local_scale(bone, fno, model)
                     local_scales[0, bone.index] = local_scale
                     self.cache_local_scales[(fno, model.digest, bone.index)] = local_scale
-
-        self.clear()
 
         return poses, qqs, scales, poses2, qqs2, scales2, local_poses, local_qqs, local_scales
 
@@ -796,17 +789,16 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             ローカル軸を加味したスケーリング行列
         """
         # 自身のローカルスケール
-        local_scale = self[bone.name][fno].local_scale + MVector3D(1, 1, 1)
+        local_scale = self[bone.name][fno].local_scale
         local_parent_matrix = np.eye(4)
 
         if not bone.is_twist:
             for parent_name in model.bone_trees[bone.name].names[:-1]:
                 # 親のキャンセルローカルスケール
                 parent_bone = model.bones[parent_name]
-                parent_local_scale = self[bone.name][fno].local_scale + MVector3D(1, 1, 1)
-                local_parent_matrix = local_parent_matrix @ self.calc_locale_scale(parent_bone, parent_local_scale)
+                local_parent_matrix = local_parent_matrix @ self.cache_local_scales.get((fno, model.digest, parent_bone.index), np.eye(4))
 
-        if local_scale == MVector3D(1, 1, 1) and np.all(np.isclose(local_parent_matrix, np.eye(4))):
+        if not local_scale and np.all(np.isclose(local_parent_matrix, np.eye(4))):
             return np.eye(4)
 
         # ローカル軸に合わせたスケーリング行列を作成する(親はキャンセルする)
@@ -828,7 +820,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         ローカル軸に沿ったスケーリング行列
         """
         scale_matrix = np.eye(4)
-        scale_matrix[:3, :3] = np.diag(scale.vector)
+        scale_matrix[:3, :3] = np.diag((scale + MVector3D(1, 1, 1)).vector)
 
         # ローカル軸に沿った回転行列
         rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
@@ -1597,6 +1589,7 @@ class VmdMotion(BaseHashModel):
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: モーフボーン操作")
 
         # モーションボーン操作
+        self.bones.clear()
         (
             motion_bone_poses,
             motion_bone_qqs,
