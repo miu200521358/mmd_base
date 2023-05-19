@@ -438,7 +438,7 @@ class MVector3D(MVector):
     def calc_by_ratio(prev_v: "MVector3D", next_v: "MVector3D", x: float, y: float, z: float) -> "MVector3D":
         return MVector3D(*calc_v3_by_ratio(*prev_v.vector, *next_v.vector, x, y, z))
 
-    def get_local_matrix(self) -> "MMatrix4x4":
+    def to_local_matrix4x4(self) -> "MMatrix4x4":
         """自身をローカル軸とした場合の回転行列を取得"""
         if not self:
             return MMatrix4x4()

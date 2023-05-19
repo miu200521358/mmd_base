@@ -219,7 +219,7 @@ def test_MVector3D_get_local_matrix():
 
     from mlib.base.math import MVector3D
 
-    local_matrix = MVector3D(0.8, 0.6, 1).get_local_matrix()
+    local_matrix = MVector3D(0.8, 0.6, 1).to_local_matrix4x4()
 
     assert np.isclose(
         local_matrix.vector,
@@ -238,7 +238,7 @@ def test_MVector3D_get_local_matrix():
         np.array([1.27279221, 0.6, -1.0]),
     ).all()
 
-    local_matrix = MVector3D(0, 0, -0.5).get_local_matrix()
+    local_matrix = MVector3D(0, 0, -0.5).to_local_matrix4x4()
 
     assert np.isclose(
         local_matrix.vector,
