@@ -788,6 +788,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         np.ndarray
             ローカル軸を加味したスケーリング行列
         """
+        # return self.calc_locale_scale(bone.index, fno, model)
+        # 自身のローカルスケール
+        local_scale = self[bone.name][fno].local_scale
         local_parent_matrix = np.eye(4)
 
         if not bone.is_twist:
@@ -796,23 +799,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 parent_bone = model.bones[parent_name]
                 local_parent_matrix = local_parent_matrix @ self.cache_local_scales.get((fno, model.digest, parent_bone.index), np.eye(4))
 
-        scale_matrix = self.calc_locale_scale(bone, fno)
-
-        if np.all(np.isclose(scale_matrix, np.eye(4))) and np.all(np.isclose(local_parent_matrix, np.eye(4))):
-            return np.eye(4)
-
-        # ローカル軸に合わせたスケーリング行列を作成する(親はキャンセルする)
-        return np.linalg.inv(local_parent_matrix) @ scale_matrix
-
-    def calc_locale_scale(self, bone: Bone, fno: int) -> np.ndarray:
-        """ローカル軸に沿ったスケーリング行列"""
-        if 0 > bone.index:
-            return np.eye(4)
-
-        # 自身のローカルスケール
-        local_scale = self[bone.name][fno].local_scale
-
-        if not local_scale:
+        if not local_scale and np.all(np.isclose(local_parent_matrix, np.eye(4))):
             return np.eye(4)
 
         scale_matrix = np.eye(4)
@@ -822,7 +809,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
 
         # ローカル軸に合わせたスケーリング行列を作成する(親はキャンセルする)
-        return np.linalg.inv(rotation_matrix) @ scale_matrix @ rotation_matrix
+        return np.linalg.inv(local_parent_matrix) @ np.linalg.inv(rotation_matrix) @ scale_matrix @ rotation_matrix
 
     def get_rotation(self, bone: Bone, fno: int, model: PmxModel, append_ik: bool = False) -> MQuaternion:
         """
