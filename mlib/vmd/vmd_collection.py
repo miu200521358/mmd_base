@@ -393,6 +393,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             matrixes.matmul(morph_local_qqs)
             matrixes.scale(morph_scales.tolist())
             matrixes.matmul(morph_local_scales)
+            matrixes.matmul(morph_poses2)
+            matrixes.matmul(morph_qqs2)
+            matrixes.matmul(morph_scales2)
 
             # ボーンモーション変化量
             matrixes.translate(poses.tolist())
@@ -401,11 +404,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             matrixes.matmul(local_qqs)
             matrixes.scale(scales.tolist())
             matrixes.matmul(local_scales)
-
-            # 追加変化量
-            matrixes.matmul(morph_poses2)
-            matrixes.matmul(morph_qqs2)
-            matrixes.matmul(morph_scales2)
             matrixes.matmul(poses2)
             matrixes.matmul(qqs2)
             matrixes.matmul(scales2)
@@ -1599,6 +1597,9 @@ class VmdMotion(BaseHashModel):
         matrixes.matmul(morph_bone_local_qqs)
         matrixes.scale(morph_bone_scales.tolist())
         matrixes.matmul(morph_bone_local_scales)
+        matrixes.matmul(morph_bone_poses2)
+        matrixes.matmul(morph_bone_qqs2)
+        matrixes.matmul(morph_bone_scales2)
         # モーションの適用
         matrixes.translate(motion_bone_poses.tolist())
         matrixes.matmul(motion_bone_local_poses)
@@ -1606,10 +1607,6 @@ class VmdMotion(BaseHashModel):
         matrixes.matmul(motion_bone_local_qqs)
         matrixes.scale(motion_bone_scales.tolist())
         matrixes.matmul(motion_bone_local_scales)
-        # 追加変化量
-        matrixes.matmul(morph_bone_poses2)
-        matrixes.matmul(morph_bone_qqs2)
-        matrixes.matmul(morph_bone_scales2)
         matrixes.matmul(motion_bone_poses2)
         matrixes.matmul(motion_bone_qqs2)
         matrixes.matmul(motion_bone_scales2)
