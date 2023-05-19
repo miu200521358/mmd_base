@@ -228,10 +228,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         -------
         行列辞書（キー: fno,ボーン名、値：行列リスト）
         """
+        self.clear()
 
         if append_ik:
-            self.clear()
-
             # IK回転を事前に求めておく
             for fno in fnos:
                 self.calc_ik_rotations(fno, model, bone_names)
@@ -424,8 +423,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         MVector3D(*positions[i, j + 1]),
                     )
 
-        if append_ik:
-            self.clear()
+        self.clear()
 
         return bone_matrixes
 
@@ -451,9 +449,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         if not bone_names:
             bone_names = model.bones.tail_bone_names
 
-        if append_ik:
-            self.clear()
+        self.clear()
 
+        if append_ik:
             # IK回転を事前に求めておく
             self.calc_ik_rotations(fno, model)
 
@@ -513,8 +511,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     local_scales[0, bone.index] = local_scale
                     self.cache_local_scales[(fno, model.digest, bone.index)] = local_scale
 
-        if append_ik:
-            self.clear()
+        self.clear()
 
         return poses, qqs, scales, poses2, qqs2, scales2, local_poses, local_qqs, local_scales
 
