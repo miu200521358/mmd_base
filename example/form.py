@@ -496,18 +496,18 @@ class TestFrame(BaseFrame):
         # bf2.local_scale = MVector3D(0, 1, 1)
         # dress_motion.bones["上半身2"].append(bf2)
 
-        # bf = VmdBoneFrame(0, "左肩")
-        # bf.local_scale = MVector3D(0, 1.5, 1.5)
-        # # bf.local_position = MVector3D(0, 1, 0)
-        # dress_motion.bones["左肩"].append(bf)
+        bf = VmdBoneFrame(0, "左肩")
+        bf.local_scale = MVector3D(0, 1.5, 1.5)
+        # bf.local_position = MVector3D(0, 1, 0)
+        dress_motion.bones["左肩"].append(bf)
 
         bf = VmdBoneFrame(0, "左腕")
         bf.local_scale = MVector3D(0, -0.5, -0.5)
         dress_motion.bones["左腕"].append(bf)
 
-        # bf = VmdBoneFrame(0, "左ひじ")
-        # bf.local_scale = MVector3D(0, 1.2, 1.2)
-        # dress_motion.bones["左ひじ"].append(bf)
+        bf = VmdBoneFrame(0, "左ひじ")
+        bf.local_scale = MVector3D(0, 1.2, 1.2)
+        dress_motion.bones["左ひじ"].append(bf)
 
         try:
             self.config_panel.canvas.set_context()
