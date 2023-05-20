@@ -366,7 +366,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                 # 末端ボーン表示先の位置を計算
                 bone_poses[n, -1] = np.zeros(3)
-                poses[n, -1] = bone_tree[-1].tail_relative_position.vector
+                poses[n, -1] = bone_tree[-1].local_axis.vector
                 local_poses[n, -1] = np.eye(4)
                 qqs[n, -1] = np.eye(4)
                 local_qqs[n, -1] = np.eye(4)
@@ -675,7 +675,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         pos_matrix[:3, 3] = local_pos.vector
 
         # ローカル軸に沿った回転行列
-        rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
+        rotation_matrix = bone.local_axis.to_local_matrix4x4().vector
 
         # ローカル軸に合わせた移動行列を作成する
         return inv(local_parent_matrix) @ inv(rotation_matrix) @ pos_matrix @ rotation_matrix
@@ -808,7 +808,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         scale_matrix[:3, :3] += np.diag(local_scale.vector)
 
         # ローカル軸に沿った回転行列
-        rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
+        rotation_matrix = bone.local_axis.to_local_matrix4x4().vector
 
         # ローカル軸に合わせたスケーリング行列を作成する(親はキャンセルする)
         return inv(local_parent_matrix) @ inv(rotation_matrix) @ scale_matrix @ rotation_matrix
@@ -1167,7 +1167,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             return np.eye(4)
 
         # ローカル軸に沿った回転行列
-        rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
+        rotation_matrix = bone.local_axis.to_local_matrix4x4().vector
 
         # ローカル軸に合わせた回転行列を作成する(親はキャンセルする)
         return inv(local_parent_matrix) @ inv(rotation_matrix) @ qq_matrix @ rotation_matrix

@@ -1,6 +1,6 @@
 import os
 from glob import glob
-from typing import Optional
+from typing import Iterable, Optional
 
 import numpy as np
 import OpenGL.GL as gl
@@ -199,12 +199,9 @@ class Bones(BaseIndexNameDictModel[Bone]):
 
         from_pos = bone.position
         bone_setting = STANDARD_BONE_NAMES[bone.name] if bone.name in STANDARD_BONE_NAMES else None
-        if bone_setting and isinstance(bone_setting.relative, MVector3D):
-            # 表示先位置が指定されてる場合、そのまま使用
-            return bone_setting.relative
-        elif bone_setting and isinstance(bone_setting.relative, list):
+        if bone_setting and isinstance(bone_setting.tails, Iterable):
             # 表示先ボーンが指定されており、いずれかある場合、そのまま使用
-            for tail_bone_name in bone_setting.relative:
+            for tail_bone_name in bone_setting.tails:
                 if tail_bone_name in self:
                     return self[tail_bone_name].position - from_pos
 
@@ -221,6 +218,50 @@ class Bones(BaseIndexNameDictModel[Bone]):
             to_pos = self[bone_index].position
 
         return to_pos - from_pos
+
+    def get_local_axis(self, bone_index: int) -> MVector3D:
+        """
+        ローカル軸を取得
+
+        Parameters
+        ----------
+        bone_index : int
+            ボーンINDEX
+
+        Returns
+        -------
+        ボーンの末端位置（グローバル位置）
+        """
+        if bone_index not in self:
+            return MVector3D()
+
+        bone = self[bone_index]
+        to_pos = MVector3D()
+
+        from_pos = bone.position
+        bone_setting = STANDARD_BONE_NAMES[bone.name] if bone.name in STANDARD_BONE_NAMES else None
+        if bone_setting and isinstance(bone_setting.relative, MVector3D):
+            # 表示先位置が指定されてる場合、そのまま使用
+            return bone_setting.relative.normalized()
+        elif bone_setting and isinstance(bone_setting.relative, Iterable):
+            # 表示先ボーンが指定されており、いずれかある場合、そのまま使用
+            for tail_bone_name in bone_setting.relative:
+                if tail_bone_name in self:
+                    return (self[tail_bone_name].position - from_pos).normalized()
+
+        # 合致するのがなければ通常の表示先から検出
+        if bone.is_tail_bone and 0 <= bone.tail_index and bone.tail_index in self:
+            # 表示先が指定されているの場合、保持
+            to_pos = self[bone.tail_index].position
+        elif not bone.is_tail_bone:
+            # 表示先が相対パスの場合、保持
+            to_pos = from_pos + bone.tail_position
+        else:
+            # 表示先がない場合、とりあえず親ボーンからの向きにする
+            from_pos = self[bone.parent_index].position
+            to_pos = self[bone_index].position
+
+        return (to_pos - from_pos).normalized()
 
     def get_parent_relative_position(self, bone_index: int) -> MVector3D:
         """親ボーンから見た相対位置"""
@@ -592,9 +633,10 @@ class PmxModel(BaseHashModel):
                     self.bones[bone.ik.bone_index].ik_target_indexes.append(bone.index)
 
             bone.parent_relative_position = self.bones.get_parent_relative_position(bone.index)
+            # 末端ボーンの相対位置
             bone.tail_relative_position = self.bones.get_tail_relative_position(bone.index)
             # 各ボーンのローカル軸
-            bone.local_axis = bone.tail_relative_position.normalized()
+            bone.local_axis = self.bones.get_local_axis(bone.index)
             if bone.has_fixed_axis:
                 bone.correct_local_vector(bone.fixed_axis.normalized())
             else:
@@ -1340,7 +1382,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
             + [
                 np.fromiter(
                     [
-                        *(b.position + b.local_axis).gl.vector,
+                        *(b.position + b.local_axis.normalized()).gl.vector,
                         b.index / len(writable_bones) * 2,
                     ],
                     dtype=np.float32,
