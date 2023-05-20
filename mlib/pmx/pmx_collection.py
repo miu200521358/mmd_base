@@ -547,20 +547,24 @@ class PmxModel(BaseHashModel):
         # システム用ボーン追加
         if "右腕" in self.bones and "左腕" in self.bones and "上半身" in self.bones and "首根元" not in self.bones:
             neck_root_bone = Bone(name="首根元")
-            if "上半身2" in self.bones:
-                neck_root_bone.parent_index = self.bones["上半身2"].index
-            else:
-                neck_root_bone.parent_index = self.bones["上半身"].index
+            parent_bone_name = "上半身3" if "上半身3" in self.bones else "上半身2" if "上半身2" in self.bones else "上半身"
+            neck_root_bone.parent_index = self.bones[parent_bone_name].index
+            neck_root_bone.index = self.bones[parent_bone_name].index + 1
             neck_root_bone.position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
-            neck_root_bone.is_system = True
-            self.bones.append(neck_root_bone)
+            self.insert_bone(neck_root_bone)
+            for replace_bone_name in ("右肩P", "左肩P", "右肩", "左肩"):
+                if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones[parent_bone_name].index:
+                    self.bones[replace_bone_name].parent_index = self.bones["首根元"].index
 
         if "右足" in self.bones and "左足" in self.bones and "下半身" in self.bones and "足中心" not in self.bones:
             leg_root_bone = Bone(name="足中心")
             leg_root_bone.parent_index = self.bones["下半身"].index
+            leg_root_bone.index = self.bones["下半身"].index + 1
             leg_root_bone.position = (self.bones["右足"].position + self.bones["左足"].position) / 2
-            leg_root_bone.is_system = True
-            self.bones.append(leg_root_bone)
+            self.insert_bone(leg_root_bone)
+            for replace_bone_name in ("右足", "左足", "右足D", "左足D"):
+                if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones["下半身"].index:
+                    self.bones[replace_bone_name].parent_index = self.bones["足中心"].index
 
         logger.info("モデルセットアップ：システム用ボーン")
 
@@ -1207,7 +1211,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
         # ----------
 
-        writable_bones = model.bones.writable()
+        writable_bones = [bone for bone in model.bones if 0 <= bone.index]
 
         # ボーン位置
         self.bones = np.array(
