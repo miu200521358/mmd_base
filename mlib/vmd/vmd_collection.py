@@ -203,7 +203,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
     def get_tail_relative_position(self, bone: Bone, model: PmxModel, positions: Optional[np.ndarray] = None) -> MVector3D:
         """末端ボーン相対位置取得"""
-        if not positions:
+        if positions is None:
             return bone.tail_relative_position
 
         from_pos = MVector3D(*positions[bone.index])
