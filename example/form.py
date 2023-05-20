@@ -11,9 +11,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
 from mlib.base.math import MQuaternion, MVector3D
-
-from mlib.vmd.vmd_part import VmdBoneFrame
-from mlib.pmx.pmx_part import Bone, Face, Material, SphereMode, Texture, ToonSharing, Vertex
+from mlib.vmd.vmd_part import VmdBoneFrame, VmdMorphFrame
+from mlib.pmx.pmx_part import Bone, BoneMorphOffset, Face, Material, Morph, MorphType, SphereMode, Texture, ToonSharing, Vertex
 from mlib.base.exception import MApplicationException
 from mlib.base.logger import MLogger
 from mlib.pmx.canvas import CanvasPanel
@@ -496,9 +495,9 @@ class TestFrame(BaseFrame):
         # dress_matrixes = dress_motion.bones.get_matrix_by_indexes([0], ["左肩"], dress, append_ik=False)
         # left_shoulder_position = dress_matrixes[0, "左肩"].position
 
-        bf2 = VmdBoneFrame(0, "上半身2")
-        bf2.local_scale = MVector3D(0, 1, 1)
-        dress_motion.bones["上半身2"].append(bf2)
+        # bf2 = VmdBoneFrame(0, "上半身2")
+        # bf2.local_scale = MVector3D(0, 1, 1)
+        # dress_motion.bones["上半身2"].append(bf2)
 
         # dress_motion.bones.clear()
         # dress_scaled_matrixes = dress_motion.bones.get_matrix_by_indexes([0], ["左肩"], dress, append_ik=False)
@@ -528,10 +527,20 @@ class TestFrame(BaseFrame):
         # bf.local_scale = MVector3D(0, 1.2, 1.2)
         # dress_motion.bones["左ひじ"].append(bf)
 
+        # モーフ追加
+        morph = Morph(name="上半身")
+        morph.morph_type = MorphType.BONE
+        offset = BoneMorphOffset(dress.bones["上半身"].index, MVector3D(), MQuaternion())
+        offset.local_scale = MVector3D(0, 1.5, 1.5)
+        morph.offsets.append(offset)
+        dress.morphs.append(morph)
+
+        dress_motion.morphs["上半身"].append(VmdMorphFrame(0, "上半身", 1))
+
         try:
             self.config_panel.canvas.set_context()
             self.config_panel.canvas.append_model_set(self.file_panel.model_ctrl.data, self.file_panel.motion_ctrl.data.copy(), 0.5)
-            self.config_panel.canvas.append_model_set(self.file_panel.dress_ctrl.data, dress_motion, 0.7)
+            self.config_panel.canvas.append_model_set(dress, dress_motion, 0.7)
             self.config_panel.canvas.Refresh()
             self.notebook.ChangeSelection(self.config_panel.tab_idx)
         except:
