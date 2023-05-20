@@ -1004,6 +1004,11 @@ class Bone(BaseIndexNameModel):
         """準標準ボーン：上半身系であるか"""
         return self.name in STANDARD_BONE_UPPER_NAMES
 
+    @property
+    def is_not_local_cancel(self) -> bool:
+        """ローカル軸行列計算で親をキャンセルさせないボーン"""
+        return self.is_twist or self.name in ["頭部装飾"]
+
 
 STANDARD_BONE_HEAD_NAMES = (
     "首",

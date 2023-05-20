@@ -712,7 +712,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_pos = self[bone.name][fno].local_position
         local_parent_matrix = np.eye(4)
 
-        if not bone.is_twist:
+        if not bone.is_not_local_cancel:
             for parent_name in model.bone_trees[bone.name].names[:-1]:
                 # 親のキャンセルローカル移動
                 parent_bone = model.bones[parent_name]
@@ -844,7 +844,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_scale = self[bone.name][fno].local_scale
         local_parent_matrix = np.eye(4)
 
-        if not bone.is_twist:
+        if not bone.is_not_local_cancel:
             for parent_name in model.bone_trees[bone.name].names[:-1]:
                 # 親のキャンセルローカルスケール
                 parent_bone = model.bones[parent_name]
@@ -1206,7 +1206,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         local_parent_matrix = np.eye(4)
 
-        if not bone.is_twist:
+        if not bone.is_not_local_cancel:
             for parent_name in model.bone_trees[bone.name].names[:-1]:
                 # 親のキャンセルローカル移動
                 parent_bone = model.bones[parent_name]
