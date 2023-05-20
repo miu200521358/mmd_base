@@ -601,7 +601,6 @@ class PmxModel(BaseHashModel):
             neck_root_bone.parent_index = self.bones[parent_bone_name].index
             neck_root_bone.index = self.bones[parent_bone_name].index + 1
             neck_root_bone.position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
-            neck_root_bone.is_system = True
             self.insert_bone(neck_root_bone)
             for replace_bone_name in ("右肩P", "左肩P", "右肩", "左肩"):
                 if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones[parent_bone_name].index:
@@ -612,7 +611,6 @@ class PmxModel(BaseHashModel):
             leg_root_bone.parent_index = self.bones["下半身"].index
             leg_root_bone.index = self.bones["下半身"].index + 1
             leg_root_bone.position = (self.bones["右足"].position + self.bones["左足"].position) / 2
-            leg_root_bone.is_system = True
             self.insert_bone(leg_root_bone)
             for replace_bone_name in ("腰キャンセル右", "腰キャンセル左", "右足", "左足", "右足D", "左足D"):
                 if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones["下半身"].index:
