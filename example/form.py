@@ -537,6 +537,8 @@ class TestFrame(BaseFrame):
 
         dress_motion.morphs["上半身"].append(VmdMorphFrame(0, "上半身", 1))
 
+        dress_matrixes = dress_motion.animate_bone(0, dress)
+
         try:
             self.config_panel.canvas.set_context()
             self.config_panel.canvas.append_model_set(self.file_panel.model_ctrl.data, self.file_panel.motion_ctrl.data.copy(), 0.5)

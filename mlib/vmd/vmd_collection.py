@@ -1738,3 +1738,101 @@ class VmdMotion(BaseHashModel):
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: OpenGL座標系変換")
 
         return gl_matrixes, vertex_morph_poses + group_vertex_morph_poses, uv_morph_poses, uv1_morph_poses, group_materials
+
+    def animate_bone(self, fno: int, model: PmxModel) -> VmdBoneFrameTrees:
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 開始")
+
+        # 材質モーフ
+        material_morphs = self.morphs.animate_material_morphs(fno, model)
+        logger.debug(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 材質モーフ")
+
+        # ボーンモーフ
+        morph_bone_frames = self.morphs.animate_bone_morphs(fno, model)
+        logger.debug(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: ボーンモーフ")
+
+        # グループモーフ
+        group_vertex_morph_poses, group_morph_bone_frames, group_materials = self.morphs.animate_group_morphs(fno, model, material_morphs)
+        logger.debug(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: グループモーフ")
+
+        for bfs in group_morph_bone_frames:
+            bf = bfs[fno]
+            mbf = morph_bone_frames[bf.name][bf.index]
+            morph_bone_frames[bf.name][bf.index] = mbf + bf
+
+        logger.debug(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: モーフキーフレ加算")
+
+        # モーフボーン操作
+        (
+            morph_bone_poses,
+            morph_bone_qqs,
+            morph_bone_scales,
+            morph_bone_poses2,
+            morph_bone_qqs2,
+            morph_bone_scales2,
+            morph_bone_local_poses,
+            morph_bone_local_qqs,
+            morph_bone_local_scales,
+        ) = morph_bone_frames.animate_bone_matrixes(fno, model, append_ik=False)
+        logger.debug(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: モーフボーン操作")
+
+        # モーションボーン操作
+        self.bones.clear()
+        (
+            motion_bone_poses,
+            motion_bone_qqs,
+            motion_bone_scales,
+            motion_bone_poses2,
+            motion_bone_qqs2,
+            motion_bone_scales2,
+            motion_bone_local_poses,
+            motion_bone_local_qqs,
+            motion_bone_local_scales,
+        ) = self.bones.animate_bone_matrixes(fno, model, morph_bone_frames=morph_bone_frames)
+        logger.debug(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: モーションボーン操作")
+
+        # ボーン変形行列
+        matrixes = MMatrix4x4List(morph_bone_poses.shape[0], morph_bone_poses.shape[1])
+        # モーフの適用
+        matrixes.translate(morph_bone_poses.tolist())
+        matrixes.matmul(morph_bone_local_poses)
+        matrixes.rotate(morph_bone_qqs.tolist())
+        matrixes.matmul(morph_bone_local_qqs)
+        matrixes.scale(morph_bone_scales.tolist())
+        matrixes.matmul(morph_bone_local_scales)
+        matrixes.matmul(morph_bone_poses2)
+        matrixes.matmul(morph_bone_qqs2)
+        matrixes.matmul(morph_bone_scales2)
+        # モーションの適用
+        matrixes.translate(motion_bone_poses.tolist())
+        matrixes.matmul(motion_bone_local_poses)
+        matrixes.rotate(motion_bone_qqs.tolist())
+        matrixes.matmul(motion_bone_local_qqs)
+        matrixes.scale(motion_bone_scales.tolist())
+        matrixes.matmul(motion_bone_local_scales)
+        matrixes.matmul(motion_bone_poses2)
+        matrixes.matmul(motion_bone_qqs2)
+        matrixes.matmul(motion_bone_scales2)
+
+        bone_matrixes = VmdBoneFrameTrees()
+        for bone_index in model.bones.indexes:
+            if 0 > bone_index:
+                continue
+
+            bone = model.bones[bone_index]
+
+            # BOf行列: 自身のボーンのボーンオフセット行列
+            matrix = bone.offset_matrix.copy().vector
+
+            # 全体のボーン変形行列を求める
+            matrix = model.bones.get_mesh_matrix(matrixes, bone.index, matrix)
+
+            bone_matrixes.append(
+                fno=fno,
+                bone_name=bone.name,
+                matrix=matrix,
+                position=(matrix @ np.append(bone.position.vector, 1))[:3],
+                tail_position=(matrix @ np.append((bone.position + bone.tail_relative_position).vector, 1))[:3],
+            )
+        logger.debug(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: ボーン変形行列")
+
+        return bone_matrixes
