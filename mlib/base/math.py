@@ -456,7 +456,7 @@ class MVector3D(MVector):
         if np.all(np.isnan(y_axis)):
             return MMatrix4x4()
 
-        # ローカル軸に合わせたスケーリング行列を作成する
+        # ローカル軸に合わせた回転行列を作成する
         rotation_matrix = MMatrix4x4()
         rotation_matrix.vector[0, :3] = x_axis
         rotation_matrix.vector[1, :3] = y_axis

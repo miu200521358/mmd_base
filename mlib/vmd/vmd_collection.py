@@ -3,6 +3,7 @@ from bisect import bisect_left
 from functools import lru_cache
 from math import acos, degrees
 from typing import Optional
+from numpy.linalg import inv
 
 import numpy as np
 
@@ -677,7 +678,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
 
         # ローカル軸に合わせた移動行列を作成する
-        return np.linalg.inv(local_parent_matrix) @ np.linalg.inv(rotation_matrix) @ pos_matrix @ rotation_matrix
+        return inv(local_parent_matrix) @ inv(rotation_matrix) @ pos_matrix @ rotation_matrix
 
     def get_scale(self, bone: Bone, fno: int, model: PmxModel) -> MVector3D:
         """
@@ -810,7 +811,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
 
         # ローカル軸に合わせたスケーリング行列を作成する(親はキャンセルする)
-        return np.linalg.inv(local_parent_matrix) @ np.linalg.inv(rotation_matrix) @ scale_matrix @ rotation_matrix
+        return inv(local_parent_matrix) @ inv(rotation_matrix) @ scale_matrix @ rotation_matrix
 
     def get_rotation(self, bone: Bone, fno: int, model: PmxModel, append_ik: bool = False) -> MQuaternion:
         """
@@ -1169,7 +1170,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
 
         # ローカル軸に合わせた回転行列を作成する(親はキャンセルする)
-        return np.linalg.inv(local_parent_matrix) @ np.linalg.inv(rotation_matrix) @ qq_matrix @ rotation_matrix
+        return inv(local_parent_matrix) @ inv(rotation_matrix) @ qq_matrix @ rotation_matrix
 
 
 @lru_cache(maxsize=None)

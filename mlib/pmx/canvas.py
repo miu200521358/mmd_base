@@ -58,6 +58,13 @@ MODEL_BONE_COLORS = [
 ]
 
 
+MODEL_AXIS_COLORS = [
+    np.array([0.6, 0.6, 0, 1]),
+    np.array([0, 0.6, 0.6, 1]),
+    np.array([0.6, 0, 0.6, 1]),
+]
+
+
 class ModelSet:
     def __init__(self, shader: MShader, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0):
         self.model = model
@@ -250,6 +257,17 @@ class PmxCanvas(glcanvas.GLCanvas):
                     animation.gl_matrixes,
                     color * np.fromiter([1, 1, 1, model_set.bone_alpha], count=4, dtype=np.float32),
                 )
+
+        if logging.DEBUG >= logger.total_level:
+            for model_set, animation, color in zip(self.model_sets, self.animations, MODEL_AXIS_COLORS):
+                # ローカル軸を表示
+                if model_set.model:
+                    logger.test(f"-- ローカル軸描画(透過): {model_set.model.name}")
+
+                    model_set.model.draw_axis(
+                        animation.gl_matrixes,
+                        color * np.fromiter([1, 1, 1, model_set.bone_alpha], count=4, dtype=np.float32),
+                    )
 
     def draw_ground(self):
         """平面を描画する"""

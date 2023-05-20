@@ -28,6 +28,7 @@ class ProgramType(IntEnum):
     MODEL = 0
     EDGE = 1
     BONE = 2
+    AXIS = 3
 
 
 class Msaa:
@@ -188,6 +189,15 @@ class MShader:
         self.initialize(self.bone_program, ProgramType.BONE)
         self.unuse()
 
+        # ローカル軸描画シェーダー ------------------
+        self.axis_program = gl.glCreateProgram()
+        self.compile(self.axis_program, "axis.vert", "axis.frag", ProgramType.AXIS)
+
+        # 初期化
+        self.use(ProgramType.AXIS)
+        self.initialize(self.axis_program, ProgramType.AXIS)
+        self.unuse()
+
         # フィット（両方）
         self.fit(self.width, self.height)
 
@@ -208,7 +218,7 @@ class MShader:
 
     def compile(self, program: Any, vertex_shader_name: str, fragments_shader_name: str, program_type: ProgramType) -> None:
         vertex_shader_src = Path(os.path.join(os.path.dirname(__file__), "glsl", vertex_shader_name)).read_text(encoding="utf-8")
-        if program_type != ProgramType.BONE:
+        if program_type in [ProgramType.MODEL, ProgramType.EDGE]:
             vertex_shader_src = vertex_shader_src % (
                 VsLayout.POSITION_ID.value,
                 VsLayout.NORMAL_ID.value,
@@ -377,6 +387,8 @@ class MShader:
                 gl.glUseProgram(self.edge_program)
             case ProgramType.BONE:
                 gl.glUseProgram(self.bone_program)
+            case ProgramType.AXIS:
+                gl.glUseProgram(self.axis_program)
 
     def unuse(self):
         gl.glUseProgram(0)

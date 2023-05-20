@@ -497,7 +497,7 @@ class TestFrame(BaseFrame):
         # left_shoulder_position = dress_matrixes[0, "左肩"].position
 
         bf2 = VmdBoneFrame(0, "上半身2")
-        bf2.local_scale = MVector3D(0, 1, 1)
+        bf2.local_scale = MVector3D(0, 0, 1)
         dress_motion.bones["上半身2"].append(bf2)
 
         # dress_motion.bones.clear()
