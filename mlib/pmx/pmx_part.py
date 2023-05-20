@@ -1191,6 +1191,14 @@ class BoneSettings(Enum):
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, 1, 0),
     )
+    ARM_CENTER = BoneSetting(
+        "首根元",
+        ("首",),
+        ("上半身3", "上半身2"),
+        ("首",),
+        BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
+        MVector3D(0, 1, 0),
+    )
     NECK = BoneSetting(
         "首",
         ("頭",),
