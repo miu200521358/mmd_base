@@ -201,37 +201,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     def max_fno(self) -> int:
         return max([max(self[bname].indexes + [0]) for bname in self.names] + [0])
 
-    def get_tail_relative_position(self, bone: Bone, model: PmxModel, positions: Optional[np.ndarray] = None) -> MVector3D:
-        """末端ボーン相対位置取得"""
-        if positions is None:
-            return bone.tail_relative_position.copy()
-
-        from_pos = MVector3D(*positions[0, bone.index])
-        logger.debug(f"*** get_tail_relative_position: from[{bone.name}] bone{bone.position} -> calc{from_pos}")
-
-        # 合致するのがなければ通常の表示先から検出
-        if bone.is_tail_bone and 0 <= bone.tail_index and bone.tail_index in model.bones:
-            # 表示先が指定されているの場合、保持
-            to_pos = MVector3D(*positions[0, bone.tail_index])
-            logger.debug(f"*** get_tail_relative_position: to[{model.bones[bone.tail_index].name}] bone{model.bones[bone.tail_index].position} -> calc{to_pos}")
-        elif not bone.is_tail_bone:
-            # 表示先が相対パスの場合、保持
-            to_pos = from_pos + bone.tail_position
-            logger.debug(f"*** get_tail_relative_position: to-tail{bone.tail_position} -> calc{to_pos}")
-        else:
-            # 表示先がない場合、とりあえず親ボーンからの向きにする
-            from_pos = MVector3D(*positions[0, bone.parent_index])
-            to_pos = MVector3D(*positions[0, bone.index])
-            logger.debug(f"*** get_tail_relative_position: no-display from{from_pos}, to{to_pos}")
-
-        tail_relative_position = to_pos - from_pos
-        logger.debug(
-            f"*** get_tail_relative_position: bone{bone.tail_relative_position}({bone.tail_relative_position.normalized()}) "
-            + f"-> calc{tail_relative_position}({tail_relative_position.normalized()})"
-        )
-
-        return tail_relative_position
-
     def get_matrix_by_indexes(
         self,
         fnos: list[int],
@@ -726,7 +695,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         pos_matrix[:3, 3] = local_pos.vector
 
         # ローカル軸に沿った回転行列
-        rotation_matrix = self.get_tail_relative_position(bone, model, positions).to_local_matrix4x4().vector
+        rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
 
         # ローカル軸に合わせた移動行列を作成する
         return inv(local_parent_matrix) @ inv(rotation_matrix) @ pos_matrix @ rotation_matrix
@@ -857,7 +826,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         scale_matrix[:3, :3] += np.diag(local_scale.vector)
 
         # ローカル軸に沿った回転行列
-        rotation_matrix = self.get_tail_relative_position(bone, model, positions).to_local_matrix4x4().vector
+        rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
 
         # ローカル軸に合わせたスケーリング行列を作成する(親はキャンセルする)
         return inv(local_parent_matrix) @ inv(rotation_matrix) @ scale_matrix @ rotation_matrix
@@ -1216,7 +1185,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             return np.eye(4)
 
         # ローカル軸に沿った回転行列
-        rotation_matrix = self.get_tail_relative_position(bone, model, positions).to_local_matrix4x4().vector
+        rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
 
         # ローカル軸に合わせた回転行列を作成する(親はキャンセルする)
         return inv(local_parent_matrix) @ inv(rotation_matrix) @ qq_matrix @ rotation_matrix
