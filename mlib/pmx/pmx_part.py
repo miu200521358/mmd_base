@@ -1102,12 +1102,21 @@ class BoneSetting:
     def __init__(
         self,
         name: str,
-        relative: Union[MVector3D, Iterable[str]],
         parents: Iterable[str],
+        relative: Union[MVector3D, Iterable[str]],
         tails: Iterable[str],
         flag: BoneFlg,
         axis: MVector3D,
     ) -> None:
+        """
+        name : 準標準ボーン名
+        parents : 親ボーン名候補リスト
+        relative : 軸計算時の相対位置
+            vector の場合はそのまま使う。名前リストの場合、該当ボーンの位置との相対位置
+        tails : 末端ボーン名リスト
+        flag : ボーンの特性
+        axis : ボーンの仮想軸
+        """
         self.name = name
         self.relative = relative
         self.parents = parents
@@ -1121,120 +1130,120 @@ class BoneSettings(Enum):
 
     ROOT = BoneSetting(
         "全ての親",
-        MVector3D(0, 1, 0),
         (Bone.SYSTEM_ROOT_NAME,),
+        MVector3D(0, 1, 0),
         ("センター",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, 1, 0),
     )
     CENTER = BoneSetting(
         "センター",
-        MVector3D(0, 1, 0),
         ("全ての親",),
+        MVector3D(0, 1, 0),
         ("上半身", "下半身"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, 1, 0),
     )
     GROOVE = BoneSetting(
         "グルーブ",
-        MVector3D(0, -1, 0),
         ("センター",),
+        MVector3D(0, -1, 0),
         ("上半身", "下半身"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, -1, 0),
     )
     WAIST = BoneSetting(
         "腰",
-        MVector3D(0, -1, 0),
         ("グルーブ", "センター"),
+        MVector3D(0, -1, 0),
         ("上半身", "下半身"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, -1, 0),
     )
     LOWER = BoneSetting(
         "下半身",
-        MVector3D(0, -1, 0),
         ("腰", "グルーブ", "センター"),
+        MVector3D(0, -1, 0),
         ("足中心", "腰キャンセル左", "左足", "腰キャンセル右", "右足"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, -1, 0),
     )
     LEG_CENTER = BoneSetting(
         "足中心",
-        MVector3D(0, -1, 0),
         ("腰", "グルーブ", "センター"),
+        MVector3D(0, -1, 0),
         ("腰キャンセル左", "左足", "腰キャンセル右", "右足"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, -1, 0),
     )
     UPPER = BoneSetting(
         "上半身",
-        ("上半身2", "首根元"),
         ("腰", "グルーブ", "センター"),
+        ("上半身2", "首根元"),
         ("上半身2", "首根元"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, 1, 0),
     )
     UPPER2 = BoneSetting(
         "上半身2",
-        ("上半身3", "首根元"),
         ("上半身",),
+        ("上半身3", "首根元"),
         ("上半身3", "首根元"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, 1, 0),
     )
     UPPER3 = BoneSetting(
         "上半身3",
-        ("首根元",),
         ("上半身2",),
+        ("首根元",),
         ("首根元",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, 1, 0),
     )
     ARM_CENTER = BoneSetting(
         "首根元",
-        ("首",),
         ("上半身3", "上半身2"),
+        ("首",),
         ("首",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, 1, 0),
     )
     NECK = BoneSetting(
         "首",
-        ("頭",),
         ("首根元",),
+        ("頭",),
         ("頭",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, 1, 0),
     )
     HEAD = BoneSetting(
         "頭",
-        MVector3D(0, 1, 0),
         ("首",),
+        MVector3D(0, 1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, 1, 0),
     )
     EYES = BoneSetting(
         "両目",
-        MVector3D(0, 1, 0),
         ("頭",),
+        MVector3D(0, 1, 0),
         ("左目", "右目"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, 1, 0),
     )
     LEFT_EYE = BoneSetting(
         "左目",
-        MVector3D(0, 1, 0),
         ("頭",),
+        MVector3D(0, 1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION,
         MVector3D(0, 1, 0),
     )
     RIGHT_EYE = BoneSetting(
         "右目",
-        MVector3D(0, 1, 0),
         ("頭",),
+        MVector3D(0, 1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION,
         MVector3D(0, 1, 0),
@@ -1242,272 +1251,272 @@ class BoneSettings(Enum):
 
     RIGHT_SHOULDER_P = BoneSetting(
         "右肩P",
+        ("首根元", "上半身3", "上半身2", "上半身"),
         MVector3D(0, 1, 0),
-        ("首根元",),
         ("右肩",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_SHOULDER = BoneSetting(
         "右肩",
+        ("右肩P", "首根元", "上半身3", "上半身2", "上半身"),
         ("右腕",),
-        ("右肩P", "首根元"),
         ("右腕",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_SHOULDER_C = BoneSetting(
         "右肩C",
+        ("右肩",),
         MVector3D(0, 1, 0),
-        ("右肩", "首根元"),
         ("右腕",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
         MVector3D(-1, 0, 0),
     )
     RIGHT_ARM = BoneSetting(
         "右腕",
-        ("右ひじ",),
         ("右肩C", "右肩"),
+        ("右ひじ",),
         ("右腕捩", "右ひじ"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_ARM_TWIST = BoneSetting(
         "右腕捩",
-        MVector3D(0, 1, 0),
         ("右腕",),
+        MVector3D(0, 1, 0),
         ("右ひじ",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
         MVector3D(-1, 0, 0),
     )
     RIGHT_ELBOW = BoneSetting(
         "右ひじ",
-        ("右手首",),
         ("右腕捩", "右腕"),
+        ("右手首",),
         ("右手捩", "右手首"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_HAND_TWIST = BoneSetting(
         "右手捩",
-        MVector3D(0, 1, 0),
         ("右ひじ",),
+        MVector3D(0, 1, 0),
         ("右手首",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
         MVector3D(-1, 0, 0),
     )
     RIGHT_WRIST = BoneSetting(
         "右手首",
-        ("右中指１", "右人指１", "右薬指１", "右小指１"),
         ("右手捩", "右ひじ"),
+        ("右中指１", "右人指１", "右薬指１", "右小指１"),
         ("右中指１", "右人指１", "右薬指１", "右小指１"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_THUMB0 = BoneSetting(
         "右親指０",
-        ("右親指１",),
         ("右手首",),
+        ("右親指１",),
         ("右親指２",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_THUMB1 = BoneSetting(
         "右親指１",
-        ("右親指２",),
         ("右親指０",),
+        ("右親指２",),
         ("右親指２",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_THUMB2 = BoneSetting(
         "右親指２",
-        MVector3D(0, 1, 0),
         ("右親指１",),
+        MVector3D(0, 1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_INDEX0 = BoneSetting(
         "右人指１",
-        ("右人指２",),
         ("右手首",),
+        ("右人指２",),
         ("右人指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_INDEX1 = BoneSetting(
         "右人指２",
-        ("右人指３",),
         ("右人指１",),
+        ("右人指３",),
         ("右人指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_INDEX2 = BoneSetting(
         "右人指３",
-        MVector3D(0, 1, 0),
         ("右人指２",),
+        MVector3D(0, 1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_MIDDLE0 = BoneSetting(
         "右中指１",
-        ("右中指２",),
         ("右手首",),
+        ("右中指２",),
         ("右中指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_MIDDLE1 = BoneSetting(
         "右中指２",
-        ("右中指３",),
         ("右中指１",),
+        ("右中指３",),
         ("右中指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_MIDDLE2 = BoneSetting(
         "右中指３",
-        MVector3D(0, 1, 0),
         ("右中指２",),
+        MVector3D(0, 1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_RING0 = BoneSetting(
         "右薬指１",
-        ("右薬指２",),
         ("右手首",),
+        ("右薬指２",),
         ("右薬指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_RING1 = BoneSetting(
         "右薬指２",
-        ("右薬指３",),
         ("右薬指１",),
+        ("右薬指３",),
         ("右薬指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_RING2 = BoneSetting(
         "右薬指３",
-        MVector3D(0, 1, 0),
         ("右薬指２",),
+        MVector3D(0, 1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_PINKY0 = BoneSetting(
         "右小指１",
-        ("右小指２",),
         ("右手首",),
+        ("右小指２",),
         ("右小指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_PINKY1 = BoneSetting(
         "右小指２",
-        ("右小指３",),
         ("右小指１",),
+        ("右小指３",),
         ("右小指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_PINKY2 = BoneSetting(
         "右小指３",
-        MVector3D(0, 1, 0),
         ("右小指２",),
+        MVector3D(0, 1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(-1, 0, 0),
     )
     RIGHT_WRIST_CANCEL = BoneSetting(
         "腰キャンセル右",
-        MVector3D(0, -1, 0),
         ("足中心", "下半身"),
+        MVector3D(0, -1, 0),
         ("右足",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
         MVector3D(0, -1, 0),
     )
     RIGHT_LEG = BoneSetting(
         "右足",
-        ("右ひざ",),
         ("腰キャンセル右", "足中心", "下半身"),
+        ("右ひざ",),
         ("右ひざ",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, -1, 0),
     )
     RIGHT_KNEE = BoneSetting(
         "右ひざ",
-        ("右足首",),
         ("右足",),
+        ("右足首",),
         ("右足首",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, -1, 0),
     )
     RIGHT_ANKLE = BoneSetting(
         "右足首",
-        MVector3D(0, -1, 0),
         ("右ひざ",),
+        MVector3D(0, -1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, -1, 0),
     )
     RIGHT_LEG_IK_PARENT = BoneSetting(
         "右足IK親",
-        MVector3D(0, 1, 0),
         ("全ての親",),
+        MVector3D(0, 1, 0),
         ("右足ＩＫ",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, 1, 0),
     )
     RIGHT_LEG_IK = BoneSetting(
         "右足ＩＫ",
-        ("右つま先ＩＫ",),
         ("右足IK親", "全ての親"),
+        ("右つま先ＩＫ",),
         ("右つま先ＩＫ",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, 1, 0),
     )
     RIGHT_TOE_IK = BoneSetting(
         "右つま先ＩＫ",
-        MVector3D(0, -1, 0),
         ("右足ＩＫ",),
+        MVector3D(0, -1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK,
         MVector3D(0, -1, 0),
     )
     RIGHT_LEG_D = BoneSetting(
         "右足D",
-        ("右ひざD",),
         ("腰キャンセル右", "下半身"),
+        ("右ひざD",),
         ("右ひざD",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, -1, 0),
     )
     RIGHT_KNEE_D = BoneSetting(
         "右ひざD",
-        ("右足首D",),
         ("右足D",),
+        ("右足首D",),
         ("右足首D",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, -1, 0),
     )
     RIGHT_ANKLE_D = BoneSetting(
         "右足首D",
-        ("右足先EX",),
         ("右ひざD",),
+        ("右足先EX",),
         ("右足先EX",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, -1, 0),
     )
     RIGHT_TOE_EX = BoneSetting(
         "右足先EX",
-        MVector3D(0, -1, 0),
         ("右足首D",),
+        MVector3D(0, -1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, -1, 0),
@@ -1515,272 +1524,272 @@ class BoneSettings(Enum):
 
     LEFT_SHOULDER_P = BoneSetting(
         "左肩P",
+        ("首根元", "上半身3", "上半身2", "上半身"),
         MVector3D(0, 1, 0),
-        ("首根元",),
         ("左肩",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(-1, 0, 0),
     )
     LEFT_SHOULDER = BoneSetting(
         "左肩",
+        ("左肩P", "首根元", "上半身3", "上半身2", "上半身"),
         ("左腕",),
-        ("左肩P", "首根元"),
         ("左腕",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     LEFT_SHOULDER_C = BoneSetting(
         "左肩C",
+        ("左肩",),
         MVector3D(0, 1, 0),
-        ("左肩", "首根元"),
         ("左腕",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
         MVector3D(-1, 0, 0),
     )
     LEFT_ARM = BoneSetting(
         "左腕",
-        ("左ひじ",),
         ("左肩C", "左肩"),
+        ("左ひじ",),
         ("左腕捩", "左ひじ"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     LEFT_ARM_TWIST = BoneSetting(
         "左腕捩",
-        MVector3D(0, 1, 0),
         ("左腕",),
+        MVector3D(0, 1, 0),
         ("左ひじ",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
         MVector3D(-1, 0, 0),
     )
     LEFT_ELBOW = BoneSetting(
         "左ひじ",
-        ("左手首",),
         ("左腕捩", "左腕"),
+        ("左手首",),
         ("左手捩", "左手首"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     LEFT_HAND_TWIST = BoneSetting(
         "左手捩",
-        MVector3D(0, 1, 0),
         ("左ひじ",),
+        MVector3D(0, 1, 0),
         ("左手首",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
         MVector3D(-1, 0, 0),
     )
     LEFT_WRIST = BoneSetting(
         "左手首",
-        ("左中指１", "左人指１", "左薬指１", "左小指１"),
         ("左手捩", "左ひじ"),
+        ("左中指１", "左人指１", "左薬指１", "左小指１"),
         ("左中指１", "左人指１", "左薬指１", "左小指１"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     LEFT_THUMB0 = BoneSetting(
         "左親指０",
-        ("左親指１",),
         ("左手首",),
+        ("左親指１",),
         ("左親指２",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     LEFT_THUMB1 = BoneSetting(
         "左親指１",
-        ("左親指２",),
         ("左親指０",),
+        ("左親指２",),
         ("左親指２",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     LEFT_THUMB2 = BoneSetting(
         "左親指２",
-        MVector3D(0, 1, 0),
         ("左親指１",),
+        MVector3D(0, 1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(-1, 0, 0),
     )
     LEFT_INDEX0 = BoneSetting(
         "左人指１",
-        ("左人指２",),
         ("左手首",),
+        ("左人指２",),
         ("左人指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     LEFT_INDEX1 = BoneSetting(
         "左人指２",
-        ("左人指３",),
         ("左人指１",),
+        ("左人指３",),
         ("左人指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     LEFT_INDEX2 = BoneSetting(
         "左人指３",
-        MVector3D(0, 1, 0),
         ("左人指２",),
+        MVector3D(0, 1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(-1, 0, 0),
     )
     LEFT_MIDDLE0 = BoneSetting(
         "左中指１",
-        ("左中指２",),
         ("左手首",),
+        ("左中指２",),
         ("左中指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     LEFT_MIDDLE1 = BoneSetting(
         "左中指２",
-        ("左中指３",),
         ("左中指１",),
+        ("左中指３",),
         ("左中指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     LEFT_MIDDLE2 = BoneSetting(
         "左中指３",
-        MVector3D(0, 1, 0),
         ("左中指２",),
+        MVector3D(0, 1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(-1, 0, 0),
     )
     LEFT_RING0 = BoneSetting(
         "左薬指１",
-        ("左薬指２",),
         ("左手首",),
+        ("左薬指２",),
         ("左薬指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     LEFT_RING1 = BoneSetting(
         "左薬指２",
-        ("左薬指３",),
         ("左薬指１",),
+        ("左薬指３",),
         ("左薬指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     LEFT_RING2 = BoneSetting(
         "左薬指３",
-        MVector3D(0, 1, 0),
         ("左薬指２",),
+        MVector3D(0, 1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(-1, 0, 0),
     )
     LEFT_PINKY0 = BoneSetting(
         "左小指１",
-        ("左小指２",),
         ("左手首",),
+        ("左小指２",),
         ("左小指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     LEFT_PINKY1 = BoneSetting(
         "左小指２",
-        ("左小指３",),
         ("左小指１",),
+        ("左小指３",),
         ("左小指３",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
     )
     LEFT_PINKY2 = BoneSetting(
         "左小指３",
-        MVector3D(0, 1, 0),
         ("左小指２",),
+        MVector3D(0, 1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(-1, 0, 0),
     )
     LEFT_WRIST_CANCEL = BoneSetting(
         "腰キャンセル左",
-        MVector3D(0, -1, 0),
         ("足中心", "下半身"),
+        MVector3D(0, -1, 0),
         ("左足",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
         MVector3D(0, -1, 0),
     )
     LEFT_LEG = BoneSetting(
         "左足",
-        ("左ひざ",),
         ("腰キャンセル左", "足中心", "下半身"),
+        ("左ひざ",),
         ("左ひざ",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, -1, 0),
     )
     LEFT_KNEE = BoneSetting(
         "左ひざ",
-        ("左足首",),
         ("左足",),
+        ("左足首",),
         ("左足首",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, -1, 0),
     )
     LEFT_ANKLE = BoneSetting(
         "左足首",
-        MVector3D(0, -1, 0),
         ("左ひざ",),
+        MVector3D(0, -1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, -1, 0),
     )
     LEFT_LEG_IK_PARENT = BoneSetting(
         "左足IK親",
-        MVector3D(0, 1, 0),
         ("全ての親",),
+        MVector3D(0, 1, 0),
         ("左足ＩＫ",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, 1, 0),
     )
     LEFT_LEG_IK = BoneSetting(
         "左足ＩＫ",
-        ("左つま先ＩＫ",),
         ("左足IK親", "全ての親"),
+        ("左つま先ＩＫ",),
         ("左つま先ＩＫ",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, 1, 0),
     )
     LEFT_TOE_IK = BoneSetting(
         "左つま先ＩＫ",
-        MVector3D(0, -1, 0),
         ("左足ＩＫ",),
+        MVector3D(0, -1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK,
         MVector3D(0, -1, 0),
     )
     LEFT_LEG_D = BoneSetting(
         "左足D",
-        ("左ひざD",),
         ("腰キャンセル左", "下半身"),
+        ("左ひざD",),
         ("左ひざD",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, -1, 0),
     )
     LEFT_KNEE_D = BoneSetting(
         "左ひざD",
-        ("左足首D",),
         ("左足D",),
+        ("左足首D",),
         ("左足首D",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, -1, 0),
     )
     LEFT_ANKLE_D = BoneSetting(
         "左足首D",
-        ("左足先EX",),
         ("左ひざD",),
+        ("左足先EX",),
         ("左足先EX",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, -1, 0),
     )
     LEFT_TOE_EX = BoneSetting(
         "左足先EX",
-        MVector3D(0, -1, 0),
         ("左足首D",),
+        MVector3D(0, -1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, -1, 0),

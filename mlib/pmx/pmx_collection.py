@@ -1340,7 +1340,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
             + [
                 np.fromiter(
                     [
-                        *(b.position + b.tail_relative_position).gl.vector,
+                        *(b.position + b.local_axis).gl.vector,
                         b.index / len(writable_bones) * 2,
                     ],
                     dtype=np.float32,
