@@ -1829,9 +1829,9 @@ class VmdMotion(BaseHashModel):
             bone_matrixes.append(
                 fno=fno,
                 bone_name=bone.name,
-                matrix=matrix,
-                position=(matrix @ np.append(bone.position.vector, 1))[:3],
-                tail_position=(matrix @ np.append((bone.position + bone.tail_relative_position).vector, 1))[:3],
+                matrix=MMatrix4x4(*matrix.flatten()),
+                position=MVector3D(*(matrix @ np.append(bone.position.vector, 1))[:3]),
+                tail_position=MVector3D(*(matrix @ np.append((bone.position + bone.tail_relative_position).vector, 1))[:3]),
             )
         logger.debug(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: ボーン変形行列")
 
