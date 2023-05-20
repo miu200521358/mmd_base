@@ -1824,7 +1824,7 @@ class VmdMotion(BaseHashModel):
             matrix = bone.offset_matrix.copy().vector
 
             # 全体のボーン変形行列を求める
-            matrix = model.bones.get_mesh_matrix(matrixes, bone.index, np.eye(4))
+            matrix = model.bones.get_mesh_matrix(matrixes, bone.index, matrix)
 
             # 最後にボーン位置に移動させる
             matrix2 = MMatrix4x4(*matrix.flatten())
@@ -1834,8 +1834,8 @@ class VmdMotion(BaseHashModel):
                 fno=fno,
                 bone_name=bone.name,
                 matrix=matrix2,
-                position=MVector3D(*(matrix @ np.append(bone.position.vector, 1))[:3]),
-                tail_position=MVector3D(*(matrix @ np.append((bone.position + bone.tail_relative_position).vector, 1))[:3]),
+                position=matrix2 * MVector3D(),
+                tail_position=matrix2 * bone.tail_relative_position,
             )
         logger.debug(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: ボーン変形行列")
 
