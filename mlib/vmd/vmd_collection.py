@@ -840,7 +840,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         np.ndarray
             ローカル軸を加味したスケーリング行列
         """
-        # return self.calc_locale_scale(bone.index, fno, model)
         # 自身のローカルスケール
         local_scale = self[bone.name][fno].local_scale
         local_parent_matrix = np.eye(4)
@@ -1696,7 +1695,7 @@ class VmdMotion(BaseHashModel):
         return gl_matrixes, vertex_morph_poses + group_vertex_morph_poses, uv_morph_poses, uv1_morph_poses, group_materials
 
     def animate_bone(self, fno: int, model: PmxModel) -> VmdBoneFrameTrees:
-        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 開始")
+        logger.debug(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 開始")
 
         # 材質モーフ
         material_morphs = self.morphs.animate_material_morphs(fno, model)
