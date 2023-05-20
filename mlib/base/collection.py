@@ -147,6 +147,45 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         else:
             self.indexes.append(value.index)
 
+    def remove(self, value: TBaseIndexNameModel, is_sort: bool = True) -> dict[int, int]:
+        replaced_map: dict[int, int] = {}
+
+        if value.index not in self.data:
+            return replaced_map
+
+        del self.data[value.index]
+        for i in range(len(self.indexes)):
+            if self.indexes[i] == value.index:
+                del self.indexes[i]
+                break
+        for i in range(len(self.names)):
+            if self.names[i] == value.index:
+                del self.names[i]
+                break
+
+        # 既に同じINDEXがある場合、前からずらす
+        for i in range(value.index + 1, self.last_index + 1):
+            v = self.data[i]
+            # ズラした結果を保持する
+            replaced_map[v.index] = v.index - 1
+            v.index -= 1
+            # indexをズラして保持
+            self.data[v.index] = v
+            # 名前逆引きもINDEX置き換え
+            self._names[v.name] = v.index
+        for i in range(value.index - 1, -2, -1):
+            # 範囲外はそのまま
+            v = self.data[i]
+            replaced_map[v.index] = v.index
+
+        # 最後が重複するので削除する
+        del self.data[self.last_index]
+
+        if is_sort:
+            self.sort_indexes()
+
+        return replaced_map
+
     def insert(self, value: TBaseIndexNameModel, is_sort: bool = True, is_positive_index: bool = True) -> dict[int, int]:
         if 0 > value.index and is_positive_index:
             value.index = len([k for k in self.data.keys() if k >= 0])
@@ -164,6 +203,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
                 # 名前逆引きもINDEX置き換え
                 self._names[v.name] = v.index
             for i in range(value.index - 1, -2, -1):
+                # 範囲外はそのまま
                 v = self.data[i]
                 replaced_map[v.index] = v.index
         self.data[value.index] = value

@@ -152,7 +152,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
 
         return tail_bone_names
 
-    def create_bone_link_indexes(self, child_idx: int, bone_link_indexes=None) -> list[tuple[int, int]]:
+    def create_bone_link_indexes(self, child_idx: int, bone_link_indexes=None, cnt=0) -> list[tuple[int, int]]:
         """
         指定ボーンの親ボーンを繋げてく
 
@@ -172,9 +172,9 @@ class Bones(BaseIndexNameDictModel[Bone]):
             bone_link_indexes = [(self.data[child_idx].layer, self.data[child_idx].index)]
 
         for b in reversed(self.data.values()):
-            if b.index == self.data[child_idx].parent_index and b.index >= 0:
+            if b.index == self.data[child_idx].parent_index and b.index >= 0 and cnt < len(self.data):
                 bone_link_indexes.append((b.layer, b.index))
-                return self.create_bone_link_indexes(b.index, bone_link_indexes)
+                return self.create_bone_link_indexes(b.index, bone_link_indexes, cnt + 1)
 
         return bone_link_indexes
 
@@ -551,6 +551,7 @@ class PmxModel(BaseHashModel):
             neck_root_bone.parent_index = self.bones[parent_bone_name].index
             neck_root_bone.index = self.bones[parent_bone_name].index + 1
             neck_root_bone.position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
+            neck_root_bone.is_system = True
             self.insert_bone(neck_root_bone)
             for replace_bone_name in ("右肩P", "左肩P", "右肩", "左肩"):
                 if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones[parent_bone_name].index:
@@ -561,8 +562,9 @@ class PmxModel(BaseHashModel):
             leg_root_bone.parent_index = self.bones["下半身"].index
             leg_root_bone.index = self.bones["下半身"].index + 1
             leg_root_bone.position = (self.bones["右足"].position + self.bones["左足"].position) / 2
+            leg_root_bone.is_system = True
             self.insert_bone(leg_root_bone)
-            for replace_bone_name in ("右足", "左足", "右足D", "左足D"):
+            for replace_bone_name in ("腰キャンセル右", "腰キャンセル左", "右足", "左足", "右足D", "左足D"):
                 if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones["下半身"].index:
                     self.bones[replace_bone_name].parent_index = self.bones["足中心"].index
 
@@ -618,6 +620,59 @@ class PmxModel(BaseHashModel):
                     continue
                 last_bone.far_parent_index = self.bones[bone_name].index
                 break
+
+    def remove_bone(self, bone: Bone):
+        """ボーンの削除に伴う諸々のボーンINDEXの置き換え"""
+        replaced_map = self.bones.remove(bone)
+
+        if not replaced_map:
+            return
+
+        for v in self.vertices:
+            v.deform.indexes = np.vectorize(replaced_map.get)(v.deform.indexes)
+
+        for b in self.bones:
+            if b.index < 0:
+                continue
+
+            if b.parent_index in replaced_map:
+                b.parent_index = replaced_map[b.parent_index]
+            else:
+                b.parent_index = replaced_map[bone.parent_index]
+
+            if b.tail_index in replaced_map:
+                b.tail_index = replaced_map[b.tail_index]
+            else:
+                b.tail_index = replaced_map[bone.tail_index]
+
+            if b.effect_index in replaced_map:
+                b.effect_index = replaced_map[b.effect_index]
+            else:
+                b.effect_index = replaced_map[bone.effect_index]
+
+            if b.is_ik:
+                if b.ik.bone_index in replaced_map:
+                    b.ik.bone_index = replaced_map[b.ik.bone_index]
+                for link in b.ik.links:
+                    if link.bone_index in replaced_map:
+                        link.bone_index = replaced_map[link.bone_index]
+
+        for m in self.morphs:
+            if m.morph_type == MorphType.BONE:
+                for offset in m.offsets:
+                    bone_offset: BoneMorphOffset = offset
+                    if bone_offset.bone_index in replaced_map:
+                        bone_offset.bone_index = replaced_map[bone_offset.bone_index]
+
+        for d in self.display_slots:
+            for r in d.references:
+                if r.display_type == DisplayType.BONE:
+                    if r.display_index in replaced_map:
+                        r.display_index = replaced_map[r.display_index]
+
+        for r in self.rigidbodies:
+            if r.bone_index in replaced_map:
+                r.bone_index = replaced_map[r.bone_index]
 
     def insert_bone(self, bone: Bone):
         """ボーンの追加に伴う諸々のボーンINDEXの置き換え"""
@@ -718,10 +773,11 @@ class PmxModel(BaseHashModel):
         if not [bname for bname in bone_setting.tails if bname in self.bones] and "D" != bone_name[-1] and "EX" != bone_name[-2:]:
             # 先に接続可能なボーンが無い場合、作成しない
             return False
-        if bone_setting.parent not in self.bones:
+        parent_names = [p for p in bone_setting.parents if p in self.bones.names]
+        if not parent_names:
             # 親ボーンが無い場合、作成しない
             return False
-        parent_bone = self.bones[bone_setting.parent]
+        parent_bone = self.bones[parent_names[0]]
         # 親のひとつ下に作成する
         bone = Bone(name=bone_name, index=parent_bone.index + 1)
         direction = bone.name[0]

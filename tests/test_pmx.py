@@ -147,7 +147,7 @@ def test_read_by_filepath_ok() -> None:
     ).all()
     assert DeformType.BDEF2 == model.vertices[0].deform_type
     assert np.isclose(
-        np.array([4, 108]),
+        np.array([4, 108 + 2]),
         model.vertices[0].deform.get_indexes(),
     ).all()
     assert np.isclose(
@@ -217,14 +217,14 @@ def test_read_by_filepath_ok() -> None:
         lower_bone.tail_position.vector,
     ).all()
     # 左足IKボーン
-    left_leg_ik_bone = model.bones[98]
+    left_leg_ik_bone = model.bones[98 + 2]
     assert "左足ＩＫ" == left_leg_ik_bone.name
     assert "leg_IK_L" == left_leg_ik_bone.english_name
     assert np.isclose(
         np.array([0.9644502, 1.647273, 0.4050385]),
         left_leg_ik_bone.position.vector,
     ).all()
-    assert 97 == left_leg_ik_bone.parent_index
+    assert 97 + 2 == left_leg_ik_bone.parent_index
     assert BoneFlg.TAIL_IS_BONE not in left_leg_ik_bone.bone_flg
     assert BoneFlg.CAN_ROTATE in left_leg_ik_bone.bone_flg
     assert BoneFlg.CAN_TRANSLATE in left_leg_ik_bone.bone_flg
@@ -243,13 +243,13 @@ def test_read_by_filepath_ok() -> None:
         left_leg_ik_bone.tail_position.vector,
     ).all()
     if left_leg_ik_bone.ik:
-        assert 95 == left_leg_ik_bone.ik.bone_index
+        assert 95 + 2 == left_leg_ik_bone.ik.bone_index
         assert 40 == left_leg_ik_bone.ik.loop_count
         assert np.isclose(
             np.array([57.29578, 0, 0]),
             left_leg_ik_bone.ik.unit_rotation.degrees.vector,
         ).all()
-        assert 94 == left_leg_ik_bone.ik.links[0].bone_index
+        assert 94 + 2 == left_leg_ik_bone.ik.links[0].bone_index
         assert left_leg_ik_bone.ik.links[0].angle_limit
         assert np.isclose(
             np.array([-180, 0, 0]),
@@ -276,12 +276,12 @@ def test_read_by_filepath_ok() -> None:
     assert "右指" == right_hand_display_slot.name
     assert "right hand" == right_hand_display_slot.english_name
     assert DisplayType.BONE == right_hand_display_slot.references[7].display_type
-    assert 81 == right_hand_display_slot.references[7].display_index
+    assert 81 + 2 == right_hand_display_slot.references[7].display_index
     # 剛体
     left_knee_rigidbody = model.rigidbodies[20]
     assert "左ひざ" == left_knee_rigidbody.name
     assert "J_Bip_L_LowerLegUpper" == left_knee_rigidbody.english_name
-    assert 94 == left_knee_rigidbody.bone_index
+    assert 94 + 2 == left_knee_rigidbody.bone_index
     assert RigidBodyMode.STATIC == left_knee_rigidbody.mode
     assert 1 == left_knee_rigidbody.collision_group
     assert RigidBodyCollisionGroup.GROUP01 not in left_knee_rigidbody.no_collision_group
@@ -390,6 +390,7 @@ def test_read_by_filepath_ok_tree() -> None:
         "腰",
         "上半身",
         "上半身2",
+        "首根元",
         "左肩P",
         "左肩",
         "左腕YZ",
@@ -417,6 +418,7 @@ def test_read_by_filepath_ok_tree() -> None:
     assert [
         "上半身",
         "上半身2",
+        "首根元",
         "右肩P",
         "右肩",
         "右肩C",
@@ -427,11 +429,11 @@ def test_read_by_filepath_ok_tree() -> None:
         "右手首",
     ] == range_bone_tree.names
 
-    slice1_bone_tree = range_bone_tree.range(2, 4)
+    slice1_bone_tree = range_bone_tree.range(3, 5)
     assert 2 == len(slice1_bone_tree)
     assert ["右肩P", "右肩"] == [b.name for b in slice1_bone_tree]
 
-    slice2_bone_tree = range_bone_tree.range(7)
+    slice2_bone_tree = range_bone_tree.range(8)
     assert 3 == len(slice2_bone_tree)
     assert ["右ひじ", "右手捩", "右手首"] == [b.name for b in slice2_bone_tree]
 
@@ -441,7 +443,7 @@ def test_read_by_filepath_ok_tree() -> None:
     assert not model.bone_trees.is_in_standard("左エリIK")
     assert not model.bone_trees.is_in_standard("左ひざ2先")
 
-    assert model.bones["左肩"].far_parent_index == 8
+    assert model.bones["左肩"].far_parent_index == 8 + 2
 
 
 def test_read_by_filepath_complicated() -> None:
@@ -531,66 +533,66 @@ def test_insert_bone() -> None:
     input_path = os.path.join("tests", "resources", "サンプルモデル.pmx")
     model: PmxModel = PmxReader().read_by_filepath(input_path)
 
-    insert_bone = Bone(name="追加ボーン", index=6)
+    insert_bone = Bone(name="追加ボーン", index=model.bones["上半身"].index + 1)
     insert_bone.parent_index = model.bones["上半身"].index
     model.insert_bone(insert_bone)
 
     v = model.vertices[15724]
-    assert 10 == v.deform.indexes[0]
-    assert 135 == v.deform.indexes[1]
+    assert 10 + 2 == v.deform.indexes[0]
+    assert 135 + 2 == v.deform.indexes[1]
 
     lower_bone = model.bones["下半身"]
     assert 4 == lower_bone.index
     assert 3 == lower_bone.parent_index
 
     upper_bone = model.bones["上半身"]
-    assert 5 == upper_bone.index
+    assert 5 + 1 == upper_bone.index
     assert 3 == upper_bone.parent_index
 
     inserted_bone = model.bones["追加ボーン"]
-    assert 6 == inserted_bone.index
-    assert 5 == inserted_bone.parent_index
+    assert 6 + 1 == inserted_bone.index
+    assert 5 + 1 == inserted_bone.parent_index
 
     upper2_bone = model.bones["上半身2"]
-    assert 7 == upper2_bone.index
-    assert 5 == upper2_bone.parent_index
-    assert 8 == upper2_bone.tail_index
+    assert 7 + 1 == upper2_bone.index
+    assert 5 + 1 == upper2_bone.parent_index
+    assert 8 + 1 == upper2_bone.tail_index
 
     left_eye_bone = model.bones["左目"]
-    assert 12 == left_eye_bone.index
-    assert 10 == left_eye_bone.parent_index
+    assert 12 + 2 == left_eye_bone.index
+    assert 10 + 2 == left_eye_bone.parent_index
     assert -1 == left_eye_bone.tail_index
 
     left_leg_ik_bone = model.bones["左足ＩＫ"]
-    assert 99 == left_leg_ik_bone.index
-    assert 98 == left_leg_ik_bone.parent_index
+    assert 99 + 2 == left_leg_ik_bone.index
+    assert 98 + 2 == left_leg_ik_bone.parent_index
     assert left_leg_ik_bone.ik
-    assert 96 == left_leg_ik_bone.ik.bone_index
-    assert 95 == left_leg_ik_bone.ik.links[0].bone_index
-    assert 94 == left_leg_ik_bone.ik.links[1].bone_index
+    assert 96 + 2 == left_leg_ik_bone.ik.bone_index
+    assert 95 + 2 == left_leg_ik_bone.ik.links[0].bone_index
+    assert 94 + 2 == left_leg_ik_bone.ik.links[1].bone_index
 
     e_morph = model.morphs["えボーン"]
     assert isinstance(e_morph.offsets[0], BoneMorphOffset)
-    assert 17 == e_morph.offsets[0].bone_index
+    assert 17 + 2 == e_morph.offsets[0].bone_index
     assert isinstance(e_morph.offsets[1], BoneMorphOffset)
-    assert 18 == e_morph.offsets[1].bone_index
+    assert 18 + 2 == e_morph.offsets[1].bone_index
     assert isinstance(e_morph.offsets[2], BoneMorphOffset)
-    assert 19 == e_morph.offsets[2].bone_index
+    assert 19 + 2 == e_morph.offsets[2].bone_index
 
     trunk_display_slot = model.display_slots["体幹"]
     assert 3 == trunk_display_slot.references[0].display_index
     assert 4 == trunk_display_slot.references[1].display_index
-    assert 5 == trunk_display_slot.references[2].display_index
-    assert 7 == trunk_display_slot.references[3].display_index
-    assert 8 == trunk_display_slot.references[4].display_index
-    assert 9 == trunk_display_slot.references[5].display_index
-    assert 10 == trunk_display_slot.references[6].display_index
+    assert 5 + 1 == trunk_display_slot.references[2].display_index
+    assert 7 + 1 == trunk_display_slot.references[3].display_index
+    assert 8 + 1 == trunk_display_slot.references[4].display_index
+    assert 9 + 2 == trunk_display_slot.references[5].display_index
+    assert 10 + 2 == trunk_display_slot.references[6].display_index
 
     upper_rigidbody = model.rigidbodies["上半身"]
-    assert 5 == upper_rigidbody.bone_index
+    assert 5 + 1 == upper_rigidbody.bone_index
 
     head_rigidbody = model.rigidbodies["頭"]
-    assert 10 == head_rigidbody.bone_index
+    assert 10 + 2 == head_rigidbody.bone_index
 
     output_path = os.path.join("tests", "resources", "result.pmx")
     PmxWriter(model, output_path).save()
@@ -671,12 +673,14 @@ def test_insert_standard_bone() -> None:
     bone_matrixes = VmdMotion().bones.get_matrix_by_indexes([0], model.bones.tail_bone_names, model)
     model.insert_standard_bone("上半身2", bone_matrixes)
 
-    output_path = os.path.join("tests", "resources", "result.pmx")
-    PmxWriter(model, output_path).save()
+    # output_path = os.path.join("tests", "resources", "result.pmx")
+    # PmxWriter(model, output_path, include_system=True).save()
 
     for b in model.bones:
-        if b.name in ["首", "右肩", "左肩", "ﾈｸﾀｲ１", "首根元"]:
+        if b.name in ["首根元"]:
             assert model.bones["上半身2"].index == b.parent_index
+        elif b.name in ["首", "右肩", "左肩", "ﾈｸﾀｲ１"]:
+            assert model.bones["首根元"].index == b.parent_index
         elif b.name in parent_names:
             assert parent_names[b.name] == model.bones[b.parent_index].name
 
