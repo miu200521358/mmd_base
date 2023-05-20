@@ -209,7 +209,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         from_pos = MVector3D(*positions[0, bone.index])
 
         # 合致するのがなければ通常の表示先から検出
-        if bone.is_tail_bone and 0 <= bone.tail_index and bone.tail_index in model:
+        if bone.is_tail_bone and 0 <= bone.tail_index and bone.tail_index in model.bones:
             # 表示先が指定されているの場合、保持
             to_pos = MVector3D(*positions[0, bone.tail_index])
         elif not bone.is_tail_bone:
