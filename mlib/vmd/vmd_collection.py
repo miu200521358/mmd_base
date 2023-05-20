@@ -225,7 +225,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             logger.debug(f"*** get_tail_relative_position: no-display from{from_pos}, to{to_pos}")
 
         tail_relative_position = to_pos - from_pos
-        logger.debug(f"*** get_tail_relative_position: bone{bone.tail_relative_position} -> calc{tail_relative_position}")
+        logger.debug(
+            f"*** get_tail_relative_position: bone{bone.tail_relative_position}({bone.tail_relative_position.normalized()}) "
+            + f"-> calc{tail_relative_position}({tail_relative_position.normalized()})"
+        )
 
         return tail_relative_position
 
