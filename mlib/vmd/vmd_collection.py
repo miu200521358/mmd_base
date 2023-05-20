@@ -207,20 +207,27 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             return bone.tail_relative_position
 
         from_pos = MVector3D(*positions[0, bone.index])
+        logger.debug(f"*** get_tail_relative_position: from[{bone.name}] bone{bone.position} -> calc{from_pos}")
 
         # 合致するのがなければ通常の表示先から検出
         if bone.is_tail_bone and 0 <= bone.tail_index and bone.tail_index in model.bones:
             # 表示先が指定されているの場合、保持
             to_pos = MVector3D(*positions[0, bone.tail_index])
+            logger.debug(f"*** get_tail_relative_position: to[{model.bones[bone.tail_index].name}] bone{model.bones[bone.tail_index].position} -> calc{to_pos}")
         elif not bone.is_tail_bone:
             # 表示先が相対パスの場合、保持
             to_pos = from_pos + bone.tail_position
+            logger.debug(f"*** get_tail_relative_position: to-tail{bone.tail_position} -> calc{to_pos}")
         else:
             # 表示先がない場合、とりあえず親ボーンからの向きにする
             from_pos = MVector3D(*positions[0, bone.parent_index])
             to_pos = MVector3D(*positions[0, bone.index])
+            logger.debug(f"*** get_tail_relative_position: no-display from{from_pos}, to{to_pos}")
 
-        return to_pos - from_pos
+        tail_relative_position = to_pos - from_pos
+        logger.debug(f"*** get_tail_relative_position: bone{bone.tail_relative_position} -> calc{tail_relative_position}")
+
+        return tail_relative_position
 
     def get_matrix_by_indexes(
         self,
