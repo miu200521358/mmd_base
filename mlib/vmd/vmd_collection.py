@@ -482,7 +482,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         model: PmxModel,
         bone_names: list[str] = [],
         append_ik: bool = True,
-        morph_bone_frames: Optional["VmdBoneFrames"] = None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         row = 1
         col = len(model.bones) - 1
@@ -503,49 +502,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             # IK回転を事前に求めておく
             self.calc_ik_rotations(fno, model)
 
-        # モーフモーションがある場合、それを適用した形状を元にローカル軸を計算する
-        if morph_bone_frames is not None:
-            (
-                morph_bone_poses,
-                morph_bone_qqs,
-                morph_bone_scales,
-                morph_bone_poses2,
-                morph_bone_qqs2,
-                morph_bone_scales2,
-                morph_bone_local_poses,
-                morph_bone_local_qqs,
-                morph_bone_local_scales,
-            ) = morph_bone_frames.animate_bone_matrixes(0, model, append_ik=False)
-        else:
-            morph_col = len(model.bones) - 1
-            morph_bone_poses = np.full((1, morph_col, 3), np.zeros(3))
-            morph_bone_qqs = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_bone_scales = np.full((1, morph_col, 3), np.ones(3))
-            morph_bone_poses2 = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_bone_qqs2 = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_bone_scales2 = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_bone_local_poses = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_bone_local_qqs = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_bone_local_scales = np.full((1, morph_col, 4, 4), np.eye(4))
-
-        # ボーン変形行列
-        morph_matrixes = MMatrix4x4List(morph_bone_poses.shape[0], morph_bone_poses.shape[1])
-        # モーフの適用
-        morph_matrixes.translate([bone.parent_relative_position.vector for bone in model.bones if 0 <= bone.index])
-        morph_matrixes.translate(morph_bone_poses.tolist())
-        morph_matrixes.matmul(morph_bone_local_poses)
-        morph_matrixes.rotate(morph_bone_qqs.tolist())
-        morph_matrixes.matmul(morph_bone_local_qqs)
-        morph_matrixes.scale(morph_bone_scales.tolist())
-        morph_matrixes.matmul(morph_bone_local_scales)
-        morph_matrixes.matmul(morph_bone_poses2)
-        morph_matrixes.matmul(morph_bone_qqs2)
-        morph_matrixes.matmul(morph_bone_scales2)
-        # グローバル座標行列
-        global_morph_mats = morph_matrixes.matmul_cols()
-        # グローバル位置
-        morph_positions = global_morph_mats.to_positions()
-
         for bone_name in bone_names:
             for bone in model.bone_trees[bone_name]:
                 # モーションによる移動量
@@ -562,7 +518,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                 # モーションによるローカル移動量
                 if (fno, model.digest, bone.index) not in self.cache_local_poses:
-                    local_pos = self.get_local_position(bone, fno, model, morph_positions)
+                    local_pos = self.get_local_position(bone, fno, model)
                     local_poses[0, bone.index] = local_pos
                     self.cache_local_poses[(fno, model.digest, bone.index)] = local_pos
 
@@ -580,7 +536,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                 # ローカル回転
                 if (fno, model.digest, bone.index) not in self.cache_local_qqs:
-                    local_qq = self.get_local_rotation(bone, fno, model, morph_positions)
+                    local_qq = self.get_local_rotation(bone, fno, model)
                     self.cache_local_qqs[(fno, model.digest, bone.index)] = local_qq
                     local_qqs[0, bone.index] = local_qq
 
@@ -598,7 +554,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                 # モーションによるローカルスケール変化
                 if (fno, model.digest, bone.index) not in self.cache_local_scales:
-                    local_scale = self.get_local_scale(bone, fno, model, morph_positions)
+                    local_scale = self.get_local_scale(bone, fno, model)
                     local_scales[0, bone.index] = local_scale
                     self.cache_local_scales[(fno, model.digest, bone.index)] = local_scale
 
