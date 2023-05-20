@@ -281,7 +281,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 morph_bone_local_scales,
             ) = morph_bone_frames.animate_bone_matrixes(0, model, append_ik=False)
         else:
-            morph_col = len(model.bones)
+            morph_col = len(model.bones) - 1
             morph_bone_poses = np.full((1, morph_col, 3), np.zeros(3))
             morph_bone_qqs = np.full((1, morph_col, 4, 4), np.eye(4))
             morph_bone_scales = np.full((1, morph_col, 3), np.ones(3))
@@ -295,7 +295,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # ボーン変形行列
         morph_matrixes = MMatrix4x4List(morph_bone_poses.shape[0], morph_bone_poses.shape[1])
         # モーフの適用
-        morph_matrixes.translate([bone.parent_relative_position.vector for bone in model.bones])
+        morph_matrixes.translate([bone.parent_relative_position.vector for bone in model.bones if 0 <= bone.index])
         morph_matrixes.translate(morph_bone_poses.tolist())
         morph_matrixes.matmul(morph_bone_local_poses)
         morph_matrixes.rotate(morph_bone_qqs.tolist())
@@ -482,7 +482,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         morph_bone_frames: Optional["VmdBoneFrames"] = None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         row = 1
-        col = len(model.bones)
+        col = len(model.bones) - 1
         poses = np.full((row, col, 3), np.zeros(3))
         qqs = np.full((row, col, 4, 4), np.eye(4))
         scales = np.full((row, col, 3), np.ones(3))
@@ -514,7 +514,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 morph_bone_local_scales,
             ) = morph_bone_frames.animate_bone_matrixes(0, model, append_ik=False)
         else:
-            morph_col = len(model.bones)
+            morph_col = len(model.bones) - 1
             morph_bone_poses = np.full((1, morph_col, 3), np.zeros(3))
             morph_bone_qqs = np.full((1, morph_col, 4, 4), np.eye(4))
             morph_bone_scales = np.full((1, morph_col, 3), np.ones(3))
@@ -528,7 +528,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # ボーン変形行列
         morph_matrixes = MMatrix4x4List(morph_bone_poses.shape[0], morph_bone_poses.shape[1])
         # モーフの適用
-        morph_matrixes.translate([bone.parent_relative_position.vector for bone in model.bones])
+        morph_matrixes.translate([bone.parent_relative_position.vector for bone in model.bones if 0 <= bone.index])
         morph_matrixes.translate(morph_bone_poses.tolist())
         morph_matrixes.matmul(morph_bone_local_poses)
         morph_matrixes.rotate(morph_bone_qqs.tolist())
