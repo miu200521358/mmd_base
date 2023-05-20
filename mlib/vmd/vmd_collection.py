@@ -1681,7 +1681,7 @@ class VmdMotion(BaseHashModel):
             motion_bone_local_poses,
             motion_bone_local_qqs,
             motion_bone_local_scales,
-        ) = self.bones.animate_bone_matrixes(fno, model, morph_bone_frames=morph_bone_frames)
+        ) = self.bones.animate_bone_matrixes(fno, model)
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: モーションボーン操作")
 
         # ボーン変形行列
@@ -1787,7 +1787,7 @@ class VmdMotion(BaseHashModel):
             motion_bone_local_poses,
             motion_bone_local_qqs,
             motion_bone_local_scales,
-        ) = self.bones.animate_bone_matrixes(fno, model, morph_bone_frames=morph_bone_frames)
+        ) = self.bones.animate_bone_matrixes(fno, model)
         logger.debug(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: モーションボーン操作")
 
         # ボーン変形行列
