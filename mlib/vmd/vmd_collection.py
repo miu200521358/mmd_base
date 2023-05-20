@@ -716,7 +716,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for parent_name in model.bone_trees[bone.name].names[:-1]:
                 # 親のキャンセルローカル移動
                 parent_bone = model.bones[parent_name]
-                local_parent_matrix = local_parent_matrix @ self.cache_local_poses.get((fno, model.digest, parent_bone.index), np.eye(4))
+                local_parent_matrix = local_parent_matrix @ np.copy(self.cache_local_poses.get((fno, model.digest, parent_bone.index), np.eye(4)))
 
         if not local_pos and np.all(np.isclose(local_parent_matrix, np.eye(4))):
             return np.eye(4)
@@ -848,8 +848,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for parent_name in model.bone_trees[bone.name].names[:-1]:
                 # 親のキャンセルローカルスケール
                 parent_bone = model.bones[parent_name]
-                parent_scale_matrix = self.cache_local_scales.get((fno, model.digest, parent_bone.index), np.eye(4))
-                local_parent_matrix = local_parent_matrix @ parent_scale_matrix
+                local_parent_matrix = local_parent_matrix @ np.copy(self.cache_local_scales.get((fno, model.digest, parent_bone.index), np.eye(4)))
 
         if not local_scale and np.all(np.isclose(local_parent_matrix, np.eye(4))):
             return np.eye(4)
@@ -1211,7 +1210,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for parent_name in model.bone_trees[bone.name].names[:-1]:
                 # 親のキャンセルローカル移動
                 parent_bone = model.bones[parent_name]
-                local_parent_matrix = local_parent_matrix @ self.cache_local_qqs.get((fno, model.digest, parent_bone.index), np.eye(4))
+                local_parent_matrix = local_parent_matrix @ np.copy(self.cache_local_qqs.get((fno, model.digest, parent_bone.index), np.eye(4)))
 
         if np.all(np.isclose(qq_matrix, np.eye(4))) and np.all(np.isclose(local_parent_matrix, np.eye(4))):
             return np.eye(4)
