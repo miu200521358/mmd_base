@@ -1532,7 +1532,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *axis_color)
         gl.glUniform1i(self.shader.bone_count_uniform[ProgramType.BONE.value], len(self.model.bones) * 2)
 
-        self.model.meshes[0].bind_bone_matrixes(axis_matrixes, self.shader, ProgramType.AXIS)
+        self.model.meshes[0].bind_bone_matrixes(np.concatenate([axis_matrixes, axis_matrixes]), self.shader, ProgramType.AXIS)
 
         try:
             gl.glDrawElements(

@@ -59,9 +59,9 @@ MODEL_BONE_COLORS = [
 
 
 MODEL_AXIS_COLORS = [
-    np.array([0.6, 0.6, 0, 1]),
-    np.array([0, 0.6, 0.6, 1]),
-    np.array([0.6, 0, 0.6, 1]),
+    np.array([0.6, 0, 1, 1]),
+    np.array([0, 1, 0.6, 1]),
+    np.array([1, 0, 0.6, 1]),
 ]
 
 

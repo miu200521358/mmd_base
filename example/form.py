@@ -530,8 +530,8 @@ class TestFrame(BaseFrame):
 
         try:
             self.config_panel.canvas.set_context()
-            self.config_panel.canvas.append_model_set(self.file_panel.model_ctrl.data, self.file_panel.motion_ctrl.data.copy())
-            self.config_panel.canvas.append_model_set(self.file_panel.dress_ctrl.data, dress_motion, 0.3)
+            self.config_panel.canvas.append_model_set(self.file_panel.model_ctrl.data, self.file_panel.motion_ctrl.data.copy(), 0.5)
+            self.config_panel.canvas.append_model_set(self.file_panel.dress_ctrl.data, dress_motion, 0.7)
             self.config_panel.canvas.Refresh()
             self.notebook.ChangeSelection(self.config_panel.tab_idx)
         except:
