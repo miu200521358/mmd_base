@@ -1828,14 +1828,14 @@ class VmdMotion(BaseHashModel):
 
             # 最後にボーン位置に移動させる
             matrix2 = MMatrix4x4(*matrix.flatten())
-            matrix2.translate(bone.position)
+            # matrix2.translate(bone.position)
 
             bone_matrixes.append(
                 fno=fno,
                 bone_name=bone.name,
                 matrix=matrix2,
-                position=matrix2 * MVector3D(),
-                tail_position=matrix2 * bone.tail_relative_position,
+                position=matrix2 * bone.position,
+                tail_position=matrix2 * (bone.position + bone.tail_relative_position),
             )
         logger.debug(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: ボーン変形行列")
 
