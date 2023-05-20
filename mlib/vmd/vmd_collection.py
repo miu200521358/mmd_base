@@ -1820,11 +1820,11 @@ class VmdMotion(BaseHashModel):
 
             bone = model.bones[bone_index]
 
-            # BOf行列: 自身のボーンのボーンオフセット行列
-            matrix = bone.offset_matrix.copy().vector
+            # # BOf行列: 自身のボーンのボーンオフセット行列
+            # matrix = bone.offset_matrix.copy().vector
 
             # 全体のボーン変形行列を求める
-            matrix = model.bones.get_mesh_matrix(matrixes, bone.index, matrix)
+            matrix = model.bones.get_mesh_matrix(matrixes, bone.index, np.eye(4))
 
             bone_matrixes.append(
                 fno=fno,
