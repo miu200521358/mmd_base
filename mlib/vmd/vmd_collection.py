@@ -206,19 +206,19 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         if positions is None:
             return bone.tail_relative_position
 
-        from_pos = MVector3D(*positions[bone.index])
+        from_pos = MVector3D(*positions[0, bone.index])
 
         # 合致するのがなければ通常の表示先から検出
         if bone.is_tail_bone and 0 <= bone.tail_index and bone.tail_index in model:
             # 表示先が指定されているの場合、保持
-            to_pos = MVector3D(*positions[bone.tail_index])
+            to_pos = MVector3D(*positions[0, bone.tail_index])
         elif not bone.is_tail_bone:
             # 表示先が相対パスの場合、保持
             to_pos = from_pos + bone.tail_position
         else:
             # 表示先がない場合、とりあえず親ボーンからの向きにする
-            from_pos = MVector3D(*positions[bone.parent_index])
-            to_pos = MVector3D(*positions[bone.index])
+            from_pos = MVector3D(*positions[0, bone.parent_index])
+            to_pos = MVector3D(*positions[0, bone.index])
 
         return to_pos - from_pos
 
