@@ -317,16 +317,16 @@ class MLogger:
         msg_block.append("■■■■■■■■■■■■■■■■■")
 
         if level == logging.CRITICAL:
-            msg_block.append("■　**CRITICAL**  ")
+            msg_block.append("■　** CRITICAL **  ")
 
-        if level == logging.ERROR:
-            msg_block.append("■　**ERROR**  ")
+        elif level == logging.ERROR:
+            msg_block.append("■　** ERROR **  ")
 
-        if level == logging.WARNING:
-            msg_block.append("■　**WARNING**  ")
+        elif level == logging.WARNING:
+            msg_block.append("■　** WARNING **  ")
 
-        if logging.INFO >= level and title:
-            msg_block.append(f"■　**{title}**  ")
+        elif logging.INFO >= level and title:
+            msg_block.append(f"■　** {title} **  ")
 
         msg_block.extend([f"■　{msg_line}" for msg_line in msg.split("\n")])
         msg_block.append("■■■■■■■■■■■■■■■■■")

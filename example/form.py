@@ -89,9 +89,9 @@ class FilePanel(BasePanel):
         )
         self.output_pmx_ctrl.set_parent_sizer(self.root_sizer)
 
-        self.save_worker = SaveWorker(self, self.exec_result)
         self.exec_btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.exec_btn_ctrl = ExecButton(self, "実行", "実行中", self.exec, self.save_worker, 200, "実行ボタンだよ")
+        self.exec_btn_ctrl = ExecButton(self, "実行", "実行中", self.exec, 200, "実行ボタンだよ")
+        self.exec_btn_ctrl.exec_worker = SaveWorker(self, self.exec_result)
         self.exec_btn_sizer.Add(self.exec_btn_ctrl, 0, wx.ALL, 3)
         self.root_sizer.Add(self.exec_btn_sizer, 0, wx.ALIGN_CENTER | wx.SHAPED, 5)
 
@@ -105,7 +105,8 @@ class FilePanel(BasePanel):
         if not (self.model_ctrl.data and self.dress_ctrl.data):
             return
 
-        self.save_worker.start()
+        if self.exec_btn_ctrl.exec_worker:
+            self.exec_btn_ctrl.exec_worker.start()
 
     def exec_result(self, result: bool, data: Optional[Any], elapsed_time: str):
         logger.info(self.output_pmx_ctrl.path, decoration=MLogger.Decoration.BOX)
@@ -140,7 +141,7 @@ class PmxLoadWorker(BaseWorker):
         super().__init__(panel, result_event)
 
     def thread_execute(self):
-        file_panel: FilePanel = self.panel
+        file_panel: FilePanel = self.frame
         model: Optional[PmxModel] = None
         dress: Optional[PmxModel] = None
         motion: Optional[VmdMotion] = None
@@ -165,7 +166,7 @@ class PmxLoadWorker(BaseWorker):
         self.result_data = (model, dress, motion)
 
     def load_model(self):
-        file_panel: FilePanel = self.panel
+        file_panel: FilePanel = self.frame
         model: Optional[PmxModel] = None
 
         if not file_panel.model_ctrl.data and file_panel.model_ctrl.valid():
@@ -192,7 +193,7 @@ class SaveWorker(BaseWorker):
         pass
 
     def thread_execute(self):
-        file_panel: FilePanel = self.panel
+        file_panel: FilePanel = self.frame
 
         if not (file_panel.model_ctrl.data and file_panel.dress_ctrl.data):
             return
