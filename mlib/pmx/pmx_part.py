@@ -906,6 +906,24 @@ class Bone(BaseIndexNameModel):
         )
 
     @property
+    def is_ankle(self) -> bool:
+        """足首から先であるか"""
+        return (
+            self.name
+            in [
+                "左足首",
+                "左足首D",
+                "左つま先",
+                "左足先EX",
+                "右足首",
+                "右足首D",
+                "右つま先",
+                "右足先EX",
+            ]
+            or self.is_leg_d
+        )
+
+    @property
     def is_twist(self) -> bool:
         """捩りボーンであるか"""
         return "捩" in self.name
