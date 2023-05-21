@@ -1030,6 +1030,11 @@ class Bone(BaseIndexNameModel):
         """
         return self.is_twist or self.name not in STANDARD_BONE_NAMES
 
+    @property
+    def is_standard(self) -> bool:
+        """準標準であるか"""
+        return self.name in STANDARD_BONE_NAMES
+
 
 STANDARD_BONE_HEAD_NAMES = (
     "首",
