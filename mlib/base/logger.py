@@ -445,7 +445,7 @@ class ConsoleHandler(Handler):
     def emit(self, record: LogRecord):
         try:
             msg = self.format(record)
-            wx.CallAfter(self.text_ctrl.WriteText, msg + "\n")
+            wx.CallAfter(self.text_ctrl.AppendText, msg + "\n")
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
