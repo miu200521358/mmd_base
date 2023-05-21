@@ -33,7 +33,6 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
     def create(self) -> "TBaseIndexModel":
         raise NotImplementedError
 
-    @verify_thread
     def __getitem__(self, index: int) -> TBaseIndexModel:
         if 0 > index:
             # マイナス指定の場合、後ろからの順番に置き換える
@@ -127,7 +126,6 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         self._iter_index = 0
         self._size = 0
 
-    @verify_thread
     def __getitem__(self, key: int | str) -> TBaseIndexNameModel:
         if isinstance(key, (int, np.int32, np.int64, np.int16)):
             return self.get_by_index(int(key))
@@ -200,7 +198,6 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
 
         return replaced_map
 
-    @verify_thread
     def insert(self, value: TBaseIndexNameModel, is_sort: bool = True, is_positive_index: bool = True) -> dict[int, int]:
         if 0 > value.index and is_positive_index:
             value.index = len([k for k in self.data.keys() if k >= 0])
@@ -297,7 +294,6 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     def sort_indexes(self) -> None:
         self.indexes = sorted(self.data.keys()) if self.data else []
 
-    @verify_thread
     def __len__(self) -> int:
         return len(self.data)
 
@@ -312,13 +308,11 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             raise StopIteration
         return self.data[self.indexes[self._iter_index]]
 
-    @verify_thread
     def __contains__(self, key: int | str) -> bool:
         if isinstance(key, (int, np.int32, np.int64, np.int16)):
             return int(key) in self.data
         return key in self._names
 
-    @verify_thread
     def __bool__(self) -> bool:
         return 0 < len(self.data)
 
@@ -391,13 +385,11 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
     def create(self, key: str) -> TBaseIndexNameDictModel:
         raise NotImplementedError
 
-    @verify_thread
     def __getitem__(self, key: str) -> TBaseIndexNameDictModel:
         if key not in self.data:
             self.append(self.create(key), name=key)
         return self.data[key]
 
-    @verify_thread
     def filter(self, *keys: str) -> dict[str, TBaseIndexNameDictModel]:
         return dict([(k, v.copy()) for k, v in self.data.items() if k in keys])
 
