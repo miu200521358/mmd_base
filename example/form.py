@@ -391,6 +391,7 @@ class ConfigPanel(CanvasPanel):
             border=3,
             position=wx.DefaultPosition,
             size=wx.Size(200, -1),
+            tooltip="スライダーツールチップ",
         )
         self.btn_sizer.Add(self.float_slider.sizer, 0, wx.ALL, 0)
 

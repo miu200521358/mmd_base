@@ -1,6 +1,12 @@
+import os
 from typing import Optional
 
 import wx
+
+from mlib.base.logger import MLogger
+
+logger = MLogger(os.path.basename(__file__))
+__ = logger.get_text
 
 
 class FloatSliderCtrl:
@@ -29,7 +35,7 @@ class FloatSliderCtrl:
         self._value_ctrl = wx.TextCtrl(parent, wx.ID_ANY, str(f"{value:.2f}"), wx.DefaultPosition, wx.Size(50, -1), style=wx.TE_PROCESS_ENTER)
         self._value_ctrl.Bind(wx.EVT_TEXT_ENTER, self._on_change_value)
         if tooltip:
-            self._value_ctrl.SetToolTip(tooltip)
+            self._value_ctrl.SetToolTip(tooltip + __("\nEnterキーを押下したタイミングで値が反映されます。"))
 
         self._slider = wx.Slider(parent, wx.ID_ANY, i_value, i_min, i_max, position, size, wx.SL_HORIZONTAL)
         self._slider.Bind(wx.EVT_SCROLL, self._on_scroll)
