@@ -630,23 +630,8 @@ class PmxModel(BaseHashModel):
                     # ターゲットボーンにもフラグを立てる
                     self.bones[bone.ik.bone_index].ik_target_indexes.append(bone.index)
 
-            bone.parent_relative_position = self.bones.get_parent_relative_position(bone.index)
-            # 末端ボーンの相対位置
-            bone.tail_relative_position = self.bones.get_tail_relative_position(bone.index)
-            # 各ボーンのローカル軸
-            bone.local_axis = self.bones.get_local_axis(bone.index)
-            if bone.has_fixed_axis:
-                bone.correct_local_vector(bone.fixed_axis.normalized())
-            else:
-                bone.correct_local_vector(bone.local_axis)
-
-            # 逆オフセット行列は親ボーンからの相対位置分を戻す
-            bone.parent_revert_matrix = MMatrix4x4()
-            bone.parent_revert_matrix.translate(bone.parent_relative_position)
-
-            # オフセット行列は自身の位置を原点に戻す行列
-            bone.offset_matrix = MMatrix4x4()
-            bone.offset_matrix.translate(-bone.position)
+            # ボーンセットアップ
+            self.setup_bone(bone)
 
             logger.count(
                 "モデルセットアップ：ボーン",
@@ -669,6 +654,25 @@ class PmxModel(BaseHashModel):
                     continue
                 last_bone.far_parent_index = self.bones[bone_name].index
                 break
+
+    def setup_bone(self, bone: Bone):
+        bone.parent_relative_position = self.bones.get_parent_relative_position(bone.index)
+        # 末端ボーンの相対位置
+        bone.tail_relative_position = self.bones.get_tail_relative_position(bone.index)
+        # 各ボーンのローカル軸
+        bone.local_axis = self.bones.get_local_axis(bone.index)
+        if bone.has_fixed_axis:
+            bone.correct_local_vector(bone.fixed_axis.normalized())
+        else:
+            bone.correct_local_vector(bone.local_axis)
+
+        # 逆オフセット行列は親ボーンからの相対位置分を戻す
+        bone.parent_revert_matrix = MMatrix4x4()
+        bone.parent_revert_matrix.translate(bone.parent_relative_position)
+
+        # オフセット行列は自身の位置を原点に戻す行列
+        bone.offset_matrix = MMatrix4x4()
+        bone.offset_matrix.translate(-bone.position)
 
     def remove_bone(self, bone: Bone):
         """ボーンの削除に伴う諸々のボーンINDEXの置き換え"""
