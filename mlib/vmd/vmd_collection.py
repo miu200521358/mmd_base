@@ -3,9 +3,9 @@ from bisect import bisect_left
 from functools import lru_cache
 from math import acos, degrees
 from typing import Optional
-from numpy.linalg import inv
 
 import numpy as np
+from numpy.linalg import inv
 
 from mlib.base.collection import BaseHashModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
 from mlib.base.logger import MLogger
@@ -681,7 +681,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_pos = self[bone.name][fno].local_position
         local_parent_matrix = np.eye(4)
 
-        if not bone.is_not_local_cancel and bone.parent_index != model.bones["頭"].index:
+        if not bone.is_not_local_cancel and bone.parent_index != model.bones.data.get("頭", Bone()).index:
             for parent_name in model.bone_trees[bone.name].names[:-1]:
                 # 親のキャンセルローカル移動
                 parent_bone = model.bones[parent_name]
@@ -813,7 +813,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_scale = self[bone.name][fno].local_scale
         local_parent_matrix = np.eye(4)
 
-        if not bone.is_not_local_cancel and bone.parent_index != model.bones["頭"].index:
+        if not bone.is_not_local_cancel and bone.parent_index != model.bones.data.get("頭", Bone()).index:
             for parent_name in model.bone_trees[bone.name].names[:-1]:
                 # 親のキャンセルローカルスケール
                 parent_bone = model.bones[parent_name]
@@ -1175,7 +1175,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         local_parent_matrix = np.eye(4)
 
-        if not bone.is_not_local_cancel and bone.parent_index != model.bones["頭"].index:
+        if not bone.is_not_local_cancel and bone.parent_index != model.bones.data.get("頭", Bone()).index:
             for parent_name in model.bone_trees[bone.name].names[:-1]:
                 # 親のキャンセルローカル移動
                 parent_bone = model.bones[parent_name]

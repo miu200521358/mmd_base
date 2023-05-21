@@ -397,12 +397,12 @@ def test_read_by_filepath_ok_matrix_morph() -> None:
 
     import numpy as np
 
-    from mlib.pmx.pmx_part import BoneMorphOffset, Morph, MorphType
     from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_part import BoneMorphOffset, Morph, MorphType
     from mlib.pmx.pmx_reader import PmxReader
     from mlib.vmd.vmd_collection import VmdMotion
-    from mlib.vmd.vmd_reader import VmdReader
     from mlib.vmd.vmd_part import VmdMorphFrame
+    from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
     motion: VmdMotion = vmd_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション.vmd"))

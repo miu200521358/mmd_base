@@ -2,6 +2,8 @@ import hashlib
 from bisect import bisect_left
 from typing import Generic, Optional, TypeVar
 
+import numpy as np
+
 from mlib.base.base import BaseModel, Encoding
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel
 
@@ -119,14 +121,14 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         self._size = 0
 
     def __getitem__(self, key: int | str) -> TBaseIndexNameModel:
-        if isinstance(key, int):
-            return self.get_by_index(key)
+        if isinstance(key, int) or isinstance(key, np.int32):
+            return self.get_by_index(int(key))
         return self.get_by_name(key)
 
     def __delitem__(self, key: int | str) -> None:
         if key in self:
-            if isinstance(key, int):
-                del self.data[key]
+            if isinstance(key, int) or isinstance(key, np.int32):
+                del self.data[int(key)]
             else:
                 del self.data[self._names[key]]
 
@@ -293,8 +295,8 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         return self.data[self.indexes[self._iter_index]]
 
     def __contains__(self, key: int | str) -> bool:
-        if isinstance(key, int):
-            return key in self.data
+        if isinstance(key, int) or isinstance(key, np.int32):
+            return int(key) in self.data
         return key in self._names
 
     def __bool__(self) -> bool:
