@@ -293,7 +293,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
         # 逆BOf行列(初期姿勢行列)
         matrix = bone.parent_revert_matrix.vector @ matrix
 
-        if 0 <= bone.index and bone.parent_index in self:
+        if 0 <= bone.index and 0 <= bone.parent_index and bone.parent_index in self:
             # 親ボーンがある場合、遡る
             matrix = self.get_mesh_matrix(matrixes, bone.parent_index, matrix)
 

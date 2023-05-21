@@ -527,6 +527,10 @@ class TestFrame(BaseFrame):
         # bf.local_scale = MVector3D(0, 1.2, 1.2)
         # dress_motion.bones["左ひじ"].append(bf)
 
+        bf = VmdBoneFrame(0, "頭")
+        bf.local_scale = MVector3D(0, 1, 1)
+        dress_motion.bones["頭"].append(bf)
+
         # モーフ追加
         morph = Morph(name="上半身")
         morph.morph_type = MorphType.BONE
@@ -536,8 +540,6 @@ class TestFrame(BaseFrame):
         dress.morphs.append(morph)
 
         dress_motion.morphs["上半身"].append(VmdMorphFrame(0, "上半身", 1))
-
-        dress_matrixes = dress_motion.animate_bone(0, dress)
 
         try:
             self.config_panel.canvas.set_context()
