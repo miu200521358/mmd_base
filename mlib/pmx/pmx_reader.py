@@ -40,6 +40,7 @@ from mlib.pmx.pmx_part import (
     Vertex,
     VertexMorphOffset,
 )
+from mlib.service.base_worker import verify_thread
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -213,6 +214,7 @@ class PmxReader(BaseReader[PmxModel]):
 
         logger.info("モデルセットアップ完了")
 
+    @verify_thread
     def read_vertices(self, model: PmxModel):
         """頂点データ読み込み"""
         total_index_count = self.read_int()
@@ -268,6 +270,7 @@ class PmxReader(BaseReader[PmxModel]):
 
         model.vertices.sort_indexes()
 
+    @verify_thread
     def read_faces(self, model: PmxModel):
         """面データ読み込み"""
         faces_vertex_count = self.read_int()
@@ -289,6 +292,7 @@ class PmxReader(BaseReader[PmxModel]):
 
         model.faces.sort_indexes()
 
+    @verify_thread
     def read_textures(self, model: PmxModel):
         """テクスチャデータ読み込み"""
         total_index_count = self.read_int()
@@ -305,6 +309,7 @@ class PmxReader(BaseReader[PmxModel]):
 
         model.textures.sort_indexes()
 
+    @verify_thread
     def read_materials(self, model: PmxModel):
         """材質データ読み込み"""
         total_index_count = self.read_int()
@@ -358,6 +363,7 @@ class PmxReader(BaseReader[PmxModel]):
 
         model.materials.sort_indexes()
 
+    @verify_thread
     def read_bones(self, model: PmxModel):
         # 最初にルートを追加する
         root_bone = Bone(name=Bone.SYSTEM_ROOT_NAME, index=-1)
@@ -423,6 +429,7 @@ class PmxReader(BaseReader[PmxModel]):
 
         model.bones.sort_indexes()
 
+    @verify_thread
     def read_morphs(self, model: PmxModel):
         """モーフデータ読み込み"""
         total_index_count = self.read_int()
@@ -482,6 +489,7 @@ class PmxReader(BaseReader[PmxModel]):
 
         model.morphs.sort_indexes()
 
+    @verify_thread
     def read_display_slots(self, model: PmxModel):
         """表示枠データ読み込み"""
         total_index_count = self.read_int()
@@ -510,6 +518,7 @@ class PmxReader(BaseReader[PmxModel]):
 
         model.display_slots.sort_indexes()
 
+    @verify_thread
     def read_rigidbodies(self, model: PmxModel):
         """剛体データ読み込み"""
         total_index_count = self.read_int()
@@ -559,6 +568,7 @@ class PmxReader(BaseReader[PmxModel]):
 
         model.rigidbodies.sort_indexes()
 
+    @verify_thread
     def read_joints(self, model: PmxModel):
         """モデルデータ読み込み"""
         total_index_count = self.read_int()
@@ -619,6 +629,7 @@ class PmxReader(BaseReader[PmxModel]):
 
         model.joints.sort_indexes()
 
+    @verify_thread
     def define_read_index(self, count: int, is_vertex=False):
         """
         INDEX読み取り定義

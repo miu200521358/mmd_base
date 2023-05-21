@@ -37,14 +37,14 @@ def verify_thread(callable: Callable):
 
     @wraps(callable)
     def f(self, *args, **kwargs):
-        thread: SimpleThread = current_thread()
-        if thread.killed:
+        thread = current_thread()
+        if isinstance(thread, SimpleThread) and thread.killed:
             raise MKilledException
 
         result = callable(self, *args, **kwargs)
 
-        thread: SimpleThread = current_thread()
-        if thread.killed:
+        thread = current_thread()
+        if isinstance(thread, SimpleThread) and thread.killed:
             raise MKilledException
 
         return result
