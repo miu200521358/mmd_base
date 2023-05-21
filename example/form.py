@@ -17,7 +17,7 @@ from mlib.pmx.canvas import CanvasPanel
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import Bone, BoneMorphOffset, Face, Material, Morph, MorphType, SphereMode, Texture, ToonSharing, Vertex
 from mlib.pmx.pmx_writer import PmxWriter
-from mlib.service.base_worker import BaseWorker, verify_thread
+from mlib.service.base_worker import BaseWorker
 from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
 from mlib.service.form.widgets.console_ctrl import ConsoleCtrl
@@ -89,8 +89,9 @@ class FilePanel(BasePanel):
         )
         self.output_pmx_ctrl.set_parent_sizer(self.root_sizer)
 
+        self.save_worker = SaveWorker(self, self.exec_result)
         self.exec_btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.exec_btn_ctrl = ExecButton(self, "実行", "実行中", self.exec, 200, "実行ボタンだよ")
+        self.exec_btn_ctrl = ExecButton(self, "実行", "実行中", self.exec, self.save_worker, 200, "実行ボタンだよ")
         self.exec_btn_sizer.Add(self.exec_btn_ctrl, 0, wx.ALL, 3)
         self.root_sizer.Add(self.exec_btn_sizer, 0, wx.ALIGN_CENTER | wx.SHAPED, 5)
 
@@ -104,7 +105,7 @@ class FilePanel(BasePanel):
         if not (self.model_ctrl.data and self.dress_ctrl.data):
             return
 
-        SaveWorker(self, self.exec_result).start()
+        self.save_worker.start()
 
     def exec_result(self, result: bool, data: Optional[Any], elapsed_time: str):
         logger.info(self.output_pmx_ctrl.path, decoration=MLogger.Decoration.BOX)
@@ -138,7 +139,6 @@ class PmxLoadWorker(BaseWorker):
     def __init__(self, panel: BasePanel, result_event: wx.Event) -> None:
         super().__init__(panel, result_event)
 
-    @verify_thread
     def thread_execute(self):
         file_panel: FilePanel = self.panel
         model: Optional[PmxModel] = None
@@ -191,7 +191,6 @@ class SaveWorker(BaseWorker):
     def output_log(self):
         pass
 
-    @verify_thread
     def thread_execute(self):
         file_panel: FilePanel = self.panel
 
@@ -369,7 +368,6 @@ class SaveWorker(BaseWorker):
 
         self.result_data = True
 
-    @verify_thread
     def copy_texture(self, dest_model: PmxModel, texture: Texture, src_model_path: str) -> Texture:
         copy_texture: Texture = texture.copy()
         copy_texture.index = len(dest_model.textures)

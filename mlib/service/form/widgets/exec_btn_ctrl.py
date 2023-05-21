@@ -1,11 +1,10 @@
 import os
-from threading import current_thread
-from typing import Optional
+from typing import Callable, Optional
 
 import wx
 
 from mlib.base.logger import MLogger
-from mlib.service.base_worker import SimpleThread
+from mlib.service.base_worker import BaseWorker
 
 
 logger = MLogger(os.path.basename(__file__))
@@ -13,11 +12,21 @@ __ = logger.get_text
 
 
 class ExecButton(wx.Button):
-    def __init__(self, parent, label: str, disable_label: str, exec_evt, width: int = 120, tooltip: Optional[str] = None, *args, **kw):
+    def __init__(
+        self,
+        parent,
+        label: str,
+        disable_label: str,
+        exec_evt: Callable,
+        exec_worker: BaseWorker,
+        width: int = 120,
+        tooltip: Optional[str] = None,
+    ):
         self.parent = parent
         self.label = label
         self.disable_label = disable_label
         self.exec_evt = exec_evt
+        self.exec_worker = exec_worker
 
         super().__init__(
             parent,
@@ -33,8 +42,10 @@ class ExecButton(wx.Button):
             self.parent.Enable(False)
 
             # 実行停止
-            thread: SimpleThread = current_thread()
-            thread.killed = True
+            self.exec_worker.killed = True
+
+            self.parent.Enable(True)
+            self.SetLabel(self.label)
         else:
             # 実行開始
             self.SetLabel(self.disable_label)
