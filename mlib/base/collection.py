@@ -121,13 +121,13 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         self._size = 0
 
     def __getitem__(self, key: int | str) -> TBaseIndexNameModel:
-        if isinstance(key, int) or isinstance(key, np.int32):
+        if isinstance(key, (int, np.int32, np.int64, np.int16)):
             return self.get_by_index(int(key))
         return self.get_by_name(key)
 
     def __delitem__(self, key: int | str) -> None:
         if key in self:
-            if isinstance(key, int) or isinstance(key, np.int32):
+            if isinstance(key, (int, np.int32, np.int64, np.int16)):
                 del self.data[int(key)]
             else:
                 del self.data[self._names[key]]
@@ -295,7 +295,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         return self.data[self.indexes[self._iter_index]]
 
     def __contains__(self, key: int | str) -> bool:
-        if isinstance(key, int) or isinstance(key, np.int32):
+        if isinstance(key, (int, np.int32, np.int64, np.int16)):
             return int(key) in self.data
         return key in self._names
 
