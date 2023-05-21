@@ -472,13 +472,12 @@ class PmxModel(BaseHashModel):
         return self.model_name
 
     def initialize_display_slots(self):
-        dd = DisplaySlots()
         d01 = DisplaySlot(name="Root", english_name="Root")
         d01.special_flg = Switch.ON
-        dd.append(d01)
+        self.display_slots.append(d01, is_sort=False)
         d02 = DisplaySlot(name="表情", english_name="Exp")
         d02.special_flg = Switch.ON
-        dd.append(d02)
+        self.display_slots.append(d02, is_sort=False)
 
     def get_weighted_vertex_scale(self) -> dict[int, dict[int, MVector3D]]:
         vertex_bone_scales: dict[int, dict[int, MVector3D]] = {}
