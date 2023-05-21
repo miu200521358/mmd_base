@@ -2309,10 +2309,12 @@ class DisplaySlotReference(BaseModel):
 
     def __init__(
         self,
+        display_type: DisplayType = DisplayType.BONE,
+        display_index: int = -1,
     ):
         super().__init__()
-        self.display_type = DisplayType.BONE
-        self.display_index = -1
+        self.display_type = display_type
+        self.display_index = display_index
 
 
 class DisplaySlot(BaseIndexNameModel):
