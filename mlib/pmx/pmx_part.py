@@ -1006,8 +1006,8 @@ class Bone(BaseIndexNameModel):
 
     @property
     def is_not_local_cancel(self) -> bool:
-        """ローカル軸行列計算で親をキャンセルさせないボーン"""
-        return self.is_twist or self.name in ["頭部装飾"]
+        """ローカル軸行列計算で親のキャンセルをさせないボーン"""
+        return self.is_twist or self.name in ["頭"]
 
 
 STANDARD_BONE_HEAD_NAMES = (
