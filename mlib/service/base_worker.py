@@ -102,12 +102,14 @@ class BaseWorker:
     def run(self):
         try:
             self.thread_execute()
+            self.result = True
         except MLibException as e:
             logger.error("処理が継続できないため、中断しました\n----------------\n" + e.message, decoration=MLogger.Decoration.BOX, **e.kwargs)
+            self.result = False
         except Exception:
             logger.critical("予期せぬエラーが発生しました")
-        finally:
             self.result = False
+        finally:
             self.started = False
             self.killed = False
             try:
