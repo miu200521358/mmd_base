@@ -1,6 +1,15 @@
+import os
+from threading import current_thread
 from typing import Optional
 
 import wx
+
+from mlib.base.logger import MLogger
+from mlib.service.base_worker import SimpleThread
+
+
+logger = MLogger(os.path.basename(__file__))
+__ = logger.get_text
 
 
 class ExecButton(wx.Button):
@@ -19,10 +28,19 @@ class ExecButton(wx.Button):
         self.SetToolTip(tooltip)
 
     def _exec(self, event: wx.Event):
-        self.SetLabel(self.disable_label)
-        self.parent.Enable(False)
+        if self.GetLabel() == self.disable_label:
+            logger.info(__("*** 処理を停止します ***"))
+            self.parent.Enable(False)
 
-        self.exec_evt(event)
+            # 実行停止
+            thread: SimpleThread = current_thread()
+            thread.killed = True
+        else:
+            # 実行開始
+            self.SetLabel(self.disable_label)
+            self.parent.Enable(False)
 
-        self.parent.Enable(True)
-        self.SetLabel(self.label)
+            self.exec_evt(event)
+
+            self.parent.Enable(True)
+            self.SetLabel(self.label)

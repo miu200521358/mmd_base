@@ -6,7 +6,7 @@ from typing import Any, Callable, Optional
 
 import wx
 
-from mlib.base.exception import MLibException
+from mlib.base.exception import MKilledException, MLibException
 from mlib.base.logger import MLogger
 from mlib.service.form.base_panel import BasePanel
 
@@ -30,6 +30,26 @@ class SimpleThread(Thread):
 
     def result(self):
         return self._result
+
+
+def verify_thread(callable: Callable):
+    """スレッドの生死を確認するデコレーター"""
+
+    @wraps(callable)
+    def f(self, *args, **kwargs):
+        thread: SimpleThread = current_thread()
+        if thread.killed:
+            raise MKilledException
+
+        result = callable(self, *args, **kwargs)
+
+        thread: SimpleThread = current_thread()
+        if thread.killed:
+            raise MKilledException
+
+        return result
+
+    return f
 
 
 def task_takes_time(callable: Callable):
@@ -103,6 +123,9 @@ class BaseWorker:
         try:
             self.thread_execute()
             self.result = True
+        except MKilledException as e:
+            logger.info(e.message, title="STOP", decoration=MLogger.Decoration.BOX)
+            self.result = False
         except MLibException as e:
             logger.error("処理が継続できないため、中断しました\n----------------\n" + e.message, decoration=MLogger.Decoration.BOX, **e.kwargs)
             self.result = False

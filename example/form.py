@@ -17,7 +17,7 @@ from mlib.pmx.canvas import CanvasPanel
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import Bone, BoneMorphOffset, Face, Material, Morph, MorphType, SphereMode, Texture, ToonSharing, Vertex
 from mlib.pmx.pmx_writer import PmxWriter
-from mlib.service.base_worker import BaseWorker
+from mlib.service.base_worker import BaseWorker, verify_thread
 from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
 from mlib.service.form.widgets.console_ctrl import ConsoleCtrl
@@ -104,10 +104,104 @@ class FilePanel(BasePanel):
         if not (self.model_ctrl.data and self.dress_ctrl.data):
             return
 
-        os.makedirs(os.path.dirname(self.output_pmx_ctrl.path), exist_ok=True)
-        model = self.model_ctrl.data
-        dress = self.dress_ctrl.data
-        dress_model = PmxModel(self.output_pmx_ctrl.path)
+        SaveWorker(self, self.exec_result).start()
+
+    def exec_result(self, result: bool, data: Optional[Any], elapsed_time: str):
+        logger.info(self.output_pmx_ctrl.path, decoration=MLogger.Decoration.BOX)
+        self.frame.on_sound()
+
+    def on_change_model_pmx(self, event: wx.Event):
+        self.model_ctrl.unwrap()
+        if self.model_ctrl.read_name():
+            self.model_ctrl.read_digest()
+            dir_path, file_name, file_ext = separate_path(self.model_ctrl.path)
+            model_path = os.path.join(dir_path, f"{datetime.now():%Y%m%d_%H%M%S}", f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
+            self.output_pmx_ctrl.path = model_path
+
+    def on_change_dress_pmx(self, event: wx.Event):
+        self.dress_ctrl.unwrap()
+        if self.dress_ctrl.read_name():
+            self.dress_ctrl.read_digest()
+
+    def on_change_motion(self, event: wx.Event):
+        self.motion_ctrl.unwrap()
+        if self.motion_ctrl.read_name():
+            self.motion_ctrl.read_digest()
+
+    def Enable(self, enable: bool):
+        self.model_ctrl.Enable(enable)
+        self.dress_ctrl.Enable(enable)
+        self.motion_ctrl.Enable(enable)
+
+
+class PmxLoadWorker(BaseWorker):
+    def __init__(self, panel: BasePanel, result_event: wx.Event) -> None:
+        super().__init__(panel, result_event)
+
+    @verify_thread
+    def thread_execute(self):
+        file_panel: FilePanel = self.panel
+        model: Optional[PmxModel] = None
+        dress: Optional[PmxModel] = None
+        motion: Optional[VmdMotion] = None
+
+        model = self.load_model()
+
+        if not file_panel.dress_ctrl.data and file_panel.dress_ctrl.valid():
+            dress = file_panel.dress_ctrl.reader.read_by_filepath(file_panel.dress_ctrl.path)
+            PmxWriter(dress, "C:/MMD/mmd_base/tests/resources/result.pmx", include_system=True).save()
+        elif file_panel.dress_ctrl.data:
+            dress = file_panel.dress_ctrl.data
+        else:
+            dress = PmxModel()
+
+        if not file_panel.motion_ctrl.data and file_panel.motion_ctrl.valid():
+            motion = file_panel.motion_ctrl.reader.read_by_filepath(file_panel.motion_ctrl.path)
+        elif file_panel.motion_ctrl.data:
+            motion = file_panel.motion_ctrl.data
+        else:
+            motion = VmdMotion("empty")
+
+        self.result_data = (model, dress, motion)
+
+    def load_model(self):
+        file_panel: FilePanel = self.panel
+        model: Optional[PmxModel] = None
+
+        if not file_panel.model_ctrl.data and file_panel.model_ctrl.valid():
+            model = file_panel.model_ctrl.reader.read_by_filepath(file_panel.model_ctrl.path)
+
+            if "首" not in model.bones:
+                raise MApplicationException("{b}ボーン不足", b="首")
+        elif file_panel.model_ctrl.data:
+            model = file_panel.model_ctrl.data
+        else:
+            model = PmxModel()
+
+        return model
+
+    def output_log(self):
+        pass
+
+
+class SaveWorker(BaseWorker):
+    def __init__(self, panel: BasePanel, result_event: wx.Event) -> None:
+        super().__init__(panel, result_event)
+
+    def output_log(self):
+        pass
+
+    @verify_thread
+    def thread_execute(self):
+        file_panel: FilePanel = self.panel
+
+        if not (file_panel.model_ctrl.data and file_panel.dress_ctrl.data):
+            return
+
+        os.makedirs(os.path.dirname(file_panel.output_pmx_ctrl.path), exist_ok=True)
+        model: PmxModel = file_panel.model_ctrl.data
+        dress: PmxModel = file_panel.dress_ctrl.data
+        dress_model = PmxModel(file_panel.output_pmx_ctrl.path)
         dress_model.comment = model.comment + "\n------------------\n" + dress.comment
         dress_model.initialize_display_slots()
 
@@ -271,11 +365,11 @@ class FilePanel(BasePanel):
 
             prev_faces_count += material.vertices_count // 3
 
-        PmxWriter(dress_model, self.output_pmx_ctrl.path).save()
+        PmxWriter(dress_model, file_panel.output_pmx_ctrl.path).save()
 
-        logger.info(self.output_pmx_ctrl.path, decoration=MLogger.Decoration.BOX)
-        self.frame.on_sound()
+        self.result_data = True
 
+    @verify_thread
     def copy_texture(self, dest_model: PmxModel, texture: Texture, src_model_path: str) -> Texture:
         copy_texture: Texture = texture.copy()
         copy_texture.index = len(dest_model.textures)
@@ -288,70 +382,6 @@ class FilePanel(BasePanel):
         dest_model.textures.append(copy_texture, is_sort=False)
 
         return copy_texture
-
-    def on_change_model_pmx(self, event: wx.Event):
-        self.model_ctrl.unwrap()
-        if self.model_ctrl.read_name():
-            self.model_ctrl.read_digest()
-            dir_path, file_name, file_ext = separate_path(self.model_ctrl.path)
-            model_path = os.path.join(dir_path, f"{datetime.now():%Y%m%d_%H%M%S}", f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
-            self.output_pmx_ctrl.path = model_path
-
-    def on_change_dress_pmx(self, event: wx.Event):
-        self.dress_ctrl.unwrap()
-        if self.dress_ctrl.read_name():
-            self.dress_ctrl.read_digest()
-
-    def on_change_motion(self, event: wx.Event):
-        self.motion_ctrl.unwrap()
-        if self.motion_ctrl.read_name():
-            self.motion_ctrl.read_digest()
-
-    def Enable(self, enable: bool):
-        self.model_ctrl.Enable(enable)
-        self.dress_ctrl.Enable(enable)
-        self.motion_ctrl.Enable(enable)
-
-
-class PmxLoadWorker(BaseWorker):
-    def __init__(self, panel: BasePanel, result_event: wx.Event) -> None:
-        super().__init__(panel, result_event)
-
-    def thread_execute(self):
-        file_panel: FilePanel = self.panel
-        model: Optional[PmxModel] = None
-        dress: Optional[PmxModel] = None
-        motion: Optional[VmdMotion] = None
-
-        if not file_panel.model_ctrl.data and file_panel.model_ctrl.valid():
-            model = file_panel.model_ctrl.reader.read_by_filepath(file_panel.model_ctrl.path)
-
-            if "首" not in model.bones:
-                raise MApplicationException("{b}ボーン不足", b="首")
-        elif file_panel.model_ctrl.data:
-            model = file_panel.model_ctrl.data
-        else:
-            model = PmxModel()
-
-        if not file_panel.dress_ctrl.data and file_panel.dress_ctrl.valid():
-            dress = file_panel.dress_ctrl.reader.read_by_filepath(file_panel.dress_ctrl.path)
-            PmxWriter(dress, "C:/MMD/mmd_base/tests/resources/result.pmx", include_system=True).save()
-        elif file_panel.dress_ctrl.data:
-            dress = file_panel.dress_ctrl.data
-        else:
-            dress = PmxModel()
-
-        if not file_panel.motion_ctrl.data and file_panel.motion_ctrl.valid():
-            motion = file_panel.motion_ctrl.reader.read_by_filepath(file_panel.motion_ctrl.path)
-        elif file_panel.motion_ctrl.data:
-            motion = file_panel.motion_ctrl.data
-        else:
-            motion = VmdMotion("empty")
-
-        self.result_data = (model, dress, motion)
-
-    def output_log(self):
-        pass
 
 
 class ConfigPanel(CanvasPanel):

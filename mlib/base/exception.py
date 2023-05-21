@@ -38,5 +38,5 @@ class MViewerException(MLibException):
 class MKilledException(MLibException):
     """ツールの実行が停止された時のエラー"""
 
-    def __init__(self, message: str = "", exception: Optional[Exception] = None, *args, **kwargs):
+    def __init__(self, message: str = "処理を停止しました", exception: Optional[Exception] = None, *args, **kwargs):
         super().__init__(message, exception, *args, **kwargs)
