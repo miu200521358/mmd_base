@@ -133,14 +133,14 @@ class BaseWorker:
             logger.critical("予期せぬエラーが発生しました")
             self.result = False
         finally:
-            self.started = False
-            self.killed = False
             try:
                 if logger.is_out_log or (not self.result and not self.killed):
                     # ログ出力
                     self.output_log()
             except:
                 pass
+            self.started = False
+            self.killed = False
 
     def thread_execute(self):
         raise NotImplementedError
