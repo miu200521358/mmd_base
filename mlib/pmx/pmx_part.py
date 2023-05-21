@@ -1483,6 +1483,14 @@ class BoneSettings(Enum):
     RIGHT_ANKLE = BoneSetting(
         "右足首",
         ("右ひざ",),
+        ("右つま先",),
+        ("右つま先",),
+        BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
+        MVector3D(0, -1, 0),
+    )
+    RIGHT_TOE = BoneSetting(
+        "右つま先",
+        ("右足首",),
         MVector3D(0, -1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
@@ -1756,6 +1764,14 @@ class BoneSettings(Enum):
     LEFT_ANKLE = BoneSetting(
         "左足首",
         ("左ひざ",),
+        MVector3D(0, -1, 0),
+        [],
+        BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
+        MVector3D(0, -1, 0),
+    )
+    LEFT_TOE = BoneSetting(
+        "左つま先",
+        ("左足首",),
         MVector3D(0, -1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
