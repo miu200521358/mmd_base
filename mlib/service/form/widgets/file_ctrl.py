@@ -57,28 +57,29 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         # ファイルタイトル
         self.title_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.title_ctrl = wx.StaticText(self.parent, wx.ID_ANY, self.title, wx.DefaultPosition, wx.DefaultSize, 0)
+        self.title_ctrl = wx.StaticText(self.parent, wx.ID_ANY, self.title, wx.DefaultPosition, wx.Size(len(self.title) * 16, -1), 0)
         self.title_ctrl.SetToolTip(__(tooltip))
-        self.title_sizer.Add(self.title_ctrl, 1, wx.GROW | wx.ALL, 3)
+        self.title_sizer.Add(self.title_ctrl, 0, wx.ALL, 3)
 
         # モデル名等の表示
         if self.is_show_name and not self.is_save:
-            self.spacer_ctrl = wx.StaticText(self.parent, wx.ID_ANY, " " * name_spacer, wx.DefaultPosition, wx.DefaultSize, 0)
-            self.title_sizer.Add(self.spacer_ctrl, 0, wx.ALL, 3)
+            if name_spacer:
+                self.spacer_ctrl = wx.StaticText(self.parent, wx.ID_ANY, " " * name_spacer, wx.DefaultPosition, wx.Size(name_spacer * 16, -1), 0)
+                self.title_sizer.Add(self.spacer_ctrl, 0, wx.ALL, 3)
 
             self.name_ctrl = wx.TextCtrl(
                 self.parent,
                 wx.ID_ANY,
                 __("(未設定)"),
                 wx.DefaultPosition,
-                wx.Size(100, -1),
+                wx.Size(-1, -1),
                 wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS,
             )
             self.name_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
             self.name_ctrl.SetToolTip(__("{t}に記録されているモデル名です。\n文字列は選択およびコピー可能です。", t=self.title))
             self.title_sizer.Add(self.name_ctrl, 1, wx.EXPAND | wx.ALL, 3)
 
-        self.root_sizer.Add(self.title_sizer, 0, wx.ALL, 3)
+        self.root_sizer.Add(self.title_sizer, 1, wx.EXPAND | wx.ALL, 3)
 
         # ------------------------------
         # ファイルコントロール
