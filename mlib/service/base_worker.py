@@ -104,11 +104,12 @@ class BaseWorker:
             self.thread_execute()
         except MLibException as e:
             logger.error("処理が継続できないため、中断しました\n----------------\n" + e.message, decoration=MLogger.Decoration.BOX, **e.kwargs)
-            self.result = False
         except Exception:
             logger.critical("予期せぬエラーが発生しました")
-            self.result = False
         finally:
+            self.result = False
+            self.started = False
+            self.killed = False
             try:
                 if logger.is_out_log or (not self.result and not self.killed):
                     # ログ出力
