@@ -2496,6 +2496,7 @@ class RigidBody(BaseIndexNameModel):
         "x_direction",
         "y_direction",
         "z_direction",
+        "is_system",
     )
 
     def __init__(
@@ -2518,6 +2519,7 @@ class RigidBody(BaseIndexNameModel):
         self.x_direction = MVector3D(1, 0, 0)
         self.y_direction = MVector3D(0, 1, 0)
         self.z_direction = MVector3D(0, 0, -1)
+        self.is_system = False
 
 
 class JointLimitParam(BaseModel):
@@ -2629,6 +2631,7 @@ class Joint(BaseIndexNameModel):
         "position",
         "rotation",
         "param",
+        "is_system",
     )
 
     def __init__(
@@ -2644,3 +2647,4 @@ class Joint(BaseIndexNameModel):
         self.position = MVector3D()
         self.rotation = BaseRotationModel()
         self.param = JointParam()
+        self.is_system = False
