@@ -33,15 +33,15 @@ if __name__ == "__main__":
                 trans_messages = f.readlines()
 
             # 翻訳のペアを辞書にする
-            trans_messages_dict = dict([(message_id, message_str) for (message_id, message_str) in zip(trans_messages[:-1], trans_messages[1:])])
+            trans_messages_dict = dict([(message_id, message_str[:-1]) for (message_id, message_str) in zip(trans_messages[:-1], trans_messages[1:])])
 
             msg_id = None
+            translated_message = None
             for i, org_msg in enumerate(messages):
                 if i < 18:
                     # ヘッダはそのまま
                     continue
 
-                translated_message = None
                 if "msgid" in org_msg:
                     m = re_message.search(org_msg)
                     if m:
@@ -68,6 +68,7 @@ if __name__ == "__main__":
                             messages[i] = f"msgstr {translated_text}"
                             print(f"翻訳: [{lang}][{msg_id}] -> [{translated_text}]")
                         msg_id = None
+                        translated_message = None
 
             for i, message in enumerate(messages):
                 message = re_break.sub("\\\\n", message)
