@@ -32,28 +32,28 @@ if __name__ == "__main__":
             with open(file_path, mode="r", encoding="utf-8") as f:
                 trans_messages = f.readlines()
 
+            # 翻訳のペアを辞書にする
+            trans_messages_dict = dict([(message_id, message_str) for (message_id, message_str) in zip(trans_messages[:-1], trans_messages[1:])])
+
             msg_id = None
             for i, org_msg in enumerate(messages):
                 if i < 18:
                     # ヘッダはそのまま
                     continue
 
+                translated_message = None
                 if "msgid" in org_msg:
                     m = re_message.search(org_msg)
                     if m:
                         msg_id = m.group()
+                        # 辞書に既にあればそれを採用する
+                        translated_message = trans_messages_dict.get(org_msg, None)
                         continue
 
                 if msg_id and "msgstr" in org_msg:
-                    transed_msg_idxs = [
-                        n + 1
-                        for n, msg in enumerate(trans_messages)
-                        if "msgid" in msg and "msgstr" in trans_messages[n + 1] and msg_id == msg and '""' not in trans_messages[n + 1]
-                    ]
-
-                    if transed_msg_idxs:
+                    if translated_message and '""' not in translated_message:
                         # 既に翻訳済みの場合、記載されてる翻訳情報を転載
-                        messages[i] = trans_messages[transed_msg_idxs[0]]
+                        messages[i] = translated_message
                     else:
                         if is_ja:
                             messages[i] = f"msgstr {msg_id}"

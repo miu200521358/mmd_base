@@ -154,6 +154,12 @@ class PmxWriter(BaseModel):
                 self.write_number(fout, PmxBinaryType.FLOAT, float(uv.y))
                 self.write_number(fout, PmxBinaryType.FLOAT, float(uv.z))
                 self.write_number(fout, PmxBinaryType.FLOAT, float(uv.w))
+            for _ in range(len(vertex.extended_uvs), self.model.extended_uv_count):
+                # 追加UVが個数より足りない場合、0で埋める
+                self.write_number(fout, PmxBinaryType.FLOAT, 0.0)
+                self.write_number(fout, PmxBinaryType.FLOAT, 0.0)
+                self.write_number(fout, PmxBinaryType.FLOAT, 0.0)
+                self.write_number(fout, PmxBinaryType.FLOAT, 0.0)
 
             # deform
             if type(vertex.deform) is Bdef1:
