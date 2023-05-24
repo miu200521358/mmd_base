@@ -268,12 +268,14 @@ class Bones(BaseIndexNameDictModel[Bone]):
         bone = self[bone_index]
         return bone.position - (MVector3D() if bone.index < 0 or bone.parent_index not in self else self[bone.parent_index].position)
 
-    def get_mesh_matrix(self, matrixes: MMatrix4x4List, bone_index: int, matrix: np.ndarray) -> np.ndarray:
+    def get_mesh_matrix(self, fidx: int, matrixes: MMatrix4x4List, bone_index: int, matrix: np.ndarray) -> np.ndarray:
         """
         スキンメッシュアニメーション用ボーン変形行列を作成する
 
         Parameters
         ----------
+        fidx : int
+            フレームINDEX（キーフレ番号とは違う）
         matrixes : MMatrix4x4List
             座標変換行列
         bone_index : int
@@ -289,13 +291,13 @@ class Bones(BaseIndexNameDictModel[Bone]):
 
         # 自身の姿勢をかける
         # 座標変換行列
-        matrix = matrixes.vector[0, bone_index] @ matrix
+        matrix = matrixes.vector[fidx, bone_index] @ matrix
         # 逆BOf行列(初期姿勢行列)
         matrix = bone.parent_revert_matrix.vector @ matrix
 
         if 0 <= bone.index and 0 <= bone.parent_index and bone.parent_index in self:
             # 親ボーンがある場合、遡る
-            matrix = self.get_mesh_matrix(matrixes, bone.parent_index, matrix)
+            matrix = self.get_mesh_matrix(fidx, matrixes, bone.parent_index, matrix)
 
         return matrix
 

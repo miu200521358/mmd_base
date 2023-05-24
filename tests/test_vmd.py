@@ -203,7 +203,7 @@ def test_read_by_filepath_ok_matrix() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
     # キーフレ
-    bone_matrixes = motion.bones.get_matrix_by_indexes([10, 999], ["グルーブ", "左人指先"], model)
+    bone_matrixes = motion.animate_bone([10, 999], model)
 
     assert np.isclose(
         np.array([0, 0, 0]),
@@ -416,11 +416,10 @@ def test_read_by_filepath_ok_matrix_morph() -> None:
     morph.offsets.append(BoneMorphOffset(0, MVector3D(0, 1, 0), MQuaternion()))
     model.morphs.append(morph)
 
-    morph_motion = VmdMotion()
-    morph_motion.morphs["底上げ"].append(VmdMorphFrame(0, "底上げ", 1))
+    motion.morphs["底上げ"].append(VmdMorphFrame(0, "底上げ", 1))
 
     # キーフレ
-    bone_matrixes = motion.bones.get_matrix_by_indexes([10, 999], ["グルーブ", "左人指先"], model, morph_motion=morph_motion, append_ik=False)
+    bone_matrixes = motion.animate_bone([10, 999], model, append_ik=False)
 
     # キーフレがない場合
     assert np.isclose(
@@ -544,7 +543,7 @@ def test_read_by_filepath_ok_leg_ik1() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
     # キーフレ
-    bone_matrixes = motion.bones.get_matrix_by_indexes([29], ["左つま先"], model)
+    bone_matrixes = motion.animate_bone([29], model, ["左つま先"])
 
     # --------
     # キーフレがある場合
@@ -598,7 +597,7 @@ def test_read_by_filepath_ok_leg_ik2() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
     # キーフレ
-    bone_matrixes = motion.bones.get_matrix_by_indexes([3152], ["左つま先"], model)
+    bone_matrixes = motion.animate_bone([3152], model)
 
     # --------
     # キーフレがない場合
@@ -652,7 +651,7 @@ def test_read_by_filepath_ok_leg_ik3() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
     # キーフレ
-    bone_matrixes = motion.bones.get_matrix_by_indexes([60], ["左つま先", "左足先EX"], model)
+    bone_matrixes = motion.animate_bone([60], model)
 
     # --------
     # キーフレがない場合
@@ -719,7 +718,7 @@ def test_read_by_filepath_ok_leg_ik4() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
     # キーフレ
-    bone_matrixes = motion.bones.get_matrix_by_indexes([0], ["右つま先"], model)
+    bone_matrixes = motion.animate_bone([0], model)
 
     # --------
     # キーフレがある場合
@@ -773,7 +772,7 @@ def test_read_by_filepath_ok_leg_ik5() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
     # キーフレ
-    bone_matrixes = motion.bones.get_matrix_by_indexes([7409], ["右つま先"], model)
+    bone_matrixes = motion.animate_bone([7409], model)
 
     # --------
     # 最後を越したキーフレ
@@ -827,7 +826,7 @@ def test_read_by_filepath_ok_arm_ik() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "ボーンツリーテストモデル.pmx"))
 
     # キーフレ
-    bone_matrixes = motion.bones.get_matrix_by_indexes([10, 999], ["グルーブ", "左人指先"], model)
+    bone_matrixes = motion.animate_bone([10, 999], model)
 
     assert np.isclose(
         np.array([0, 0, 0]),

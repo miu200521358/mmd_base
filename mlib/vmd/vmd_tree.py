@@ -2,8 +2,15 @@ from mlib.base.math import MMatrix4x4, MVector3D
 
 
 class VmdBoneFrameTree:
-    def __init__(self, matrix: MMatrix4x4, position: MVector3D, tail_position: MVector3D) -> None:
-        self.matrix = matrix
+    def __init__(
+        self,
+        global_matrix: MMatrix4x4,
+        local_matrix: MMatrix4x4,
+        position: MVector3D,
+        tail_position: MVector3D,
+    ) -> None:
+        self.global_matrix = global_matrix
+        self.local_matrix = local_matrix
         self.position = position
         self.tail_position = tail_position
 
@@ -14,7 +21,15 @@ class VmdBoneFrameTrees:
     def __init__(self) -> None:
         self.data: dict[tuple[int, str], VmdBoneFrameTree] = {}
 
-    def append(self, fno: int, bone_name: str, matrix: MMatrix4x4, position: MVector3D, tail_position: MVector3D):
+    def append(
+        self,
+        fno: int,
+        bone_name: str,
+        global_matrix: MMatrix4x4,
+        local_matrix: MMatrix4x4,
+        position: MVector3D,
+        tail_position: MVector3D,
+    ):
         """
         ボーン変形結果追加
 
@@ -22,10 +37,11 @@ class VmdBoneFrameTrees:
         ----------
         fno: キーフレ
         bone_name: ボーン名
-        matrix : 親ボーンから見た行列
+        global_matrix : 自身のボーン位置を加味した行列
+        local_matrix : 自身のボーン位置を加味しない行列
         position : ボーン変形後のグローバル位置
         """
-        self.data[(fno, bone_name)] = VmdBoneFrameTree(matrix, position, tail_position)
+        self.data[(fno, bone_name)] = VmdBoneFrameTree(global_matrix, local_matrix, position, tail_position)
 
     def __getitem__(self, key) -> VmdBoneFrameTree:
         return self.data[key]
