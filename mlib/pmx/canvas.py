@@ -258,16 +258,16 @@ class PmxCanvas(glcanvas.GLCanvas):
                     color * np.fromiter([1, 1, 1, model_set.bone_alpha], count=4, dtype=np.float32),
                 )
 
-        if logging.DEBUG >= logger.total_level:
-            for model_set, animation, color in zip(self.model_sets, self.animations, MODEL_AXIS_COLORS):
-                # ローカル軸を表示
-                if model_set.model:
-                    logger.test(f"-- ローカル軸描画(透過): {model_set.model.name}")
+        # if logging.DEBUG >= logger.total_level:
+        #     for model_set, animation, color in zip(self.model_sets, self.animations, MODEL_AXIS_COLORS):
+        #         # ローカル軸を表示
+        #         if model_set.model:
+        #             logger.test(f"-- ローカル軸描画(透過): {model_set.model.name}")
 
-                    model_set.model.draw_axis(
-                        animation.gl_matrixes,
-                        color * np.fromiter([1, 1, 1, model_set.bone_alpha], count=4, dtype=np.float32),
-                    )
+        #             model_set.model.draw_axis(
+        #                 animation.gl_matrixes,
+        #                 color * np.fromiter([1, 1, 1, model_set.bone_alpha], count=4, dtype=np.float32),
+        #             )
 
     def draw_ground(self):
         """平面を描画する"""
