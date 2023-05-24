@@ -1580,7 +1580,7 @@ class MMatrix4x4List:
         # 行列計算結果の位置
         return self.vector[..., :3, 3]
 
-    def __getitem__(self, index) -> float:
+    def __getitem__(self, index) -> np.ndarray:
         y, x = index
         return self.vector[y, x]
 

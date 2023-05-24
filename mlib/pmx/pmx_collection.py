@@ -125,6 +125,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
             bone_tree = BoneTree(name=end_bone.name)
             for _, bidx in sorted(self.create_bone_link_indexes(end_bone.index)):
                 bone_tree.append(self.data[bidx], is_sort=False)
+                end_bone.tree_indexes.append(bidx)
             bone_trees.append(bone_tree, name=end_bone.name)
 
             logger.count(
@@ -167,6 +168,9 @@ class Bones(BaseIndexNameDictModel[Bone]):
         -------
         親ボーンリスト
         """
+        if 0 > child_idx:
+            return []
+
         # 階層＞リスト順（＞FK＞IK＞付与）
         if not bone_link_indexes:
             bone_link_indexes = [(self.data[child_idx].layer, self.data[child_idx].index)]
@@ -293,7 +297,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
         # 座標変換行列
         matrix = matrixes.vector[fidx, bone_index] @ matrix
         # 逆BOf行列(初期姿勢行列)
-        matrix = bone.parent_revert_matrix.vector @ matrix
+        matrix = bone.parent_revert_matrix @ matrix
 
         if 0 <= bone.index and 0 <= bone.parent_index and bone.parent_index in self:
             # 親ボーンがある場合、遡る
@@ -435,6 +439,9 @@ class PmxModel(BaseHashModel):
         "meshes",
         "textures",
         "toon_textures",
+        "parent_matrixes",
+        "offset_matrixes",
+        "parent_revert_matrixes",
     )
 
     def __init__(
@@ -468,6 +475,8 @@ class PmxModel(BaseHashModel):
         self.joints: Joints = Joints()
         self.for_draw = False
         self.meshes: Optional[Meshes] = None
+        self.offset_matrixes: Optional[np.ndarray] = None
+        self.parent_revert_matrixes: Optional[np.ndarray] = None
 
     @property
     def name(self) -> str:
@@ -619,6 +628,9 @@ class PmxModel(BaseHashModel):
 
         logger.info("モデルセットアップ：システム用ボーン")
 
+        self.parent_revert_matrixes = np.full((len(self.bones), 4, 4), np.eye(4))
+        self.offset_matrixes = np.full((len(self.bones), 4, 4), np.eye(4))
+
         for bone in self.bones:
             # IKのリンクとターゲット
             if bone.is_ik and bone.ik:
@@ -646,16 +658,6 @@ class PmxModel(BaseHashModel):
 
         logger.info("モデルセットアップ：ボーンツリー")
 
-        # 距離が離れている親ボーンINDEXの取得
-        for bone_tree in self.bone_trees:
-            last_bone = self.bones[bone_tree.last_name]
-            for bone_name in reversed(bone_tree.names[:-1]):
-                if np.isclose([last_bone.position.distance(self.bones[bone_name].position)], 0, atol=0.01, rtol=0.01).any():
-                    # 同じ位置のはスルー
-                    continue
-                last_bone.far_parent_index = self.bones[bone_name].index
-                break
-
     def setup_bone(self, bone: Bone):
         bone.parent_relative_position = self.bones.get_parent_relative_position(bone.index)
         # 末端ボーンの相対位置
@@ -667,13 +669,13 @@ class PmxModel(BaseHashModel):
         else:
             bone.correct_local_vector(bone.local_axis)
 
-        # 逆オフセット行列は親ボーンからの相対位置分を戻す
-        bone.parent_revert_matrix = MMatrix4x4()
-        bone.parent_revert_matrix.translate(bone.parent_relative_position)
-
         # オフセット行列は自身の位置を原点に戻す行列
-        bone.offset_matrix = MMatrix4x4()
-        bone.offset_matrix.translate(-bone.position)
+        bone.offset_matrix[:3, 3] = -bone.position.vector
+        self.offset_matrixes[bone.index, :3, 3] = -bone.position.vector
+
+        # 逆オフセット行列は親ボーンからの相対位置分を戻す
+        bone.parent_revert_matrix[:3, 3] = bone.parent_relative_position.vector
+        self.parent_revert_matrixes[bone.index, :3, 3] = bone.parent_relative_position.vector
 
     def remove_bone(self, bone: Bone):
         """ボーンの削除に伴う諸々のボーンINDEXの置き換え"""
@@ -828,17 +830,22 @@ class PmxModel(BaseHashModel):
             # 先に接続可能なボーンが無い場合、作成しない
             return False
         parent_names = [p for p in bone_setting.parents if p in self.bones.names]
-        if not parent_names:
-            # 親ボーンが無い場合、作成しない
+        if bone_name != "全ての親" and not parent_names:
+            # 全ての親以外で親ボーンが無い場合、作成しない
             return False
-        parent_bone = self.bones[parent_names[0]]
-        # 親のひとつ下に作成する
-        bone = Bone(name=bone_name, index=parent_bone.index + 1)
+        if bone_name == "全ての親":
+            # 親のひとつ下に作成する
+            bone = Bone(name=bone_name, index=0)
+            bone.parent_index = -1
+        else:
+            parent_bone = self.bones[parent_names[0]]
+            # 親のひとつ下に作成する
+            bone = Bone(name=bone_name, index=parent_bone.index + 1)
+            bone.parent_index = parent_bone.index
+            # 変形階層
+            bone.layer = parent_bone.layer
         direction = bone.name[0]
-        bone.parent_index = parent_bone.index
         bone.bone_flg = bone_setting.flag
-        # 変形階層
-        bone.layer = parent_bone.layer
         if "足D" in bone.name:
             # 足D系列は変形階層を追加
             bone.layer += 1
@@ -1321,7 +1328,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
         # ----------
 
-        writable_bones = [bone for bone in model.bones if 0 <= bone.index]
+        writable_bones = [bone for bone in model.bones]
 
         # ボーン位置
         self.bones = np.array(

@@ -160,7 +160,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
 
     @verify_thread
     def remove(self, value: TBaseIndexNameModel, is_sort: bool = True) -> dict[int, int]:
-        replaced_map: dict[int, int] = {}
+        replaced_map: dict[int, int] = {-1: -1}
 
         if value.index not in self.data:
             return replaced_map
@@ -185,7 +185,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             self.data[v.index] = v
             # 名前逆引きもINDEX置き換え
             self._names[v.name] = v.index
-        for i in range(value.index - 1, -2, -1):
+        for i in range(value.index - 1, -1, -1):
             # 範囲外はそのまま
             v = self.data[i]
             replaced_map[v.index] = v.index
@@ -202,7 +202,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         if 0 > value.index and is_positive_index:
             value.index = len([k for k in self.data.keys() if k >= 0])
 
-        replaced_map: dict[int, int] = {}
+        replaced_map: dict[int, int] = {-1: -1}
         if value.index in self.data:
             # 既に同じINDEXがある場合、後ろからずらす
             for i in range(self.last_index, value.index - 1, -1):
@@ -214,7 +214,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
                 self.data[v.index] = v
                 # 名前逆引きもINDEX置き換え
                 self._names[v.name] = v.index
-            for i in range(value.index - 1, -2, -1):
+            for i in range(value.index - 1, -1, -1):
                 # 範囲外はそのまま
                 v = self.data[i]
                 replaced_map[v.index] = v.index

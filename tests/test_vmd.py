@@ -1,3 +1,4 @@
+from multiprocessing import freeze_support
 import pytest
 
 from mlib.base.math import MQuaternion, MVector3D
@@ -203,7 +204,7 @@ def test_read_by_filepath_ok_matrix() -> None:
     model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
 
     # キーフレ
-    bone_matrixes = motion.animate_bone([10, 999], model)
+    bone_matrixes = motion.animate_bone([10, 999], model, ["左人指３"])
 
     assert np.isclose(
         np.array([0, 0, 0]),
@@ -969,4 +970,5 @@ def test_vmd_save_01():
 
 
 if __name__ == "__main__":
+    freeze_support()
     pytest.main()

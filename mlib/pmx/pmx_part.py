@@ -9,7 +9,7 @@ from PIL import Image, ImageOps
 
 from mlib.base.base import BaseModel
 from mlib.base.exception import MViewerException
-from mlib.base.math import MMatrix4x4, MQuaternion, MVector2D, MVector3D, MVector4D
+from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
 
 
@@ -713,8 +713,9 @@ class Bone(BaseIndexNameModel):
     parent_relative_position: 親ボーンからの相対位置
     tail_relative_position: 表示先ボーンの相対位置（表示先がボーンの場合、そのボーンとの差分）
 
-    offset_matrix: オフセット行列 (自身の位置を原点に戻す行列)
+    parent_indexes: 親ボーンINDEXリスト
     parent_revert_matrix: 逆オフセット行列(親ボーンからの相対位置分を戻す)
+    offset_matrix: オフセット行列 (自身の位置を原点に戻す行列)
     """
 
     __slots__ = (
@@ -742,12 +743,12 @@ class Bone(BaseIndexNameModel):
         "local_axis",
         "ik_link_indexes",
         "ik_target_indexes",
-        "offset_matrix",
-        "parent_revert_matrix",
         "parent_relative_position",
         "tail_relative_position",
-        "far_parent_index",
         "corrected_fixed_axis",
+        "parent_indexes",
+        "parent_revert_matrix",
+        "offset_matrix",
     )
 
     SYSTEM_ROOT_NAME = "SYSTEM_ROOT"
@@ -786,9 +787,9 @@ class Bone(BaseIndexNameModel):
         self.tail_relative_position = MVector3D()
         self.local_axis = MVector3D(1, 0, 0)
 
-        self.offset_matrix = MMatrix4x4()
-        self.parent_revert_matrix = MMatrix4x4()
-        self.far_parent_index = -1
+        self.tree_indexes: list[int] = []
+        self.offset_matrix = np.eye(4)
+        self.parent_revert_matrix = np.eye(4)
 
     def correct_fixed_axis(self, corrected_fixed_axis: MVector3D):
         self.corrected_fixed_axis = corrected_fixed_axis.normalized()
@@ -1161,7 +1162,7 @@ class BoneSettings(Enum):
 
     ROOT = BoneSetting(
         "全ての親",
-        (Bone.SYSTEM_ROOT_NAME,),
+        [],
         MVector3D(0, 1, 0),
         ("センター",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
