@@ -202,252 +202,253 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     def max_fno(self) -> int:
         return max([max(self[bname].indexes + [0]) for bname in self.names] + [0])
 
-    def get_matrix_by_indexes(
-        self,
-        fnos: list[int],
-        bone_names: list[str],
-        model: PmxModel,
-        append_ik: bool = True,
-        morph_motion: Optional["VmdMotion"] = None,
-    ) -> VmdBoneFrameTrees:
-        """
-        指定されたキーフレ番号の行列計算結果を返す
+    # def get_matrix_by_indexes(
+    #     self,
+    #     fnos: list[int],
+    #     bone_names: list[str],
+    #     model: PmxModel,
+    #     append_ik: bool = True,
+    #     morph_motion: Optional["VmdMotion"] = None,
+    # ) -> VmdBoneFrameTrees:
+    #     """
+    #     指定されたキーフレ番号の行列計算結果を返す
 
-        Parameters
-        ----------
-        fnos : list[int]
-            キーフレ番号のリスト
-        bone_names: list[str]
-            取得ボーン名リスト
-        model: PmxModel
-            モデルデータ
-        append_ik: bool
-            IK計算を行うか否か
-        morph_motion: VmdMotion
-            初期姿勢モーフモーション
+    #     Parameters
+    #     ----------
+    #     fnos : list[int]
+    #         キーフレ番号のリスト
+    #     bone_names: list[str]
+    #         取得ボーン名リスト
+    #     model: PmxModel
+    #         モデルデータ
+    #     append_ik: bool
+    #         IK計算を行うか否か
+    #     morph_motion: VmdMotion
+    #         初期姿勢モーフモーション
 
-        Returns
-        -------
-        行列辞書（キー: fno,ボーン名、値：行列リスト）
-        """
+    #     Returns
+    #     -------
+    #     行列辞書（キー: fno,ボーン名、値：行列リスト）
+    #     """
 
-        if append_ik:
-            # IK回転を事前に求めておく
-            for fno in fnos:
-                self.calc_ik_rotations(fno, model, bone_names)
+    #     if append_ik:
+    #         # IK回転を事前に求めておく
+    #         for fno in fnos:
+    #             self.calc_ik_rotations(fno, model, bone_names)
 
-        bone_trees = model.bone_trees.filter(*bone_names)
-        bone_matrixes = VmdBoneFrameTrees()
+    #     bone_trees = model.bone_trees.filter(*bone_names)
+    #     bone_matrixes = VmdBoneFrameTrees()
 
-        # モーフモーションがある場合、それを適用した形状を元にローカル軸を計算する
-        if morph_motion is not None:
-            morph_bone_frames = morph_motion.morphs.animate_bone_morphs(0, model)
-            (
-                morph_bone_poses,
-                morph_bone_qqs,
-                morph_bone_scales,
-                morph_bone_poses2,
-                morph_bone_qqs2,
-                morph_bone_scales2,
-                morph_bone_local_poses,
-                morph_bone_local_qqs,
-                morph_bone_local_scales,
-            ) = morph_bone_frames.get_bone_matrixes(0, model, append_ik=False)
-        else:
-            morph_col = len(model.bones) - 1
-            morph_bone_poses = np.full((1, morph_col, 3), np.zeros(3))
-            morph_bone_qqs = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_bone_scales = np.full((1, morph_col, 3), np.ones(3))
-            morph_bone_poses2 = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_bone_qqs2 = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_bone_scales2 = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_bone_local_poses = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_bone_local_qqs = np.full((1, morph_col, 4, 4), np.eye(4))
-            morph_bone_local_scales = np.full((1, morph_col, 4, 4), np.eye(4))
+    #     # モーフモーションがある場合、それを適用した形状を元にローカル軸を計算する
+    #     if morph_motion is not None:
+    #         morph_bone_frames = morph_motion.morphs.animate_bone_morphs(0, model)
+    #         (
+    #             morph_bone_poses,
+    #             morph_bone_qqs,
+    #             morph_bone_scales,
+    #             morph_bone_poses2,
+    #             morph_bone_qqs2,
+    #             morph_bone_scales2,
+    #             morph_bone_local_poses,
+    #             morph_bone_local_qqs,
+    #             morph_bone_local_scales,
+    #         ) = morph_bone_frames.get_bone_matrixes(0, model, append_ik=False)
+    #     else:
+    #         morph_col = len(model.bones) - 1
+    #         morph_bone_poses = np.full((1, morph_col, 3), np.zeros(3))
+    #         morph_bone_qqs = np.full((1, morph_col, 4, 4), np.eye(4))
+    #         morph_bone_scales = np.full((1, morph_col, 3), np.ones(3))
+    #         morph_bone_poses2 = np.full((1, morph_col, 4, 4), np.eye(4))
+    #         morph_bone_qqs2 = np.full((1, morph_col, 4, 4), np.eye(4))
+    #         morph_bone_scales2 = np.full((1, morph_col, 4, 4), np.eye(4))
+    #         morph_bone_local_poses = np.full((1, morph_col, 4, 4), np.eye(4))
+    #         morph_bone_local_qqs = np.full((1, morph_col, 4, 4), np.eye(4))
+    #         morph_bone_local_scales = np.full((1, morph_col, 4, 4), np.eye(4))
 
-        # ボーン変形行列
-        morph_matrixes = MMatrix4x4List(morph_bone_poses.shape[0], morph_bone_poses.shape[1])
-        # モーフの適用
-        morph_matrixes.translate([bone.parent_relative_position.vector for bone in model.bones])
-        morph_matrixes.translate(morph_bone_poses.tolist())
-        morph_matrixes.matmul(morph_bone_local_poses)
-        morph_matrixes.rotate(morph_bone_qqs.tolist())
-        morph_matrixes.matmul(morph_bone_local_qqs)
-        morph_matrixes.scale(morph_bone_scales.tolist())
-        morph_matrixes.matmul(morph_bone_local_scales)
-        morph_matrixes.matmul(morph_bone_poses2)
-        morph_matrixes.matmul(morph_bone_qqs2)
-        morph_matrixes.matmul(morph_bone_scales2)
-        # グローバル座標行列
-        global_morph_mats = morph_matrixes.matmul_cols()
-        # グローバル位置
-        morph_positions = global_morph_mats.to_positions()
+    #     # ボーン変形行列
+    #     morph_matrixes = MMatrix4x4List(morph_bone_poses.shape[0], morph_bone_poses.shape[1])
+    #     # モーフの適用
+    #     morph_matrixes.translate([bone.parent_relative_position.vector for bone in model.bones])
+    #     morph_matrixes.translate(morph_bone_poses.tolist())
+    #     morph_matrixes.matmul(morph_bone_local_poses)
+    #     morph_matrixes.rotate(morph_bone_qqs.tolist())
+    #     morph_matrixes.matmul(morph_bone_local_qqs)
+    #     morph_matrixes.scale(morph_bone_scales.tolist())
+    #     morph_matrixes.matmul(morph_bone_local_scales)
+    #     morph_matrixes.matmul(morph_bone_poses2)
+    #     morph_matrixes.matmul(morph_bone_qqs2)
+    #     morph_matrixes.matmul(morph_bone_scales2)
+    #     # グローバル座標行列
+    #     global_morph_mats = morph_matrixes.matmul_cols()
+    #     # グローバル位置
+    #     morph_positions = global_morph_mats.to_positions()
 
-        for bone_tree in bone_trees.values():
-            row = len(fnos)
-            col = len(bone_tree) + 1
-            bone_poses = np.full((row, col, 3), np.zeros(3))
-            poses = np.full((row, col, 3), np.zeros(3))
-            qqs = np.full((row, col, 4, 4), np.eye(4))
-            scales = np.full((row, col, 3), np.ones(3))
-            poses2 = np.full((row, col, 4, 4), np.eye(4))
-            qqs2 = np.full((row, col, 4, 4), np.eye(4))
-            scales2 = np.full((row, col, 4, 4), np.eye(4))
-            local_poses = np.full((row, col, 4, 4), np.eye(4))
-            local_qqs = np.full((row, col, 4, 4), np.eye(4))
-            local_scales = np.full((row, col, 4, 4), np.eye(4))
+    #     for bone_tree in bone_trees.values():
+    #         row = len(fnos)
+    #         col = len(bone_tree) + 1
+    #         bone_poses = np.full((row, col, 3), np.zeros(3))
+    #         poses = np.full((row, col, 3), np.zeros(3))
+    #         qqs = np.full((row, col, 4, 4), np.eye(4))
+    #         scales = np.full((row, col, 3), np.ones(3))
+    #         poses2 = np.full((row, col, 4, 4), np.eye(4))
+    #         qqs2 = np.full((row, col, 4, 4), np.eye(4))
+    #         scales2 = np.full((row, col, 4, 4), np.eye(4))
+    #         local_poses = np.full((row, col, 4, 4), np.eye(4))
+    #         local_qqs = np.full((row, col, 4, 4), np.eye(4))
+    #         local_scales = np.full((row, col, 4, 4), np.eye(4))
 
-            morph_poses = np.full((row, col, 3), np.zeros(3))
-            morph_qqs = np.full((row, col, 4, 4), np.eye(4))
-            morph_scales = np.full((row, col, 3), np.ones(3))
-            morph_poses2 = np.full((row, col, 4, 4), np.eye(4))
-            morph_qqs2 = np.full((row, col, 4, 4), np.eye(4))
-            morph_scales2 = np.full((row, col, 4, 4), np.eye(4))
-            morph_local_poses = np.full((row, col, 4, 4), np.eye(4))
-            morph_local_qqs = np.full((row, col, 4, 4), np.eye(4))
-            morph_local_scales = np.full((row, col, 4, 4), np.eye(4))
+    #         morph_poses = np.full((row, col, 3), np.zeros(3))
+    #         morph_qqs = np.full((row, col, 4, 4), np.eye(4))
+    #         morph_scales = np.full((row, col, 3), np.ones(3))
+    #         morph_poses2 = np.full((row, col, 4, 4), np.eye(4))
+    #         morph_qqs2 = np.full((row, col, 4, 4), np.eye(4))
+    #         morph_scales2 = np.full((row, col, 4, 4), np.eye(4))
+    #         morph_local_poses = np.full((row, col, 4, 4), np.eye(4))
+    #         morph_local_qqs = np.full((row, col, 4, 4), np.eye(4))
+    #         morph_local_scales = np.full((row, col, 4, 4), np.eye(4))
 
-            for n, fno in enumerate(fnos):
-                for m, bone in enumerate(bone_tree):
-                    # ボーンの親から見た相対位置
-                    bone_poses[n, m] = (bone.position - (MVector3D() if m == 0 else bone_tree[bone_tree.names[m - 1]].position)).vector
+    #         for n, fno in enumerate(fnos):
+    #             for m, bone in enumerate(bone_tree):
+    #                 # ボーンの親から見た相対位置
+    #                 bone_poses[n, m] = (bone.position - (MVector3D() if m == 0 else bone_tree[bone_tree.names[m - 1]].position)).vector
 
-                    # 移動量
-                    if (fno, model.digest, bone.index) in self.cache_poses:
-                        poses[n, m] = self.cache_poses[(fno, model.digest, bone.index)].vector
-                    else:
-                        pos = self.get_position(bone, fno, model)
-                        self.cache_poses[(fno, model.digest, bone.index)] = pos
-                        poses[n, m] = pos.vector
+    #                 # 移動量
+    #                 if (fno, model.digest, bone.index) in self.cache_poses:
+    #                     poses[n, m] = self.cache_poses[(fno, model.digest, bone.index)].vector
+    #                 else:
+    #                     pos = self.get_position(bone, fno, model)
+    #                     self.cache_poses[(fno, model.digest, bone.index)] = pos
+    #                     poses[n, m] = pos.vector
 
-                    # 第二移動量
-                    if (fno, model.digest, bone.index) in self.cache_poses2:
-                        poses2[n, m] = self.cache_poses2[(fno, model.digest, bone.index)]
-                    else:
-                        pos = self.get_position2(bone, fno, model)
-                        self.cache_poses2[(fno, model.digest, bone.index)] = pos
-                        poses2[n, m] = pos
+    #                 # 第二移動量
+    #                 if (fno, model.digest, bone.index) in self.cache_poses2:
+    #                     poses2[n, m] = self.cache_poses2[(fno, model.digest, bone.index)]
+    #                 else:
+    #                     pos = self.get_position2(bone, fno, model)
+    #                     self.cache_poses2[(fno, model.digest, bone.index)] = pos
+    #                     poses2[n, m] = pos
 
-                    # ローカル移動量
-                    if (fno, model.digest, bone.index) in self.cache_local_poses:
-                        local_poses[n, m] = self.cache_local_poses[(fno, model.digest, bone.index)]
-                    else:
-                        local_pos = self.get_local_position(bone, fno, model, morph_positions)
-                        self.cache_local_poses[(fno, model.digest, bone.index)] = local_pos
-                        local_poses[n, m] = local_pos
+    #                 # ローカル移動量
+    #                 if (fno, model.digest, bone.index) in self.cache_local_poses:
+    #                     local_poses[n, m] = self.cache_local_poses[(fno, model.digest, bone.index)]
+    #                 else:
+    #                     local_pos = self.get_local_position(bone, fno, model, morph_positions)
+    #                     self.cache_local_poses[(fno, model.digest, bone.index)] = local_pos
+    #                     local_poses[n, m] = local_pos
 
-                    # FK(捩り) > IK(捩り) > 付与親(捩り)
-                    if (fno, model.digest, bone.index, append_ik) in self.cache_qqs:
-                        qqs[n, m] = self.cache_qqs[(fno, model.digest, bone.index, append_ik)].to_matrix4x4().vector
-                    else:
-                        qq = self.get_rotation(bone, fno, model, append_ik=append_ik)
-                        self.cache_qqs[(fno, model.digest, bone.index, append_ik)] = qq
-                        qqs[n, m] = qq.to_matrix4x4().vector
+    #                 # FK(捩り) > IK(捩り) > 付与親(捩り)
+    #                 if (fno, model.digest, bone.index, append_ik) in self.cache_qqs:
+    #                     qqs[n, m] = self.cache_qqs[(fno, model.digest, bone.index, append_ik)].to_matrix4x4().vector
+    #                 else:
+    #                     qq = self.get_rotation(bone, fno, model, append_ik=append_ik)
+    #                     self.cache_qqs[(fno, model.digest, bone.index, append_ik)] = qq
+    #                     qqs[n, m] = qq.to_matrix4x4().vector
 
-                    # 第二回転量
-                    if (fno, model.digest, bone.index, append_ik) in self.cache_qqs2:
-                        qqs2[n, m] = self.cache_qqs2[(fno, model.digest, bone.index, append_ik)]
-                    else:
-                        qq = self.get_rotation2(bone, fno, model)
-                        self.cache_qqs2[(fno, model.digest, bone.index, append_ik)] = qq
-                        qqs2[n, m] = qq
+    #                 # 第二回転量
+    #                 if (fno, model.digest, bone.index, append_ik) in self.cache_qqs2:
+    #                     qqs2[n, m] = self.cache_qqs2[(fno, model.digest, bone.index, append_ik)]
+    #                 else:
+    #                     qq = self.get_rotation2(bone, fno, model)
+    #                     self.cache_qqs2[(fno, model.digest, bone.index, append_ik)] = qq
+    #                     qqs2[n, m] = qq
 
-                    # ローカル回転
-                    if (fno, model.digest, bone.index, append_ik) in self.cache_local_qqs:
-                        local_qqs[n, m] = self.cache_local_qqs[(fno, model.digest, bone.index, append_ik)]
-                    else:
-                        local_qq = self.get_local_rotation(bone, fno, model, morph_positions)
-                        self.cache_local_qqs[(fno, model.digest, bone.index, append_ik)] = local_qq
-                        local_qqs[n, m] = local_qq
+    #                 # ローカル回転
+    #                 if (fno, model.digest, bone.index, append_ik) in self.cache_local_qqs:
+    #                     local_qqs[n, m] = self.cache_local_qqs[(fno, model.digest, bone.index, append_ik)]
+    #                 else:
+    #                     local_qq = self.get_local_rotation(bone, fno, model, morph_positions)
+    #                     self.cache_local_qqs[(fno, model.digest, bone.index, append_ik)] = local_qq
+    #                     local_qqs[n, m] = local_qq
 
-                    # モーションによるスケール変化
-                    if (fno, model.digest, bone.index) in self.cache_scales:
-                        scales[n, m] = self.cache_scales[(fno, model.digest, bone.index)].vector
-                    else:
-                        scale = self.get_scale(bone, fno, model)
-                        self.cache_scales[(fno, model.digest, bone.index)] = scale
-                        scales[n, m] = scale.vector
+    #                 # モーションによるスケール変化
+    #                 if (fno, model.digest, bone.index) in self.cache_scales:
+    #                     scales[n, m] = self.cache_scales[(fno, model.digest, bone.index)].vector
+    #                 else:
+    #                     scale = self.get_scale(bone, fno, model)
+    #                     self.cache_scales[(fno, model.digest, bone.index)] = scale
+    #                     scales[n, m] = scale.vector
 
-                    # モーションによるスケール変化
-                    if (fno, model.digest, bone.index) in self.cache_scales2:
-                        scales2[n, m] = self.cache_scales2[(fno, model.digest, bone.index)]
-                    else:
-                        scale = self.get_scale2(bone, fno, model)
-                        self.cache_scales2[(fno, model.digest, bone.index)] = scale
-                        scales2[n, m] = scale
+    #                 # モーションによるスケール変化
+    #                 if (fno, model.digest, bone.index) in self.cache_scales2:
+    #                     scales2[n, m] = self.cache_scales2[(fno, model.digest, bone.index)]
+    #                 else:
+    #                     scale = self.get_scale2(bone, fno, model)
+    #                     self.cache_scales2[(fno, model.digest, bone.index)] = scale
+    #                     scales2[n, m] = scale
 
-                    # モーションによるローカルスケール変化
-                    if (fno, model.digest, bone.index) in self.cache_local_scales:
-                        local_scales[n, m] = self.cache_local_scales[(fno, model.digest, bone.index)]
-                    else:
-                        local_scale = self.get_local_scale(bone, fno, model, morph_positions)
-                        self.cache_local_scales[(fno, model.digest, bone.index)] = local_scale
-                        local_scales[n, m] = local_scale
+    #                 # モーションによるローカルスケール変化
+    #                 if (fno, model.digest, bone.index) in self.cache_local_scales:
+    #                     local_scales[n, m] = self.cache_local_scales[(fno, model.digest, bone.index)]
+    #                 else:
+    #                     local_scale = self.get_local_scale(bone, fno, model, morph_positions)
+    #                     self.cache_local_scales[(fno, model.digest, bone.index)] = local_scale
+    #                     local_scales[n, m] = local_scale
 
-                # 末端ボーン表示先の位置を計算
-                bone_poses[n, -1] = np.zeros(3)
-                poses[n, -1] = bone_tree[-1].local_axis.vector
-                local_poses[n, -1] = np.eye(4)
-                qqs[n, -1] = np.eye(4)
-                local_qqs[n, -1] = np.eye(4)
-                scales[n, -1] = np.ones(3)
-                local_scales[n, -1] = np.eye(4)
+    #             # 末端ボーン表示先の位置を計算
+    #             bone_poses[n, -1] = np.zeros(3)
+    #             poses[n, -1] = bone_tree[-1].local_axis.vector
+    #             local_poses[n, -1] = np.eye(4)
+    #             qqs[n, -1] = np.eye(4)
+    #             local_qqs[n, -1] = np.eye(4)
+    #             scales[n, -1] = np.ones(3)
+    #             local_scales[n, -1] = np.eye(4)
 
-                # モーフの該当項目を設定
-                morph_poses[n, : (col - 1)] = morph_bone_poses[0, bone_tree.indexes]
-                morph_qqs[n, : (col - 1)] = morph_bone_qqs[0, bone_tree.indexes]
-                morph_scales[n, : (col - 1)] = morph_bone_scales[0, bone_tree.indexes]
-                morph_poses2[n, : (col - 1)] = morph_bone_poses2[0, bone_tree.indexes]
-                morph_qqs2[n, : (col - 1)] = morph_bone_qqs2[0, bone_tree.indexes]
-                morph_scales2[n, : (col - 1)] = morph_bone_scales2[0, bone_tree.indexes]
-                morph_local_poses[n, : (col - 1)] = morph_bone_local_poses[0, bone_tree.indexes]
-                morph_local_qqs[n, : (col - 1)] = morph_bone_local_qqs[0, bone_tree.indexes]
-                morph_local_scales[n, : (col - 1)] = morph_bone_local_scales[0, bone_tree.indexes]
+    #             # モーフの該当項目を設定
+    #             morph_poses[n, : (col - 1)] = morph_bone_poses[0, bone_tree.indexes]
+    #             morph_qqs[n, : (col - 1)] = morph_bone_qqs[0, bone_tree.indexes]
+    #             morph_scales[n, : (col - 1)] = morph_bone_scales[0, bone_tree.indexes]
+    #             morph_poses2[n, : (col - 1)] = morph_bone_poses2[0, bone_tree.indexes]
+    #             morph_qqs2[n, : (col - 1)] = morph_bone_qqs2[0, bone_tree.indexes]
+    #             morph_scales2[n, : (col - 1)] = morph_bone_scales2[0, bone_tree.indexes]
+    #             morph_local_poses[n, : (col - 1)] = morph_bone_local_poses[0, bone_tree.indexes]
+    #             morph_local_qqs[n, : (col - 1)] = morph_bone_local_qqs[0, bone_tree.indexes]
+    #             morph_local_scales[n, : (col - 1)] = morph_bone_local_scales[0, bone_tree.indexes]
 
-            # 親ボーンから見たローカル座標行列
-            global_matrixes = MMatrix4x4List(row, col)
-            global_matrixes.translate(bone_poses.tolist())
+    #         # 親ボーンから見たローカル座標行列
+    #         global_matrixes = MMatrix4x4List(row, col)
+    #         global_matrixes.translate(bone_poses.tolist())
 
-            # モーフ変化量
-            global_matrixes.translate(morph_poses.tolist())
-            global_matrixes.matmul(morph_local_poses)
-            global_matrixes.rotate(morph_qqs.tolist())
-            global_matrixes.matmul(morph_local_qqs)
-            global_matrixes.scale(morph_scales.tolist())
-            global_matrixes.matmul(morph_local_scales)
-            global_matrixes.matmul(morph_poses2)
-            global_matrixes.matmul(morph_qqs2)
-            global_matrixes.matmul(morph_scales2)
+    #         # モーフ変化量
+    #         global_matrixes.translate(morph_poses.tolist())
+    #         global_matrixes.matmul(morph_local_poses)
+    #         global_matrixes.rotate(morph_qqs.tolist())
+    #         global_matrixes.matmul(morph_local_qqs)
+    #         global_matrixes.scale(morph_scales.tolist())
+    #         global_matrixes.matmul(morph_local_scales)
+    #         global_matrixes.matmul(morph_poses2)
+    #         global_matrixes.matmul(morph_qqs2)
+    #         global_matrixes.matmul(morph_scales2)
 
-            # ボーンモーション変化量
-            global_matrixes.translate(poses.tolist())
-            global_matrixes.matmul(local_poses)
-            global_matrixes.rotate(qqs.tolist())
-            global_matrixes.matmul(local_qqs)
-            global_matrixes.scale(scales.tolist())
-            global_matrixes.matmul(local_scales)
-            global_matrixes.matmul(poses2)
-            global_matrixes.matmul(qqs2)
-            global_matrixes.matmul(scales2)
+    #         # ボーンモーション変化量
+    #         global_matrixes.translate(poses.tolist())
+    #         global_matrixes.matmul(local_poses)
+    #         global_matrixes.rotate(qqs.tolist())
+    #         global_matrixes.matmul(local_qqs)
+    #         global_matrixes.scale(scales.tolist())
+    #         global_matrixes.matmul(local_scales)
+    #         global_matrixes.matmul(poses2)
+    #         global_matrixes.matmul(qqs2)
+    #         global_matrixes.matmul(scales2)
 
-            # グローバル座標行列
-            global_result_matrixes = global_matrixes.matmul_cols()
-            # グローバル位置
-            positions = global_result_matrixes.to_positions()
+    #         # グローバル座標行列
+    #         global_result_matrixes = global_matrixes.matmul_cols()
+    #         # グローバル位置
+    #         positions = global_result_matrixes.to_positions()
 
-            for i, fno in enumerate(fnos):
-                for j, bone in enumerate(bone_tree):
-                    bone_matrixes.append(
-                        fno,
-                        bone.name,
-                        MMatrix4x4(*global_result_matrixes.vector[i, j].flatten()),
-                        MMatrix4x4(*global_result_matrixes.vector[i, j].flatten()),
-                        MVector3D(*positions[i, j]),
-                        MVector3D(*positions[i, j + 1]),
-                    )
+    #         for i, fno in enumerate(fnos):
+    #             for j, bone in enumerate(bone_tree):
+    #                 bone_matrixes.append(
+    #                     fno,
+    #                     bone.name,
+    #                     MMatrix4x4(*global_result_matrixes.vector[i, j].flatten()),
+    #                     MMatrix4x4(*global_result_matrixes.vector[i, j].flatten()),
+    #                     MVector3D(*positions[i, j]),
+    #                     MVector3D(*positions[i, j + 1]),
+    #                 )
 
-        return bone_matrixes
+    #     return bone_matrixes
 
+    @profile
     def get_bone_matrixes(
         self,
         fnos: list[int],
@@ -493,7 +494,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # モーションによるローカル移動量
                     if not use_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_local_poses:
-                        local_pos = self.get_local_position(bone, fno, model)
+                        local_pos = self.get_local_position(bone, fno, model, append_ik)
                         local_poses[i, bone.index] = local_pos
                         self.cache_local_poses[(fno, model.digest, bone.index, append_ik)] = local_pos
 
@@ -511,7 +512,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # ローカル回転
                     if not use_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_local_qqs:
-                        local_qq = self.get_local_rotation(bone, fno, model)
+                        local_qq = self.get_local_rotation(bone, fno, model, append_ik)
                         self.cache_local_qqs[(fno, model.digest, bone.index, append_ik)] = local_qq
                         local_qqs[i, bone.index] = local_qq
 
@@ -529,7 +530,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # モーションによるローカルスケール変化
                     if not use_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_local_scales:
-                        local_scale = self.get_local_scale(bone, fno, model)
+                        local_scale = self.get_local_scale(bone, fno, model, append_ik)
                         local_scales[i, bone.index] = local_scale
                         self.cache_local_scales[(fno, model.digest, bone.index, append_ik)] = local_scale
 
@@ -640,14 +641,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 global_matrix = MMatrix4x4(*result_matrixes[fidx, bone.index].flatten())
                 global_matrix.translate(bone.position)
 
-                bone_matrixes.append(
-                    fno,
-                    bone.name,
-                    global_matrix,
-                    local_matrix,
-                    global_matrix.to_position(),
-                    global_matrix * bone.tail_relative_position,
-                )
+                bone_matrixes.append(fno, bone.name, global_matrix, local_matrix, global_matrix.to_position())
 
             # if not bone_names:
             #     bone_names = model.bones.tail_bone_names
@@ -817,7 +811,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return pos_matrix
 
-    def get_local_position(self, bone: Bone, fno: int, model: PmxModel, positions: Optional[np.ndarray] = None) -> np.ndarray:
+    def get_local_position(self, bone: Bone, fno: int, model: PmxModel, append_ik: bool, positions: Optional[np.ndarray] = None) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル位置
 
@@ -839,11 +833,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_pos = self[bone.name][fno].local_position
         local_parent_matrix = np.eye(4)
 
-        if not bone.is_not_local_cancel:
+        if not bone.is_not_local_cancel and True in [
+            (fno, model.digest, bone_index, append_ik) in self.cache_local_poses for bone_index in bone.tree_indexes[:-1]
+        ]:
             for parent_name in model.bone_trees[bone.name].names[:-1]:
                 # 親のキャンセルローカル移動
                 parent_bone = model.bones[parent_name]
-                local_parent_matrix = local_parent_matrix @ self.cache_local_poses.get((fno, model.digest, parent_bone.index), np.eye(4))
+                local_parent_matrix = local_parent_matrix @ self.cache_local_poses.get((fno, model.digest, parent_bone.index, append_ik), np.eye(4))
 
         if not local_pos and np.all(np.isclose(local_parent_matrix, np.eye(4))):
             return np.eye(4)
@@ -949,7 +945,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return scale_matrix
 
-    def get_local_scale(self, bone: Bone, fno: int, model: PmxModel, positions: Optional[np.ndarray] = None) -> np.ndarray:
+    def get_local_scale(self, bone: Bone, fno: int, model: PmxModel, append_ik: bool, positions: Optional[np.ndarray] = None) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル縮尺
 
@@ -971,11 +967,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_scale = self[bone.name][fno].local_scale
         local_parent_matrix = np.eye(4)
 
-        if not bone.is_not_local_cancel:
+        if not bone.is_not_local_cancel and True in [
+            (fno, model.digest, bone_index, append_ik) in self.cache_local_scales for bone_index in bone.tree_indexes[:-1]
+        ]:
             for parent_name in model.bone_trees[bone.name].names[:-1]:
                 # 親のキャンセルローカルスケール
                 parent_bone = model.bones[parent_name]
-                local_parent_matrix = local_parent_matrix @ self.cache_local_scales.get((fno, model.digest, parent_bone.index), np.eye(4))
+                local_parent_matrix = local_parent_matrix @ self.cache_local_scales.get((fno, model.digest, parent_bone.index, append_ik), np.eye(4))
 
         if not local_scale and np.all(np.isclose(local_parent_matrix, np.eye(4))):
             return np.eye(4)
@@ -1319,7 +1317,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return self[bone.name][fno].rotation2.to_matrix4x4().vector
 
-    def get_local_rotation(self, bone: Bone, fno: int, model: PmxModel, positions: Optional[np.ndarray] = None) -> np.ndarray:
+    def get_local_rotation(self, bone: Bone, fno: int, model: PmxModel, append_ik: bool, positions: Optional[np.ndarray] = None) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル回転
 
@@ -1342,11 +1340,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         local_parent_matrix = np.eye(4)
 
-        if not bone.is_not_local_cancel:
+        if not bone.is_not_local_cancel and True in [
+            (fno, model.digest, bone_index, append_ik) in self.cache_local_qqs for bone_index in bone.tree_indexes[:-1]
+        ]:
             for parent_name in model.bone_trees[bone.name].names[:-1]:
                 # 親のキャンセルローカル移動
                 parent_bone = model.bones[parent_name]
-                local_parent_matrix = local_parent_matrix @ self.cache_local_qqs.get((fno, model.digest, parent_bone.index), np.eye(4))
+                local_parent_matrix = local_parent_matrix @ self.cache_local_qqs.get((fno, model.digest, parent_bone.index, append_ik), np.eye(4))
 
         if np.all(np.isclose(qq_matrix, np.eye(4))) and np.all(np.isclose(local_parent_matrix, np.eye(4))):
             return np.eye(4)

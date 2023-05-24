@@ -1294,8 +1294,9 @@ class MMatrix4x4(MVector):
         """
         平行移動行列
         """
-        vmat = self.vector[:, :3] * v.vector
-        self.vector[:, 3] += np.sum(vmat, axis=1)
+        vmat = np.eye(4)
+        vmat[:3, 3] = v.vector
+        self.vector = self.vector @ vmat
 
     def scale(self, v: Union[MVector3D, float]):
         """

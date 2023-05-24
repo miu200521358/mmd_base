@@ -7,12 +7,10 @@ class VmdBoneFrameTree:
         global_matrix: MMatrix4x4,
         local_matrix: MMatrix4x4,
         position: MVector3D,
-        tail_position: MVector3D,
     ) -> None:
         self.global_matrix = global_matrix
         self.local_matrix = local_matrix
         self.position = position
-        self.tail_position = tail_position
 
 
 class VmdBoneFrameTrees:
@@ -28,7 +26,6 @@ class VmdBoneFrameTrees:
         global_matrix: MMatrix4x4,
         local_matrix: MMatrix4x4,
         position: MVector3D,
-        tail_position: MVector3D,
     ):
         """
         ボーン変形結果追加
@@ -41,7 +38,7 @@ class VmdBoneFrameTrees:
         local_matrix : 自身のボーン位置を加味しない行列
         position : ボーン変形後のグローバル位置
         """
-        self.data[(fno, bone_name)] = VmdBoneFrameTree(global_matrix, local_matrix, position, tail_position)
+        self.data[(fno, bone_name)] = VmdBoneFrameTree(global_matrix, local_matrix, position)
 
     def __getitem__(self, key) -> VmdBoneFrameTree:
         return self.data[key]
