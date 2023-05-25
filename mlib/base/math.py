@@ -309,6 +309,9 @@ class MVector(BaseModel):
     def __invert__(self):
         return self.__class__(*operator.invert(self.vector))
 
+    def __hash__(self) -> int:
+        return hash(tuple(self.vector.flatten()))
+
     @property
     def x(self) -> float:
         return self.vector[0]
@@ -446,14 +449,22 @@ class MVector3D(MVector):
 
         # ローカルX軸の方向ベクトル
         x_axis = self.normalized().vector
-        x_axis = x_axis / np.linalg.norm(x_axis)
+        norm_x_axis = norm(x_axis)
+        if not norm_x_axis:
+            return MMatrix4x4()
+        x_axis = x_axis / norm_x_axis
+        if np.all(np.isnan(x_axis)):
+            return MMatrix4x4()
 
         # ローカルZ軸の方向ベクトル
         z_axis = np.array([0.0, 0.0, -1.0])
 
         # ローカルY軸の方向ベクトル
         y_axis = np.cross(z_axis, x_axis)
-        y_axis /= np.linalg.norm(y_axis)
+        norm_y_axis = norm(y_axis)
+        if not norm_y_axis:
+            return MMatrix4x4()
+        y_axis /= norm_y_axis
         if np.all(np.isnan(y_axis)):
             return MMatrix4x4()
 
@@ -814,10 +825,10 @@ class MQuaternion(MVector):
         z_axis = local_z_axis.copy().vector
 
         # X軸回転行列を作成
-        x_axis = x_axis / np.linalg.norm(x_axis)
+        x_axis = x_axis / norm(x_axis)
         y_axis = np.cross(z_axis, x_axis)
-        y_axis = y_axis / np.linalg.norm(y_axis)
-        z_axis = z_axis / np.linalg.norm(z_axis)
+        y_axis = y_axis / norm(y_axis)
+        z_axis = z_axis / norm(z_axis)
         # X = np.array([[1, 0, 0, 0], [0, y_axis[2], -y_axis[1], 0], [0, y_axis[1], y_axis[2], 0], [0, 0, 0, 1]])
         theta = np.arctan2(x_axis[1], x_axis[0])
         RX = np.array([[1, 0, 0, 0], [0, np.cos(theta), np.sin(theta), 0], [0, -np.sin(theta), np.cos(theta), 0], [0, 0, 0, 1]])
@@ -840,12 +851,12 @@ class MQuaternion(MVector):
     #     axis = local_axis.vector
 
     #     # クォータニオンを正規化
-    #     quat /= np.linalg.norm(quat)
+    #     quat /= norm(quat)
 
     #     # Rodriguesの任意軸回転行列を使用して、回転行列を計算する
     #     angle = 2 * np.arccos(quat[0])
     #     r = quat[1:]
-    #     v = axis / np.linalg.norm(axis)
+    #     v = axis / norm(axis)
     #     cross_prod = np.cross(v, r)
     #     rotation_matrix = np.cos(angle) * np.eye(3) + np.sin(angle) * cross_prod + (1 - np.cos(angle)) * np.outer(cross_prod, cross_prod)
     #     rotation_matrix4x4 = np.pad(rotation_matrix, [(0, 0), (0, 1)], mode="constant", constant_values=0)
@@ -1683,7 +1694,7 @@ def align_triangle(
     v2 = B2 - B1
 
     # B-3'を求めるためのベクトルを計算
-    v3_prime = (A3 - A1) / np.linalg.norm(v1) * np.linalg.norm(v2)
+    v3_prime = (A3 - A1) / norm(v1) * norm(v2)
 
     # B-3'をB-1, B-2からオフセット
     B3_prime = B1 + v3_prime
