@@ -5,7 +5,8 @@ from typing import Union
 
 import numpy as np
 from numpy.linalg import inv, norm
-from quaternion import as_rotation_matrix, from_rotation_matrix, one, quaternion, slerp_evaluate
+from quaternion import one as qq_one
+from quaternion import as_rotation_matrix, from_rotation_matrix, quaternion, slerp_evaluate
 
 from .base import BaseModel
 
@@ -658,7 +659,7 @@ class MQuaternion(MVector):
         return MQuaternion(-self.scalar, -self.x, self.y, self.z)
 
     def __bool__(self) -> bool:
-        return not np.all(self.vector == one)
+        return not np.all(self.vector == qq_one)
 
     def __str__(self) -> str:
         return f"[x={round(self.x, 5)}, y={round(self.y, 5)}, " + f"z={round(self.z, 5)}, scalar={round(self.scalar, 5)}]"

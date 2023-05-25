@@ -448,7 +448,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
     #     return bone_matrixes
 
-    @profile
     def get_bone_matrixes(
         self,
         fnos: list[int],
@@ -841,7 +840,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 parent_bone = model.bones[parent_name]
                 local_parent_matrix = local_parent_matrix @ self.cache_local_poses.get((fno, model.digest, parent_bone.index, append_ik), np.eye(4))
 
-        if not local_pos and np.all(np.isclose(local_parent_matrix, np.eye(4))):
+        if not local_pos and np.all(local_parent_matrix == np.eye(4)):
             return np.eye(4)
 
         # 3D移動は、ローカル軸に沿う
@@ -975,7 +974,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 parent_bone = model.bones[parent_name]
                 local_parent_matrix = local_parent_matrix @ self.cache_local_scales.get((fno, model.digest, parent_bone.index, append_ik), np.eye(4))
 
-        if not local_scale and np.all(np.isclose(local_parent_matrix, np.eye(4))):
+        if not local_scale and np.all(local_parent_matrix == np.eye(4)):
             return np.eye(4)
 
         scale_matrix = np.eye(4)
@@ -1336,7 +1335,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             ローカル軸を加味した回転行列
         """
         # 自身のローカル回転量
-        qq_matrix = self[bone.name][fno].local_rotation.to_matrix4x4().vector
+        local_qq = self[bone.name][fno].local_rotation
 
         local_parent_matrix = np.eye(4)
 
@@ -1348,14 +1347,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 parent_bone = model.bones[parent_name]
                 local_parent_matrix = local_parent_matrix @ self.cache_local_qqs.get((fno, model.digest, parent_bone.index, append_ik), np.eye(4))
 
-        if np.all(np.isclose(qq_matrix, np.eye(4))) and np.all(np.isclose(local_parent_matrix, np.eye(4))):
+        if not local_qq and np.all(local_parent_matrix == np.eye(4)):
             return np.eye(4)
 
         # ローカル軸に沿った回転行列
         rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
 
         # ローカル軸に合わせた回転行列を作成する(親はキャンセルする)
-        return inv(local_parent_matrix) @ inv(rotation_matrix) @ qq_matrix @ rotation_matrix
+        return inv(local_parent_matrix) @ inv(rotation_matrix) @ local_qq.to_matrix4x4().vector @ rotation_matrix
 
 
 @lru_cache(maxsize=None)
