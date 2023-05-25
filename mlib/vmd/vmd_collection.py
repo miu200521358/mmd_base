@@ -702,11 +702,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone_matrixes = VmdBoneFrameTrees()
         for fidx, fno in enumerate(fnos):
             for bone in model.bones:
-                local_matrix = MMatrix4x4(*result_matrixes[fidx, bone.index].flatten())
+                local_matrix = MMatrix4x4()
+                local_matrix.vector = result_matrixes[fidx, bone.index]
+
+                pos_mat = np.eye(4)
+                pos_mat[:3, 3] = bone.position.vector
 
                 # グローバル行列は最後にボーン位置に移動させる
-                global_matrix = MMatrix4x4(*result_matrixes[fidx, bone.index].flatten())
-                global_matrix.translate(bone.position)
+                global_matrix = MMatrix4x4()
+                global_matrix.vector = result_matrixes[fidx, bone.index] @ pos_mat
 
                 bone_matrixes.append(fno, bone.name, global_matrix, local_matrix, global_matrix.to_position())
 
