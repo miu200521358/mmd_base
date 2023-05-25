@@ -487,6 +487,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             fno_local_scales: dict[int, MVector3D] = {}
             fno_local_axises: dict[int, MVector3D] = {}
 
+            is_valid_local_pos = False
+            is_valid_local_rot = False
+            is_valid_local_scale = False
+
             for bone_name in bone_names:
                 for bone in model.bone_trees[bone_name]:
                     if bone.index in fno_local_axises:
@@ -498,6 +502,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     fno_local_qqs[bone.index] = bf.local_rotation
                     fno_local_scales[bone.index] = bf.local_scale
                     fno_local_axises[bone.index] = bone.tail_relative_position
+
+                    is_valid_local_pos = is_valid_local_pos or bool(bf.local_position)
+                    is_valid_local_rot = is_valid_local_rot or bool(bf.local_rotation)
+                    is_valid_local_scale = is_valid_local_scale or bool(bf.local_scale)
 
             for bone_name in bone_names:
                 for bone in model.bone_trees[bone_name]:
@@ -530,14 +538,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         self.cache_poses2[(fno, model.digest, bone.index, append_ik)] = pos2_mat
 
                     # モーションによるローカル移動量
-                    local_pos_mat = self.get_local_position(
-                        bf,
-                        bone,
-                        tuple(is_parent_bone_not_local_cancels),
-                        tuple(parent_local_poses),
-                        tuple(parent_local_axises),
-                    )
-                    local_poses[i, bone.index] = local_pos_mat
+                    if is_valid_local_pos:
+                        local_pos_mat = self.get_local_position(
+                            bf,
+                            bone,
+                            tuple(is_parent_bone_not_local_cancels),
+                            tuple(parent_local_poses),
+                            tuple(parent_local_axises),
+                        )
+                        local_poses[i, bone.index] = local_pos_mat
 
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
                     if not use_rot_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_qqs:
@@ -553,19 +562,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         qqs2[i, bone.index] = rot2_mat
 
                     # ローカル回転
-                    local_rot_mat = self.get_local_rotation(
-                        bf,
-                        bone,
-                        tuple(is_parent_bone_not_local_cancels),
-                        tuple(parent_local_qqs),
-                        tuple(parent_local_axises),
-                    )
-                    local_qqs[i, bone.index] = local_rot_mat
-
-                    # if not use_rot_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_local_qqs:
-                    #     local_rot_mat = self.get_local_rotation2(bf, bone, fno, model, append_ik)
-                    #     self.cache_local_qqs[(fno, model.digest, bone.index, append_ik)] = local_rot_mat
-                    #     local_qqs[i, bone.index] = local_rot_mat
+                    if is_valid_local_rot:
+                        local_rot_mat = self.get_local_rotation(
+                            bf,
+                            bone,
+                            tuple(is_parent_bone_not_local_cancels),
+                            tuple(parent_local_qqs),
+                            tuple(parent_local_axises),
+                        )
+                        local_qqs[i, bone.index] = local_rot_mat
 
                     # モーションによるスケール変化
                     if not use_scale_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_scales:
@@ -579,21 +584,16 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         scales2[i, bone.index] = scale2_mat
                         self.cache_scales2[(fno, model.digest, bone.index, append_ik)] = scale2_mat
 
-                    # ローカル回転
-                    local_scale_mat = self.get_local_scale(
-                        bf,
-                        bone,
-                        tuple(is_parent_bone_not_local_cancels),
-                        tuple(parent_local_scales),
-                        tuple(parent_local_axises),
-                    )
-                    local_scales[i, bone.index] = local_scale_mat
-
-                    # # モーションによるローカルスケール変化
-                    # if not use_scale_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_local_scales:
-                    #     local_scale_mat = self.get_local_scale(bf, bone, fno, model, append_ik)
-                    #     local_scales[i, bone.index] = local_scale_mat
-                    #     self.cache_local_scales[(fno, model.digest, bone.index, append_ik)] = local_scale_mat
+                    # ローカルスケール
+                    if is_valid_local_scale:
+                        local_scale_mat = self.get_local_scale(
+                            bf,
+                            bone,
+                            tuple(is_parent_bone_not_local_cancels),
+                            tuple(parent_local_scales),
+                            tuple(parent_local_axises),
+                        )
+                        local_scales[i, bone.index] = local_scale_mat
 
         return poses, qqs, scales, poses2, qqs2, scales2, local_poses, local_qqs, local_scales
 
@@ -623,7 +623,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             ) = morph_bone_frames.get_bone_matrixes(
                 fnos, model, bone_names, append_ik=False, use_pos_cache=use_pos_cache, use_rot_cache=use_rot_cache, use_scale_cache=use_scale_cache
             )
-            logger.debug(f"-- ボーンアニメーション[{model.name}]: モーフボーン操作")
+            # logger.debug(f"-- ボーンアニメーション[{model.name}]: モーフボーン操作")
         else:
             morph_row = len(fnos)
             morph_col = len(model.bones)
@@ -651,7 +651,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         ) = self.get_bone_matrixes(
             fnos, model, bone_names, append_ik=append_ik, use_pos_cache=use_pos_cache, use_rot_cache=use_rot_cache, use_scale_cache=use_scale_cache
         )
-        logger.debug(f"-- ボーンアニメーション[{model.name}]: モーションボーン操作")
+        # logger.debug(f"-- ボーンアニメーション[{model.name}]: モーションボーン操作")
 
         # ボーン変形行列
         matrixes = MMatrix4x4List(motion_bone_poses.shape[0], motion_bone_poses.shape[1])
@@ -748,7 +748,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             #                 tail_position=local_matrix * (bone.position + bone.tail_relative_position),
             #             )
 
-            logger.debug(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: ボーン変形行列")
+            # logger.debug(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: ボーン変形行列")
 
         return bone_matrixes
 
@@ -2076,5 +2076,6 @@ class VmdMotion(BaseHashModel):
         # ボーン変形行列操作
         self.bones.clear()
         bone_matrixes = self.bones.animate_bone_matrixes(fnos, model, all_morph_bone_frames, bone_names, append_ik=append_ik)
+        logger.debug(f"-- ボーンアニメーション[{model.name}]: ボーン変形行列操作")
 
         return bone_matrixes
