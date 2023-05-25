@@ -449,7 +449,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
     #     return bone_matrixes
 
-    @profile
     def get_bone_matrixes(
         self,
         fnos: list[int],
@@ -481,10 +480,29 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 self.calc_ik_rotations(fno, model)
 
         for i, fno in enumerate(fnos):
+            fno_bfs: dict[int, VmdBoneFrame] = {}
+            fno_is_bone_not_local_cancels: dict[int, bool] = {}
+            fno_local_poses: dict[int, MVector3D] = {}
+            fno_local_qqs: dict[int, MQuaternion] = {}
+            fno_local_scales: dict[int, MVector3D] = {}
+            fno_local_axises: dict[int, MVector3D] = {}
+
+            for bone_name in bone_names:
+                for bone in model.bone_trees[bone_name]:
+                    if bone.index in fno_local_axises:
+                        continue
+                    bf = self[bone.name][fno]
+                    fno_bfs[bone.index] = bf
+                    fno_is_bone_not_local_cancels[bone.index] = bone.is_not_local_cancel
+                    fno_local_poses[bone.index] = bf.local_position
+                    fno_local_qqs[bone.index] = bf.local_rotation
+                    fno_local_scales[bone.index] = bf.local_scale
+                    fno_local_axises[bone.index] = bone.tail_relative_position
+
             for bone_name in bone_names:
                 for bone in model.bone_trees[bone_name]:
                     # モーションによる移動量
-                    bf = self[bone.name][fno]
+                    bf = fno_bfs[bone.index]
 
                     is_parent_bone_not_local_cancels: list[bool] = []
                     parent_local_poses: list[MVector3D] = []
@@ -494,12 +512,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     for parent_index in bone.tree_indexes[:-1]:
                         parent_bone = model.bones[parent_index]
-                        is_parent_bone_not_local_cancels.append(parent_bone.is_not_local_cancel)
-                        parent_bf = self[parent_bone.name][fno]
-                        parent_local_poses.append(parent_bf.local_position)
-                        parent_local_qqs.append(parent_bf.local_rotation)
-                        parent_local_scales.append(parent_bf.local_scale)
-                        parent_local_axises.append(parent_bone.tail_relative_position)
+                        is_parent_bone_not_local_cancels.append(fno_is_bone_not_local_cancels[parent_bone.index])
+                        parent_local_poses.append(fno_local_poses[parent_bone.index])
+                        parent_local_qqs.append(fno_local_qqs[parent_bone.index])
+                        parent_local_scales.append(fno_local_scales[parent_bone.index])
+                        parent_local_axises.append(fno_local_axises[parent_bone.index])
 
                     if not use_pos_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_poses:
                         pos_mat = self.get_position(bf, bone, fno, model)
@@ -1143,7 +1160,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return qq.normalized()
 
-    @profile
     def get_ik_rotation(
         self,
         bone: Bone,
