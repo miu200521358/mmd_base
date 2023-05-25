@@ -175,9 +175,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
     def __init__(self) -> None:
         super().__init__()
-        self.cache_poses: dict[tuple[int, str, int, bool], MVector3D] = {}
-        self.cache_qqs: dict[tuple[int, str, int, bool], MQuaternion] = {}
-        self.cache_scales: dict[tuple[int, str, int, bool], MVector3D] = {}
+        self.cache_poses: dict[tuple[int, str, int, bool], np.ndarray] = {}
+        self.cache_qqs: dict[tuple[int, str, int, bool], np.ndarray] = {}
+        self.cache_scales: dict[tuple[int, str, int, bool], np.ndarray] = {}
         self.cache_poses2: dict[tuple[int, str, int, bool], np.ndarray] = {}
         self.cache_qqs2: dict[tuple[int, str, int, bool], np.ndarray] = {}
         self.cache_scales2: dict[tuple[int, str, int, bool], np.ndarray] = {}
@@ -461,9 +461,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         row = len(fnos)
         col = len(model.bones)
-        poses = np.full((row, col, 3), np.zeros(3))
+        poses = np.full((row, col, 4, 4), np.eye(4))
         qqs = np.full((row, col, 4, 4), np.eye(4))
-        scales = np.full((row, col, 3), np.ones(3))
+        scales = np.full((row, col, 4, 4), np.eye(4))
         poses2 = np.full((row, col, 4, 4), np.eye(4))
         qqs2 = np.full((row, col, 4, 4), np.eye(4))
         scales2 = np.full((row, col, 4, 4), np.eye(4))
@@ -485,57 +485,58 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # モーションによる移動量
                     bf = self[bone.name][fno]
                     if not use_pos_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_poses:
-                        pos = self.get_position(bf, bone, fno, model)
-                        poses[i, bone.index] = pos.vector
-                        self.cache_poses[(fno, model.digest, bone.index, append_ik)] = pos
+                        pos_mat = self.get_position(bf, bone, fno, model)
+                        poses[i, bone.index] = pos_mat
+                        self.cache_poses[(fno, model.digest, bone.index, append_ik)] = pos_mat
 
                     # モーションによる第二移動量
                     if not use_pos_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_poses2:
-                        pos = self.get_position2(bf, bone, fno, model)
-                        poses2[i, bone.index] = pos
-                        self.cache_poses2[(fno, model.digest, bone.index, append_ik)] = pos
+                        pos2_mat = self.get_position2(bf, bone, fno, model)
+                        poses2[i, bone.index] = pos2_mat
+                        self.cache_poses2[(fno, model.digest, bone.index, append_ik)] = pos2_mat
 
                     # モーションによるローカル移動量
                     if not use_pos_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_local_poses:
-                        local_pos = self.get_local_position(bf, bone, fno, model, append_ik)
-                        local_poses[i, bone.index] = local_pos
-                        self.cache_local_poses[(fno, model.digest, bone.index, append_ik)] = local_pos
+                        local_pos_mat = self.get_local_position(bf, bone, fno, model, append_ik)
+                        local_poses[i, bone.index] = local_pos_mat
+                        self.cache_local_poses[(fno, model.digest, bone.index, append_ik)] = local_pos_mat
 
                     # FK(捩り) > IK(捩り) > 付与親(捩り)
                     if not use_rot_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_qqs:
                         qq = self.get_rotation(bf, bone, fno, model, append_ik=append_ik)
-                        self.cache_qqs[(fno, model.digest, bone.index, append_ik)] = qq
-                        qqs[i, bone.index] = qq.to_matrix4x4().vector
+                        rot_mat = qq.to_matrix4x4().vector
+                        self.cache_qqs[(fno, model.digest, bone.index, append_ik)] = rot_mat
+                        qqs[i, bone.index] = rot_mat
 
                     # 第二回転量
                     if not use_rot_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_qqs2:
-                        qq = self.get_rotation2(bf, bone, fno, model)
-                        self.cache_qqs2[(fno, model.digest, bone.index, append_ik)] = qq
-                        qqs2[i, bone.index] = qq
+                        rot2_mat = self.get_rotation2(bf, bone, fno, model)
+                        self.cache_qqs2[(fno, model.digest, bone.index, append_ik)] = rot2_mat
+                        qqs2[i, bone.index] = rot2_mat
 
                     # ローカル回転
                     if not use_rot_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_local_qqs:
-                        local_qq = self.get_local_rotation(bf, bone, fno, model, append_ik)
-                        self.cache_local_qqs[(fno, model.digest, bone.index, append_ik)] = local_qq
-                        local_qqs[i, bone.index] = local_qq
+                        local_rot_mat = self.get_local_rotation(bf, bone, fno, model, append_ik)
+                        self.cache_local_qqs[(fno, model.digest, bone.index, append_ik)] = local_rot_mat
+                        local_qqs[i, bone.index] = local_rot_mat
 
                     # モーションによるスケール変化
                     if not use_scale_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_scales:
-                        scale = self.get_scale(bf, bone, fno, model)
-                        scales[i, bone.index] = scale.vector
-                        self.cache_scales[(fno, model.digest, bone.index, append_ik)] = scale
+                        scale_mat = self.get_scale(bf, bone, fno, model)
+                        scales[i, bone.index] = scale_mat
+                        self.cache_scales[(fno, model.digest, bone.index, append_ik)] = scale_mat
 
                     # モーションによる第二スケール変化
                     if not use_scale_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_scales2:
-                        scale = self.get_scale2(bf, bone, fno, model)
-                        scales2[i, bone.index] = scale
-                        self.cache_scales2[(fno, model.digest, bone.index, append_ik)] = scale
+                        scale2_mat = self.get_scale2(bf, bone, fno, model)
+                        scales2[i, bone.index] = scale2_mat
+                        self.cache_scales2[(fno, model.digest, bone.index, append_ik)] = scale2_mat
 
                     # モーションによるローカルスケール変化
                     if not use_scale_cache or (fno, model.digest, bone.index, append_ik) not in self.cache_local_scales:
-                        local_scale = self.get_local_scale(bf, bone, fno, model, append_ik)
-                        local_scales[i, bone.index] = local_scale
-                        self.cache_local_scales[(fno, model.digest, bone.index, append_ik)] = local_scale
+                        local_scale_mat = self.get_local_scale(bf, bone, fno, model, append_ik)
+                        local_scales[i, bone.index] = local_scale_mat
+                        self.cache_local_scales[(fno, model.digest, bone.index, append_ik)] = local_scale_mat
 
         return poses, qqs, scales, poses2, qqs2, scales2, local_poses, local_qqs, local_scales
 
@@ -569,9 +570,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         else:
             morph_row = len(fnos)
             morph_col = len(model.bones)
-            morph_bone_poses = np.full((morph_row, morph_col, 3), np.zeros(3))
+            morph_bone_poses = np.full((morph_row, morph_col, 4, 4), np.eye(4))
             morph_bone_qqs = np.full((morph_row, morph_col, 4, 4), np.eye(4))
-            morph_bone_scales = np.full((morph_row, morph_col, 3), np.ones(3))
+            morph_bone_scales = np.full((morph_row, morph_col, 4, 4), np.eye(4))
             morph_bone_poses2 = np.full((morph_row, morph_col, 4, 4), np.eye(4))
             morph_bone_qqs2 = np.full((morph_row, morph_col, 4, 4), np.eye(4))
             morph_bone_scales2 = np.full((morph_row, morph_col, 4, 4), np.eye(4))
@@ -599,22 +600,22 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         matrixes = MMatrix4x4List(motion_bone_poses.shape[0], motion_bone_poses.shape[1])
 
         # モーフの適用
-        matrixes.translate(morph_bone_poses.tolist())
+        matrixes.matmul(morph_bone_poses)
         matrixes.matmul(morph_bone_local_poses)
-        matrixes.rotate(morph_bone_qqs.tolist())
+        matrixes.matmul(morph_bone_qqs)
         matrixes.matmul(morph_bone_local_qqs)
-        matrixes.scale(morph_bone_scales.tolist())
+        matrixes.matmul(morph_bone_scales)
         matrixes.matmul(morph_bone_local_scales)
         matrixes.matmul(morph_bone_poses2)
         matrixes.matmul(morph_bone_qqs2)
         matrixes.matmul(morph_bone_scales2)
 
         # モーションの適用
-        matrixes.translate(motion_bone_poses.tolist())
+        matrixes.matmul(motion_bone_poses)
         matrixes.matmul(motion_bone_local_poses)
-        matrixes.rotate(motion_bone_qqs.tolist())
+        matrixes.matmul(motion_bone_qqs)
         matrixes.matmul(motion_bone_local_qqs)
-        matrixes.scale(motion_bone_scales.tolist())
+        matrixes.matmul(motion_bone_scales)
         matrixes.matmul(motion_bone_local_scales)
         matrixes.matmul(motion_bone_poses2)
         matrixes.matmul(motion_bone_qqs2)
@@ -731,7 +732,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 if is_calc_next and (next_fno, model.digest, ik_last_bone_name, True) not in self.cache_qqs:
                     self.get_rotation(self[ik_last_bone_name][next_fno], model.bones[ik_last_bone_name], next_fno, model, append_ik=True)
 
-    def get_position(self, bf: VmdBoneFrame, bone: Bone, fno: int, model: PmxModel) -> MVector3D:
+    def get_position(self, bf: VmdBoneFrame, bone: Bone, fno: int, model: PmxModel) -> np.ndarray:
         """
         該当キーフレにおけるボーンの移動位置
 
@@ -750,12 +751,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             相対位置
         """
         # 自身の位置
-        pos = bf.position.copy()
+        mat = np.eye(4)
+        mat[:3, 3] = bf.position.vector
 
         # 付与親を加味して返す
-        return self.get_effect_position(bone, fno, pos, model)
+        return self.get_effect_position(bone, fno, mat, model)
 
-    def get_effect_position(self, bone: Bone, fno: int, pos: MVector3D, model: PmxModel) -> MVector3D:
+    def get_effect_position(self, bone: Bone, fno: int, pos_mat: np.ndarray, model: PmxModel) -> np.ndarray:
         """
         付与親を加味した移動を求める
 
@@ -776,7 +778,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             計算結果
         """
         if not (bone.is_external_translation and bone.effect_index in model.bones):
-            return pos
+            return pos_mat
 
         if 0 == bone.effect_factor:
             # 付与率が0の場合、常に0になる
@@ -786,10 +788,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         effect_bone = model.bones[bone.effect_index]
         # effect_pos = model.bones.get_parent_relative_position(bone.effect_index)
         effect_bf = self[effect_bone.name][fno]
-        effect_pos = self.get_position(effect_bf, effect_bone, fno, model)
-        pos *= effect_pos
+        effect_pos_mat = self.get_position(effect_bf, effect_bone, fno, model)
 
-        return pos
+        return pos_mat @ effect_pos_mat
 
     def get_position2(self, bf: VmdBoneFrame, bone: Bone, fno: int, model: PmxModel) -> np.ndarray:
         """
@@ -815,9 +816,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return pos_matrix
 
-    def get_local_position(
-        self, bf: VmdBoneFrame, bone: Bone, fno: int, model: PmxModel, append_ik: bool, positions: Optional[np.ndarray] = None
-    ) -> np.ndarray:
+    def get_local_position(self, bf: VmdBoneFrame, bone: Bone, fno: int, model: PmxModel, append_ik: bool) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル位置
 
@@ -860,7 +859,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # ローカル軸に合わせた移動行列を作成する
         return inv(local_parent_matrix) @ inv(rotation_matrix) @ pos_matrix @ rotation_matrix
 
-    def get_scale(self, bf: VmdBoneFrame, bone: Bone, fno: int, model: PmxModel) -> MVector3D:
+    def get_scale(self, bf: VmdBoneFrame, bone: Bone, fno: int, model: PmxModel) -> np.ndarray:
         """
         該当キーフレにおけるボーンの縮尺
 
@@ -879,18 +878,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             相対スケール
         """
         # 自身のスケール
-        scale = bf.scale + MVector3D(1, 1, 1)
+        scale_mat = np.eye(4)
+        scale_mat[:3, :3] += np.diag(bf.scale.vector)
 
         # 付与親を加味して返す
-        return self.get_effect_scale(bone, fno, scale, model)
+        return self.get_effect_scale(bone, fno, scale_mat, model)
 
-    def get_effect_scale(
-        self,
-        bone: Bone,
-        fno: int,
-        scale: MVector3D,
-        model: PmxModel,
-    ) -> MVector3D:
+    def get_effect_scale(self, bone: Bone, fno: int, scale_mat: np.ndarray, model: PmxModel) -> np.ndarray:
         """
         付与親を加味した縮尺を求める
 
@@ -911,19 +905,18 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             計算結果
         """
         if not (bone.is_external_translation and bone.effect_index in model.bones):
-            return scale
+            return scale_mat
 
         if 0 == bone.effect_factor:
             # 付与率が0の場合、常に1になる
-            return MVector3D(1, 1, 1)
+            return np.eye(4)
 
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
         effect_bf = self[effect_bone.name][fno]
-        effect_scale = self.get_scale(effect_bf, effect_bone, fno, model)
-        scale *= effect_scale
+        effect_scale_mat = self.get_scale(effect_bf, effect_bone, fno, model)
 
-        return scale
+        return scale_mat @ effect_scale_mat
 
     def get_scale2(self, bf: VmdBoneFrame, bone: Bone, fno: int, model: PmxModel) -> np.ndarray:
         """
@@ -944,13 +937,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             相対スケール
         """
         # 自身のスケール
+        scale2_mat = np.eye(4)
+        scale2_mat[:3, :3] += np.diag(bf.scale2.vector)
 
-        scale2 = bf.scale2 + MVector3D(1, 1, 1)
-
-        scale_matrix = np.eye(4)
-        scale_matrix[:3, :3] = np.diag(scale2.vector)
-
-        return scale_matrix
+        return scale2_mat
 
     def get_local_scale(self, bf: VmdBoneFrame, bone: Bone, fno: int, model: PmxModel, append_ik: bool) -> np.ndarray:
         """
