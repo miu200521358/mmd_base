@@ -713,9 +713,11 @@ class Bone(BaseIndexNameModel):
     parent_relative_position: 親ボーンからの相対位置
     tail_relative_position: 表示先ボーンの相対位置（表示先がボーンの場合、そのボーンとの差分）
 
-    parent_indexes: 親ボーンINDEXリスト
+    tree_indexes: ボーンINDEXリスト（自分のINDEXが末端にある）
     parent_revert_matrix: 逆オフセット行列(親ボーンからの相対位置分を戻す)
     offset_matrix: オフセット行列 (自身の位置を原点に戻す行列)
+
+    relative_bone_indexes: 関連ボーンINDEX一覧（付与親とかIKとか）
     """
 
     __slots__ = (
@@ -746,9 +748,10 @@ class Bone(BaseIndexNameModel):
         "parent_relative_position",
         "tail_relative_position",
         "corrected_fixed_axis",
-        "parent_indexes",
+        "tree_indexes",
         "parent_revert_matrix",
         "offset_matrix",
+        "relative_bone_indexes",
     )
 
     SYSTEM_ROOT_NAME = "SYSTEM_ROOT"
@@ -790,6 +793,8 @@ class Bone(BaseIndexNameModel):
         self.tree_indexes: list[int] = []
         self.offset_matrix = np.eye(4)
         self.parent_revert_matrix = np.eye(4)
+
+        self.relative_bone_indexes: list[int] = []
 
     def correct_fixed_axis(self, corrected_fixed_axis: MVector3D):
         self.corrected_fixed_axis = corrected_fixed_axis.normalized()
@@ -2005,12 +2010,6 @@ class BoneMorphOffset(MorphOffset):
         グローバル回転量-クォータニオン(x,y,z,w)
     scale : MVector3D
         グローバル縮尺量(x,y,z) ※システム独自
-    position2: MVector3D
-        グローバル第二移動量(x,y,z) ※システム独自
-    qq2: MQuaternion
-        グローバル第二回転量-クォータニオン(x,y,z,w) ※システム独自
-    scale2: MVector3D
-        グローバル第二縮尺量(x,y,z) ※システム独自
     local_position : MVector3D
         ローカル軸に沿った移動量(x,y,z) ※システム独自
     local_qq : MQuaternion
@@ -2024,9 +2023,6 @@ class BoneMorphOffset(MorphOffset):
         "position",
         "rotation",
         "scale",
-        "position2",
-        "rotation2",
-        "scale2",
         "local_position",
         "local_rotation",
         "local_scale",
@@ -2048,9 +2044,6 @@ class BoneMorphOffset(MorphOffset):
         self.rotation = BaseRotationModel()
         self.rotation.qq = qq
         self.scale = scale or MVector3D()
-        self.position2 = MVector3D()
-        self.rotation2 = BaseRotationModel()
-        self.scale2 = MVector3D()
         self.local_position = local_position or MVector3D()
         self.local_rotation = BaseRotationModel()
         if local_qq:
@@ -2061,9 +2054,6 @@ class BoneMorphOffset(MorphOffset):
         self.position = MVector3D()
         self.rotation = BaseRotationModel()
         self.scale = MVector3D()
-        self.position2 = MVector3D()
-        self.rotation2 = BaseRotationModel()
-        self.scale2 = MVector3D()
         self.local_position = MVector3D()
         self.local_rotation = BaseRotationModel()
         self.local_scale = MVector3D()

@@ -57,7 +57,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         self.data[index] = v
 
     @verify_thread
-    def append(self, value: TBaseIndexModel, is_sort: bool = True) -> None:
+    def append(self, value: TBaseIndexModel, is_sort: bool = False) -> None:
         if 0 > value.index:
             value.index = len(self.data)
         self.data[value.index] = value
@@ -144,7 +144,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         self.data[index] = v
 
     @verify_thread
-    def append(self, value: TBaseIndexNameModel, is_sort: bool = True, is_positive_index: bool = True) -> None:
+    def append(self, value: TBaseIndexNameModel, is_sort: bool = False, is_positive_index: bool = True) -> None:
         if 0 > value.index and is_positive_index:
             value.index = len([k for k in self.data.keys() if k >= 0])
 
@@ -159,7 +159,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             self.indexes.append(value.index)
 
     @verify_thread
-    def remove(self, value: TBaseIndexNameModel, is_sort: bool = True) -> dict[int, int]:
+    def remove(self, value: TBaseIndexNameModel, is_sort: bool = False) -> dict[int, int]:
         replaced_map: dict[int, int] = {-1: -1}
 
         if value.index not in self.data:
@@ -198,7 +198,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
 
         return replaced_map
 
-    def insert(self, value: TBaseIndexNameModel, is_sort: bool = True, is_positive_index: bool = True) -> dict[int, int]:
+    def insert(self, value: TBaseIndexNameModel, is_sort: bool = False, is_positive_index: bool = True) -> dict[int, int]:
         if 0 > value.index and is_positive_index:
             value.index = len([k for k in self.data.keys() if k >= 0])
 

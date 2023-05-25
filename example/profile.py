@@ -23,7 +23,7 @@ from mlib.vmd.vmd_reader import VmdReader
 
 
 def main():
-    model = PmxReader().read_by_filepath("D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/ISAO式ミク/I_ミクv4/Miku_V4_準標準.pmx")
+    model = PmxReader().read_by_filepath("D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/ISAO式ミク/I_ミクv4/Miku_V4.pmx")
     motion = VmdReader().read_by_filepath("D:/MMD/MikuMikuDance_v926x64/UserFile/Motion/ダンス_1人/テレキャスタービーボーイ 粉ふきスティック/TeBeboy.vmd")
 
     # モーフ追加
@@ -31,11 +31,8 @@ def main():
     morph.morph_type = MorphType.BONE
     offset = BoneMorphOffset(model.bones["上半身"].index, MVector3D(), MQuaternion())
     offset.local_position = MVector3D(0, 1, 0)
-    offset.position2 = MVector3D(0, 1, 0)
     offset.local_rotation.qq = MQuaternion.from_euler_degrees(10, 0, 0)
-    offset.rotation2.qq = MQuaternion.from_euler_degrees(0, 10, 0)
     offset.local_scale = MVector3D(0, 1.5, 1.5)
-    offset.scale2 = MVector3D(1.5, 1.5, 0)
     morph.offsets.append(offset)
     model.morphs.append(morph)
 

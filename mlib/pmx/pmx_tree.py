@@ -42,7 +42,7 @@ class BoneTree(BaseIndexNameDictModel[Bone]):
         new_tree = BoneTree(end_bone_name)
         for i, t in enumerate(self):
             if start_index <= i <= end_index:
-                new_tree.append(t, is_sort=False)
+                new_tree.append(t)
         return new_tree
 
 

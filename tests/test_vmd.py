@@ -393,6 +393,19 @@ def test_read_by_filepath_ok_matrix() -> None:
     ).all()
 
 
+def test_read_by_filepath_ok_matrix_animate() -> None:
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.vmd.vmd_reader import VmdReader
+
+    motion = VmdReader().read_by_filepath("D:/MMD/MikuMikuDance_v926x64/UserFile/Motion/ダンス_1人/テレキャスタービーボーイ 粉ふきスティック/TeBeboy.vmd")
+    model = PmxReader().read_by_filepath("D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/ISAO式ミク/I_ミクv4/Miku_V4_準標準.pmx")
+
+    # キーフレ
+    gl_matrixes, _, _, _, _ = motion.animate(999, model)
+
+    assert gl_matrixes is not None
+
+
 def test_read_by_filepath_ok_matrix_morph() -> None:
     import os
 

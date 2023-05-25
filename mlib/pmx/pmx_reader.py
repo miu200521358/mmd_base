@@ -257,7 +257,7 @@ class PmxReader(BaseReader[PmxModel]):
                     )
                 )
             vertex.edge_factor = self.read_float()
-            model.vertices.append(vertex, is_sort=False)
+            model.vertices.append(vertex)
 
             logger.count(
                 "頂点データ読み取り",
@@ -278,13 +278,13 @@ class PmxReader(BaseReader[PmxModel]):
 
         for i, (v0, v1, v2) in enumerate(zip(faces_vertices[:-2:3], faces_vertices[1:-1:3], faces_vertices[2::3])):
             face = Face(i, v0, v1, v2)
-            model.faces.append(face, is_sort=False)
+            model.faces.append(face)
 
             logger.count(
                 "面データ読み取り",
                 index=i,
                 total_index_count=faces_vertex_count,
-                display_block=100000,
+                display_block=10000,
             )
 
         model.faces.sort_indexes()
@@ -294,7 +294,7 @@ class PmxReader(BaseReader[PmxModel]):
         total_index_count = self.read_int()
         for i in range(total_index_count):
             texture = Texture(i, self.read_text())
-            model.textures.append(texture, is_sort=False)
+            model.textures.append(texture)
 
             logger.count(
                 "テクスチャデータ読み取り",
@@ -347,7 +347,7 @@ class PmxReader(BaseReader[PmxModel]):
                 material.toon_texture_index = self.read_byte()
             material.comment = self.read_text()
             material.vertices_count = self.read_int()
-            model.materials.append(material, is_sort=False)
+            model.materials.append(material)
 
             logger.count(
                 "テクスチャデータ読み取り",
@@ -412,7 +412,7 @@ class PmxReader(BaseReader[PmxModel]):
                     ik.links.append(ik_link)
                 bone.ik = ik
 
-            model.bones.append(bone, is_sort=False)
+            model.bones.append(bone)
 
             logger.count(
                 "ボーンデータ読み取り",
@@ -471,7 +471,7 @@ class PmxReader(BaseReader[PmxModel]):
                         ),
                     )
 
-            model.morphs.append(morph, is_sort=False)
+            model.morphs.append(morph)
 
             logger.count(
                 "モーフデータ読み取り",
@@ -499,7 +499,7 @@ class PmxReader(BaseReader[PmxModel]):
                     reference.display_index = self.read_morph_index()
                 display_slot.references.append(reference)
 
-            model.display_slots.append(display_slot, is_sort=False)
+            model.display_slots.append(display_slot)
 
             logger.count(
                 "表示枠データ読み取り",
@@ -548,7 +548,7 @@ class PmxReader(BaseReader[PmxModel]):
             rigidbody.no_collision_group = RigidBodyCollisionGroup(no_collision_group)
             rigidbody.shape_rotation.radians = shape_rotation_radians
 
-            model.rigidbodies.append(rigidbody, is_sort=False)
+            model.rigidbodies.append(rigidbody)
 
             logger.count(
                 "剛体データ読み取り",
@@ -608,7 +608,7 @@ class PmxReader(BaseReader[PmxModel]):
             joint.param.rotation_limit_min.radians = rotation_limit_min_radians
             joint.param.rotation_limit_max.radians = rotation_limit_max_radians
 
-            model.joints.append(joint, is_sort=False)
+            model.joints.append(joint)
 
             logger.count(
                 "ジョイントデータ読み取り",

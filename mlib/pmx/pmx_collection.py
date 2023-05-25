@@ -124,7 +124,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
             # レイヤー込みのINDEXリスト取得を末端ボーンをキーとして保持
             bone_tree = BoneTree(name=end_bone.name)
             for _, bidx in sorted(self.create_bone_link_indexes(end_bone.index)):
-                bone_tree.append(self.data[bidx], is_sort=False)
+                bone_tree.append(self.data[bidx])
                 end_bone.tree_indexes.append(bidx)
             bone_trees.append(bone_tree, name=end_bone.name)
 
@@ -153,7 +153,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
 
         return tail_bone_names
 
-    def create_bone_link_indexes(self, child_idx: int, bone_link_indexes=None, cnt=0) -> list[tuple[int, int]]:
+    def create_bone_link_indexes(self, child_idx: int, bone_link_indexes=None, loop=0) -> list[tuple[int, int]]:
         """
         指定ボーンの親ボーンを繋げてく
 
@@ -176,9 +176,9 @@ class Bones(BaseIndexNameDictModel[Bone]):
             bone_link_indexes = [(self.data[child_idx].layer, self.data[child_idx].index)]
 
         for b in reversed(self.data.values()):
-            if b.index == self.data[child_idx].parent_index and b.index >= 0 and cnt < len(self.data):
+            if b.index == self.data[child_idx].parent_index and 0 <= b.index and loop < len(self.data) and (b.layer, b.index) not in bone_link_indexes:
                 bone_link_indexes.append((b.layer, b.index))
-                return self.create_bone_link_indexes(b.index, bone_link_indexes, cnt + 1)
+                return self.create_bone_link_indexes(b.index, bone_link_indexes, loop + 1)
 
         return bone_link_indexes
 
@@ -485,10 +485,10 @@ class PmxModel(BaseHashModel):
     def initialize_display_slots(self):
         d01 = DisplaySlot(name="Root", english_name="Root")
         d01.special_flg = Switch.ON
-        self.display_slots.append(d01, is_sort=False)
+        self.display_slots.append(d01)
         d02 = DisplaySlot(name="表情", english_name="Exp")
         d02.special_flg = Switch.ON
-        self.display_slots.append(d02, is_sort=False)
+        self.display_slots.append(d02)
 
     def get_weighted_vertex_scale(self) -> dict[int, dict[int, MVector3D]]:
         vertex_bone_scales: dict[int, dict[int, MVector3D]] = {}
@@ -650,13 +650,27 @@ class PmxModel(BaseHashModel):
                 "モデルセットアップ：ボーン",
                 index=bone.index,
                 total_index_count=total_index_count,
-                display_block=500,
+                display_block=100,
             )
 
         # ボーンツリー生成
         self.bone_trees = self.bones.create_bone_trees()
 
         logger.info("モデルセットアップ：ボーンツリー")
+
+    def get_relative_bone_indexes(self, bone_index: int, relative_bone_indexes: set[int], loop: int = 0) -> set[int]:
+        if 0 > bone_index or bone_index not in self.bones.indexes or loop > len(self.bones):
+            return relative_bone_indexes
+        bone = self.bones[bone_index]
+        relative_bone_indexes |= {bone.index}
+        relative_bone_indexes |= self.get_relative_bone_indexes(bone.parent_index, relative_bone_indexes, loop + 1)
+        relative_bone_indexes |= self.get_relative_bone_indexes(bone.effect_index, relative_bone_indexes, loop + 1)
+        if bone.ik:
+            relative_bone_indexes |= self.get_relative_bone_indexes(bone.ik.bone_index, relative_bone_indexes, loop + 1)
+            for link in bone.ik.links:
+                relative_bone_indexes |= self.get_relative_bone_indexes(link.bone_index, relative_bone_indexes, loop + 1)
+
+        return relative_bone_indexes
 
     def setup_bone(self, bone: Bone):
         bone.parent_relative_position = self.bones.get_parent_relative_position(bone.index)
@@ -676,6 +690,9 @@ class PmxModel(BaseHashModel):
         # 逆オフセット行列は親ボーンからの相対位置分を戻す
         bone.parent_revert_matrix[:3, 3] = bone.parent_relative_position.vector
         self.parent_revert_matrixes[bone.index, :3, 3] = bone.parent_relative_position.vector
+
+        # ボーンを計算するのに必要なボーンINDEXリスト
+        bone.relative_bone_indexes = list(sorted(self.get_relative_bone_indexes(bone.index, set([]))))
 
     def remove_bone(self, bone: Bone):
         """ボーンの削除に伴う諸々のボーンINDEXの置き換え"""
