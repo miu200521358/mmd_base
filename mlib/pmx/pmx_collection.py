@@ -643,6 +643,7 @@ class PmxModel(BaseHashModel):
                     # ターゲットボーンにもフラグを立てる
                     self.bones[bone.ik.bone_index].ik_target_indexes.append(bone.index)
 
+        for bone in self.bones:
             # ボーンセットアップ
             self.setup_bone(bone)
 
@@ -669,6 +670,10 @@ class PmxModel(BaseHashModel):
             relative_bone_indexes |= self.get_relative_bone_indexes(bone.ik.bone_index, relative_bone_indexes, loop + 1)
             for link in bone.ik.links:
                 relative_bone_indexes |= self.get_relative_bone_indexes(link.bone_index, relative_bone_indexes, loop + 1)
+        if bone.ik_link_indexes:
+            relative_bone_indexes |= set(bone.ik_link_indexes)
+        if bone.ik_target_indexes:
+            relative_bone_indexes |= set(bone.ik_target_indexes)
 
         return relative_bone_indexes
 

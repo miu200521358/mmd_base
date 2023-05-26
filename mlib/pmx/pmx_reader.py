@@ -206,12 +206,12 @@ class PmxReader(BaseReader[PmxModel]):
 
         logger.info("ジョイントデータ読み取り完了: {c}", c=len(model.joints))
 
-        logger.info("モデルセットアップ開始")
+        logger.info("モデルセットアップ開始", decoration=MLogger.Decoration.LINE)
 
         # セットアップ
         model.setup()
 
-        logger.info("モデルセットアップ完了")
+        logger.info("モデルセットアップ完了", decoration=MLogger.Decoration.LINE)
 
     def read_vertices(self, model: PmxModel):
         """頂点データ読み込み"""

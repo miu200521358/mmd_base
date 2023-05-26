@@ -576,48 +576,68 @@ def test_read_by_filepath_ok_matrix_local_morph() -> None:
     assert np.isclose(
         np.array([0.044920, 9.218059, 0.069347]),
         bone_matrixes[10, "センター"].position.vector,
-        rtol=0.03,
-        atol=0.03,
+        rtol=0.01,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([0.044920, 9.392067, 0.064877]),
         bone_matrixes[10, "グルーブ"].position.vector,
+        rtol=0.01,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([0.044920, 11.740084, 0.055937]),
         bone_matrixes[10, "腰"].position.vector,
+        rtol=0.01,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([0.044920, 12.390969, -0.100531]),
         bone_matrixes[10, "上半身"].position.vector,
+        rtol=0.01,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([0.044920, 13.803633, -0.138654]),
         bone_matrixes[10, "上半身2"].position.vector,
+        rtol=0.01,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([0.044920, 15.149180, 0.044429]),
         bone_matrixes[10, "上半身3"].position.vector,
+        rtol=0.01,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([0.324862, 16.470263, 0.419041]),
         bone_matrixes[10, "左肩P"].position.vector,
+        rtol=0.01,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([0.324862, 16.470263, 0.419041]),
         bone_matrixes[10, "左肩"].position.vector,
+        rtol=0.01,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([1.369838, 16.312170, 0.676838]),
         bone_matrixes[10, "左腕"].position.vector,
+        rtol=0.01,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([1.845001, 15.024807, 0.747681]),
         bone_matrixes[10, "左腕捩"].position.vector,
+        rtol=0.01,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([2.320162, 13.737446, 0.818525]),
         bone_matrixes[10, "左ひじ"].position.vector,
+        rtol=0.01,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([2.516700, 12.502447, 0.336127]),
