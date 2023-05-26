@@ -258,6 +258,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone_names: list[str] = [],
         append_ik: bool = True,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """ボーン変形行列を求める"""
+
         row = len(fnos)
         col = len(model.bones)
         poses = np.full((row, col, 4, 4), np.eye(4))
@@ -286,7 +288,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_axises: dict[int, MVector3D] = dict([(model.bones[bone_name].index, model.bones[bone_name].local_axis) for bone_name in target_bone_names])
 
         for i, fno in enumerate(fnos):
-            fno_bfs: dict[int, VmdBoneFrame] = {}
             fno_poses: dict[int, MVector3D] = {}
             fno_qqs: dict[int, MQuaternion] = {}
             fno_ik_qqs: dict[int, Optional[MQuaternion]] = {}
@@ -301,10 +302,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
             for bone_name in target_bone_names:
                 bone = model.bones[bone_name]
-                if bone.index in fno_bfs:
+                if bone.index in fno_poses:
                     continue
                 bf = self[bone.name][fno]
-                fno_bfs[bone.index] = bf
                 fno_poses[bone.index] = bf.position
                 fno_qqs[bone.index] = bf.rotation
                 fno_ik_qqs[bone.index] = bf.ik_rotation
@@ -319,9 +319,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
             for bone_name in target_bone_names:
                 bone = model.bones[bone_name]
-
-                # モーションによる移動量
-                bf = fno_bfs[bone.index]
 
                 is_parent_bone_not_local_cancels: list[bool] = []
                 parent_local_poses: list[MVector3D] = []
@@ -342,7 +339,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 # モーションによるローカル移動量
                 if is_valid_local_pos:
                     local_pos_mat = self.get_local_position(
-                        bf,
+                        fno_local_poses,
                         bone,
                         tuple(is_parent_bone_not_local_cancels),
                         tuple(parent_local_poses),
@@ -357,7 +354,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 # ローカル回転
                 if is_valid_local_rot:
                     local_rot_mat = self.get_local_rotation(
-                        bf,
+                        fno_local_qqs,
                         bone,
                         tuple(is_parent_bone_not_local_cancels),
                         tuple(parent_local_qqs),
@@ -366,13 +363,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     local_qqs[i, bone.index] = local_rot_mat
 
                 # モーションによるスケール変化
-                scale_mat = self.get_scale(bf, bone, fno, model)
+                scale_mat = self.get_scale(fno_scales, bone, model)
                 scales[i, bone.index] = scale_mat
 
                 # ローカルスケール
                 if is_valid_local_scale:
                     local_scale_mat = self.get_local_scale(
-                        bf,
+                        fno_local_scales,
                         bone,
                         tuple(is_parent_bone_not_local_cancels),
                         tuple(parent_local_scales),
@@ -385,20 +382,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     def get_position(self, fno_poses: dict[int, MVector3D], bone: Bone, model: PmxModel) -> np.ndarray:
         """
         該当キーフレにおけるボーンの移動位置
-
-        Parameters
-        ----------
-        bone : Bone
-            計算対象ボーン
-        fno : int
-            計算対象キーフレ
-        model : PmxModel
-            計算対象モデル
-
-        Returns
-        -------
-        MVector3D
-            相対位置
         """
         # 自身の位置
         mat = np.eye(4)
@@ -410,22 +393,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     def get_effect_position(self, fno_poses: dict[int, MVector3D], bone: Bone, model: PmxModel) -> np.ndarray:
         """
         付与親を加味した移動を求める
-
-        Parameters
-        ----------
-        bone : Bone
-            計算対象ボーン
-        fno : int
-            計算対象キーフレ
-        pos : MVector3D
-            計算対象移動
-        model : PmxModel
-            計算対象モデル
-
-        Returns
-        -------
-        MVector3D
-            計算結果
         """
         if not (bone.is_external_translation and bone.effect_index in model.bones):
             return np.eye(4)
@@ -444,7 +411,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
     def get_local_position(
         self,
-        bf: VmdBoneFrame,
+        fno_local_poses: dict[int, MVector3D],
         bone: Bone,
         is_parent_bone_not_local_cancels: tuple[bool],
         parent_local_poses: tuple[MVector3D],
@@ -452,23 +419,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     ) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル位置
-
-        Parameters
-        ----------
-        bone : Bone
-            計算対象ボーン
-        fno : int
-            計算対象キーフレ
-        model : PmxModel
-            計算対象モデル
-
-        Returns
-        -------
-        np.ndarray
-            ローカル軸を加味した移動行列
         """
         # 自身のローカル移動量
-        local_pos = bf.local_position
+        local_pos = fno_local_poses[bone.index]
 
         return calc_local_position(
             bone.is_not_local_cancel,
@@ -480,6 +433,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         )
 
     def calc_ik_rotations(self, fno: int, model: PmxModel, target_bone_names: list[str]):
+        """IK関連ボーンの事前計算"""
         ik_target_names = [model.bone_trees[target_bone_name].last_name for target_bone_name in target_bone_names if model.bones[target_bone_name].is_ik]
         if not ik_target_names:
             # IK計算対象がない場合はそのまま終了
@@ -517,50 +471,20 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for relative_bone_name in ik_relative_bone_names:
                 self.get_rotation(fno, fno_qqs, fno_ik_qqs, bone, model, append_ik=True)
 
-    def get_scale(self, bf: VmdBoneFrame, bone: Bone, fno: int, model: PmxModel) -> np.ndarray:
+    def get_scale(self, fno_scales: dict[int, MVector3D], bone: Bone, model: PmxModel) -> np.ndarray:
         """
         該当キーフレにおけるボーンの縮尺
-
-        Parameters
-        ----------
-        bone : Bone
-            計算対象ボーン
-        fno : int
-            計算対象キーフレ
-        model : PmxModel
-            計算対象モデル
-
-        Returns
-        -------
-        MVector3D
-            相対スケール
         """
         # 自身のスケール
         scale_mat = np.eye(4)
-        scale_mat[:3, :3] += np.diag(bf.scale.vector)
+        scale_mat[:3, :3] += np.diag(fno_scales[bone.index].vector)
 
         # 付与親を加味して返す
-        return self.get_effect_scale(bone, fno, scale_mat, model)
+        return self.get_effect_scale(scale_mat, fno_scales, bone, model)
 
-    def get_effect_scale(self, bone: Bone, fno: int, scale_mat: np.ndarray, model: PmxModel) -> np.ndarray:
+    def get_effect_scale(self, scale_mat: np.ndarray, fno_scales: dict[int, MVector3D], bone: Bone, model: PmxModel) -> np.ndarray:
         """
         付与親を加味した縮尺を求める
-
-        Parameters
-        ----------
-        bone : Bone
-            計算対象ボーン
-        fno : int
-            計算対象キーフレ
-        scale : MVector3D
-            計算対象縮尺
-        model : PmxModel
-            計算対象モデル
-
-        Returns
-        -------
-        MVector3D
-            計算結果
         """
         if not (bone.is_external_translation and bone.effect_index in model.bones):
             return scale_mat
@@ -571,14 +495,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_bf = self[effect_bone.name][fno]
-        effect_scale_mat = self.get_scale(effect_bf, effect_bone, fno, model)
+        effect_scale_mat = self.get_scale(fno_scales, effect_bone, model)
 
         return scale_mat @ effect_scale_mat
 
     def get_local_scale(
         self,
-        bf: VmdBoneFrame,
+        fno_local_scales: dict[int, MVector3D],
         bone: Bone,
         is_parent_bone_not_local_cancels: tuple[bool],
         parent_local_scales: tuple[MVector3D],
@@ -586,23 +509,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     ) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル縮尺
-
-        Parameters
-        ----------
-        bone : Bone
-            計算対象ボーン
-        fno : int
-            計算対象キーフレ
-        model : PmxModel
-            計算対象モデル
-
-        Returns
-        -------
-        np.ndarray
-            ローカル軸を加味したスケーリング行列
         """
         # 自身のローカルスケール
-        local_scale = bf.local_scale
+        local_scale = fno_local_scales[bone.index]
 
         return calc_local_scale(
             bone.is_not_local_cancel,
@@ -624,22 +533,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     ) -> MQuaternion:
         """
         該当キーフレにおけるボーンの相対位置
-
-        Parameters
-        ----------
-        bone : Bone
-            計算対象ボーン
-        fno : int
-            計算対象キーフレ
-        model : PmxModel
-            計算対象モデル
-        append_ik : bool
-            IKを計算するか(循環してしまう場合があるので、デフォルトFalse)
-
-        Returns
-        -------
-        MQuaternion
-            該当キーフレにおけるボーンの回転量
+        append_ik : IKを計算するか(循環してしまう場合があるので、デフォルトFalse)
         """
 
         # FK(捩り) > IK(捩り) > 付与親(捩り)
@@ -671,22 +565,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     ) -> MQuaternion:
         """
         付与親を加味した回転を求める
-
-        Parameters
-        ----------
-        bone : Bone
-            計算対象ボーン
-        fno : int
-            計算対象キーフレ
-        qq : MQuaternion
-            計算対象クォータニオン
-        model : PmxModel
-            計算対象モデル
-
-        Returns
-        -------
-        MQuaternion
-            計算結果
         """
         if not (bone.is_external_rotation and bone.effect_index in model.bones):
             return qq
@@ -716,24 +594,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     ) -> MQuaternion:
         """
         IKを加味した回転を求める
-
-        Parameters
-        ----------
-        bone : Bone
-            計算対象ボーン
-        fno : int
-            計算対象キーフレ
-        qq : MQuaternion
-            計算対象クォータニオン
-        model : PmxModel
-            計算対象モデル
-        ik_bones : PmxModel
-            IK計算用キーフレ
-
-        Returns
-        -------
-        MQuaternion
-            計算結果
         """
 
         if not bone.ik_link_indexes:
@@ -860,18 +720,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     def get_fix_rotation(self, bone: Bone, qq: MQuaternion) -> MQuaternion:
         """
         軸制限回転を求める
-
-        Parameters
-        ----------
-        bone : Bone
-            対象ボーン
-        qq : MQuaternion
-            計算対象回転
-
-        Returns
-        -------
-        MQuaternion
-            軸制限された回転
         """
         if bone.has_fixed_axis:
             return qq.to_fixed_axis_quaternion(bone.corrected_fixed_axis)
@@ -880,7 +728,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
     def get_local_rotation(
         self,
-        bf: VmdBoneFrame,
+        fno_local_qqs: dict[int, MQuaternion],
         bone: Bone,
         is_parent_bone_not_local_cancels: tuple[bool],
         parent_local_qqs: tuple[MQuaternion],
@@ -888,23 +736,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     ) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル回転
-
-        Parameters
-        ----------
-        bone : Bone
-            計算対象ボーン
-        fno : int
-            計算対象キーフレ
-        model : PmxModel
-            計算対象モデル
-
-        Returns
-        -------
-        np.ndarray
-            ローカル軸を加味した回転行列
         """
         # 自身のローカル回転量
-        local_qq = bf.local_rotation
+        local_qq = fno_local_qqs[bone.index]
 
         return calc_local_rotation(
             bone.is_not_local_cancel,
