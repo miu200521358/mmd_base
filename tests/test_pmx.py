@@ -806,7 +806,7 @@ def test_insert_standard_bone() -> None:
     model.insert_standard_bone("右手捩", bone_matrixes)
 
     for b in model.bones:
-        if b.name in ["右手首", "右袖"]:
+        if b.name in ["右手首"]:
             assert model.bones["右手捩"].index == b.parent_index
         elif b.name in parent_names:
             assert parent_names[b.name] == model.bones[b.parent_index].name
@@ -824,7 +824,7 @@ def test_insert_standard_bone() -> None:
     model.insert_standard_bone("左手捩", bone_matrixes)
 
     for b in model.bones:
-        if b.name in ["左手首", "左袖"]:
+        if b.name in ["左手首"]:
             assert model.bones["左手捩"].index == b.parent_index
         elif b.name in parent_names:
             assert parent_names[b.name] == model.bones[b.parent_index].name

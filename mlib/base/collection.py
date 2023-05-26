@@ -196,13 +196,16 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         if is_sort:
             self.sort_indexes()
 
+        if replaced_map:
+            replaced_map[-1] = -1
+
         return replaced_map
 
     def insert(self, value: TBaseIndexNameModel, is_sort: bool = False, is_positive_index: bool = True) -> dict[int, int]:
         if 0 > value.index and is_positive_index:
             value.index = len([k for k in self.data.keys() if k >= 0])
 
-        replaced_map: dict[int, int] = {-1: -1}
+        replaced_map: dict[int, int] = {}
         if value.index in self.data:
             # 既に同じINDEXがある場合、後ろからずらす
             for i in range(self.last_index, value.index - 1, -1):
@@ -228,6 +231,9 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             self.sort_indexes()
         else:
             self.indexes.append(value.index)
+
+        if replaced_map:
+            replaced_map[-1] = -1
 
         return replaced_map
 
