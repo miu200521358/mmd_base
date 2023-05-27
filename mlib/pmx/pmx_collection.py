@@ -1020,7 +1020,10 @@ class PmxModel(BaseHashModel):
             from_name = f"{direction}腕" if "腕捩" in bone.name else f"{direction}ひじ"
             to_name = f"{direction}ひじ" if "腕捩" in bone.name else f"{direction}手首"
             for no, ratio in ((1, 0.3), (2, 0.6), (3, 0.9)):
-                twist_bone = Bone(name=f"{bone.name}{no}", index=bone.index + no)
+                twist_bone_name = f"{bone.name}{no}"
+                if twist_bone_name in self.bones:
+                    continue
+                twist_bone = Bone(name=twist_bone_name, index=bone.index + no)
                 twist_bone.position = MVector3D(
                     *np.average(
                         [bone_matrixes[0, from_name].position.vector, bone_matrixes[0, to_name].position.vector],
