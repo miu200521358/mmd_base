@@ -140,6 +140,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
             if 0 > end_bone.index:
                 continue
             # レイヤー込みのINDEXリスト取得を末端ボーンをキーとして保持
+            end_bone.tree_indexes = []
             bone_tree = BoneTree(name=end_bone.name)
             for _, bidx in sorted(self.create_bone_link_indexes(end_bone.index)):
                 bone_tree.append(self.data[bidx])

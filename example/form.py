@@ -521,9 +521,9 @@ class TestFrame(BaseFrame):
             return
 
         bone_matrixes = motion.animate_bone([0], model)
-        model.insert_standard_bone("右腕捩", bone_matrixes)
+        model.insert_standard_bone("全ての親", bone_matrixes)
         model.setup()
-        model.replace_standard_weights(["右腕捩"])
+        model.replace_standard_weights(["全ての親"])
 
         dress_motion = self.file_panel.motion_ctrl.data.copy()
 
