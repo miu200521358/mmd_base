@@ -19,7 +19,7 @@ class Interpolation(BaseModel):
         "finish",
     )
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         補間曲線
         """
@@ -28,7 +28,7 @@ class Interpolation(BaseModel):
         self.end = MVector2D(107, 107)
         self.finish = MVector2D(IP_MAX, IP_MAX)
 
-    def normalize(self):
+    def normalize(self) -> None:
         diff = self.finish - self.begin
         self.begin = Interpolation.round_mmd((self.begin - self.begin) / diff, MVector2D())
         self.start = Interpolation.round_mmd((self.start - self.begin) / diff, MVector2D())
@@ -179,7 +179,7 @@ def cached_func_f(x1, x2, x, t):
 
 
 # Newton法（方程式の関数項、探索の開始点、微小量、誤差範囲、最大反復回数）
-def newton(x1, x2, x, t0=0.5, eps=1e-10, error=1e-10):
+def newton(x1, x2, x, t0=0.5, eps=1e-10, error=1e-10) -> float:
     derivative = 2 * eps
     for _ in range(10):
         func_f_value = cached_func_f(x1, x2, x, t0)

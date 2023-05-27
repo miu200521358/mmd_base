@@ -1,5 +1,6 @@
 from enum import Enum, IntEnum, unique
 from pickle import dumps, loads
+from typing import Any
 
 from mlib.base.logger import parse2str
 
@@ -41,5 +42,5 @@ class BaseModel:
     def __str__(self) -> str:
         return parse2str(self)
 
-    def copy(self):
+    def copy(self) -> Any:
         return loads(dumps(self))

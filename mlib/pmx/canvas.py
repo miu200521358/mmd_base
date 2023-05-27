@@ -30,17 +30,17 @@ class CanvasPanel(BasePanel):
         self.canvas = PmxCanvas(self, width, height)
 
     @property
-    def fno(self):
+    def fno(self) -> int:
         return self.index
 
     @fno.setter
-    def fno(self, v: int):
+    def fno(self, v: int) -> None:
         self.index = v
 
-    def stop_play(self):
+    def stop_play(self) -> None:
         pass
 
-    def start_play(self):
+    def start_play(self) -> None:
         pass
 
 
@@ -135,13 +135,13 @@ class PmxCanvas(glcanvas.GLCanvas):
         # 録画中かどうかを示すフラグ
         self.recording = False
 
-    def _initialize_ui(self):
+    def _initialize_ui(self) -> None:
         gl.glClearColor(0.7, 0.7, 0.7, 1)
 
         # 再生タイマー
         self.play_timer = wx.Timer(self)
 
-    def _initialize_event(self):
+    def _initialize_event(self) -> None:
         # ペイントイベントをバインド
         self.Bind(wx.EVT_PAINT, self.on_paint)
 
@@ -191,7 +191,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
             self.SwapBuffers()
 
-    def set_context(self):
+    def set_context(self) -> None:
         self.SetCurrent(self.context)
 
     def append_model_set(self, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0):
@@ -202,14 +202,14 @@ class PmxCanvas(glcanvas.GLCanvas):
         logger.debug("append_model_set: max_fno")
         self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
 
-    def clear_model_set(self):
+    def clear_model_set(self) -> None:
         if self.model_sets:
             del self.model_sets
             del self.animations
         self.model_sets = []
         self.animations = []
 
-    def draw(self):
+    def draw(self) -> None:
         self.set_context()
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
@@ -269,7 +269,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         #                 color * np.fromiter([1, 1, 1, model_set.bone_alpha], count=4, dtype=np.float32),
         #             )
 
-    def draw_ground(self):
+    def draw_ground(self) -> None:
         """平面を描画する"""
         gl.glBegin(gl.GL_QUADS)
         gl.glColor4f(0.5, 0.5, 0.5, 0.5)
@@ -337,7 +337,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.clear_process()
             self.parent.stop_play()
 
-    def clear_process(self):
+    def clear_process(self) -> None:
         if self.processes:
             for p in self.processes:
                 if p.is_alive():

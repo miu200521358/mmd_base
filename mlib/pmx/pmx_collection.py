@@ -110,7 +110,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
         self.is_bone_not_local_cancels: Optional[list[bool]] = None
         self.local_axises: Optional[list[MVector3D]] = None
 
-    def setup(self):
+    def setup(self) -> None:
         self.is_bone_not_local_cancels = [bone.is_not_local_cancel for bone in self.data.values()]
         self.local_axises = [bone.local_axis for bone in self.data.values()]
 
@@ -357,7 +357,7 @@ class DisplaySlots(BaseIndexNameDictModel[DisplaySlot]):
     表示枠リスト
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
@@ -576,7 +576,7 @@ class PmxModel(BaseHashModel):
         # 描画初期化
         self.for_draw = True
 
-    def delete_draw(self):
+    def delete_draw(self) -> None:
         if not self.for_draw or not self.meshes:
             # 描画初期化してなければスルー
             return
@@ -591,7 +591,7 @@ class PmxModel(BaseHashModel):
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
         is_alpha: bool,
-    ):
+    ) -> None:
         if not self.for_draw or not self.meshes:
             return
         self.meshes.draw(bone_matrixes, vertex_morph_poses, uv_morph_poses, uv1_morph_poses, material_morphs, is_alpha)
@@ -600,7 +600,7 @@ class PmxModel(BaseHashModel):
         self,
         bone_matrixes: np.ndarray,
         bone_color: np.ndarray,
-    ):
+    ) -> None:
         if not self.for_draw or not self.meshes:
             return
         self.meshes.draw_bone(bone_matrixes, bone_color)
@@ -609,7 +609,7 @@ class PmxModel(BaseHashModel):
         self,
         axis_matrixes: np.ndarray,
         axis_color: np.ndarray,
-    ):
+    ) -> None:
         if not self.for_draw or not self.meshes:
             return
         self.meshes.draw_axis(axis_matrixes, axis_color)
@@ -941,7 +941,7 @@ class PmxModel(BaseHashModel):
             bone.tail_position = MVector3D()
             bone.bone_flg &= ~BoneFlg.TAIL_IS_BONE
             bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
-        elif "足先EX" in bone.name and f"{direction}足首" in self.bones and f"{direction}つま先ＩＫ" in self.bones:
+        elif "足先EX" in bone.name and f"{direction}足首" in self.bones and f"{direction}つま先ＩＫ" in self.bones and self.bones[f"{direction}つま先ＩＫ"].ik:
             toe_target_bone = self.bones[self.bones[f"{direction}つま先ＩＫ"].ik.bone_index]
             bone.position = MVector3D(
                 *np.average(
@@ -1554,7 +1554,8 @@ class Meshes(BaseIndexDictModel[Mesh]):
         gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *bone_color)
         gl.glUniform1i(self.shader.bone_count_uniform[ProgramType.BONE.value], len(self.model.bones))
 
-        self.model.meshes[0].bind_bone_matrixes(bone_matrixes, self.shader, ProgramType.BONE)
+        if self.model.meshes:
+            self.model.meshes[0].bind_bone_matrixes(bone_matrixes, self.shader, ProgramType.BONE)
 
         try:
             gl.glDrawElements(
@@ -1570,7 +1571,8 @@ class Meshes(BaseIndexDictModel[Mesh]):
         if error_code != gl.GL_NO_ERROR:
             raise MViewerException(f"Meshes draw_bone Failure\n{error_code}")
 
-        self.model.meshes[0].unbind_bone_matrixes()
+        if self.model.meshes:
+            self.model.meshes[0].unbind_bone_matrixes()
 
         self.bone_ibo_faces.unbind()
         self.bone_vbo_vertices.unbind()
@@ -1604,7 +1606,8 @@ class Meshes(BaseIndexDictModel[Mesh]):
         gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *axis_color)
         gl.glUniform1i(self.shader.bone_count_uniform[ProgramType.BONE.value], len(self.model.bones) * 2)
 
-        self.model.meshes[0].bind_bone_matrixes(np.concatenate([axis_matrixes, axis_matrixes]), self.shader, ProgramType.AXIS)
+        if self.model.meshes:
+            self.model.meshes[0].bind_bone_matrixes(np.concatenate([axis_matrixes, axis_matrixes]), self.shader, ProgramType.AXIS)
 
         try:
             gl.glDrawElements(
@@ -1620,7 +1623,8 @@ class Meshes(BaseIndexDictModel[Mesh]):
         if error_code != gl.GL_NO_ERROR:
             raise MViewerException(f"Meshes draw_axis Failure\n{error_code}")
 
-        self.model.meshes[0].unbind_bone_matrixes()
+        if self.model.meshes:
+            self.model.meshes[0].unbind_bone_matrixes()
 
         self.axis_ibo_faces.unbind()
         self.axis_vbo_vertices.unbind()
@@ -1631,7 +1635,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         gl.glDisable(gl.GL_ALPHA_TEST)
         gl.glDisable(gl.GL_DEPTH_TEST)
 
-    def delete_draw(self):
+    def delete_draw(self) -> None:
         for material in self.model.materials:
             texture: Optional[Texture] = None
             if 0 <= material.texture_index:

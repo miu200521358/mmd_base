@@ -250,7 +250,7 @@ class MShader:
         gl.glDeleteShader(vs)
         gl.glDeleteShader(fs)
 
-    def initialize(self, program: Any, program_type: ProgramType):
+    def initialize(self, program: Any, program_type: ProgramType) -> None:
         # light color
         # MMD Light Diffuse は必ず0
         self.light_diffuse = MVector3D()
@@ -369,7 +369,7 @@ class MShader:
 
             self.unuse()
 
-    def fit(self, width: int, height: int):
+    def fit(self, width: int, height: int) -> None:
         self.width = width
         self.height = height
         self.aspect_ratio = float(self.width) / float(self.height)
@@ -379,7 +379,7 @@ class MShader:
 
         self.update_camera()
 
-    def use(self, program_type: ProgramType):
+    def use(self, program_type: ProgramType) -> None:
         match program_type:
             case ProgramType.MODEL:
                 gl.glUseProgram(self.model_program)
@@ -390,5 +390,5 @@ class MShader:
             case ProgramType.AXIS:
                 gl.glUseProgram(self.axis_program)
 
-    def unuse(self):
+    def unuse(self) -> None:
         gl.glUseProgram(0)

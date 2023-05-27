@@ -84,7 +84,7 @@ class MLogger:
 
     def __init__(
         self,
-        module_name,
+        module_name: str,
         level=logging.INFO,
     ):
         self.file_name = module_name
@@ -98,7 +98,7 @@ class MLogger:
 
         self.logger.setLevel(level)
 
-    def add_handler(self):
+    def add_handler(self) -> None:
         for h in self.logger.handlers:
             if isinstance(h, StreamHandler):
                 self.logger.removeHandler(h)
@@ -312,7 +312,7 @@ class MLogger:
 
         return output_msg
 
-    def create_box_message(self, msg, level, title=None):
+    def create_box_message(self, msg, level, title=None) -> str:
         msg_block = []
         msg_block.append("■■■■■■■■■■■■■■■■■")
 
@@ -333,11 +333,11 @@ class MLogger:
 
         return "\n".join(msg_block)
 
-    def create_line_message(self, msg, level, title=None):
+    def create_line_message(self, msg, level, title=None) -> str:
         msg_block = [f"-- {msg_line} --------------------" for msg_line in msg.split("\n")]
         return "\n".join(msg_block)
 
-    def create_in_box_message(self, msg, level, title=None):
+    def create_in_box_message(self, msg, level, title=None) -> str:
         msg_block = [f"■　{msg_line}" for msg_line in msg.split("\n")]
         return "\n".join(msg_block)
 

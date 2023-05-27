@@ -18,17 +18,17 @@ __ = logger.get_text
 class SimpleThread(Thread):
     """呼び出し可能オブジェクト（関数など）を実行するだけのスレッド"""
 
-    def __init__(self, base_thread, callable):
+    def __init__(self, base_thread, callable) -> None:
         self.base_thread = base_thread
         self.callable = callable
         self._result = None
         self.killed = False
         super(SimpleThread, self).__init__(name="simple_thread")
 
-    def run(self):
+    def run(self) -> None:
         self._result = self.callable(self.base_thread)
 
-    def result(self):
+    def result(self) -> Any:
         return self._result
 
 
@@ -142,8 +142,8 @@ class BaseWorker:
             self.started = False
             self.killed = False
 
-    def thread_execute(self):
+    def thread_execute(self) -> None:
         raise NotImplementedError
 
-    def output_log(self):
+    def output_log(self) -> None:
         raise NotImplementedError

@@ -219,14 +219,16 @@ class Mesh(BaseIndexModel):
         gl.glUniform1i(shader.use_texture_uniform[ProgramType.MODEL.value], self.texture is not None and self.texture.valid)
         if self.texture and self.texture.valid:
             self.texture.bind()
-            gl.glUniform1i(shader.texture_uniform[ProgramType.MODEL.value], self.texture.texture_type.value)
+            if self.texture.texture_type:
+                gl.glUniform1i(shader.texture_uniform[ProgramType.MODEL.value], self.texture.texture_type.value)
             gl.glUniform4f(shader.texture_factor_uniform[ProgramType.MODEL.value], *material_morphs.texture_factor)
 
         # Toon使用有無
         gl.glUniform1i(shader.use_toon_uniform[ProgramType.MODEL.value], self.toon_texture is not None and self.toon_texture.valid)
         if self.toon_texture and self.toon_texture.valid:
             self.toon_texture.bind()
-            gl.glUniform1i(shader.toon_uniform[ProgramType.MODEL.value], self.toon_texture.texture_type.value)
+            if self.toon_texture.texture_type:
+                gl.glUniform1i(shader.toon_uniform[ProgramType.MODEL.value], self.toon_texture.texture_type.value)
             gl.glUniform4f(shader.toon_factor_uniform[ProgramType.MODEL.value], *material_morphs.toon_texture_factor)
 
         # Sphere使用有無
@@ -237,7 +239,8 @@ class Mesh(BaseIndexModel):
         if self.sphere_texture and self.sphere_texture.valid:
             self.sphere_texture.bind()
             gl.glUniform1i(shader.sphere_mode_uniform[ProgramType.MODEL.value], self.material.sphere_mode)
-            gl.glUniform1i(shader.sphere_uniform[ProgramType.MODEL.value], self.sphere_texture.texture_type.value)
+            if self.sphere_texture.texture_type:
+                gl.glUniform1i(shader.sphere_uniform[ProgramType.MODEL.value], self.sphere_texture.texture_type.value)
             gl.glUniform4f(shader.sphere_factor_uniform[ProgramType.MODEL.value], *material_morphs.sphere_texture_factor)
 
         try:
@@ -351,7 +354,5 @@ class Mesh(BaseIndexModel):
         if error_code != gl.GL_NO_ERROR:
             raise MViewerException(f"Mesh bind_bone_matrixes Failure\n{error_code}")
 
-    def unbind_bone_matrixes(
-        self,
-    ):
+    def unbind_bone_matrixes(self) -> None:
         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)

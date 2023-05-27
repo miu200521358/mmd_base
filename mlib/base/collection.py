@@ -1,6 +1,6 @@
 import hashlib
 from bisect import bisect_left
-from typing import Generic, Optional, TypeVar
+from typing import Any, Generic, Optional, TypeVar
 
 from mlib.base.base import BaseModel, Encoding
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel
@@ -75,7 +75,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
     def __len__(self) -> int:
         return len(self.data)
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         self._iter_index = -1
         self._size = len(self.indexes)
         return self
@@ -170,7 +170,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
                 del self.indexes[i]
                 break
         for i in range(len(self.names)):
-            if self.names[i] == value.index:
+            if self.names[i] == value.name:
                 del self.names[i]
                 break
 
@@ -257,7 +257,6 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             stop = len(self.data) + stop + 1
         return [self.data[self.indexes[n]] for n in range(start, stop, step)]
 
-    @verify_thread
     def get_by_index(self, index: int) -> TBaseIndexNameModel:
         """
         リストから要素を取得する
@@ -278,7 +277,6 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             return self.data[self.indexes[index]]
         return self.data[index]
 
-    @verify_thread
     def get_by_name(self, name: str) -> TBaseIndexNameModel:
         """
         リストから要素を取得する
@@ -302,7 +300,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     def __len__(self) -> int:
         return len(self.data)
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         self._iter_index = -1
         self._size = len(self.indexes)
         return self
@@ -423,7 +421,7 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
     def __len__(self) -> int:
         return len(self.data)
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         self._iter_index = -1
         self._size = len(self.data)
         return self
@@ -482,7 +480,7 @@ class BaseHashModel(BaseModel):
         self.digest = sha1.hexdigest()
 
     @verify_thread
-    def delete(self):
+    def delete(self) -> None:
         """削除する準備"""
         pass
 

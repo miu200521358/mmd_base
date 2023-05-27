@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import Optional
 
 from mlib.base.base import BaseModel
 from mlib.base.interpolation import Interpolation, evaluate
@@ -28,7 +28,7 @@ class BaseVmdNameFrame(BaseIndexNameModel):
         name: str = "",
         register: bool = False,
         read: bool = False,
-    ):
+    ) -> None:
         super().__init__(index, name)
         self.register = register
         self.read = read
@@ -59,9 +59,7 @@ class BoneInterpolations(BaseModel):
         "vals",
     )
 
-    def __init__(
-        self,
-    ):
+    def __init__(self) -> None:
         self.translation_x = Interpolation()
         self.translation_y = Interpolation()
         self.translation_z = Interpolation()
@@ -133,7 +131,7 @@ class BoneInterpolations(BaseModel):
             0,
         ]
 
-    def evaluate(self, prev_index: int, index: int, next_index: int) -> Tuple[float, float, float, float]:
+    def evaluate(self, prev_index: int, index: int, next_index: int) -> tuple[float, float, float, float]:
         # 補間結果Yは、FKキーフレ内で計算する
         _, ry, _ = evaluate(self.rotation, prev_index, index, next_index)
         _, xy, _ = evaluate(self.translation_x, prev_index, index, next_index)
@@ -142,7 +140,7 @@ class BoneInterpolations(BaseModel):
 
         return ry, xy, yy, zy
 
-    def merge(self) -> List[int]:
+    def merge(self) -> list[int]:
         return [
             int(self.translation_x.start.x),
             self.vals[1],
@@ -265,7 +263,7 @@ class VmdBoneFrame(BaseVmdNameFrame):
         name: str = "",
         register: bool = False,
         read: bool = False,
-    ):
+    ) -> None:
         super().__init__(index, name, register, read)
         self.position = MVector3D()
         self.local_position = MVector3D()
@@ -362,7 +360,7 @@ class VmdMorphFrame(BaseVmdNameFrame):
         ratio: float = 0.0,
         register: bool = False,
         read: bool = False,
-    ):
+    ) -> None:
         super().__init__(index, name, register, read)
         self.ratio = ratio
 
@@ -413,7 +411,7 @@ class CameraInterpolations(BaseModel):
         rotation: Optional[Interpolation] = None,
         distance: Optional[Interpolation] = None,
         viewing_angle: Optional[Interpolation] = None,
-    ):
+    ) -> None:
         self.translation_x = translation_x or Interpolation()
         self.translation_y = translation_y or Interpolation()
         self.translation_z = translation_z or Interpolation()
@@ -471,7 +469,7 @@ class VmdCameraFrame(BaseVmdNameFrame):
         interpolations: Optional[CameraInterpolations] = None,
         register: bool = False,
         read: bool = False,
-    ):
+    ) -> None:
         super().__init__(index, "カメラ", register, read)
         self.position = position or MVector3D()
         self.rotation = rotation or BaseRotationModel()
@@ -514,7 +512,7 @@ class VmdLightFrame(BaseVmdNameFrame):
         position: Optional[MVector3D] = None,
         register: bool = False,
         read: bool = False,
-    ):
+    ) -> None:
         super().__init__(index, "照明", register, read)
         self.color = color or MVector3D()
         self.position = position or MVector3D()
@@ -553,7 +551,7 @@ class VmdShadowFrame(BaseVmdNameFrame):
         distance: float = 0.0,
         register: bool = False,
         read: bool = False,
-    ):
+    ) -> None:
         super().__init__(index, "セルフ影", register, read)
         self.type = mode
         self.distance = distance
@@ -580,7 +578,7 @@ class VmdIkOnOff(BaseModel):
         self,
         name: str = "",
         onoff: bool = True,
-    ):
+    ) -> None:
         super().__init__()
         self.name = name
         self.onoff = onoff
@@ -619,7 +617,7 @@ class VmdShowIkFrame(BaseVmdNameFrame):
         iks: Optional[list[VmdIkOnOff]] = None,
         register: bool = False,
         read: bool = False,
-    ):
+    ) -> None:
         super().__init__(index, "IK", register, read)
         self.show = show
         self.iks = iks or []

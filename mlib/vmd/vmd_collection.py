@@ -321,8 +321,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         fno_local_poses[parent_bone.index] = parent_bf.local_position
                         fno_local_qqs[parent_bone.index] = parent_bf.local_rotation
                         fno_local_scales[parent_bone.index] = parent_bf.local_scale
-                    is_parent_bone_not_local_cancels.append(model.bones.is_bone_not_local_cancels[parent_bone.index] or False)
-                    parent_local_axises.append(model.bones.local_axises[parent_bone.index] or MVector3D())
+                    if model.bones.is_bone_not_local_cancels:
+                        is_parent_bone_not_local_cancels.append(model.bones.is_bone_not_local_cancels[parent_bone.index] or False)
+                    if model.bones.local_axises:
+                        parent_local_axises.append(model.bones.local_axises[parent_bone.index] or MVector3D())
                     parent_local_poses.append(fno_local_poses[parent_bone.index])
                     parent_local_qqs.append(fno_local_qqs[parent_bone.index])
                     parent_local_scales.append(fno_local_scales[parent_bone.index])
@@ -334,9 +336,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     local_pos_mat = self.get_local_position(
                         fno_local_poses,
                         bone,
-                        tuple(is_parent_bone_not_local_cancels),
-                        tuple(parent_local_poses),
-                        tuple(parent_local_axises),
+                        is_parent_bone_not_local_cancels,
+                        parent_local_poses,
+                        parent_local_axises,
                     )
                     local_poses[i, bone.index] = local_pos_mat
 
@@ -349,9 +351,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     local_rot_mat = self.get_local_rotation(
                         fno_local_qqs,
                         bone,
-                        tuple(is_parent_bone_not_local_cancels),
-                        tuple(parent_local_qqs),
-                        tuple(parent_local_axises),
+                        is_parent_bone_not_local_cancels,
+                        parent_local_qqs,
+                        parent_local_axises,
                     )
                     local_qqs[i, bone.index] = local_rot_mat
 
@@ -364,9 +366,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     local_scale_mat = self.get_local_scale(
                         fno_local_scales,
                         bone,
-                        tuple(is_parent_bone_not_local_cancels),
-                        tuple(parent_local_scales),
-                        tuple(parent_local_axises),
+                        is_parent_bone_not_local_cancels,
+                        parent_local_scales,
+                        parent_local_axises,
                     )
                     local_scales[i, bone.index] = local_scale_mat
 
@@ -406,9 +408,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         self,
         fno_local_poses: dict[int, MVector3D],
         bone: Bone,
-        is_parent_bone_not_local_cancels: tuple[bool],
-        parent_local_poses: tuple[MVector3D],
-        parent_local_axises: tuple[MVector3D],
+        is_parent_bone_not_local_cancels: list[bool],
+        parent_local_poses: list[MVector3D],
+        parent_local_axises: list[MVector3D],
     ) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル位置
@@ -420,9 +422,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             bone.is_not_local_cancel,
             local_pos,
             bone.tail_relative_position,
-            is_parent_bone_not_local_cancels,
-            parent_local_poses,
-            parent_local_axises,
+            tuple(is_parent_bone_not_local_cancels),
+            tuple(parent_local_poses),
+            tuple(parent_local_axises),
         )
 
     def calc_ik_rotations(self, fno: int, model: PmxModel, target_bone_names: list[str]):
@@ -496,9 +498,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         self,
         fno_local_scales: dict[int, MVector3D],
         bone: Bone,
-        is_parent_bone_not_local_cancels: tuple[bool],
-        parent_local_scales: tuple[MVector3D],
-        parent_local_axises: tuple[MVector3D],
+        is_parent_bone_not_local_cancels: list[bool],
+        parent_local_scales: list[MVector3D],
+        parent_local_axises: list[MVector3D],
     ) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル縮尺
@@ -510,9 +512,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             bone.is_not_local_cancel,
             local_scale,
             bone.tail_relative_position,
-            is_parent_bone_not_local_cancels,
-            parent_local_scales,
-            parent_local_axises,
+            tuple(is_parent_bone_not_local_cancels),
+            tuple(parent_local_scales),
+            tuple(parent_local_axises),
         )
 
     def get_rotation(
@@ -720,9 +722,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         self,
         fno_local_qqs: dict[int, MQuaternion],
         bone: Bone,
-        is_parent_bone_not_local_cancels: tuple[bool],
-        parent_local_qqs: tuple[MQuaternion],
-        parent_local_axises: tuple[MVector3D],
+        is_parent_bone_not_local_cancels: list[bool],
+        parent_local_qqs: list[MQuaternion],
+        parent_local_axises: list[MVector3D],
     ) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル回転
@@ -734,9 +736,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             bone.is_not_local_cancel,
             local_qq,
             bone.tail_relative_position,
-            is_parent_bone_not_local_cancels,
-            parent_local_qqs,
-            parent_local_axises,
+            tuple(is_parent_bone_not_local_cancels),
+            tuple(parent_local_qqs),
+            tuple(parent_local_axises),
         )
 
 

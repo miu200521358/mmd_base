@@ -50,10 +50,10 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         self._initialize_ui(name_spacer, tooltip)
         self._initialize_event()
 
-    def set_parent_sizer(self, parent_sizer: wx.Sizer):
+    def set_parent_sizer(self, parent_sizer: wx.Sizer) -> None:
         parent_sizer.Add(self.root_sizer, 1, wx.GROW, 0)
 
-    def _initialize_ui(self, name_spacer: int, tooltip: str):
+    def _initialize_ui(self, name_spacer: int, tooltip: str) -> None:
         # ファイルタイトル
         self.title_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -113,7 +113,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
 
         self.root_sizer.Add(self.file_sizer, 0, wx.GROW | wx.ALL, 0)
 
-    def _initialize_event(self):
+    def _initialize_event(self) -> None:
         # D&Dの実装
         self.file_ctrl.SetDropTarget(MFileDropTarget(self))
 
@@ -123,7 +123,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         if self.file_change_event:
             self.file_ctrl.Bind(wx.EVT_FILEPICKER_CHANGED, self.file_change_event)
 
-    def on_show_histories(self, event: wx.Event):
+    def on_show_histories(self, event: wx.Event) -> None:
         """履歴一覧を表示する"""
         if not self.key:
             return
@@ -147,24 +147,24 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
             self.file_ctrl.SetInitialDirectory(get_dir_path(choiceDialog.GetStringSelection()))
 
     @property
-    def path(self):
+    def path(self) -> str:
         return self.file_ctrl.GetPath()
 
     @path.setter
-    def path(self, v: str):
+    def path(self, v: str) -> None:
         if self.valid(v):
             self.file_ctrl.SetPath(v)
 
-    def valid(self, v: Optional[str] = None):
+    def valid(self, v: Optional[str] = None) -> bool:
         path = v if v else self.file_ctrl.GetPath()
         if not path.strip():
             return False
         return (not self.is_save and validate_file(path, self.reader.file_type)) or (self.is_save and validate_save_file(path, self.title))
 
-    def unwrap(self):
+    def unwrap(self) -> None:
         self.file_ctrl.SetPath(unwrapped_path(self.file_ctrl.GetPath()))
 
-    def save_path(self):
+    def save_path(self) -> None:
         if not self.key or not self.valid():
             return
         insert_history(self.file_ctrl.GetPath(), self.frame.histories[self.key])
@@ -199,7 +199,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
             if self.original_data and self.original_data.digest != digest:
                 self.clear_data()
 
-    def clear_data(self):
+    def clear_data(self) -> None:
         """リーダー対象オブジェクトをクリア"""
         if self.original_data is not None:
             if isinstance(self.data, PmxModel):
@@ -208,13 +208,13 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
             self.data = None
             self.original_data = None
 
-    def set_data(self, v: TBaseHashModel):
+    def set_data(self, v: TBaseHashModel) -> None:
         """データを設定"""
         self.clear_data()
         self.original_data = v
         self.data = v.copy()
 
-    def Enable(self, enable: bool):
+    def Enable(self, enable: bool) -> None:
         self.file_ctrl.Enable(enable)
         if not self.is_save:
             # 保存じゃなければ履歴ボタンを表示

@@ -1,5 +1,5 @@
 from enum import Enum, unique
-from typing import Optional
+from typing import Optional, TypeVar
 
 import numpy as np
 
@@ -37,7 +37,7 @@ class BaseRotationModel(BaseModel):
         return self._qq
 
     @qq.setter
-    def qq(self, v: MQuaternion):
+    def qq(self, v: MQuaternion) -> None:
         """
         クォータニオンを回転情報として設定する
 
@@ -58,7 +58,7 @@ class BaseRotationModel(BaseModel):
         return self._radians
 
     @radians.setter
-    def radians(self, v: MVector3D):
+    def radians(self, v: MVector3D) -> None:
         """
         ラジアンを回転情報として設定する
 
@@ -79,7 +79,7 @@ class BaseRotationModel(BaseModel):
         return self._degrees
 
     @degrees.setter
-    def degrees(self, v: MVector3D):
+    def degrees(self, v: MVector3D) -> None:
         """
         度を回転情報として設定する
 
@@ -91,6 +91,9 @@ class BaseRotationModel(BaseModel):
         self._degrees = v
         self._radians = MVector3D(*np.radians(v.vector))
         self._qq = MQuaternion.from_euler_degrees(v)
+
+
+TBaseIndexModel = TypeVar("TBaseIndexModel", bound="BaseIndexModel")
 
 
 class BaseIndexModel(BaseModel):
@@ -112,11 +115,14 @@ class BaseIndexModel(BaseModel):
     def __bool__(self) -> bool:
         return 0 <= self.index
 
-    def __iadd__(self, v):
+    def __iadd__(self: TBaseIndexModel, v: TBaseIndexModel) -> None:
         raise NotImplementedError()
 
-    def __add__(self, v):
+    def __add__(self: TBaseIndexModel, v: TBaseIndexModel) -> TBaseIndexModel:
         raise NotImplementedError()
+
+
+TBaseIndexNameModel = TypeVar("TBaseIndexNameModel", bound="BaseIndexNameModel")
 
 
 class BaseIndexNameModel(BaseModel):
@@ -144,8 +150,8 @@ class BaseIndexNameModel(BaseModel):
     def __bool__(self) -> bool:
         return 0 <= self.index and 0 <= len(self.name)
 
-    def __iadd__(self, v):
+    def __iadd__(self: TBaseIndexNameModel, v: TBaseIndexNameModel) -> None:
         raise NotImplementedError()
 
-    def __add__(self, v):
+    def __add__(self: TBaseIndexNameModel, v: TBaseIndexNameModel) -> TBaseIndexNameModel:
         raise NotImplementedError()

@@ -1,7 +1,7 @@
 import operator
 from functools import lru_cache
 from math import acos, atan2, cos, degrees, pi, radians, sin, sqrt
-from typing import Union
+from typing import Type, TypeVar, Union
 
 import numpy as np
 from numpy.linalg import inv, norm
@@ -77,6 +77,9 @@ def calc_v3_by_ratio(
     return prev_v + (next_v - prev_v) * ratio_v
 
 
+MVectorT = TypeVar("MVectorT", bound="MVector")
+
+
 class MVector(BaseModel):
     """ベクトル基底クラス"""
 
@@ -85,29 +88,29 @@ class MVector(BaseModel):
     def __init__(self, x: float = 0.0):
         self.vector = np.array([x], dtype=np.float64)
 
-    def copy(self):
+    def copy(self: MVectorT) -> MVectorT:
         return self.__class__(self.x)
 
-    def length(self) -> float:
+    def length(self: MVectorT) -> float:
         """
         ベクトルの長さ
         """
         return float(norm(self.vector, ord=2))
 
-    def length_squared(self) -> float:
+    def length_squared(self: MVectorT) -> float:
         """
         ベクトルの長さの二乗
         """
         return float(norm(self.vector, ord=2) ** 2)
 
-    def effective(self, rtol: float = 1e-05, atol: float = 1e-08):
+    def effective(self: MVectorT, rtol: float = 1e-05, atol: float = 1e-08) -> MVectorT:
         vector = np.copy(self.vector)
         vector[np.isinf(vector)] = 0
         vector[np.isnan(vector)] = 0
         vector[np.isclose(vector, 0, rtol=rtol, atol=atol)] = 0
         return self.__class__(*vector)
 
-    def round(self, decimals: int):
+    def round(self: MVectorT, decimals: int) -> MVectorT:
         """
         丸め処理
 
@@ -122,7 +125,7 @@ class MVector(BaseModel):
         """
         return self.__class__(*np.round(self.vector, decimals=decimals))
 
-    def normalized(self):
+    def normalized(self: MVectorT) -> MVectorT:
         """
         正規化した値を返す
         """
@@ -134,13 +137,13 @@ class MVector(BaseModel):
         normv = np.divide(vector, l2, out=np.zeros_like(vector), where=l2 != 0)
         return self.__class__(*normv)
 
-    def normalize(self):
+    def normalize(self: MVectorT) -> None:
         """
         自分自身の正規化
         """
         self.vector = self.normalized().vector
 
-    def distance(self, other) -> float:
+    def distance(self: MVectorT, other) -> float:
         """
         他のベクトルとの距離
 
@@ -157,85 +160,85 @@ class MVector(BaseModel):
             raise ValueError("同じ型同士で計算してください")
         return self.__class__(*(self.vector - other.vector)).length()
 
-    def abs(self):
+    def abs(self: MVectorT) -> MVectorT:
         """
         絶対値変換
         """
         return self.__class__(*np.abs(self.vector))
 
-    def one(self):
+    def one(self: MVectorT) -> MVectorT:
         """
         0を1に変える
         """
         return self.__class__(*np.where(np.isclose(self.vector, 0), 1, self.vector))
 
-    def cross(self, other):
+    def cross(self: MVectorT, other) -> MVectorT:
         """
         外積
         """
         return self.__class__(*np.cross(self.vector, other.vector))
 
-    def inner(self, other) -> float:
+    def inner(self: MVectorT, other) -> float:
         """
         内積（一次元配列）
         """
         return float(np.inner(self.vector, other.vector))
 
-    def dot(self, other) -> float:
+    def dot(self: MVectorT, other) -> float:
         """
         内積（二次元の場合、二次元のまま返す）
         """
         return float(np.dot(self.vector, other.vector))
 
-    def __lt__(self, other) -> bool:
+    def __lt__(self: MVectorT, other) -> bool:
         if isinstance(other, MVector):
             return bool(np.all(np.less(self.vector, other.vector)))
         else:
             return bool(np.all(np.less(self.vector, other)))
 
-    def __le__(self, other) -> bool:
+    def __le__(self: MVectorT, other) -> bool:
         if isinstance(other, MVector):
             return bool(np.all(np.less_equal(self.vector, other.vector)))
         else:
             return bool(np.all(np.less_equal(self.vector, other)))
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self: MVectorT, other) -> bool:
         if isinstance(other, MVector):
             return bool(np.all(np.equal(self.vector, other.vector)))
         else:
             return bool(np.all(np.equal(self.vector, other)))
 
-    def __ne__(self, other) -> bool:
+    def __ne__(self: MVectorT, other) -> bool:
         if isinstance(other, MVector):
             return bool(np.any(np.not_equal(self.vector, other.vector)))
         else:
             return bool(np.any(np.not_equal(self.vector, other)))
 
-    def __gt__(self, other) -> bool:
+    def __gt__(self: MVectorT, other) -> bool:
         if isinstance(other, MVector):
             return bool(np.all(np.greater(self.vector, other.vector)))
         else:
             return bool(np.all(np.greater(self.vector, other)))
 
-    def __ge__(self, other) -> bool:
+    def __ge__(self: MVectorT, other) -> bool:
         if isinstance(other, MVector):
             return bool(np.all(np.greater_equal(self.vector, other.vector)))
         else:
             return bool(np.all(np.greater_equal(self.vector, other)))
 
-    def __bool__(self) -> bool:
+    def __bool__(self: MVectorT) -> bool:
         return bool(not np.all(self.vector == 0))
 
-    def __add__(self, other):
+    def __add__(self: MVectorT, other) -> MVectorT:
         return operate_vector(self, other, operator.add)
 
-    def __sub__(self, other):
+    def __sub__(self: MVectorT, other) -> MVectorT:
         return operate_vector(self, other, operator.sub)
 
-    def __mul__(self, other):
+    def __mul__(self: MVectorT, other) -> MVectorT:
         return operate_vector(self, other, operator.mul)
 
-    def __truediv__(self, other):
+    def __truediv__(self: MVectorT, other) -> MVectorT:
         if isinstance(other, MVector) and np.count_nonzero(other.vector) == 0:
             return self.__class__()
         elif np.count_nonzero(other) == 0:
@@ -243,7 +246,7 @@ class MVector(BaseModel):
 
         return operate_vector(self, other, operator.truediv)
 
-    def __floordiv__(self, other):
+    def __floordiv__(self: MVectorT, other) -> MVectorT:
         if isinstance(other, MVector) and np.count_nonzero(other.vector) == 0:
             return self.__class__()
         elif np.count_nonzero(other) == 0:
@@ -251,22 +254,22 @@ class MVector(BaseModel):
 
         return operate_vector(self, other, operator.floordiv)
 
-    def __mod__(self, other):
+    def __mod__(self: MVectorT, other) -> MVectorT:
         return operate_vector(self, other, operator.mod)
 
-    def __iadd__(self, other):
+    def __iadd__(self: MVectorT, other) -> MVectorT:
         self.vector = operate_vector(self, other, operator.add).vector
         return self
 
-    def __isub__(self, other):
+    def __isub__(self: MVectorT, other) -> MVectorT:
         self.vector = operate_vector(self, other, operator.sub).vector
         return self
 
-    def __imul__(self, other):
+    def __imul__(self: MVectorT, other) -> MVectorT:
         self.vector = operate_vector(self, other, operator.mul).vector
         return self
 
-    def __itruediv__(self, other):
+    def __itruediv__(self: MVectorT, other) -> MVectorT:
         if isinstance(other, MVector) and np.count_nonzero(other.vector) == 0:
             self = self.__class__()
         elif np.count_nonzero(other) == 0:
@@ -275,7 +278,7 @@ class MVector(BaseModel):
             self.vector = operate_vector(self, other, operator.truediv).vector
         return self
 
-    def __ifloordiv__(self, other):
+    def __ifloordiv__(self: MVectorT, other) -> MVectorT:
         if isinstance(other, MVector) and np.count_nonzero(other.vector) == 0:
             self = self.__class__()
         elif np.count_nonzero(other) == 0:
@@ -284,47 +287,47 @@ class MVector(BaseModel):
             self.vector = operate_vector(self, other, operator.floordiv).vector
         return self
 
-    def __imod__(self, other):
+    def __imod__(self: MVectorT, other) -> MVectorT:
         self.vector = operate_vector(self, other, operator.mod).vector
         return self
 
-    def __lshift__(self, other):
+    def __lshift__(self: MVectorT, other) -> MVectorT:
         return operate_vector(self, other, operator.lshift)
 
-    def __rshift__(self, other):
+    def __rshift__(self: MVectorT, other) -> MVectorT:
         return operate_vector(self, other, operator.rshift)
 
-    def __and__(self, other):
+    def __and__(self: MVectorT, other) -> MVectorT:
         return operate_vector(self, other, operator.and_)
 
-    def __or__(self, other):
+    def __or__(self: MVectorT, other) -> MVectorT:
         return operate_vector(self, other, operator.or_)
 
-    def __neg__(self):
+    def __neg__(self: MVectorT) -> MVectorT:
         return self.__class__(*operator.neg(self.vector))
 
-    def __pos__(self):
+    def __pos__(self: MVectorT) -> MVectorT:
         return self.__class__(*operator.pos(self.vector))
 
-    def __invert__(self):
+    def __invert__(self: MVectorT) -> MVectorT:
         return self.__class__(*operator.invert(self.vector))
 
-    def __hash__(self) -> int:
+    def __hash__(self: MVectorT) -> int:
         return hash(tuple(self.vector.flatten()))
 
     @property
-    def x(self) -> float:
+    def x(self: MVectorT) -> float:
         return self.vector[0]
 
     @x.setter
-    def x(self, v):
+    def x(self: MVectorT, v: float) -> None:
         self.vector[0] = v
 
-    def __getitem__(self, index: int) -> float:
+    def __getitem__(self: MVectorT, index: int) -> float:
         return self.vector[index]
 
     @classmethod
-    def std_mean(cls, values: list, range: float = 1.5):
+    def std_mean(cls: Type[MVectorT], values: list, range: float = 1.5) -> MVectorT:
         """標準偏差を加味したmean処理"""
         np_standard_vectors = np.array([v.vector for v in values])
         np_standard_lengths = np.array([v.length() for v in values])
@@ -369,7 +372,7 @@ class MVector2D(MVector):
         return self.vector[1]
 
     @y.setter
-    def y(self, v):
+    def y(self, v) -> None:
         self.vector[1] = v
 
     @property
@@ -394,7 +397,7 @@ class MVector3D(MVector):
     def copy(self) -> "MVector3D":
         return self.__class__(self.x, self.y, self.z)
 
-    def to_key(self, threshold=0.1) -> tuple:
+    def to_key(self, threshold=0.1) -> tuple[int, int, int]:
         """
         キー用値に変換
 
@@ -419,7 +422,7 @@ class MVector3D(MVector):
         return self.vector[1]
 
     @y.setter
-    def y(self, v):
+    def y(self, v: float) -> None:
         self.vector[1] = v
 
     @property
@@ -427,7 +430,7 @@ class MVector3D(MVector):
         return self.vector[2]
 
     @z.setter
-    def z(self, v):
+    def z(self, v: float) -> None:
         self.vector[2] = v
 
     @property
@@ -502,7 +505,7 @@ class MVector4D(MVector):
         return self.vector[1]
 
     @y.setter
-    def y(self, v):
+    def y(self, v: float) -> None:
         self.vector[1] = v
 
     @property
@@ -510,7 +513,7 @@ class MVector4D(MVector):
         return self.vector[2]
 
     @z.setter
-    def z(self, v):
+    def z(self, v: float) -> None:
         self.vector[2] = v
 
     @property
@@ -518,7 +521,7 @@ class MVector4D(MVector):
         return self.vector[3]
 
     @w.setter
-    def w(self, v):
+    def w(self, v: float) -> None:
         self.vector[3] = v
 
     @property
@@ -558,7 +561,7 @@ class MVectorDict:
     def distances(self, v: MVector):
         return norm((self.values() - v.vector), ord=2, axis=1)
 
-    def nearest_distance(self, v: MVector) -> float:
+    def nearest_distance(self, v: MVectorT) -> float:
         """
         指定ベクトル直近値
 
@@ -574,7 +577,7 @@ class MVectorDict:
         """
         return float(np.min(self.distances(v)))
 
-    def nearest_value(self, v: MVector):
+    def nearest_value(self, v: MVectorT):
         """
         指定ベクトル直近値
 
@@ -590,7 +593,7 @@ class MVectorDict:
         """
         return v.__class__(*np.array(self.values())[np.argmin(self.distances(v))])
 
-    def nearest_key(self, v: MVector) -> np.ndarray:
+    def nearest_key(self, v: MVectorT) -> np.ndarray:
         """
         指定ベクトル直近キー
 
@@ -630,7 +633,7 @@ class MQuaternion(MVector):
         return self.vector.components[0]  # type: ignore
 
     @scalar.setter
-    def scalar(self, v):
+    def scalar(self, v: float) -> None:
         self.vector.components[0] = v
 
     @property
@@ -638,7 +641,7 @@ class MQuaternion(MVector):
         return self.vector.components[1]  # type: ignore
 
     @x.setter
-    def x(self, v):
+    def x(self, v: float) -> None:
         self.vector.components[1] = v
 
     @property
@@ -646,7 +649,7 @@ class MQuaternion(MVector):
         return self.vector.components[2]  # type: ignore
 
     @y.setter
-    def y(self, v):
+    def y(self, v: float) -> None:
         self.vector.components[2] = v
 
     @property
@@ -654,7 +657,7 @@ class MQuaternion(MVector):
         return self.vector.components[3]  # type: ignore
 
     @z.setter
-    def z(self, v):
+    def z(self, v: float) -> None:
         self.vector.components[3] = v
 
     @property
@@ -675,7 +678,7 @@ class MQuaternion(MVector):
     def __str__(self) -> str:
         return f"[x={round(self.x, 5)}, y={round(self.y, 5)}, " + f"z={round(self.z, 5)}, scalar={round(self.scalar, 5)}]"
 
-    def effective(self):
+    def effective(self, rtol: float = 1e-05, atol: float = 1e-08) -> "MQuaternion":
         vector = np.copy(self.vector.components)
         vector[np.isnan(vector)] = 0
         vector[np.isinf(vector)] = 0
@@ -693,7 +696,7 @@ class MQuaternion(MVector):
         """
         return float(self.vector.abs() ** 2)  # type: ignore
 
-    def inverse(self):
+    def inverse(self) -> "MQuaternion":
         """
         逆回転
         """
@@ -712,7 +715,7 @@ class MQuaternion(MVector):
         normv = v.vector.components / l2
         return MQuaternion(*normv)
 
-    def normalize(self):
+    def normalize(self) -> None:
         """
         自分自身の正規化
         """
@@ -800,7 +803,7 @@ class MQuaternion(MVector):
 
         return deg
 
-    def to_theta(self, v: "MQuaternion"):
+    def to_theta(self, v: "MQuaternion") -> float:
         """
         自分ともうひとつの値vとのtheta（変位量）を返す
         """
@@ -834,7 +837,7 @@ class MQuaternion(MVector):
         RX = np.array([[1, 0, 0, 0], [0, np.cos(theta), np.sin(theta), 0], [0, -np.sin(theta), np.cos(theta), 0], [0, 0, 0, 1]])
 
         # Z軸回転行列を作成
-        z_axis_X = np.dot(RX, np.concatenate((z_axis, [0])))
+        z_axis_X = np.dot(RX, np.concatenate((z_axis.tolist(), [0.0])))
         theta = np.arctan2(z_axis_X[1], z_axis_X[0])
         RZ = np.array([[np.cos(theta), np.sin(theta), 0, 0], [-np.sin(theta), np.cos(theta), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
 
@@ -842,98 +845,6 @@ class MQuaternion(MVector):
         RY = np.dot(np.dot(np.linalg.inv(RX), np.linalg.inv(RZ)), np.dot(np.dot(R, RZ), RX))
 
         return RX, RY, RZ
-
-    # def to_matrix4x4_axis(self, local_axis: MVector3D) -> "MMatrix4x4":
-    #     if not self:
-    #         return MMatrix4x4()
-
-    #     quat = np.array(self.vector.components, dtype=np.float64, copy=True)
-    #     axis = local_axis.vector
-
-    #     # クォータニオンを正規化
-    #     quat /= norm(quat)
-
-    #     # Rodriguesの任意軸回転行列を使用して、回転行列を計算する
-    #     angle = 2 * np.arccos(quat[0])
-    #     r = quat[1:]
-    #     v = axis / norm(axis)
-    #     cross_prod = np.cross(v, r)
-    #     rotation_matrix = np.cos(angle) * np.eye(3) + np.sin(angle) * cross_prod + (1 - np.cos(angle)) * np.outer(cross_prod, cross_prod)
-    #     rotation_matrix4x4 = np.pad(rotation_matrix, [(0, 0), (0, 1)], mode="constant", constant_values=0)
-
-    #     return MMatrix4x4(*rotation_matrix4x4.flatten())
-
-    # def to_matrix4x4_axis(self, local_axis: MVector3D) -> "MMatrix4x4":
-    #     if not self:
-    #         return MMatrix4x4()
-    #     q = np.array(self.vector.components, dtype=np.float64, copy=True)
-    #     n = np.dot(q, q)
-    #     if n < np.finfo(q.dtype).eps:
-    #         return np.identity(4)
-    #     q *= np.sqrt(2.0 / n)
-    #     q = np.outer(q, q)
-    #     axis = local_axis.vector
-    #     R_axis = np.array(
-    #         [
-    #             [axis[0] * axis[0], axis[0] * axis[1], axis[0] * axis[2], 0],
-    #             [axis[1] * axis[0], axis[1] * axis[1], axis[1] * axis[2], 0],
-    #             [axis[2] * axis[0], axis[2] * axis[1], axis[2] * axis[2], 0],
-    #             [0, 0, 0, 1],
-    #         ]
-    #     )
-    #     # 回転行列を計算する
-    #     rotation_matrix = (np.eye(4) + np.sin(np.pi / 2) * (q - np.eye(4))) @ R_axis + np.cos(np.pi / 2) * np.eye(4)
-    #     return MMatrix4x4(*rotation_matrix.flatten())
-    # local_rot_matrix = np.pad(rotation_matrix, [(0, 0), (0, 1)], mode="constant", constant_values=0)
-
-    # return MMatrix4x4(
-    #     m11=local_rot_matrix[0, 0],
-    #     m12=local_rot_matrix[0, 1],
-    #     m13=local_rot_matrix[0, 2],
-    #     m21=local_rot_matrix[1, 0],
-    #     m22=local_rot_matrix[1, 1],
-    #     m23=local_rot_matrix[1, 2],
-    #     m31=local_rot_matrix[2, 0],
-    #     m32=local_rot_matrix[2, 1],
-    #     m33=local_rot_matrix[2, 2],
-    # )
-
-    # def to_matrix4x4_axis(self, local_axis: np.ndarray) -> "MMatrix4x4":
-    #     if not self:
-    #         return MMatrix4x4()
-
-    #     # クォータニオンを回転軸と回転角に変換する
-    #     theta = 2 * np.arccos(self.theta)
-    #     if np.isclose(theta, 0):
-    #         # 回転角が0の場合、回転行列は単位行列となる
-    #         return MMatrix4x4()
-    #     axis = self.xyz.vector / np.sin(theta / 2)
-
-    #     # 回転行列を計算する
-    #     rot_axis = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
-    #     rot_axis_T = rot_axis.T
-    #     rot = (
-    #         np.cos(theta / 2) * np.eye(3)
-    #         + 1j * np.sin(theta / 2) * rot_axis
-    #         - 1j * np.sin(theta / 2) * rot_axis_T
-    #         + (1 - np.cos(theta / 2)) * np.outer(axis, axis)
-    #     )
-
-    #     # 回転行列をローカル軸に合わせて回転させる
-    #     inv_local_axis = np.linalg.inv(local_axis)
-    #     local_rot = inv_local_axis @ rot @ local_axis
-
-    #     return MMatrix4x4(
-    #         m11=local_rot[0, 0],
-    #         m12=local_rot[0, 1],
-    #         m13=local_rot[0, 2],
-    #         m21=local_rot[1, 0],
-    #         m22=local_rot[1, 1],
-    #         m23=local_rot[1, 2],
-    #         m31=local_rot[2, 0],
-    #         m32=local_rot[2, 1],
-    #         m33=local_rot[2, 2],
-    #     )
 
     def __mul__(self, other: Union[float, MVector3D, "MQuaternion"]):
         if isinstance(other, MVector3D):
@@ -1188,7 +1099,7 @@ class MMatrix4x4(MVector):
             dtype=np.float64,
         ).reshape(4, 4)
 
-    def inverse(self):
+    def inverse(self) -> "MMatrix4x4":
         """
         逆行列
         """
@@ -1197,13 +1108,13 @@ class MMatrix4x4(MVector):
 
         return MMatrix4x4()
 
-    def rotate(self, q: MQuaternion):
+    def rotate(self, q: MQuaternion) -> None:
         """
         回転行列
         """
         self.vector = self.vector @ q.to_matrix4x4().vector
 
-    def rotate_x(self, q: MQuaternion):
+    def rotate_x(self, q: MQuaternion) -> None:
         """
         X軸周りの回転行列
         """
@@ -1230,7 +1141,7 @@ class MMatrix4x4(MVector):
 
         self.vector = self.vector @ mat
 
-    def rotate_y(self, q: MQuaternion):
+    def rotate_y(self, q: MQuaternion) -> None:
         """
         Y軸周りの回転行列
         """
@@ -1257,7 +1168,7 @@ class MMatrix4x4(MVector):
 
         self.vector = self.vector @ mat
 
-    def rotate_z(self, q: MQuaternion):
+    def rotate_z(self, q: MQuaternion) -> None:
         """
         Z軸周りの回転行列
         """
@@ -1284,7 +1195,7 @@ class MMatrix4x4(MVector):
 
         self.vector = self.vector @ mat
 
-    def translate(self, v: MVector3D):
+    def translate(self, v: MVector3D) -> None:
         """
         平行移動行列
         """
@@ -1292,7 +1203,7 @@ class MMatrix4x4(MVector):
         vmat[:3, 3] = v.vector
         self.vector = self.vector @ vmat
 
-    def scale(self, v: Union[MVector3D, float]):
+    def scale(self, v: Union[MVector3D, float]) -> None:
         """
         縮尺行列
         """
@@ -1304,16 +1215,16 @@ class MMatrix4x4(MVector):
 
         self.vector = self.vector @ vmat
 
-    def identity(self):
+    def identity(self) -> None:
         """
         初期化
         """
         self.vector = np.eye(4, dtype=np.float64)
 
-    def look_at(self, eye: MVector3D, center: MVector3D, up: MVector3D):
+    def look_at(self, eye: MVector3D, center: MVector3D, up: MVector3D) -> None:
         forward = center - eye
         forward.normalize()
-        if np.isclose(forward, 0).all():
+        if np.isclose(forward.vector, 0).all():
             return
 
         side = forward.cross(up).normalized()
@@ -1334,7 +1245,7 @@ class MMatrix4x4(MVector):
         aspect_ratio: float,
         near_plane: float,
         far_plane: float,
-    ):
+    ) -> None:
         """
         パースペクティブ行列
         """
@@ -1362,7 +1273,7 @@ class MMatrix4x4(MVector):
     def map_vector(self, v: MVector3D) -> MVector3D:
         return MVector3D(*np.sum(v.vector * self.vector[:3, :3], axis=1))
 
-    def to_quaternion(self):
+    def to_quaternion(self) -> "MQuaternion":
         q = MQuaternion()
         v = self.vector
 
@@ -1433,7 +1344,7 @@ class MMatrix4x4(MVector):
         y, x = index
         return self.vector[y, x]
 
-    def __setitem__(self, index, v: float):
+    def __setitem__(self, index, v: float) -> None:
         y, x = index
         self.vector[y, x] = v
 
@@ -1505,7 +1416,7 @@ class MMatrix4x4List:
         """
         # vec4に変換
         ones = np.ones((self.row, self.col, 1))
-        vs4 = np.concatenate((vs, ones), axis=2).reshape(self.row, self.col, 4, 1)
+        vs4: np.ndarray = np.concatenate((vs, ones.tolist()), axis=2).reshape(self.row, self.col, 4, 1)
         # スケール行列に変換
         mat4 = np.full((self.row, self.col, 4, 4), np.eye(4)) * vs4
 
@@ -1580,7 +1491,7 @@ class MMatrix4x4List:
         return self.vector[y, x]
 
 
-def operate_vector(v: MVector, other: Union[MVector, float, int], op):
+def operate_vector(v: MVectorT, other: Union[MVectorT, float, int], op) -> MVectorT:
     """
     演算処理
 

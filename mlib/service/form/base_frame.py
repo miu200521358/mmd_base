@@ -29,25 +29,25 @@ class BaseFrame(wx.Frame):
         self.Centre(wx.BOTH)
         self.Layout()
 
-    def _initialize_ui(self):
+    def _initialize_ui(self) -> None:
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW))
         self.notebook = BaseNotebook(self)
 
-    def _initialize_event(self):
+    def _initialize_event(self) -> None:
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_change_tab)
 
-    def on_change_tab(self, event: wx.Event):
+    def on_change_tab(self, event: wx.Event) -> None:
         pass
 
-    def on_close(self, event: wx.Event):
+    def on_close(self, event: wx.Event) -> None:
         self.Destroy()
         sys.exit(0)
 
-    def on_sound(self):
+    def on_sound(self) -> None:
         Thread(target=self.sound_finish_thread).start()
 
-    def sound_finish_thread(self):
+    def sound_finish_thread(self) -> None:
         """Windowsのみ終了音を鳴らす"""
         if os.name == "nt":
             try:

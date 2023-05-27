@@ -15,7 +15,7 @@ class BaseNotebook(wx.Notebook):
         self._initialize_ui()
         self._initialize_event()
 
-    def _initialize_ui(self):
+    def _initialize_ui(self) -> None:
         if logger.total_level <= LoggingLevel.DEBUG.value:
             # テスト（デバッグ版）の場合
             self.SetBackgroundColour("CORAL")
@@ -28,5 +28,5 @@ class BaseNotebook(wx.Notebook):
         else:
             self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW))
 
-    def _initialize_event(self):
+    def _initialize_event(self) -> None:
         pass

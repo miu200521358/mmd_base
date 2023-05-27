@@ -76,10 +76,7 @@ class PmxReader(BaseReader[PmxModel]):
             "2.1",
         ]:
             # 整合性チェック
-            raise MParseException(
-                "PMX2.0/2.1形式外のデータです。signature: %s, version: %s ",
-                [model.signature, model.version],
-            )
+            raise MParseException("PMX2.0/2.1形式外のデータです。signature: %s, version: %s ", model.signature, model.version)
 
         # 後続するデータ列のバイトサイズ  PMX2.0は 8 で固定
         _ = self.read_byte()

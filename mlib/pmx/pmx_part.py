@@ -87,7 +87,7 @@ class Deform(BaseModel, ABC):
         """
         return self.weights[self.weights >= weight_threshold]
 
-    def normalize(self, align=False):
+    def normalize(self, align=False) -> None:
         """
         ウェイト正規化
 
@@ -338,7 +338,7 @@ class Texture(BaseIndexNameModel):
         self.texture_idx = None
         self.valid = True
 
-    def delete_draw(self):
+    def delete_draw(self) -> None:
         if not self.for_draw or not self.texture_id:
             # 描画フラグが立ってなければスルー
             return
@@ -352,7 +352,7 @@ class Texture(BaseIndexNameModel):
         if error_code != gl.GL_NO_ERROR:
             raise MViewerException(f"glDeleteTextures Failure\n{self.name}: {error_code}")
 
-    def init_draw(self, model_path: str, texture_type: TextureType, is_individual: bool = True):
+    def init_draw(self, model_path: str, texture_type: TextureType, is_individual: bool = True) -> None:
         if self.for_draw:
             # 既にフラグが立ってたら描画初期化済み
             return
@@ -394,7 +394,7 @@ class Texture(BaseIndexNameModel):
         # 描画初期化
         self.for_draw = True
 
-    def set_texture(self):
+    def set_texture(self) -> None:
         if self.image:
             self.bind()
 
@@ -586,12 +586,15 @@ class IkLink(BaseModel):
 
     def __init__(
         self,
-    ):
+    ) -> None:
         super().__init__()
         self.bone_index = -1
         self.angle_limit = False
         self.min_angle_limit = BaseRotationModel()
         self.max_angle_limit = BaseRotationModel()
+
+    def __bool__(self) -> bool:
+        return 0 <= self.bone_index
 
 
 class Ik(BaseModel):
@@ -618,14 +621,15 @@ class Ik(BaseModel):
         "links",
     )
 
-    def __init__(
-        self,
-    ):
+    def __init__(self) -> None:
         super().__init__()
         self.bone_index = -1
         self.loop_count = 0
         self.unit_rotation = BaseRotationModel()
         self.links: list[IkLink] = []
+
+    def __bool__(self) -> bool:
+        return 0 <= self.bone_index
 
 
 @unique
@@ -771,7 +775,7 @@ class Bone(BaseIndexNameModel):
         self.local_x_vector = MVector3D(1, 0, 0)
         self.local_z_vector = MVector3D(0, 0, -1)
         self.external_key = -1
-        self.ik: Optional[Ik] = None
+        self.ik: Ik = Ik()
         self.display: bool = False
         self.is_system: bool = False
         self.ik_link_indexes: list[int] = []

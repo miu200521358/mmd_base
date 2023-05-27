@@ -38,6 +38,7 @@ class BoneTree(BaseIndexNameDictModel[Bone]):
         if end_bone_name:
             end_index = [i for i, b in enumerate(self.data.values()) if b.name == end_bone_name][0]
         else:
+            end_bone_name = self.last_name
             end_index = self.last_index
         new_tree = BoneTree(end_bone_name)
         for i, t in enumerate(self):
