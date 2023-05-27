@@ -620,6 +620,7 @@ class PmxModel(BaseHashModel):
         self.meshes.draw_axis(axis_matrixes, axis_color)
 
     def setup(self) -> None:
+        self.delete_draw()
         total_index_count = len(self.bones)
 
         # システム用ボーン追加
@@ -1053,7 +1054,7 @@ class PmxModel(BaseHashModel):
 
         return True
 
-    def replace_standard_weights(self, bone_names: list[str]):
+    def replace_standard_weights(self, bone_names: list[str]) -> None:
         vertices_indexes = self.get_vertices_by_bone()
 
         if "上半身2" in bone_names:
