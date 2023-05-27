@@ -101,16 +101,12 @@ class Bones(BaseIndexNameDictModel[Bone]):
         "_names",
         "_iter_index",
         "_size",
-        "offset_matrixes",
-        "parent_revert_matrixes",
         "is_bone_not_local_cancels",
         "local_axises",
     )
 
     def __init__(self) -> None:
         super().__init__()
-        self.offset_matrixes: Optional[np.ndarray] = None
-        self.parent_revert_matrixes: Optional[np.ndarray] = None
         self.is_bone_not_local_cancels: Optional[list[bool]] = None
         self.local_axises: Optional[list[MVector3D]] = None
 
