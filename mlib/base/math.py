@@ -5,8 +5,9 @@ from typing import Type, TypeVar, Union
 
 import numpy as np
 from numpy.linalg import inv, norm
+from quaternion import as_rotation_matrix, from_rotation_matrix
 from quaternion import one as qq_one
-from quaternion import as_rotation_matrix, from_rotation_matrix, quaternion, slerp_evaluate
+from quaternion import quaternion, slerp_evaluate
 
 from .base import BaseModel
 

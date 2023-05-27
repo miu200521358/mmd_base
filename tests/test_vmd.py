@@ -1,4 +1,5 @@
 from multiprocessing import freeze_support
+
 import pytest
 
 from mlib.base.math import MQuaternion, MVector3D

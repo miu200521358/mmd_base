@@ -1,9 +1,9 @@
 import os
 from bisect import bisect_left
 from functools import lru_cache
+from itertools import product
 from math import acos, degrees
 from typing import Optional
-from itertools import product
 
 import numpy as np
 from numpy.linalg import inv

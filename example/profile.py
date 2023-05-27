@@ -1,16 +1,15 @@
-from multiprocessing import freeze_support
 import os
 import sys
 import time
+from multiprocessing import freeze_support
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from mlib.base.math import MQuaternion, MVector3D
 from mlib.pmx.pmx_part import BoneMorphOffset, Morph, MorphType
-from mlib.vmd.vmd_part import VmdMorphFrame
 from mlib.pmx.pmx_reader import PmxReader
+from mlib.vmd.vmd_part import VmdMorphFrame
 from mlib.vmd.vmd_reader import VmdReader
-
 
 # 全体プロファイル
 # python -m cProfile -s tottime example\profile.py

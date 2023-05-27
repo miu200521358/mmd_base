@@ -7,7 +7,6 @@ from mlib.base.logger import MLogger
 from mlib.service.base_worker import BaseWorker
 from mlib.service.form.base_panel import BasePanel
 
-
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
