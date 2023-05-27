@@ -495,7 +495,10 @@ class MVector4D(MVector):
         self.vector = np.array([x, y, z, w], dtype=np.float64)
 
     def __str__(self) -> str:
-        return f"[x={round(self.vector[0], 5)}, y={round(self.vector[1], 5)}, " + f"z={round(self.vector[2], 5)}], w={round(self.vector[2], 5)}]"
+        return (
+            f"[x={round(self.vector[0], 5)}, y={round(self.vector[1], 5)}, "
+            + f"z={round(self.vector[2], 5)}], w={round(self.vector[2], 5)}]"
+        )
 
     def copy(self) -> "MVector4D":
         return self.__class__(self.x, self.y, self.z, self.w)

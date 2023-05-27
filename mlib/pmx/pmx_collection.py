@@ -194,7 +194,12 @@ class Bones(BaseIndexNameDictModel[Bone]):
             bone_link_indexes = [(self.data[child_idx].layer, self.data[child_idx].index)]
 
         for b in reversed(self.data.values()):
-            if b.index == self.data[child_idx].parent_index and 0 <= b.index and loop < len(self.data) and (b.layer, b.index) not in bone_link_indexes:
+            if (
+                b.index == self.data[child_idx].parent_index
+                and 0 <= b.index
+                and loop < len(self.data)
+                and (b.layer, b.index) not in bone_link_indexes
+            ):
                 bone_link_indexes.append((b.layer, b.index))
                 return self.create_bone_link_indexes(b.index, bone_link_indexes, loop + 1)
 
@@ -795,7 +800,9 @@ class PmxModel(BaseHashModel):
                 is_same_direction = True
                 is_same_finger = True
                 if bone.name[0] in ["右", "左"] or bone.name[-1] in ["右", "左"]:
-                    is_same_direction = (bone.name[-1] == b.name[0] and "腰キャンセル" in bone.name) or (bone.name[0] == b.name[0] and "腰キャンセル" not in bone.name)
+                    is_same_direction = (bone.name[-1] == b.name[0] and "腰キャンセル" in bone.name) or (
+                        bone.name[0] == b.name[0] and "腰キャンセル" not in bone.name
+                    )
                     if "指" == bone.name[:3][-1]:
                         is_same_finger = bone.name[:2][-1] == b.name[:2][-1]
 
@@ -803,8 +810,12 @@ class PmxModel(BaseHashModel):
                 in_standard = self.bone_trees.is_in_standard(b.name)
                 if b.is_ik:
                     # IKの場合リンクの起点をボーンツリーの基準とする
-                    in_bone_tree = set(self.bones.create_bone_link_indexes(b.index)) | set(self.bones.create_bone_link_indexes(b.ik.links[-1].bone_index))
-                    in_standard |= True in [self.bone_trees.is_in_standard(b.name) for b in self.bone_trees[self.bones[b.ik.links[-1].bone_index].name]]
+                    in_bone_tree = set(self.bones.create_bone_link_indexes(b.index)) | set(
+                        self.bones.create_bone_link_indexes(b.ik.links[-1].bone_index)
+                    )
+                    in_standard |= True in [
+                        self.bone_trees.is_in_standard(b.name) for b in self.bone_trees[self.bones[b.ik.links[-1].bone_index].name]
+                    ]
                 in_bone_tree &= set(self.bones.create_bone_link_indexes(replaced_map[bone.parent_index]))
                 if b.parent_index <= 0:
                     in_bone_tree |= {(0, -1)}
@@ -848,7 +859,11 @@ class PmxModel(BaseHashModel):
                 original_parent = self.bones[replaced_map[r.bone_index]]
                 original_parent_distance = r.shape_position.distance(original_parent.position)
                 replaced_parent_distance = r.shape_position.distance(bone.position)
-                if bone.parent_index == replaced_map[r.bone_index] and original_parent_distance and 0.5 > replaced_parent_distance / original_parent_distance:
+                if (
+                    bone.parent_index == replaced_map[r.bone_index]
+                    and original_parent_distance
+                    and 0.5 > replaced_parent_distance / original_parent_distance
+                ):
                     r.bone_index = bone.index
                 else:
                     r.bone_index = replaced_map[r.bone_index]
@@ -941,7 +956,12 @@ class PmxModel(BaseHashModel):
             bone.tail_position = MVector3D()
             bone.bone_flg &= ~BoneFlg.TAIL_IS_BONE
             bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
-        elif "足先EX" in bone.name and f"{direction}足首" in self.bones and f"{direction}つま先ＩＫ" in self.bones and self.bones[f"{direction}つま先ＩＫ"].ik:
+        elif (
+            "足先EX" in bone.name
+            and f"{direction}足首" in self.bones
+            and f"{direction}つま先ＩＫ" in self.bones
+            and self.bones[f"{direction}つま先ＩＫ"].ik
+        ):
             toe_target_bone = self.bones[self.bones[f"{direction}つま先ＩＫ"].ik.bone_index]
             bone.position = MVector3D(
                 *np.average(
@@ -950,7 +970,9 @@ class PmxModel(BaseHashModel):
                     axis=0,
                 )
             )
-            bone.local_x_vector = (bone_matrixes[0, toe_target_bone.name].position - bone_matrixes[0, f"{direction}足首"].position).normalized()
+            bone.local_x_vector = (
+                bone_matrixes[0, toe_target_bone.name].position - bone_matrixes[0, f"{direction}足首"].position
+            ).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.tail_position = MVector3D()
             bone.bone_flg &= ~BoneFlg.TAIL_IS_BONE
@@ -1095,7 +1117,9 @@ class PmxModel(BaseHashModel):
         for v in [v for v in self.vertices if set(v.deform.indexes) & replaced_bone_indexes]:
             v.deform.indexes = np.vectorize(replaced_map.get)(v.deform.indexes)
 
-    def separate_twist_weights(self, from_name: str, twist1_name: str, twist2_name: str, twist3_name: str, to_name: str, vertices_indexes: list[int]):
+    def separate_twist_weights(
+        self, from_name: str, twist1_name: str, twist2_name: str, twist3_name: str, to_name: str, vertices_indexes: list[int]
+    ):
         """捩りのウェイト置換"""
         x_direction = (self.bones[to_name].position - self.bones[from_name].position).normalized()
         z_direction = MVector3D(0, 0, -1)
@@ -1120,13 +1144,19 @@ class PmxModel(BaseHashModel):
                     continue
                 if abs(vertex_local_pos.z) >= abs(separate_local_pos.z):
                     # 分割先ボーンより先の場合、元ボーンのウェイトをそのまま分割先に置き換える
-                    v.deform.indexes = np.where(v.deform.indexes == self.bones[original_name].index, self.bones[weight_name].index, v.deform.indexes)
+                    v.deform.indexes = np.where(
+                        v.deform.indexes == self.bones[original_name].index, self.bones[weight_name].index, v.deform.indexes
+                    )
                 else:
-                    separate_factor = 1 - abs((vertex_local_pos.z - separate_local_pos.z) / (separate_to_pos.z - separate_local_pos.z)) * 1.5
+                    separate_factor = (
+                        1 - abs((vertex_local_pos.z - separate_local_pos.z) / (separate_to_pos.z - separate_local_pos.z)) * 1.5
+                    )
                     original_weight = np.sum(v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)])
                     separate_weight = original_weight * separate_factor
                     # 元ボーンは分割先ボーンの残り
-                    v.deform.weights = np.where(v.deform.indexes == self.bones[original_name].index, v.deform.weights - separate_weight, v.deform.weights)
+                    v.deform.weights = np.where(
+                        v.deform.indexes == self.bones[original_name].index, v.deform.weights - separate_weight, v.deform.weights
+                    )
                     v.deform.weights = np.append(v.deform.weights, separate_weight)
                     v.deform.indexes = np.append(v.deform.indexes, self.bones[weight_name].index)
                     # 一旦最大値で正規化
@@ -1137,7 +1167,9 @@ class PmxModel(BaseHashModel):
                         v.deform = Bdef2(v.deform.indexes[0], v.deform.indexes[1], v.deform.weights[0])
                     elif not isinstance(v.deform, Sdef):
                         # SdefではなければBdef4で再定義
-                        v.deform = Bdef4(*(v.deform.indexes.tolist() + [0, 0, 0, 0])[:4], *(v.deform.weights.tolist() + [0.0, 0.0, 0.0, 0.0])[:4])
+                        v.deform = Bdef4(
+                            *(v.deform.indexes.tolist() + [0, 0, 0, 0])[:4], *(v.deform.weights.tolist() + [0.0, 0.0, 0.0, 0.0])[:4]
+                        )
                     v.deform.normalize(align=True)
 
     def separate_thumb_weights(self, original_name: str, separate_name: str, tail_name: str, vertex_indexes: list[int]):
@@ -1154,18 +1186,24 @@ class PmxModel(BaseHashModel):
                 # 親指０から頂点への距離が、親指０から親指１の距離の一定倍より離れていたらスルー
                 if v.position.z < vertex_separate_z and vertex_original_distance > vertex_tail_distance:
                     # 手首より親指１の方が近い場合、親指１に置き換えておく
-                    v.deform.indexes = np.where(v.deform.indexes == self.bones[original_name].index, self.bones[tail_name].index, v.deform.indexes)
+                    v.deform.indexes = np.where(
+                        v.deform.indexes == self.bones[original_name].index, self.bones[tail_name].index, v.deform.indexes
+                    )
                 continue
             separate_factor = vertex_separate_distance / (tail_distance + abs(vertex_separate_z))
             original_weight = np.sum(v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)])
             separate_weight = original_weight * separate_factor
             # 元ボーンは分割先ボーンの残り
-            v.deform.weights = np.where(v.deform.indexes == self.bones[original_name].index, v.deform.weights - separate_weight, v.deform.weights)
+            v.deform.weights = np.where(
+                v.deform.indexes == self.bones[original_name].index, v.deform.weights - separate_weight, v.deform.weights
+            )
             v.deform.weights = np.append(v.deform.weights, separate_weight)
             v.deform.indexes = np.append(v.deform.indexes, self.bones[separate_name].index)
             if vertex_original_distance > vertex_separate_distance:
                 # 手首より親指１の方が近い場合、手首のウェイトを親指１に置き換える
-                v.deform.indexes = np.where(v.deform.indexes == self.bones[original_name].index, self.bones[tail_name].index, v.deform.indexes)
+                v.deform.indexes = np.where(
+                    v.deform.indexes == self.bones[original_name].index, self.bones[tail_name].index, v.deform.indexes
+                )
             # 一旦最大値で正規化
             v.deform.count = 4
             v.deform.normalize()
@@ -1197,12 +1235,16 @@ class PmxModel(BaseHashModel):
 
             if separate_factor >= ratio:
                 # 分割先ボーンより上の場合、元ボーンのウェイトをそのまま分割先に置き換える
-                v.deform.indexes = np.where(v.deform.indexes == self.bones[original_name].index, self.bones[separate_name].index, v.deform.indexes)
+                v.deform.indexes = np.where(
+                    v.deform.indexes == self.bones[original_name].index, self.bones[separate_name].index, v.deform.indexes
+                )
             else:
                 original_weight = np.sum(v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)])
                 separate_weight = original_weight * separate_factor
                 # 元ボーンは分割先ボーンの残り
-                v.deform.weights = np.where(v.deform.indexes == self.bones[original_name].index, v.deform.weights - separate_weight, v.deform.weights)
+                v.deform.weights = np.where(
+                    v.deform.indexes == self.bones[original_name].index, v.deform.weights - separate_weight, v.deform.weights
+                )
                 v.deform.weights = np.append(v.deform.weights, separate_weight)
                 v.deform.indexes = np.append(v.deform.indexes, self.bones[separate_name].index)
                 # 一旦最大値で正規化
@@ -1213,7 +1255,9 @@ class PmxModel(BaseHashModel):
                     v.deform = Bdef2(v.deform.indexes[0], v.deform.indexes[1], v.deform.weights[0])
                 elif not isinstance(v.deform, Sdef):
                     # SdefではなければBdef4で再定義
-                    v.deform = Bdef4(*(v.deform.indexes.tolist() + [0, 0, 0, 0])[:4], *(v.deform.weights.tolist() + [0.0, 0.0, 0.0, 0.0])[:4])
+                    v.deform = Bdef4(
+                        *(v.deform.indexes.tolist() + [0, 0, 0, 0])[:4], *(v.deform.weights.tolist() + [0.0, 0.0, 0.0, 0.0])[:4]
+                    )
                 v.deform.normalize(align=True)
 
 
@@ -1466,9 +1510,15 @@ class Meshes(BaseIndexDictModel[Mesh]):
         gl.glDepthFunc(gl.GL_LEQUAL)
 
         # 頂点モーフ変動量を上書き設定してからバインド
-        self.vbo_vertices.data[:, self.morph_pos_comps["offset"] : (self.morph_pos_comps["offset"] + self.morph_pos_comps["size"])] = vertex_morph_poses
-        self.vbo_vertices.data[:, self.morph_uv_comps["offset"] : (self.morph_uv_comps["offset"] + self.morph_uv_comps["size"])] = uv_morph_poses
-        self.vbo_vertices.data[:, self.morph_uv1_comps["offset"] : (self.morph_uv1_comps["offset"] + self.morph_uv1_comps["size"])] = uv1_morph_poses
+        self.vbo_vertices.data[
+            :, self.morph_pos_comps["offset"] : (self.morph_pos_comps["offset"] + self.morph_pos_comps["size"])
+        ] = vertex_morph_poses
+        self.vbo_vertices.data[
+            :, self.morph_uv_comps["offset"] : (self.morph_uv_comps["offset"] + self.morph_uv_comps["size"])
+        ] = uv_morph_poses
+        self.vbo_vertices.data[
+            :, self.morph_uv1_comps["offset"] : (self.morph_uv1_comps["offset"] + self.morph_uv1_comps["size"])
+        ] = uv1_morph_poses
 
         for mesh in self:
             self.vao.bind()

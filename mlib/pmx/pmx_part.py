@@ -387,7 +387,11 @@ class Texture(BaseIndexNameModel):
 
                 self.texture_type = texture_type
                 self.texture_idx = (
-                    gl.GL_TEXTURE0 if texture_type == TextureType.TEXTURE else gl.GL_TEXTURE1 if texture_type == TextureType.TOON else gl.GL_TEXTURE2
+                    gl.GL_TEXTURE0
+                    if texture_type == TextureType.TEXTURE
+                    else gl.GL_TEXTURE1
+                    if texture_type == TextureType.TOON
+                    else gl.GL_TEXTURE2
                 )
                 self.set_texture()
 

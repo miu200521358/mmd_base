@@ -32,7 +32,9 @@ class FloatSliderCtrl:
         self._initial_value = value
         i_value, i_min, i_max = [round(v / increment) for v in (value, min_value, max_value)]
 
-        self._value_ctrl = wx.TextCtrl(parent, wx.ID_ANY, str(f"{value:.2f}"), wx.DefaultPosition, wx.Size(50, -1), style=wx.TE_PROCESS_ENTER)
+        self._value_ctrl = wx.TextCtrl(
+            parent, wx.ID_ANY, str(f"{value:.2f}"), wx.DefaultPosition, wx.Size(50, -1), style=wx.TE_PROCESS_ENTER
+        )
         self._value_ctrl.Bind(wx.EVT_TEXT_ENTER, self._on_change_value)
         if tooltip:
             self._value_ctrl.SetToolTip(tooltip + __("\nEnterキーを押下したタイミングで値が反映されます。"))

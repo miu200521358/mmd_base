@@ -101,7 +101,10 @@ class Geometries:
             for face_index in range(prev_face_count, prev_face_count + face_count):
                 vertex_position_list.append(
                     np.array(
-                        [((self.model.vertices[vidx].position + MVector3D(0, -10, 0)) / 15).vector for vidx in self.model.faces[face_index].vertices],
+                        [
+                            ((self.model.vertices[vidx].position + MVector3D(0, -10, 0)) / 15).vector
+                            for vidx in self.model.faces[face_index].vertices
+                        ],
                         dtype=np.float64,
                     )
                 )

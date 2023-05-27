@@ -214,10 +214,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         matrixes.matmul(motion_bone_local_scales)
 
         # 各ボーンごとのボーン変形行列結果と逆BOf行列(初期姿勢行列)の行列積
-        relative_matrixes = np.array([np.array([bone.parent_revert_matrix @ matrixes[fidx, bone.index] for bone in model.bones]) for fidx in range(len(fnos))])
+        relative_matrixes = np.array(
+            [np.array([bone.parent_revert_matrix @ matrixes[fidx, bone.index] for bone in model.bones]) for fidx in range(len(fnos))]
+        )
 
         # ボーンツリーINDEXリストごとのボーン変形行列リスト(子どもから親に遡る)
-        tree_relative_matrixes = [[relative_matrixes[fidx, list(reversed(bone.tree_indexes))] for bone in model.bones] for fidx in range(len(fnos))]
+        tree_relative_matrixes = [
+            [relative_matrixes[fidx, list(reversed(bone.tree_indexes))] for bone in model.bones] for fidx in range(len(fnos))
+        ]
 
         bone_indexes = model.bones.indexes
         if bone_names:
@@ -271,7 +275,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         else:
             target_bone_names = [
                 model.bones[bone_index].name
-                for bone_index in sorted(set([bone_index for bone_name in bone_names for bone_index in model.bones[bone_name].relative_bone_indexes]))
+                for bone_index in sorted(
+                    set([bone_index for bone_name in bone_names for bone_index in model.bones[bone_name].relative_bone_indexes])
+                )
             ]
 
         if append_ik:
@@ -429,7 +435,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
     def calc_ik_rotations(self, fno: int, model: PmxModel, target_bone_names: list[str]):
         """IK関連ボーンの事前計算"""
-        ik_target_names = [model.bone_trees[target_bone_name].last_name for target_bone_name in target_bone_names if model.bones[target_bone_name].is_ik]
+        ik_target_names = [
+            model.bone_trees[target_bone_name].last_name for target_bone_name in target_bone_names if model.bones[target_bone_name].is_ik
+        ]
         if not ik_target_names:
             # IK計算対象がない場合はそのまま終了
             return
@@ -437,7 +445,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         ik_relative_bone_names = [
             model.bones[bone_index].name
             for bone_index in sorted(
-                set([relative_bone_index for ik_target_name in ik_target_names for relative_bone_index in model.bones[ik_target_name].relative_bone_indexes])
+                set(
+                    [
+                        relative_bone_index
+                        for ik_target_name in ik_target_names
+                        for relative_bone_index in model.bones[ik_target_name].relative_bone_indexes
+                    ]
+                )
             )
         ]
 
@@ -619,7 +633,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     link_bone = model.bones[ik_link.bone_index]
 
                     # IK関連の行列を一括計算
-                    ik_matrixes = self.animate_bone_matrixes([fno], model, bone_names=[ik_bone.name, effector_bone.name, link_bone.name], append_ik=False)
+                    ik_matrixes = self.animate_bone_matrixes(
+                        [fno], model, bone_names=[ik_bone.name, effector_bone.name, link_bone.name], append_ik=False
+                    )
 
                     # IKボーンのグローバル位置
                     global_target_pos = ik_matrixes[fno, ik_bone.name].position
@@ -978,7 +994,9 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         bf.local_scale += offset.local_scale * ratio
         return bf
 
-    def animate_group_morphs(self, fno: int, model: PmxModel, materials: list[ShaderMaterial]) -> tuple[np.ndarray, VmdBoneFrames, list[ShaderMaterial]]:
+    def animate_group_morphs(
+        self, fno: int, model: PmxModel, materials: list[ShaderMaterial]
+    ) -> tuple[np.ndarray, VmdBoneFrames, list[ShaderMaterial]]:
         group_vertex_poses = np.full((len(model.vertices), 3), np.zeros(3))
         bone_frames = VmdBoneFrames()
 

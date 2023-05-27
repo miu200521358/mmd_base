@@ -228,7 +228,11 @@ class SaveWorker(BaseWorker):
                 continue
 
             for dress_bone in dress.bones.writable():
-                if 0 <= dress_bone.tail_index and dress_bone.name not in model.bones and dress.bones[dress_bone.tail_index].name == bone.name:
+                if (
+                    0 <= dress_bone.tail_index
+                    and dress_bone.name not in model.bones
+                    and dress.bones[dress_bone.tail_index].name == bone.name
+                ):
                     # 衣装だけのボーンが表示先が人物のボーンに繋がってる場合、その前に追加しておく
                     copy_bone = dress_bone.copy()
                     copy_bone.index = len(dress_model.bones.writable())
@@ -402,7 +406,9 @@ class ConfigPanel(CanvasPanel):
         self.btn_sizer.Add(self.frame_ctrl, 0, wx.ALL, 5)
 
         # キーフレ
-        self.double_ctrl = WheelSpinCtrlDouble(self, change_event=self.on_change_frame, initial=0, min=-100, max=10000, inc=0.01, size=wx.Size(80, -1))
+        self.double_ctrl = WheelSpinCtrlDouble(
+            self, change_event=self.on_change_frame, initial=0, min=-100, max=10000, inc=0.01, size=wx.Size(80, -1)
+        )
         self.btn_sizer.Add(self.double_ctrl, 0, wx.ALL, 5)
 
         # 再生

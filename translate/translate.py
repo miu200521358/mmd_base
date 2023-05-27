@@ -33,7 +33,9 @@ if __name__ == "__main__":
                 trans_messages = f.readlines()
 
             # 翻訳のペアを辞書にする
-            trans_messages_dict = dict([(message_id, message_str[:-1]) for (message_id, message_str) in zip(trans_messages[:-1], trans_messages[1:])])
+            trans_messages_dict = dict(
+                [(message_id, message_str[:-1]) for (message_id, message_str) in zip(trans_messages[:-1], trans_messages[1:])]
+            )
 
             msg_id = None
             translated_message = None

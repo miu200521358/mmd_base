@@ -610,7 +610,11 @@ def test_insert_standard_bone() -> None:
 
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -630,7 +634,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -648,7 +656,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -666,7 +678,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -691,7 +707,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -709,7 +729,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -727,7 +751,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -745,7 +773,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -763,7 +795,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -781,7 +817,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -799,7 +839,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -817,7 +861,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -835,7 +883,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -853,7 +905,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -871,7 +927,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -889,7 +949,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -907,7 +971,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
@@ -925,7 +993,11 @@ def test_insert_standard_bone() -> None:
     model.setup()
     # -------
     parent_names = dict(
-        [(b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None)) for b in model.bones if b.index >= 0 and b.name != "全ての親"]
+        [
+            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
+            for b in model.bones
+            if b.index >= 0 and b.name != "全ての親"
+        ]
     )
     tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
