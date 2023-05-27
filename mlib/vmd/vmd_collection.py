@@ -248,7 +248,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 global_matrix = MMatrix4x4()
                 global_matrix.vector = result_matrixes[fidx, bone.index] @ pos_mat
 
-                bone_matrixes.append(fno, bone.name, global_matrix, local_matrix, global_matrix.to_position())
+                bone_matrixes.append(fno, bone.index, bone.name, global_matrix, local_matrix, global_matrix.to_position())
 
         return bone_matrixes
 
@@ -1230,7 +1230,7 @@ class VmdMotion(BaseHashModel):
 
         # OpenGL座標系に変換
 
-        gl_matrixes = np.array([matrix.local_matrix.vector.T for matrix in bone_matrixes.data.values()])
+        gl_matrixes = np.array([bft.local_matrix.vector.T for bft in bone_matrixes])
         # gl_matrixes = np.array(bone_matrixes)
 
         gl_matrixes[..., 0, 1:3] *= -1
