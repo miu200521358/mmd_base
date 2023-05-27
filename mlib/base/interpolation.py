@@ -62,10 +62,10 @@ class Interpolation(BaseModel):
 
 
 def get_infections(values: List[float], threshold: float) -> np.ndarray:
-    extract_idxs = get_threshold_infections(np.fromiter(values, dtype=np.float64, count=len(values)), threshold)
+    extract_idxs = get_threshold_infections(np.array(values, dtype=np.float64), threshold)
     if 2 > len(extract_idxs):
         return np.array([])
-    extracts = np.fromiter(values, dtype=np.float64, count=len(values))[extract_idxs]
+    extracts = np.array(values, dtype=np.float64)[extract_idxs]
     f_prime = np.gradient(extracts)
     infections = extract_idxs[np.where(np.diff(np.sign(f_prime)))[0]]
     return infections
@@ -87,7 +87,7 @@ def get_threshold_infections(values: np.ndarray, threshold: float) -> np.ndarray
             start_idx = end_idx - 1
         else:
             end_idx += 1
-    return np.fromiter(sorted(list(set(extract_idxs))), dtype=np.float64, count=len(extract_idxs))
+    return np.array(sorted(list(set(extract_idxs))), dtype=np.float64)
 
 
 def create_interpolation(values: List[float]):
@@ -98,7 +98,7 @@ def create_interpolation(values: List[float]):
     xs = np.arange(0, len(values))
 
     # YはXの移動分を許容範囲とする
-    ys = np.fromiter(sorted(list(set(values))), dtype=np.float64, count=len(values))
+    ys = np.array(sorted(list(set(values))), dtype=np.float64)
 
     # https://github.com/dhermes/bezier/issues/242
     s_vals = np.linspace(0, 1, len(values))

@@ -1288,14 +1288,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
         # 面情報
         self.faces: np.ndarray = np.array(
-            [
-                np.fromiter(
-                    [f.vertices[2], f.vertices[1], f.vertices[0]],
-                    dtype=face_dtype,
-                    count=3,
-                )
-                for f in model.faces
-            ],
+            [np.array([f.vertices[2], f.vertices[1], f.vertices[0]], dtype=face_dtype) for f in model.faces],
         )
 
         prev_vertices_count = 0
@@ -1365,13 +1358,12 @@ class Meshes(BaseIndexDictModel[Mesh]):
         # ボーン位置
         self.bones = np.array(
             [
-                np.fromiter(
+                np.array(
                     [
                         *b.position.gl.vector,
                         b.index / len(writable_bones),
                     ],
                     dtype=np.float32,
-                    count=4,
                 )
                 for b in writable_bones
             ],
@@ -1382,13 +1374,12 @@ class Meshes(BaseIndexDictModel[Mesh]):
         # ボーン親子関係
         self.bone_hierarchies: np.ndarray = np.array(
             [
-                np.fromiter(
+                np.array(
                     [
                         b.index,
                         b.parent_index,
                     ],
                     dtype=bone_face_dtype,
-                    count=2,
                 )
                 for b in writable_bones
             ],
@@ -1411,24 +1402,22 @@ class Meshes(BaseIndexDictModel[Mesh]):
         # ローカル軸
         self.axises = np.array(
             [
-                np.fromiter(
+                np.array(
                     [
                         *b.position.gl.vector,
                         b.index / len(writable_bones) * 2,
                     ],
                     dtype=np.float32,
-                    count=4,
                 )
                 for b in writable_bones
             ]
             + [
-                np.fromiter(
+                np.array(
                     [
                         *(b.position + b.local_axis).gl.vector,
                         b.index / len(writable_bones) * 2,
                     ],
                     dtype=np.float32,
-                    count=4,
                 )
                 for b in writable_bones
             ],
@@ -1439,13 +1428,12 @@ class Meshes(BaseIndexDictModel[Mesh]):
         # ローカル軸親子関係
         self.axis_hierarchies: np.ndarray = np.array(
             [
-                np.fromiter(
+                np.array(
                     [
                         b.index,
                         len(writable_bones) + b.index,
                     ],
                     dtype=axis_face_dtype,
-                    count=2,
                 )
                 for b in writable_bones
             ],

@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from enum import Enum, Flag, IntEnum, unique
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, Optional, Union
 
 import numpy as np
 import OpenGL.GL as gl
@@ -47,10 +47,10 @@ class Deform(BaseModel, ABC):
         "count",
     )
 
-    def __init__(self, indexes: List[int], weights: List[float], count: int):
+    def __init__(self, indexes: list[int], weights: list[float], count: int):
         super().__init__()
-        self.indexes = np.fromiter(indexes, dtype=np.int64, count=len(indexes))
-        self.weights = np.fromiter(weights, dtype=np.float32, count=len(weights))
+        self.indexes = np.array(indexes, dtype=np.int64)
+        self.weights = np.array(weights, dtype=np.float32)
         self.count: int = count
 
     def get_indexes(self, weight_threshold: float = 0) -> np.ndarray:
@@ -99,8 +99,8 @@ class Deform(BaseModel, ABC):
         if align:
             # 揃える必要がある場合
             # 数が足りるよう、かさ増しする
-            ilist = np.fromiter(self.indexes.tolist() + [0, 0, 0, 0], count=(len(self.indexes) + 4), dtype=np.int64)
-            wlist = np.fromiter(self.weights.tolist() + [0, 0, 0, 0], count=(len(self.weights) + 4), dtype=np.float32)
+            ilist = np.array(self.indexes.tolist() + [0, 0, 0, 0], dtype=np.int64)
+            wlist = np.array(self.weights.tolist() + [0, 0, 0, 0], dtype=np.float32)
             # 正規化
             wlist /= wlist.sum(axis=0, keepdims=True)
 
@@ -117,23 +117,19 @@ class Deform(BaseModel, ABC):
         """
         # 揃える必要がある場合
         # 数が足りるよう、かさ増しする
-        ilist = np.fromiter(
-            np.fromiter(
+        ilist = np.array(
+            np.array(
                 self.indexes.tolist() + [0, 0, 0, 0],
                 dtype=np.float32,
-                count=len(self.indexes) + 4,
             ),
             dtype=np.float32,
-            count=len(self.indexes) + 4,
         )
-        wlist = np.fromiter(
-            np.fromiter(
+        wlist = np.array(
+            np.array(
                 self.weights.tolist() + [0, 0, 0, 0],
                 dtype=np.float32,
-                count=len(self.weights) + 4,
             ),
             dtype=np.float32,
-            count=len(self.weights) + 4,
         )
         # 正規化
         wlist /= wlist.sum(axis=0, keepdims=True)

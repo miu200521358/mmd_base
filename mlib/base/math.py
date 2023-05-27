@@ -71,9 +71,9 @@ class MRect(BaseModel):
 def calc_v3_by_ratio(
     prev_x: float, prev_y: float, prev_z: float, next_x: float, next_y: float, next_z: float, ratio_x: float, ratio_y: float, ratio_z: float
 ) -> np.ndarray:
-    prev_v = np.fromiter([prev_x, prev_y, prev_z], dtype=np.float64, count=3)
-    next_v = np.fromiter([next_x, next_y, next_z], dtype=np.float64, count=3)
-    ratio_v = np.fromiter([ratio_x, ratio_y, ratio_z], dtype=np.float64, count=3)
+    prev_v = np.array([prev_x, prev_y, prev_z], dtype=np.float64)
+    next_v = np.array([next_x, next_y, next_z], dtype=np.float64)
+    ratio_v = np.array([ratio_x, ratio_y, ratio_z], dtype=np.float64)
     return prev_v + (next_v - prev_v) * ratio_v
 
 
@@ -83,7 +83,7 @@ class MVector(BaseModel):
     __slots__ = ("vector",)
 
     def __init__(self, x: float = 0.0):
-        self.vector = np.fromiter([x], dtype=np.float64, count=1)
+        self.vector = np.array([x], dtype=np.float64)
 
     def copy(self):
         return self.__class__(self.x)
@@ -356,7 +356,7 @@ class MVector2D(MVector):
         y : float, optional
             Y値, by default 0.0
         """
-        self.vector = np.fromiter([x, y], dtype=np.float64, count=2)
+        self.vector = np.array([x, y], dtype=np.float64)
 
     def __str__(self) -> str:
         return f"[x={round(self.vector[0], 5)}, y={round(self.vector[1], 5)}]"
@@ -383,7 +383,7 @@ class MVector3D(MVector):
     """
 
     def __init__(self, x: float = 0.0, y: float = 0.0, z: float = 0.0):
-        self.vector = np.fromiter([x, y, z], dtype=np.float64, count=3)
+        self.vector = np.array([x, y, z], dtype=np.float64)
 
     def __str__(self) -> str:
         """
@@ -436,7 +436,7 @@ class MVector3D(MVector):
 
     @property
     def vector4(self) -> np.ndarray:
-        return np.fromiter([self.vector[0], self.vector[1], self.vector[2], 0], dtype=np.float64, count=4)
+        return np.array([self.vector[0], self.vector[1], self.vector[2], 0], dtype=np.float64)
 
     @staticmethod
     def calc_by_ratio(prev_v: "MVector3D", next_v: "MVector3D", x: float, y: float, z: float) -> "MVector3D":
@@ -489,7 +489,7 @@ class MVector4D(MVector):
         z: float = 0.0,
         w: float = 0.0,
     ):
-        self.vector = np.fromiter([x, y, z, w], dtype=np.float64, count=4)
+        self.vector = np.array([x, y, z, w], dtype=np.float64)
 
     def __str__(self) -> str:
         return f"[x={round(self.vector[0], 5)}, y={round(self.vector[1], 5)}, " + f"z={round(self.vector[2], 5)}], w={round(self.vector[2], 5)}]"
@@ -750,7 +750,7 @@ class MQuaternion(MVector):
         lengthSquared = xx + yy + zz + self.scalar**2
 
         if not np.isclose([lengthSquared, lengthSquared - 1.0], 0).any():
-            xx, xy, xz, xw, yy, yz, yw, zz, zw = np.fromiter([xx, xy, xz, xw, yy, yz, yw, zz, zw], dtype=np.float64, count=9) / lengthSquared
+            xx, xy, xz, xw, yy, yz, yw, zz, zw = np.array([xx, xy, xz, xw, yy, yz, yw, zz, zw], dtype=np.float64) / lengthSquared
 
         pitch = np.arcsin(max(-1, min(1, -2.0 * (yz - xw))))
         yaw = 0
@@ -1183,27 +1183,9 @@ class MMatrix4x4(MVector):
         m43: float = 0.0,
         m44: float = 1.0,
     ):
-        self.vector = np.fromiter(
-            [
-                m11,
-                m12,
-                m13,
-                m14,
-                m21,
-                m22,
-                m23,
-                m24,
-                m31,
-                m32,
-                m33,
-                m34,
-                m41,
-                m42,
-                m43,
-                m44,
-            ],
+        self.vector = np.array(
+            [m11, m12, m13, m14, m21, m22, m23, m24, m31, m32, m33, m34, m41, m42, m43, m44],
             dtype=np.float64,
-            count=16,
         ).reshape(4, 4)
 
     def inverse(self):

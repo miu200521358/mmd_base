@@ -255,7 +255,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
                 model_set.model.draw_bone(
                     animation.gl_matrixes,
-                    color * np.fromiter([1, 1, 1, model_set.bone_alpha], count=4, dtype=np.float32),
+                    color * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
                 )
 
         # if logging.DEBUG >= logger.total_level:
