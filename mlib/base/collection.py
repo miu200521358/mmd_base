@@ -1,6 +1,6 @@
 import hashlib
 from bisect import bisect_left
-from typing import Any, Generic, Optional, TypeVar
+from typing import Generic, Optional, TypeVar
 
 from mlib.base.base import BaseModel, Encoding
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel
@@ -75,7 +75,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
     def __len__(self) -> int:
         return len(self.data)
 
-    def __iter__(self) -> Any:
+    def __iter__(self):
         self._iter_index = -1
         self._size = len(self.indexes)
         return self
@@ -300,7 +300,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     def __len__(self) -> int:
         return len(self.data)
 
-    def __iter__(self) -> Any:
+    def __iter__(self):
         self._iter_index = -1
         self._size = len(self.indexes)
         return self
@@ -421,7 +421,7 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
     def __len__(self) -> int:
         return len(self.data)
 
-    def __iter__(self) -> Any:
+    def __iter__(self):
         self._iter_index = -1
         self._size = len(self.data)
         return self
