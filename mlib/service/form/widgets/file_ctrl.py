@@ -194,7 +194,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         self.clear_data()
         return False
 
-    def read_digest(self):
+    def read_digest(self) -> None:
         """リーダー対象オブジェクトのハッシュを読み取る"""
         if self.is_show_name and not self.is_save and validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
             digest = self.reader.read_hash_by_filepath(self.file_ctrl.GetPath())
@@ -243,7 +243,8 @@ class MFileDropTarget(wx.FileDropTarget):
         # # アスタリスクOKの場合、フォルダの投入を許可する
         # if os.path.isdir(files[0]) and self.is_aster:
         #     # フォルダを投入された場合、フォルダ内にvmdもしくはvpdがあれば、受け付ける
-        #     child_file_name_exts = [os.path.splitext(filename) for filename in os.listdir(files[0]) if os.path.isfile(os.path.join(files[0], filename))]
+        #     child_file_name_exts = [os.path.splitext(filename) for filename in os.listdir(files[0])
+        # if os.path.isfile(os.path.join(files[0], filename))]
 
         #     for ft in self.parent.file_type:
         #         # 親の許容ファイルパス

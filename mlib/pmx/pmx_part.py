@@ -2188,7 +2188,7 @@ class ShaderMaterial:
     ):
         super().__init__()
         self.light_ambient4 = light_ambient4
-        self.material: Material = material.copy()
+        self.material = material.copy()
         self.texture_factor_vector = texture_factor or MVector4D()
         self.sphere_texture_factor_vector = toon_texture_factor or MVector4D()
         self.toon_texture_factor_vector = sphere_texture_factor or MVector4D()

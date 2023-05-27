@@ -4,7 +4,7 @@ from mlib.service.form.base_frame import BaseFrame
 
 
 class BasePanel(wx.Panel):
-    def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
+    def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw) -> None:
         self.frame = frame
         self.tab_idx = tab_idx
         super().__init__(self.frame.notebook, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL)
@@ -13,9 +13,9 @@ class BasePanel(wx.Panel):
         self.root_sizer = wx.BoxSizer(wx.VERTICAL)
         self.is_fix_tab = False
 
-    def fit(self):
+    def fit(self) -> None:
         self.SetSizer(self.root_sizer)
         self.Layout()
 
-    def Enable(self, enable: bool):
+    def Enable(self, enable: bool) -> None:
         pass

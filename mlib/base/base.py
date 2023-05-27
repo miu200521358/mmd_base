@@ -1,6 +1,6 @@
 from enum import Enum, IntEnum, unique
 from pickle import dumps, loads
-from typing import Any
+from typing import TypeVar
 
 from mlib.base.logger import parse2str
 
@@ -33,6 +33,9 @@ class VecAxis(IntEnum):
     Z = 2
 
 
+TBaseModel = TypeVar("TBaseModel", bound="BaseModel")
+
+
 class BaseModel:
     """基底クラス"""
 
@@ -42,5 +45,5 @@ class BaseModel:
     def __str__(self) -> str:
         return parse2str(self)
 
-    def copy(self) -> Any:
+    def copy(self: TBaseModel) -> TBaseModel:
         return loads(dumps(self))

@@ -45,7 +45,7 @@ class PmxWriter(BaseModel):
         self.output_path = output_path
         self.include_system = include_system
 
-    def save(self):
+    def save(self) -> None:
         if not self.include_system:
             for bone_name in ("足中心", "首根元"):
                 if bone_name in self.model.bones:

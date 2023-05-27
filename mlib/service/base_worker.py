@@ -104,7 +104,7 @@ class BaseWorker:
         self.result_data: Optional[Any] = None
         self.result_func = result_func
 
-    def start(self):
+    def start(self) -> None:
         self.started = True
         self.start_time = time()
 
@@ -115,11 +115,11 @@ class BaseWorker:
             self.killed = False
             self.result_func(result=self.result, data=self.result_data, elapsed_time=show_worked_time(time() - self.start_time))
 
-    def stop(self):
+    def stop(self) -> None:
         self.killed = True
 
     @task_takes_time
-    def run(self):
+    def run(self) -> None:
         try:
             self.thread_execute()
             self.result = True

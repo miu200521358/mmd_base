@@ -500,7 +500,7 @@ class PmxModel(BaseHashModel):
     def name(self) -> str:
         return self.model_name
 
-    def initialize_display_slots(self):
+    def initialize_display_slots(self) -> None:
         d01 = DisplaySlot(name="Root", english_name="Root")
         d01.special_flg = Switch.ON
         self.display_slots.append(d01)

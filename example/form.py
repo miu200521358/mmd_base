@@ -15,7 +15,7 @@ from mlib.base.logger import MLogger
 from mlib.base.math import MQuaternion, MVector3D
 from mlib.pmx.canvas import CanvasPanel
 from mlib.pmx.pmx_collection import PmxModel
-from mlib.pmx.pmx_part import Bone, BoneMorphOffset, Face, Material, Morph, MorphType, SphereMode, Texture, ToonSharing, Vertex
+from mlib.pmx.pmx_part import Bone, BoneMorphOffset, Face, Morph, MorphType, SphereMode, Texture, ToonSharing
 from mlib.pmx.pmx_writer import PmxWriter
 from mlib.service.base_worker import BaseWorker
 from mlib.service.form.base_frame import BaseFrame
@@ -39,7 +39,7 @@ class FilePanel(BasePanel):
 
         self._initialize_ui()
 
-    def _initialize_ui(self):
+    def _initialize_ui(self) -> None:
         self.model_ctrl = MPmxFilePickerCtrl(
             self.frame,
             self,
@@ -101,18 +101,18 @@ class FilePanel(BasePanel):
         self.root_sizer.Add(wx.StaticLine(self, wx.ID_ANY), wx.GROW)
         self.fit()
 
-    def exec(self, event: wx.Event):
+    def exec(self, event: wx.Event) -> None:
         if not (self.model_ctrl.data and self.dress_ctrl.data):
             return
 
         if self.exec_btn_ctrl.exec_worker:
             self.exec_btn_ctrl.exec_worker.start()
 
-    def exec_result(self, result: bool, data: Optional[Any], elapsed_time: str):
+    def exec_result(self, result: bool, data: Optional[Any], elapsed_time: str) -> None:
         logger.info(self.output_pmx_ctrl.path, decoration=MLogger.Decoration.BOX)
         self.frame.on_sound()
 
-    def on_change_model_pmx(self, event: wx.Event):
+    def on_change_model_pmx(self, event: wx.Event) -> None:
         self.model_ctrl.unwrap()
         if self.model_ctrl.read_name():
             self.model_ctrl.read_digest()
@@ -120,17 +120,17 @@ class FilePanel(BasePanel):
             model_path = os.path.join(dir_path, f"{datetime.now():%Y%m%d_%H%M%S}", f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
             self.output_pmx_ctrl.path = model_path
 
-    def on_change_dress_pmx(self, event: wx.Event):
+    def on_change_dress_pmx(self, event: wx.Event) -> None:
         self.dress_ctrl.unwrap()
         if self.dress_ctrl.read_name():
             self.dress_ctrl.read_digest()
 
-    def on_change_motion(self, event: wx.Event):
+    def on_change_motion(self, event: wx.Event) -> None:
         self.motion_ctrl.unwrap()
         if self.motion_ctrl.read_name():
             self.motion_ctrl.read_digest()
 
-    def Enable(self, enable: bool):
+    def Enable(self, enable: bool) -> None:
         self.model_ctrl.Enable(enable)
         self.dress_ctrl.Enable(enable)
         self.motion_ctrl.Enable(enable)
@@ -140,7 +140,7 @@ class PmxLoadWorker(BaseWorker):
     def __init__(self, panel: BasePanel, result_event: wx.Event) -> None:
         super().__init__(panel, result_event)
 
-    def thread_execute(self):
+    def thread_execute(self) -> None:
         file_panel: FilePanel = self.frame
         model: Optional[PmxModel] = None
         dress: Optional[PmxModel] = None
@@ -165,7 +165,7 @@ class PmxLoadWorker(BaseWorker):
 
         self.result_data = (model, dress, motion)
 
-    def load_model(self):
+    def load_model(self) -> PmxModel:
         file_panel: FilePanel = self.frame
         model: Optional[PmxModel] = None
 
@@ -295,7 +295,7 @@ class SaveWorker(BaseWorker):
             if "01_Onepiece_02" in material.name:
                 prev_faces_count += material.vertices_count // 3
                 continue
-            copy_material: Material = material.copy()
+            copy_material = material.copy()
             copy_material.index = len(dress_model.materials)
 
             if 0 <= material.texture_index:
@@ -317,7 +317,7 @@ class SaveWorker(BaseWorker):
                 faces = []
                 for vertex_index in model.faces[face_index].vertices:
                     if vertex_index not in model_vertex_map:
-                        copy_vertex: Vertex = model.vertices[vertex_index].copy()
+                        copy_vertex = model.vertices[vertex_index].copy()
                         copy_vertex.index = -1
                         copy_vertex.deform.indexes = np.vectorize(model_bone_map.get)(copy_vertex.deform.indexes)
                         faces.append(len(dress_model.vertices))
@@ -374,7 +374,7 @@ class SaveWorker(BaseWorker):
         self.result_data = True
 
     def copy_texture(self, dest_model: PmxModel, texture: Texture, src_model_path: str) -> Texture:
-        copy_texture: Texture = texture.copy()
+        copy_texture = texture.copy()
         copy_texture.index = len(dest_model.textures)
         texture_path = os.path.abspath(os.path.join(os.path.dirname(src_model_path), copy_texture.name))
         if copy_texture.name and os.path.exists(texture_path) and os.path.isfile(texture_path):
@@ -394,7 +394,7 @@ class ConfigPanel(CanvasPanel):
         self._initialize_ui()
         self._initialize_event()
 
-    def _initialize_ui(self):
+    def _initialize_ui(self) -> None:
         self.config_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         self.config_sizer.Add(self.canvas, 0, wx.EXPAND | wx.ALL, 0)
@@ -435,25 +435,25 @@ class ConfigPanel(CanvasPanel):
 
         self.fit()
 
-    def _initialize_event(self):
+    def _initialize_event(self) -> None:
         self.play_btn.Bind(wx.EVT_BUTTON, self.on_play)
 
-    def on_play(self, event: wx.Event):
+    def on_play(self, event: wx.Event) -> None:
         self.canvas.on_play(event)
         self.play_btn.SetLabel("Stop" if self.canvas.playing else "Play")
 
     @property
-    def fno(self):
+    def fno(self) -> int:
         return self.frame_ctrl.GetValue()
 
     @fno.setter
-    def fno(self, v: int):
+    def fno(self, v: int) -> None:
         self.frame_ctrl.SetValue(v)
 
-    def stop_play(self):
+    def stop_play(self) -> None:
         self.play_btn.SetLabel("Play")
 
-    def on_change_frame(self, event: wx.Event):
+    def on_change_frame(self, event: wx.Event) -> None:
         self.fno = self.frame_ctrl.GetValue()
         self.canvas.change_motion(event)
 
@@ -476,7 +476,7 @@ class TestFrame(BaseFrame):
 
         self.worker = PmxLoadWorker(self.file_panel, self.on_result)
 
-    def on_change_tab(self, event: wx.Event):
+    def on_change_tab(self, event: wx.Event) -> None:
         if self.notebook.GetSelection() == self.config_panel.tab_idx:
             self.notebook.ChangeSelection(self.file_panel.tab_idx)
             if not self.worker.started:
@@ -496,14 +496,14 @@ class TestFrame(BaseFrame):
                     # 既に読み取りが完了していたらそのまま表示
                     self.notebook.ChangeSelection(self.config_panel.tab_idx)
 
-    def save_histories(self):
+    def save_histories(self) -> None:
         self.file_panel.model_ctrl.save_path()
         self.file_panel.dress_ctrl.save_path()
         self.file_panel.motion_ctrl.save_path()
 
         save_histories(self.histories)
 
-    def on_result(self, result: bool, data: Optional[Any], elapsed_time: str):
+    def on_result(self, result: bool, data: Optional[Any], elapsed_time: str) -> None:
         self.file_panel.console_ctrl.write(f"\n----------------\n{elapsed_time}")
 
         if not (result and data):
@@ -520,7 +520,7 @@ class TestFrame(BaseFrame):
         if not (self.file_panel.motion_ctrl.data and self.file_panel.model_ctrl.data and self.file_panel.dress_ctrl.data):
             return
 
-        dress_motion: VmdMotion = self.file_panel.motion_ctrl.data.copy()
+        dress_motion = self.file_panel.motion_ctrl.data.copy()
 
         # bf = VmdBoneFrame(0, "右腕")
         # bf.local_position = MVector3D(0, 1, 0)
@@ -588,7 +588,7 @@ class TestFrame(BaseFrame):
 
 
 class MuApp(wx.App):
-    def __init__(self, redirect=False, filename=None, useBestVisual=False, clearSigInt=True):
+    def __init__(self, redirect=False, filename=None, useBestVisual=False, clearSigInt=True) -> None:
         super().__init__(redirect, filename, useBestVisual, clearSigInt)
         self.frame = TestFrame(self)
         self.frame.Show()

@@ -301,7 +301,7 @@ class VmdBoneFrame(BaseVmdNameFrame):
         return self
 
     def __add__(self, v: "VmdBoneFrame"):
-        vv: VmdBoneFrame = self.copy()
+        vv = self.copy()
 
         vv.position += v.position
         vv.local_position += v.local_position
@@ -369,7 +369,7 @@ class VmdMorphFrame(BaseVmdNameFrame):
         return self
 
     def __add__(self, v: "VmdMorphFrame"):
-        vv: VmdMorphFrame = self.copy()
+        vv = self.copy()
         vv.ratio += v.ratio
         return vv
 
