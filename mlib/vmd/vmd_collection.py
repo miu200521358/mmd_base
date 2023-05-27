@@ -597,10 +597,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             if ik_target_bone_idx not in model.bones or not ik_bone.ik:
                 continue
 
-            ik_matrixes = self.animate_bone_matrixes([fno], model, bone_names=[ik_bone.name], append_ik=False)
-            global_target_pos = ik_matrixes[fno, ik_bone.name].position
-
-            # IKターゲットボーンツリー
+            # IKターゲットボーン
             effector_bone = model.bones[ik_bone.ik.bone_index]
 
             # IKリンクボーンツリー
@@ -620,12 +617,17 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 処理対象IKボーン
                     link_bone = model.bones[ik_link.bone_index]
 
+                    # IK関連の行列を一括計算
+                    ik_matrixes = self.animate_bone_matrixes([fno], model, bone_names=[ik_bone.name, effector_bone.name, link_bone.name], append_ik=False)
+
+                    # IKボーンのグローバル位置
+                    global_target_pos = ik_matrixes[fno, ik_bone.name].position
+
                     # 現在のIKターゲットボーンのグローバル位置を取得
-                    effector_matrixes = self.animate_bone_matrixes([fno], model, bone_names=[effector_bone.name, link_bone.name], append_ik=False)
-                    global_effector_pos = effector_matrixes[fno, effector_bone.name].position
+                    global_effector_pos = ik_matrixes[fno, effector_bone.name].position
 
                     # 注目ノード（実際に動かすボーン）
-                    link_matrix = effector_matrixes[fno, link_bone.name].global_matrix
+                    link_matrix = ik_matrixes[fno, link_bone.name].global_matrix
 
                     # ワールド座標系から注目ノードの局所座標系への変換
                     link_inverse_matrix = link_matrix.inverse()
