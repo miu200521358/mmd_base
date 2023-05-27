@@ -296,6 +296,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     @verify_thread
     def sort_indexes(self) -> None:
         self.indexes = sorted(self.data.keys()) if self.data else []
+        self._names = dict([(self.data[index].name, index) for index in self.indexes])
 
     def __len__(self) -> int:
         return len(self.data)
