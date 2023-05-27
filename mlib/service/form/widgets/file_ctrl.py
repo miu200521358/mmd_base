@@ -37,7 +37,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
     ) -> None:
         self.frame = frame
         self.parent = parent
-        self.reader = reader
+        self.reader: TBaseReader = reader
         self.original_data: Optional[TBaseHashModel] = None
         self.data: Optional[TBaseHashModel] = None
         self.key = key
