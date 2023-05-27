@@ -751,11 +751,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
 
 @lru_cache(maxsize=None)
-def calc_morph_ratio(prev: float, next: float, ratio: float) -> float:
-    return prev + (next - prev) * ratio
-
-
-@lru_cache(maxsize=None)
 def calc_local_position(
     is_bone_not_local_cancel: bool,
     local_pos: MVector3D,
@@ -899,7 +894,7 @@ class VmdMorphNameFrames(BaseIndexNameDictModel[VmdMorphFrame]):
 
         # モーフは補間なし
         ry = (index - prev_index) / (next_index - prev_index)
-        mf.ratio = calc_morph_ratio(prev_mf.ratio, next_mf.ratio, ry)
+        mf.ratio = prev_mf.ratio + (next_mf.ratio - prev_mf.ratio) * ry
 
         return mf
 
