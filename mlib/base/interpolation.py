@@ -172,14 +172,10 @@ def cache_evaluate(x: float, x1: float, y1: float, x2: float, y2: float) -> Tupl
 
 
 # 解を求める関数
-def func_f(x1: float, x2: float, x: float, t: float):
-    t1 = 1 - t
-    return 3 * (t1**2) * t * x1 + 3 * t1 * (t**2) * x2 + (t**3) - x
-
-
 @lru_cache(maxsize=None)
 def cached_func_f(x1, x2, x, t):
-    return func_f(x1, x2, x, t)
+    t1 = 1 - t
+    return 3 * (t1**2) * t * x1 + 3 * t1 * (t**2) * x2 + (t**3) - x
 
 
 # Newton法（方程式の関数項、探索の開始点、微小量、誤差範囲、最大反復回数）
