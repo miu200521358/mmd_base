@@ -2,8 +2,6 @@ import hashlib
 from bisect import bisect_left
 from typing import Generic, Optional, TypeVar
 
-import numpy as np
-
 from mlib.base.base import BaseModel, Encoding
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel
 from mlib.service.base_worker import verify_thread
@@ -127,17 +125,18 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         self._size = 0
 
     def __getitem__(self, key: int | str) -> TBaseIndexNameModel:
-        if isinstance(key, (int, np.int32, np.int64, np.int16)):
+        if isinstance(key, str):
+            return self.get_by_name(key)
+        else:
             return self.get_by_index(int(key))
-        return self.get_by_name(key)
 
     @verify_thread
     def __delitem__(self, key: int | str) -> None:
         if key in self:
-            if isinstance(key, (int, np.int32, np.int64, np.int16)):
-                del self.data[int(key)]
-            else:
+            if isinstance(key, str):
                 del self.data[self._names[key]]
+            else:
+                del self.data[int(key)]
 
     @verify_thread
     def __setitem__(self, index: int, v: TBaseIndexNameModel) -> None:
@@ -315,9 +314,9 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         return self.data[self.indexes[self._iter_index]]
 
     def __contains__(self, key: int | str) -> bool:
-        if isinstance(key, (int, np.int32, np.int64, np.int16)):
-            return int(key) in self.data
-        return key in self._names
+        if isinstance(key, str):
+            return key in self._names
+        return int(key) in self.data
 
     def __bool__(self) -> bool:
         return 0 < len(self.data)

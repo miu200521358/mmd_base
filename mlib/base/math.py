@@ -670,7 +670,7 @@ class MQuaternion(MVector):
         return MQuaternion(-self.scalar, -self.x, self.y, self.z)
 
     def __bool__(self) -> bool:
-        return not np.all(self.vector == qq_one)
+        return qq_one != self.vector
 
     def __str__(self) -> str:
         return f"[x={round(self.x, 5)}, y={round(self.y, 5)}, " + f"z={round(self.z, 5)}, scalar={round(self.scalar, 5)}]"
