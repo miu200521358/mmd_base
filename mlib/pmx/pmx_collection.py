@@ -1289,6 +1289,12 @@ class Meshes(BaseIndexDictModel[Mesh]):
         "bone_vbo_components",
         "bone_vbo_vertices",
         "bone_ibo_faces",
+        "axises",
+        "axis_hierarchies",
+        "axis_vao",
+        "axis_vbo_components",
+        "axis_vbo_vertices",
+        "axis_ibo_faces",
     )
 
     def __init__(self, shader: MShader, model: PmxModel) -> None:
