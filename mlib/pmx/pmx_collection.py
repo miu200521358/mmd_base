@@ -610,14 +610,14 @@ class PmxModel(BaseHashModel):
             return
         self.meshes.draw_bone(bone_matrixes, bone_color)
 
-    def draw_axis(
-        self,
-        axis_matrixes: np.ndarray,
-        axis_color: np.ndarray,
-    ) -> None:
-        if not self.for_draw or not self.meshes:
-            return
-        self.meshes.draw_axis(axis_matrixes, axis_color)
+    # def draw_axis(
+    #     self,
+    #     axis_matrixes: np.ndarray,
+    #     axis_color: np.ndarray,
+    # ) -> None:
+    #     if not self.for_draw or not self.meshes:
+    #         return
+    #     self.meshes.draw_axis(axis_matrixes, axis_color)
 
     def setup(self) -> None:
         self.delete_draw()
@@ -1407,23 +1407,21 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
         # ----------
 
-        writable_bones = [bone for bone in model.bones]
-
         # ボーン位置
         self.bones = np.array(
             [
                 np.array(
                     [
                         *b.position.gl.vector,
-                        b.index / len(writable_bones),
+                        b.index / len(model.bones),
                     ],
                     dtype=np.float32,
                 )
-                for b in writable_bones
+                for b in model.bones
             ],
         )
 
-        bone_face_dtype: type = np.uint8 if 256 > len(writable_bones) else np.uint16 if 65536 > len(writable_bones) else np.uint32
+        bone_face_dtype: type = np.uint8 if 256 > len(model.bones) else np.uint16 if 65536 > len(model.bones) else np.uint32
 
         # ボーン親子関係
         self.bone_hierarchies: np.ndarray = np.array(
@@ -1435,7 +1433,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
                     ],
                     dtype=bone_face_dtype,
                 )
-                for b in writable_bones
+                for b in model.bones
             ],
         )
 
@@ -1451,59 +1449,59 @@ class Meshes(BaseIndexDictModel[Mesh]):
         )
         self.bone_ibo_faces = IBO(self.bone_hierarchies)
 
-        # ----------
+        # # ----------
 
-        # ローカル軸
-        self.axises = np.array(
-            [
-                np.array(
-                    [
-                        *b.position.gl.vector,
-                        b.index / len(writable_bones) * 2,
-                    ],
-                    dtype=np.float32,
-                )
-                for b in writable_bones
-            ]
-            + [
-                np.array(
-                    [
-                        *(b.position + b.local_axis).gl.vector,
-                        b.index / len(writable_bones) * 2,
-                    ],
-                    dtype=np.float32,
-                )
-                for b in writable_bones
-            ],
-        )
+        # # ローカル軸
+        # self.axises = np.array(
+        #     [
+        #         np.array(
+        #             [
+        #                 *b.position.gl.vector,
+        #                 b.index / len(model.bones) * 2,
+        #             ],
+        #             dtype=np.float32,
+        #         )
+        #         for b in model.bones
+        #     ]
+        #     + [
+        #         np.array(
+        #             [
+        #                 *(b.position + b.local_axis).gl.vector,
+        #                 b.index / len(model.bones) * 2,
+        #             ],
+        #             dtype=np.float32,
+        #         )
+        #         for b in model.bones
+        #     ],
+        # )
 
-        axis_face_dtype: type = np.uint8 if 256 > len(writable_bones) * 2 else np.uint16 if 65536 > len(writable_bones) * 2 else np.uint32
+        # axis_face_dtype: type = np.uint8 if 256 > len(model.bones) * 2 else np.uint16 if 65536 > len(model.bones) * 2 else np.uint32
 
-        # ローカル軸親子関係
-        self.axis_hierarchies: np.ndarray = np.array(
-            [
-                np.array(
-                    [
-                        b.index,
-                        len(writable_bones) + b.index,
-                    ],
-                    dtype=axis_face_dtype,
-                )
-                for b in writable_bones
-            ],
-        )
+        # # ローカル軸親子関係
+        # self.axis_hierarchies: np.ndarray = np.array(
+        #     [
+        #         np.array(
+        #             [
+        #                 b.index,
+        #                 len(model.bones) + b.index,
+        #             ],
+        #             dtype=axis_face_dtype,
+        #         )
+        #         for b in model.bones
+        #     ],
+        # )
 
-        # ローカル軸VAO
-        self.axis_vao = VAO()
-        self.axis_vbo_components = {
-            0: {"size": 3, "offset": 0},
-            1: {"size": 1, "offset": 3},
-        }
-        self.axis_vbo_vertices = VBO(
-            self.axises,
-            self.axis_vbo_components,
-        )
-        self.axis_ibo_faces = IBO(self.axis_hierarchies)
+        # # ローカル軸VAO
+        # self.axis_vao = VAO()
+        # self.axis_vbo_components = {
+        #     0: {"size": 3, "offset": 0},
+        #     1: {"size": 1, "offset": 3},
+        # }
+        # self.axis_vbo_vertices = VBO(
+        #     self.axises,
+        #     self.axis_vbo_components,
+        # )
+        # self.axis_ibo_faces = IBO(self.axis_hierarchies)
 
     def draw(
         self,
@@ -1643,57 +1641,57 @@ class Meshes(BaseIndexDictModel[Mesh]):
         gl.glDisable(gl.GL_ALPHA_TEST)
         gl.glDisable(gl.GL_DEPTH_TEST)
 
-    def draw_axis(self, axis_matrixes: np.ndarray, axis_color: np.ndarray):
-        # ボーンをモデルメッシュの前面に描画するために深度テストを無効化
-        gl.glEnable(gl.GL_DEPTH_TEST)
-        gl.glDepthFunc(gl.GL_ALWAYS)
+    # def draw_axis(self, axis_matrixes: np.ndarray, axis_color: np.ndarray):
+    #     # ボーンをモデルメッシュの前面に描画するために深度テストを無効化
+    #     gl.glEnable(gl.GL_DEPTH_TEST)
+    #     gl.glDepthFunc(gl.GL_ALWAYS)
 
-        # アルファテストを有効にする
-        gl.glEnable(gl.GL_ALPHA_TEST)
+    #     # アルファテストを有効にする
+    #     gl.glEnable(gl.GL_ALPHA_TEST)
 
-        # ブレンディングを有効にする
-        gl.glEnable(gl.GL_BLEND)
-        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+    #     # ブレンディングを有効にする
+    #     gl.glEnable(gl.GL_BLEND)
+    #     gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
-        self.axis_vao.bind()
-        self.axis_vbo_vertices.bind()
-        self.axis_vbo_vertices.set_slot_by_value(0)
-        self.axis_vbo_vertices.set_slot_by_value(1)
-        self.axis_ibo_faces.bind()
+    #     self.axis_vao.bind()
+    #     self.axis_vbo_vertices.bind()
+    #     self.axis_vbo_vertices.set_slot_by_value(0)
+    #     self.axis_vbo_vertices.set_slot_by_value(1)
+    #     self.axis_ibo_faces.bind()
 
-        self.shader.use(ProgramType.AXIS)
+    #     self.shader.use(ProgramType.AXIS)
 
-        gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *axis_color)
-        gl.glUniform1i(self.shader.bone_count_uniform[ProgramType.BONE.value], len(self.model.bones) * 2)
+    #     gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *axis_color)
+    #     gl.glUniform1i(self.shader.bone_count_uniform[ProgramType.BONE.value], len(self.model.bones) * 2)
 
-        if self.model.meshes:
-            self.model.meshes[0].bind_bone_matrixes(np.concatenate([axis_matrixes, axis_matrixes]), self.shader, ProgramType.AXIS)
+    #     if self.model.meshes:
+    #         self.model.meshes[0].bind_bone_matrixes(np.concatenate([axis_matrixes, axis_matrixes]), self.shader, ProgramType.AXIS)
 
-        try:
-            gl.glDrawElements(
-                gl.GL_LINES,
-                self.axis_hierarchies.size,
-                self.axis_ibo_faces.dtype,
-                gl.ctypes.c_void_p(0),
-            )
-        except Exception as e:
-            raise MViewerException("Meshes draw_axis Failure", e)
+    #     try:
+    #         gl.glDrawElements(
+    #             gl.GL_LINES,
+    #             self.axis_hierarchies.size,
+    #             self.axis_ibo_faces.dtype,
+    #             gl.ctypes.c_void_p(0),
+    #         )
+    #     except Exception as e:
+    #         raise MViewerException("Meshes draw_axis Failure", e)
 
-        error_code = gl.glGetError()
-        if error_code != gl.GL_NO_ERROR:
-            raise MViewerException(f"Meshes draw_axis Failure\n{error_code}")
+    #     error_code = gl.glGetError()
+    #     if error_code != gl.GL_NO_ERROR:
+    #         raise MViewerException(f"Meshes draw_axis Failure\n{error_code}")
 
-        if self.model.meshes:
-            self.model.meshes[0].unbind_bone_matrixes()
+    #     if self.model.meshes:
+    #         self.model.meshes[0].unbind_bone_matrixes()
 
-        self.axis_ibo_faces.unbind()
-        self.axis_vbo_vertices.unbind()
-        self.axis_vao.unbind()
-        self.shader.unuse()
+    #     self.axis_ibo_faces.unbind()
+    #     self.axis_vbo_vertices.unbind()
+    #     self.axis_vao.unbind()
+    #     self.shader.unuse()
 
-        gl.glDisable(gl.GL_BLEND)
-        gl.glDisable(gl.GL_ALPHA_TEST)
-        gl.glDisable(gl.GL_DEPTH_TEST)
+    #     gl.glDisable(gl.GL_BLEND)
+    #     gl.glDisable(gl.GL_ALPHA_TEST)
+    #     gl.glDisable(gl.GL_DEPTH_TEST)
 
     def delete_draw(self) -> None:
         for material in self.model.materials:
