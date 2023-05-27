@@ -617,20 +617,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     if ik_link.bone_index not in model.bones:
                         continue
 
-                    # 現在のIKターゲットボーンのグローバル位置を取得
-                    effector_matrixes = self.animate_bone_matrixes([fno], model, bone_names=[effector_bone.name], append_ik=False)
-                    global_effector_pos = effector_matrixes[fno, effector_bone.name].position
-
                     # 処理対象IKボーン
                     link_bone = model.bones[ik_link.bone_index]
 
-                    # リンクボーンの角度を保持
-                    link_bf = self[link_bone.name][fno]
+                    # 現在のIKターゲットボーンのグローバル位置を取得
+                    effector_matrixes = self.animate_bone_matrixes([fno], model, bone_names=[effector_bone.name, link_bone.name], append_ik=False)
+                    global_effector_pos = effector_matrixes[fno, effector_bone.name].position
 
-                    # 処理対象IKボーンのグローバル位置と行列を取得
-                    link_matrixes = self.animate_bone_matrixes([fno], model, bone_names=[link_bone.name], append_ik=False)
                     # 注目ノード（実際に動かすボーン）
-                    link_matrix = link_matrixes[fno, link_bone.name].global_matrix
+                    link_matrix = effector_matrixes[fno, link_bone.name].global_matrix
 
                     # ワールド座標系から注目ノードの局所座標系への変換
                     link_inverse_matrix = link_matrix.inverse()
@@ -664,6 +659,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 制限角で最大変位量を制限する
                     if 0 < loop:
                         rotation_degree = min(rotation_degree, ik_bone.ik.unit_rotation.degrees.x)
+
+                    # リンクボーンの角度を保持
+                    link_bf = self[link_bone.name][fno]
 
                     # 補正関節回転量
                     correct_qq = MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
