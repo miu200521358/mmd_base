@@ -328,9 +328,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         fno_local_qqs[parent_bone.index] = parent_bf.local_rotation
                         fno_local_scales[parent_bone.index] = parent_bf.local_scale
                     if model.bones.is_bone_not_local_cancels:
-                        is_parent_bone_not_local_cancels.append(model.bones.is_bone_not_local_cancels[parent_bone.index] or False)
+                        is_parent_bone_not_local_cancels.append(model.bones.is_bone_not_local_cancels[parent_bone.index])
                     if model.bones.local_axises:
-                        parent_local_axises.append(model.bones.local_axises[parent_bone.index] or MVector3D())
+                        parent_local_axises.append(model.bones.local_axises[parent_bone.index])
                     parent_local_poses.append(fno_local_poses[parent_bone.index])
                     parent_local_qqs.append(fno_local_qqs[parent_bone.index])
                     parent_local_scales.append(fno_local_scales[parent_bone.index])
