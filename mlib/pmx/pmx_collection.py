@@ -93,8 +93,30 @@ class Bones(BaseIndexNameDictModel[Bone]):
     ボーンリスト
     """
 
+    __slots__ = (
+        "name",
+        "data",
+        "cache",
+        "indexes",
+        "_names",
+        "_iter_index",
+        "_size",
+        "offset_matrixes",
+        "parent_revert_matrixes",
+        "is_bone_not_local_cancels",
+        "local_axises",
+    )
+
     def __init__(self) -> None:
         super().__init__()
+        self.offset_matrixes: Optional[np.ndarray] = None
+        self.parent_revert_matrixes: Optional[np.ndarray] = None
+        self.is_bone_not_local_cancels: Optional[list[bool]] = None
+        self.local_axises: Optional[list[MVector3D]] = None
+
+    def setup(self):
+        self.is_bone_not_local_cancels = [bone.is_not_local_cancel for bone in self.data.values()]
+        self.local_axises = [bone.local_axis for bone in self.data.values()]
 
     def writable(self) -> list[Bone]:
         """出力対象となるボーン一覧を取得する"""
@@ -439,9 +461,6 @@ class PmxModel(BaseHashModel):
         "meshes",
         "textures",
         "toon_textures",
-        "parent_matrixes",
-        "offset_matrixes",
-        "parent_revert_matrixes",
     )
 
     def __init__(
@@ -475,8 +494,6 @@ class PmxModel(BaseHashModel):
         self.joints: Joints = Joints()
         self.for_draw = False
         self.meshes: Optional[Meshes] = None
-        self.offset_matrixes: Optional[np.ndarray] = None
-        self.parent_revert_matrixes: Optional[np.ndarray] = None
 
     @property
     def name(self) -> str:
@@ -628,9 +645,6 @@ class PmxModel(BaseHashModel):
 
         logger.info("モデルセットアップ：システム用ボーン")
 
-        self.parent_revert_matrixes = np.full((len(self.bones), 4, 4), np.eye(4))
-        self.offset_matrixes = np.full((len(self.bones), 4, 4), np.eye(4))
-
         for bone in self.bones:
             # IKのリンクとターゲット
             if bone.is_ik and bone.ik:
@@ -656,6 +670,8 @@ class PmxModel(BaseHashModel):
 
         # ボーンツリー生成
         self.bone_trees = self.bones.create_bone_trees()
+        # ボーンリストセットアップ
+        self.bones.setup()
 
         logger.info("モデルセットアップ：ボーンツリー")
 
@@ -690,11 +706,9 @@ class PmxModel(BaseHashModel):
 
         # オフセット行列は自身の位置を原点に戻す行列
         bone.offset_matrix[:3, 3] = -bone.position.vector
-        self.offset_matrixes[bone.index, :3, 3] = -bone.position.vector
 
         # 逆オフセット行列は親ボーンからの相対位置分を戻す
         bone.parent_revert_matrix[:3, 3] = bone.parent_relative_position.vector
-        self.parent_revert_matrixes[bone.index, :3, 3] = bone.parent_relative_position.vector
 
         # ボーンを計算するのに必要なボーンINDEXリスト
         bone.relative_bone_indexes = list(sorted(self.get_relative_bone_indexes(bone.index, set([]))))

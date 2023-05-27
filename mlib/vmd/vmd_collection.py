@@ -219,9 +219,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # ボーンツリーINDEXリストごとのボーン変形行列リスト(子どもから親に遡る)
         tree_relative_matrixes = [[relative_matrixes[fidx, list(reversed(bone.tree_indexes))] for bone in model.bones] for fidx in range(len(fnos))]
 
-        # # 逆ボーンオフセット行列
-        # offset_matrixes = np.array([model.offset_matrixes.copy().tolist()] * len(fnos))
-
         bone_indexes = model.bones.indexes
         if bone_names:
             bone_indexes = sorted(set([bone_index for bone_name in bone_names for bone_index in model.bones[bone_name].tree_indexes]))
