@@ -722,6 +722,7 @@ class Bone(BaseIndexNameModel):
     offset_matrix: オフセット行列 (自身の位置を原点に戻す行列)
 
     relative_bone_indexes: 関連ボーンINDEX一覧（付与親とかIKとか）
+    child_bone_indexes: 自分を親として登録しているボーンINDEX一覧
     """
 
     __slots__ = (
@@ -756,6 +757,7 @@ class Bone(BaseIndexNameModel):
         "parent_revert_matrix",
         "offset_matrix",
         "relative_bone_indexes",
+        "child_bone_indexes",
     )
 
     SYSTEM_ROOT_NAME = "SYSTEM_ROOT"
@@ -799,6 +801,7 @@ class Bone(BaseIndexNameModel):
         self.parent_revert_matrix = np.eye(4)
 
         self.relative_bone_indexes: list[int] = []
+        self.child_bone_indexes: list[int] = []
 
     def correct_fixed_axis(self, corrected_fixed_axis: MVector3D):
         self.corrected_fixed_axis = corrected_fixed_axis.normalized()

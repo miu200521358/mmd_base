@@ -668,6 +668,9 @@ class PmxModel(BaseHashModel):
             # ボーンセットアップ
             self.setup_bone(bone)
 
+            # 一旦子ボーンリストをクリア
+            bone.child_bone_indexes = []
+
             logger.count(
                 "モデルセットアップ：ボーン",
                 index=bone.index,
@@ -691,6 +694,10 @@ class PmxModel(BaseHashModel):
                     ]
                 )
             )
+
+            if bone.parent_index in self.bones:
+                # 親ボーンに子ボーンとして登録する
+                self.bones[bone.parent_index].child_bone_indexes.append(bone.index)
 
             logger.count(
                 "モデルセットアップ：関連ボーン",
