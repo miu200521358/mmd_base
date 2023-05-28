@@ -336,7 +336,7 @@ class MVector(BaseModel):
         return self.vector[index]
 
     @classmethod
-    def std_mean(cls: Type[MVectorT], values: list, range: float = 1.5) -> MVectorT:
+    def std_mean(cls: Type[MVectorT], values: list[MVectorT], range: float = 1.5) -> MVectorT:
         """標準偏差を加味したmean処理"""
         np_standard_vectors = np.array([v.vector for v in values])
         np_standard_lengths = np.array([v.length() for v in values])

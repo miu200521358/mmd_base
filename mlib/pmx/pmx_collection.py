@@ -677,30 +677,56 @@ class PmxModel(BaseHashModel):
 
         # ボーンツリー生成
         self.bone_trees = self.bones.create_bone_trees()
+
+        # ボーン変形行列を計算するのに影響する全てのボーンINDEXのリストを取得する
+        bone_relative_indexes: dict[int, list[int]] = {}
+        for bone in self.bones:
+            # ボーンセットアップ
+            bone_relative_indexes[bone.index] = sorted(
+                set(
+                    [
+                        bone_index
+                        for relative_index in bone.relative_bone_indexes
+                        for bone_index in self.bone_trees[self.bones[relative_index].name].indexes
+                    ]
+                )
+            )
+
+            logger.count(
+                "モデルセットアップ：関連ボーン",
+                index=bone.index,
+                total_index_count=total_index_count,
+                display_block=100,
+            )
+
+        for bone in self.bones:
+            bone.relative_bone_indexes = bone_relative_indexes[bone.index]
+
         # ボーンリストセットアップ
         self.bones.setup()
 
         logger.info("モデルセットアップ：ボーンツリー")
 
-    def get_relative_bone_indexes(self, bone_index: int, relative_bone_indexes: set[int], loop: int = 0) -> set[int]:
-        if 0 > bone_index or bone_index not in self.bones.indexes or loop > len(self.bones):
+    def get_relative_bone_indexes(self, bone_index: int, relative_bone_indexes: set[int]) -> set[int]:
+        """ボーンに直接影響するボーンINDEXリスト"""
+
+        if 0 > bone_index or bone_index not in self.bones.indexes:
             return relative_bone_indexes
         bone = self.bones[bone_index]
-        relative_bone_indexes |= {bone.index}
-        relative_bone_indexes |= self.get_relative_bone_indexes(bone.parent_index, relative_bone_indexes, loop + 1)
-        relative_bone_indexes |= self.get_relative_bone_indexes(bone.effect_index, relative_bone_indexes, loop + 1)
+        relative_bone_indexes |= {bone.index, bone.parent_index, bone.effect_index}
         if bone.ik:
-            relative_bone_indexes |= self.get_relative_bone_indexes(bone.ik.bone_index, relative_bone_indexes, loop + 1)
+            relative_bone_indexes |= {bone.ik.bone_index}
             for link in bone.ik.links:
-                relative_bone_indexes |= self.get_relative_bone_indexes(link.bone_index, relative_bone_indexes, loop + 1)
+                relative_bone_indexes |= {link.bone_index}
         if bone.ik_link_indexes:
             relative_bone_indexes |= set(bone.ik_link_indexes)
         if bone.ik_target_indexes:
             relative_bone_indexes |= set(bone.ik_target_indexes)
 
-        return relative_bone_indexes
+        return relative_bone_indexes - {-1}
 
     def setup_bone(self, bone: Bone):
+        """各ボーンのセットアップ"""
         bone.parent_relative_position = self.bones.get_parent_relative_position(bone.index)
         # 末端ボーンの相対位置
         bone.tail_relative_position = self.bones.get_tail_relative_position(bone.index)
@@ -717,7 +743,7 @@ class PmxModel(BaseHashModel):
         # 逆オフセット行列は親ボーンからの相対位置分を戻す
         bone.parent_revert_matrix[:3, 3] = bone.parent_relative_position.vector
 
-        # ボーンを計算するのに必要なボーンINDEXリスト
+        # ボーンを計算するのに最低限必要なボーンINDEXリスト
         bone.relative_bone_indexes = list(sorted(self.get_relative_bone_indexes(bone.index, set([]))))
 
     def remove_bone(self, bone: Bone):
