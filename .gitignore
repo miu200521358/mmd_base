@@ -134,3 +134,6 @@ history.json
 
 *.pmx
 *.vmd
+
+.env
+.vscode/
