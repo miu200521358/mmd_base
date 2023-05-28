@@ -469,7 +469,8 @@ class MVector3D(MVector):
             return MMatrix4x4()
 
         # ローカルZ軸の方向ベクトル
-        z_axis = np.array([0.0, 0.0, -1.0])
+        axis = 1.0 if np.isclose(x_axis[0], 0.0) else np.sign(x_axis[0])
+        z_axis = np.array([0.0, 0.0, -1.0 * axis])
 
         # ローカルY軸の方向ベクトル
         y_axis = np.cross(z_axis, x_axis)
