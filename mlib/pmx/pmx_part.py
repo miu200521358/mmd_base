@@ -2138,8 +2138,8 @@ class BoneMorphOffset(MorphOffset):
     def __init__(
         self,
         bone_index: int,
-        position: MVector3D,
-        qq: MQuaternion,
+        position: Optional[MVector3D] = None,
+        qq: Optional[MQuaternion] = None,
         scale: Optional[MVector3D] = None,
         local_position: Optional[MVector3D] = None,
         local_qq: Optional[MQuaternion] = None,
@@ -2147,9 +2147,10 @@ class BoneMorphOffset(MorphOffset):
     ):
         super().__init__()
         self.bone_index = bone_index
-        self.position = position
+        self.position = position or MVector3D()
         self.rotation = BaseRotationModel()
-        self.rotation.qq = qq
+        if qq:
+            self.rotation.qq = qq
         self.scale = scale or MVector3D()
         self.local_position = local_position or MVector3D()
         self.local_rotation = BaseRotationModel()
