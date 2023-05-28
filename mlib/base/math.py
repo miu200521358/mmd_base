@@ -1479,7 +1479,7 @@ class MMatrix4x4List:
         self.vector = new_mat.vector
         return self
 
-    def matmul_cols(self):
+    def matmul_cols(self) -> "MMatrix4x4List":
         # colを 行列積 するため、ひとつ次元を増やす
         tile_mats = np.tile(np.eye(4, dtype=np.float64), (self.row, self.col, self.col, 1, 1))
         # 斜めにセルを埋めていく
@@ -1622,21 +1622,24 @@ def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bo
     np.ndarray
         ローカル頂点位置
     """
+
+    # 頂点個数
+    vertex_size = len(vertex_positions)
+
     # ボーンのベクトル
     bone_vector = (bone_end - bone_start).normalized()
 
     # ボーンのベクトルをローカル軸とした回転行列
     bone_local_coordinates = bone_vector.to_local_matrix4x4()
 
-    # ボーンの中点を原点とする
-    origin = (bone_start + bone_end) / 2
-
-    # 頂点個数
-    vertex_size = len(vertex_positions)
+    # ボーンベクトルと直交する位置
+    vertex_cross_positions = np.zeros((vertex_size, 4))
+    vertex_cross_positions[..., :3] = np.cross(bone_vector.vector, vertex_positions[..., :3])
 
     # ローカル座標系からのローカル位置の計算
     vertex_local_positions = (
-        np.array([bone_local_coordinates.vector.tolist()] * vertex_size) @ (vertex_positions - origin.vector4).reshape(vertex_size, 4, 1)
+        np.array([bone_local_coordinates.vector.tolist()] * vertex_size)
+        @ (vertex_positions - vertex_cross_positions).reshape(vertex_size, 4, 1)
     ).reshape(vertex_size, 4)[..., :3]
 
     return vertex_local_positions

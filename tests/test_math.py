@@ -246,7 +246,7 @@ def test_MVector3D_get_local_matrix():
     ).all()
 
 
-def test_calculate_local_positions():
+def test_calc_local_positions():
     import numpy as np
 
     from mlib.base.math import MVector3D, calc_local_positions
@@ -259,9 +259,9 @@ def test_calculate_local_positions():
         vertex_local_positions,
         np.array(
             [
-                [-1.5184430484343439, 0.5616958103868263, 1.25],
-                [1.8698182993117125, -0.3304093002275448, -0.75],
-                [-2.7106090781968453, -1.1564325507964073, -1.75],
+                [0.1254911610276317, 1.0326913473825166, -0.9411837077072379],
+                [3.5137525087736883, -0.8462437946890451, -2.094118370770724],
+                [-1.0666748687348697, -4.238854395980599, -2.3097986143480256],
             ]
         ),
     ).all()
