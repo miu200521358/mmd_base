@@ -10,7 +10,7 @@ from numpy.linalg import inv
 
 from mlib.base.collection import BaseHashModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
 from mlib.base.logger import MLogger
-from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D, MVector4D
+from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D, MVector4D, calc_list_by_ratio
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import (
     Bone,
@@ -121,20 +121,29 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         # FK用回転
         bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
 
-        # 移動
-        bf.position = MVector3D.calc_by_ratio(prev_bf.position, next_bf.position, xy, yy, zy)
-
-        # スケール
-        bf.scale = MVector3D.calc_by_ratio(prev_bf.scale, next_bf.scale, xy, yy, zy)
-
         # ローカル回転
         bf.local_rotation = MQuaternion.slerp(prev_bf.local_rotation, next_bf.local_rotation, ry)
 
-        # ローカル移動
-        bf.local_position = MVector3D.calc_by_ratio(prev_bf.local_position, next_bf.local_position, xy, yy, zy)
-
-        # ローカルスケール
-        bf.local_scale = MVector3D.calc_by_ratio(prev_bf.local_scale, next_bf.local_scale, xy, yy, zy)
+        # 移動・スケール・ローカル移動・ローカルスケール　は一括で計算
+        bf.position.vector, bf.scale.vector, bf.local_position.vector, bf.local_scale.vector = calc_list_by_ratio(
+            tuple(
+                [
+                    tuple(prev_bf.position.vector.tolist()),
+                    tuple(prev_bf.scale.vector.tolist()),
+                    tuple(prev_bf.local_position.vector.tolist()),
+                    tuple(prev_bf.local_scale.vector.tolist()),
+                ]
+            ),
+            tuple(
+                [
+                    tuple(next_bf.position.vector.tolist()),
+                    tuple(next_bf.scale.vector.tolist()),
+                    tuple(next_bf.local_position.vector.tolist()),
+                    tuple(next_bf.local_scale.vector.tolist()),
+                ]
+            ),
+            tuple([xy, yy, zy]),
+        )
 
         return bf
 

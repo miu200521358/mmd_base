@@ -78,6 +78,14 @@ def calc_v3_by_ratio(
     return prev_v + (next_v - prev_v) * ratio_v
 
 
+@lru_cache(maxsize=None)
+def calc_list_by_ratio(prev_t: tuple, next_t: tuple, ratio_t: tuple) -> np.ndarray:
+    prev_v = np.array(prev_t, dtype=np.float64)
+    next_v = np.array(next_t, dtype=np.float64)
+    ratio_v = np.array(ratio_t, dtype=np.float64)
+    return prev_v + (next_v - prev_v) * ratio_v
+
+
 MVectorT = TypeVar("MVectorT", bound="MVector")
 
 
