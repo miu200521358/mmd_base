@@ -1343,11 +1343,11 @@ class MMatrix4x4(MVector):
             return MVector4D(*np.sum(self.vector * other.vector, axis=1))
         return super().__mul__(other)
 
-    def __matmul__(self, other):
+    def __matmul__(self, other: "MMatrix4x4") -> "MMatrix4x4":
         # 行列同士のかけ算
-        return MMatrix4x4(np.matmul(self.vector, other.vector))
+        return MMatrix4x4(*np.matmul(self.vector, other.vector).flatten())
 
-    def __imatmul__(self, other):
+    def __imatmul__(self, other: "MMatrix4x4") -> "MMatrix4x4":
         # 行列同士のかけ算代入
         self.vector = np.matmul(self.vector, other.vector)
         return self
