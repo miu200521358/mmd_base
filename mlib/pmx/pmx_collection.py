@@ -718,7 +718,7 @@ class PmxModel(BaseHashModel):
 
     def remove_bone(self, bone: Bone):
         """ボーンの削除に伴う諸々のボーンINDEXの置き換え"""
-        replaced_map = self.bones.remove(bone, is_sort=True)
+        replaced_map = self.bones.remove(bone)
 
         if not replaced_map:
             return
@@ -772,7 +772,7 @@ class PmxModel(BaseHashModel):
     def insert_bone(self, bone: Bone):
         """ボーンの追加に伴う諸々のボーンINDEXの置き換え"""
         # 挿入
-        replaced_map = self.bones.insert(bone, is_sort=True)
+        replaced_map = self.bones.insert(bone)
 
         if not replaced_map:
             return

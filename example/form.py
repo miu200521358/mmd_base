@@ -520,10 +520,12 @@ class TestFrame(BaseFrame):
         if not (self.file_panel.motion_ctrl.data and self.file_panel.model_ctrl.data and self.file_panel.dress_ctrl.data):
             return
 
-        bone_matrixes = motion.animate_bone([0], model)
+        logger.info("全ての親追加")
+        bone_matrixes = VmdMotion().animate_bone([0], model)
         model.insert_standard_bone("全ての親", bone_matrixes)
         model.setup()
         model.replace_standard_weights(["全ての親"])
+        logger.info("全ての親追加完了")
 
         dress_motion = self.file_panel.motion_ctrl.data.copy()
 

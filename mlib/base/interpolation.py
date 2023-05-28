@@ -13,27 +13,21 @@ IP_MAX = 127
 
 class Interpolation(BaseModel):
     __slots__ = (
-        "begin",
         "start",
         "end",
-        "finish",
     )
 
     def __init__(self) -> None:
         """
         補間曲線
         """
-        self.begin = MVector2D(0, 0)
         self.start = MVector2D(20, 20)
         self.end = MVector2D(107, 107)
-        self.finish = MVector2D(IP_MAX, IP_MAX)
 
-    def normalize(self) -> None:
-        diff = self.finish - self.begin
-        self.begin = Interpolation.round_mmd((self.begin - self.begin) / diff, MVector2D())
-        self.start = Interpolation.round_mmd((self.start - self.begin) / diff, MVector2D())
-        self.end = Interpolation.round_mmd((self.end - self.begin) / diff, MVector2D(IP_MAX, IP_MAX))
-        self.finish = Interpolation.round_mmd((self.finish - self.begin) / diff, MVector2D(IP_MAX, IP_MAX))
+    def normalize(self, finish: MVector2D, begin: MVector2D) -> None:
+        diff = finish - begin
+        self.start = Interpolation.round_mmd((self.start - begin) / diff, MVector2D())
+        self.end = Interpolation.round_mmd((self.end - begin) / diff, MVector2D(IP_MAX, IP_MAX))
 
     @classmethod
     def round_mmd(cls, t: MVector2D, s: MVector2D) -> MVector2D:
@@ -113,11 +107,9 @@ def create_interpolation(values: List[float]):
 
     # 次数を減らしたベジェ曲線をMMD用補間曲線に変換
     org_ip = Interpolation()
-    org_ip.begin = MVector2D(nodes[0, 0], nodes[1, 0])
     org_ip.start = MVector2D(nodes[0, 1], nodes[1, 1])
     org_ip.end = MVector2D(nodes[0, 2], nodes[1, 2])
-    org_ip.finish = MVector2D(nodes[0, 3], nodes[1, 3])
-    org_ip.normalize()
+    org_ip.normalize(MVector2D(nodes[0, 0], nodes[1, 0]), MVector2D(nodes[0, 3], nodes[1, 3]))
 
     return org_ip
 

@@ -11,7 +11,7 @@ from numpy.linalg import inv
 from mlib.base.collection import BaseHashModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
 from mlib.base.logger import MLogger
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D, MVector4D
-from mlib.pmx.pmx_collection import BoneTree, PmxModel
+from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import (
     Bone,
     BoneMorphOffset,
@@ -162,6 +162,16 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone_names: list[str] = [],
         append_ik: bool = True,
     ) -> VmdBoneFrameTrees:
+        if not bone_names:
+            target_bone_names = model.bones.names
+        else:
+            target_bone_names = [
+                model.bones[bone_index].name
+                for bone_index in sorted(
+                    set([bone_index for bone_name in bone_names for bone_index in model.bones[bone_name].relative_bone_indexes])
+                )
+            ]
+
         # モーフボーン操作
         if morph_bone_frames is not None:
             (
@@ -171,7 +181,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 morph_bone_local_poses,
                 morph_bone_local_qqs,
                 morph_bone_local_scales,
-            ) = morph_bone_frames.get_bone_matrixes(fnos, model, bone_names, append_ik=False)
+            ) = morph_bone_frames.get_bone_matrixes(fnos, model, target_bone_names, append_ik=False)
             # logger.debug(f"-- ボーンアニメーション[{model.name}]: モーフボーン操作")
         else:
             morph_row = len(fnos)
@@ -191,8 +201,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             motion_bone_local_poses,
             motion_bone_local_qqs,
             motion_bone_local_scales,
-        ) = self.get_bone_matrixes(fnos, model, bone_names, append_ik=append_ik)
-        # logger.debug(f"-- ボーンアニメーション[{model.name}]: モーションボーン操作")
+        ) = self.get_bone_matrixes(fnos, model, target_bone_names, append_ik=append_ik)
 
         # ボーン変形行列
         matrixes = MMatrix4x4List(motion_bone_poses.shape[0], motion_bone_poses.shape[1])
@@ -223,9 +232,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             [relative_matrixes[fidx, list(reversed(bone.tree_indexes))] for bone in model.bones] for fidx in range(len(fnos))
         ]
 
-        bone_indexes = model.bones.indexes
-        if bone_names:
-            bone_indexes = sorted(set([bone_index for bone_name in bone_names for bone_index in model.bones[bone_name].tree_indexes]))
+        bone_indexes = [model.bones[bone_name].index for bone_name in target_bone_names]
 
         # 行列積ボーン変形行列結果
         result_matrixes = np.full(relative_matrixes.shape, np.eye(4))
@@ -250,13 +257,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                 bone_matrixes.append(fno, bone.index, bone.name, global_matrix, local_matrix, global_matrix.to_position())
 
+        # logger.debug(f"-- ボーンアニメーション[{model.name}][{fnos}][{bone_names}]: モーションボーン操作")
+
         return bone_matrixes
 
     def get_bone_matrixes(
         self,
         fnos: list[int],
         model: PmxModel,
-        bone_names: list[str] = [],
+        target_bone_names: list[str],
         append_ik: bool = True,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """ボーン変形行列を求める"""
@@ -269,16 +278,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_poses = np.full((row, col, 4, 4), np.eye(4))
         local_qqs = np.full((row, col, 4, 4), np.eye(4))
         local_scales = np.full((row, col, 4, 4), np.eye(4))
-
-        if not bone_names:
-            target_bone_names = model.bones.names
-        else:
-            target_bone_names = [
-                model.bones[bone_index].name
-                for bone_index in sorted(
-                    set([bone_index for bone_name in bone_names for bone_index in model.bones[bone_name].relative_bone_indexes])
-                )
-            ]
 
         if append_ik:
             # IK回転を事前に求めておく
@@ -615,13 +614,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             # IKターゲットボーン
             effector_bone = model.bones[ik_bone.ik.bone_index]
 
-            # IKリンクボーンツリー
-            ik_link_bone_trees: dict[int, BoneTree] = {ik_bone.index: model.bone_trees[ik_bone.name]}
-            for ik_link in ik_bone.ik.links:
-                if ik_link.bone_index not in model.bones:
-                    continue
-                ik_link_bone_trees[ik_link.bone_index] = model.bone_trees[model.bones[ik_link.bone_index].name]
-
             is_break = False
             for loop in range(ik_bone.ik.loop_count):
                 for ik_link in ik_bone.ik.links:
@@ -667,6 +659,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # ベクトル (1) を (2) に一致させるための最短回転量（Axis-Angle）
                     # 回転角
                     rotation_dot = norm_effector_pos.dot(norm_target_pos)
+
+                    logger.debug(f"-- ボーンアニメーション[{model.name}][{fno}][{bone.name}:{link_bone.name}][{loop}][{1 - rotation_dot}]: IK計算")
+
+                    if 1e-7 > 1 - rotation_dot:
+                        # 変形角度がほぼ変わらない場合、スルー
+                        is_break = True
+                        break
+
                     # 回転角度
                     rotation_radian = acos(max(-1, min(1, rotation_dot)))
 

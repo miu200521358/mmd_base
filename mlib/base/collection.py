@@ -158,7 +158,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             self.indexes.append(value.index)
 
     @verify_thread
-    def remove(self, value: TBaseIndexNameModel, is_sort: bool = False) -> dict[int, int]:
+    def remove(self, value: TBaseIndexNameModel, is_sort: bool = True) -> dict[int, int]:
         replaced_map: dict[int, int] = {-1: -1}
 
         if value.index not in self.data:
@@ -200,7 +200,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
 
         return replaced_map
 
-    def insert(self, value: TBaseIndexNameModel, is_sort: bool = False, is_positive_index: bool = True) -> dict[int, int]:
+    def insert(self, value: TBaseIndexNameModel, is_sort: bool = True, is_positive_index: bool = True) -> dict[int, int]:
         if 0 > value.index and is_positive_index:
             value.index = len([k for k in self.data.keys() if k >= 0])
 
@@ -271,11 +271,12 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         TBaseIndexNameModel
             要素
         """
-        if 0 > index and index not in self.data:
-            # マイナス指定の場合、後ろからの順番に置き換える
-            index = len(self.data) + index
-            return self.data[self.indexes[index]]
-        return self.data[index]
+        if 0 <= index:
+            return self.data[index]
+
+        # マイナス指定の場合、後ろからの順番に置き換える
+        index = len(self.data) + index
+        return self.data[self.indexes[index]]
 
     def get_by_name(self, name: str) -> TBaseIndexNameModel:
         """
