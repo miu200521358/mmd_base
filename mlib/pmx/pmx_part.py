@@ -1617,33 +1617,6 @@ class BoneSettings(Enum):
         MVector3D(0, -1, 0),
         ("右つま先",),
     )
-    RIGHT_LEG_IK_PARENT = BoneSetting(
-        "右足IK親",
-        ("全ての親",),
-        MVector3D(0, 1, 0),
-        ("右足ＩＫ",),
-        BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        MVector3D(0, 1, 0),
-        [],
-    )
-    RIGHT_LEG_IK = BoneSetting(
-        "右足ＩＫ",
-        ("右足IK親", "全ての親"),
-        ("右つま先ＩＫ",),
-        ("右つま先ＩＫ",),
-        BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK | BoneFlg.TAIL_IS_BONE,
-        MVector3D(0, 1, 0),
-        [],
-    )
-    RIGHT_TOE_IK = BoneSetting(
-        "右つま先ＩＫ",
-        ("右足ＩＫ",),
-        MVector3D(0, -1, 0),
-        [],
-        BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK,
-        MVector3D(0, -1, 0),
-        [],
-    )
     RIGHT_LEG_D = BoneSetting(
         "右足D",
         ("腰キャンセル右", "下半身"),
@@ -1677,6 +1650,33 @@ class BoneSettings(Enum):
         MVector3D(0, -1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
+        MVector3D(0, -1, 0),
+        [],
+    )
+    RIGHT_LEG_IK_PARENT = BoneSetting(
+        "右足IK親",
+        ("全ての親",),
+        MVector3D(0, 1, 0),
+        ("右足ＩＫ",),
+        BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
+        MVector3D(0, 1, 0),
+        [],
+    )
+    RIGHT_LEG_IK = BoneSetting(
+        "右足ＩＫ",
+        ("右足IK親", "全ての親"),
+        ("右つま先ＩＫ",),
+        ("右つま先ＩＫ",),
+        BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK | BoneFlg.TAIL_IS_BONE,
+        MVector3D(0, 1, 0),
+        [],
+    )
+    RIGHT_TOE_IK = BoneSetting(
+        "右つま先ＩＫ",
+        ("右足ＩＫ",),
+        MVector3D(0, -1, 0),
+        [],
+        BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK,
         MVector3D(0, -1, 0),
         [],
     )
@@ -1987,33 +1987,6 @@ class BoneSettings(Enum):
         MVector3D(0, -1, 0),
         ("左つま先",),
     )
-    LEFT_LEG_IK_PARENT = BoneSetting(
-        "左足IK親",
-        ("全ての親",),
-        MVector3D(0, 1, 0),
-        ("左足ＩＫ",),
-        BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        MVector3D(0, 1, 0),
-        [],
-    )
-    LEFT_LEG_IK = BoneSetting(
-        "左足ＩＫ",
-        ("左足IK親", "全ての親"),
-        ("左つま先ＩＫ",),
-        ("左つま先ＩＫ",),
-        BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK | BoneFlg.TAIL_IS_BONE,
-        MVector3D(0, 1, 0),
-        [],
-    )
-    LEFT_TOE_IK = BoneSetting(
-        "左つま先ＩＫ",
-        ("左足ＩＫ",),
-        MVector3D(0, -1, 0),
-        [],
-        BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK,
-        MVector3D(0, -1, 0),
-        [],
-    )
     LEFT_LEG_D = BoneSetting(
         "左足D",
         ("腰キャンセル左", "下半身"),
@@ -2047,6 +2020,33 @@ class BoneSettings(Enum):
         MVector3D(0, -1, 0),
         [],
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
+        MVector3D(0, -1, 0),
+        [],
+    )
+    LEFT_LEG_IK_PARENT = BoneSetting(
+        "左足IK親",
+        ("全ての親",),
+        MVector3D(0, 1, 0),
+        ("左足ＩＫ",),
+        BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
+        MVector3D(0, 1, 0),
+        [],
+    )
+    LEFT_LEG_IK = BoneSetting(
+        "左足ＩＫ",
+        ("左足IK親", "全ての親"),
+        ("左つま先ＩＫ",),
+        ("左つま先ＩＫ",),
+        BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK | BoneFlg.TAIL_IS_BONE,
+        MVector3D(0, 1, 0),
+        [],
+    )
+    LEFT_TOE_IK = BoneSetting(
+        "左つま先ＩＫ",
+        ("左足ＩＫ",),
+        MVector3D(0, -1, 0),
+        [],
+        BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK,
         MVector3D(0, -1, 0),
         [],
     )
