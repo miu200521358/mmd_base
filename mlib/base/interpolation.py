@@ -165,7 +165,7 @@ def cache_evaluate(x: float, x1: float, y1: float, x2: float, y2: float) -> Tupl
 
 # 解を求める関数
 @lru_cache(maxsize=None)
-def cached_func_f(x1, x2, x, t):
+def cached_func_f(x1: float, x2: float, x: float, t: float) -> float:
     t1 = 1 - t
     return 3 * (t1**2) * t * x1 + 3 * t1 * (t**2) * x2 + (t**3) - x
 

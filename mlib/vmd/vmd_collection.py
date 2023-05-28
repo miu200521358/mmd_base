@@ -172,6 +172,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 )
             ]
 
+        bone_indexes = [model.bones[bone_name].index for bone_name in target_bone_names]
+
         # モーフボーン操作
         if morph_bone_frames is not None:
             (
@@ -223,19 +225,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         matrixes.matmul(motion_bone_local_scales)
 
         # 各ボーンごとのボーン変形行列結果と逆BOf行列(初期姿勢行列)の行列積
-        relative_matrixes = np.array(
-            [np.array([bone.parent_revert_matrix @ matrixes[fidx, bone.index] for bone in model.bones]) for fidx in range(len(fnos))]
-        )
+        relative_matrixes = model.bones.parent_revert_matrixes @ matrixes.vector
 
         # ボーンツリーINDEXリストごとのボーン変形行列リスト(子どもから親に遡る)
         tree_relative_matrixes = [
             [relative_matrixes[fidx, list(reversed(bone.tree_indexes))] for bone in model.bones] for fidx in range(len(fnos))
         ]
 
-        bone_indexes = [model.bones[bone_name].index for bone_name in target_bone_names]
-
         # 行列積ボーン変形行列結果
-        result_matrixes = np.full(relative_matrixes.shape, np.eye(4))
+        result_matrixes = np.full(motion_bone_poses.shape, np.eye(4))
 
         for fidx, bone_index in product(list(range(len(fnos))), bone_indexes):
             result_matrixes[fidx, bone_index] = model.bones[bone_index].offset_matrix.copy()
@@ -326,10 +324,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         fno_local_poses[parent_bone.index] = parent_bf.local_position
                         fno_local_qqs[parent_bone.index] = parent_bf.local_rotation
                         fno_local_scales[parent_bone.index] = parent_bf.local_scale
-                    if model.bones.is_bone_not_local_cancels:
-                        is_parent_bone_not_local_cancels.append(model.bones.is_bone_not_local_cancels[parent_bone.index])
-                    if model.bones.local_axises:
-                        parent_local_axises.append(model.bones.local_axises[parent_bone.index])
+                    is_parent_bone_not_local_cancels.append(model.bones.is_bone_not_local_cancels[parent_bone.index])
+                    parent_local_axises.append(model.bones.local_axises[parent_bone.index])
                     parent_local_poses.append(fno_local_poses[parent_bone.index])
                     parent_local_qqs.append(fno_local_qqs[parent_bone.index])
                     parent_local_scales.append(fno_local_scales[parent_bone.index])
