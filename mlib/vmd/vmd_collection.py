@@ -193,7 +193,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 morph_bone_local_qqs,
                 morph_bone_local_scales,
             ) = morph_bone_frames.get_bone_matrixes(fnos, model, target_bone_names, append_ik=False)
-            # logger.debug(f"-- ボーンアニメーション[{model.name}]: モーフボーン操作")
         else:
             morph_row = len(fnos)
             morph_col = len(model.bones)
@@ -263,8 +262,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 global_matrix.vector = result_matrixes[fidx, bone.index] @ pos_mat
 
                 bone_matrixes.append(fno, bone.index, bone.name, global_matrix, local_matrix, global_matrix.to_position())
-
-        # logger.debug(f"-- ボーンアニメーション[{model.name}][{fnos}][{bone_names}]: モーションボーン操作")
 
         return bone_matrixes
 
@@ -666,7 +663,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 回転角
                     rotation_dot = norm_effector_pos.dot(norm_target_pos)
 
-                    logger.debug(f"-- ボーンアニメーション[{model.name}][{fno}][{bone.name}:{link_bone.name}][{loop}][{1 - rotation_dot}]: IK計算")
+                    # logger.debug(f"-- ボーンアニメーション[{model.name}][{fno}][{bone.name}:{link_bone.name}][{loop}][{1 - rotation_dot}]: IK計算")
 
                     if 1e-7 > 1 - rotation_dot:
                         # 変形角度がほぼ変わらない場合、スルー
