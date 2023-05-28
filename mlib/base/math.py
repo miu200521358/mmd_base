@@ -1107,9 +1107,9 @@ class MMatrix4x4(MVector):
         m44: float = 1.0,
     ):
         self.vector = np.array(
-            [m11, m12, m13, m14, m21, m22, m23, m24, m31, m32, m33, m34, m41, m42, m43, m44],
+            [[m11, m12, m13, m14], [m21, m22, m23, m24], [m31, m32, m33, m34], [m41, m42, m43, m44]],
             dtype=np.float64,
-        ).reshape(4, 4)
+        )
 
     def inverse(self) -> "MMatrix4x4":
         """

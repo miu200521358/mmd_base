@@ -585,15 +585,17 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_qq = self.get_rotation(fno, effect_bone, model, append_ik=append_ik)
+        effect_qq = self.get_rotation(fno, effect_bone, model)
         if 0 < bone.effect_factor:
             # 正の付与親
             qq *= effect_qq.multiply_factor(bone.effect_factor)
+            qq.normalize()
         else:
             # 負の付与親の場合、逆回転
             qq *= (effect_qq.multiply_factor(abs(bone.effect_factor))).inverse()
+            qq.normalize()
 
-        return qq.normalized()
+        return qq
 
     def get_ik_rotation(
         self,
