@@ -76,14 +76,14 @@ class Msaa:
         # 描画先テクスチャのバインドを解除しておく
         gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
 
-    def bind(self):
+    def bind(self) -> None:
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
         # フレームバッファオブジェクトをバインドする
         gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.msaa_buffer)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
-    def unbind(self):
+    def unbind(self) -> None:
         # フレームバッファオブジェクトの内容を画面に描画する
         gl.glBindFramebuffer(gl.GL_READ_FRAMEBUFFER, self.msaa_buffer)
         gl.glBindFramebuffer(gl.GL_DRAW_FRAMEBUFFER, 0)

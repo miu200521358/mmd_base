@@ -1553,23 +1553,19 @@ class Meshes(BaseIndexDictModel[Mesh]):
                 # 非表示材質の場合、常に描写しない
                 continue
 
-            if is_alpha and 1.0 <= material_morph.material.diffuse.w:
-                # 半透明描写かつ非透過度が1.0以上の場合、スルー
+            if is_alpha and mesh.material.diffuse.w <= material_morph.material.diffuse.w:
+                # 半透明描写かつ非透過度が元々の非透過度以上の場合、スルー
                 continue
-            elif not is_alpha and 1.0 > material_morph.material.diffuse.w:
-                # 不透明描写かつ非透過度が1.0未満の場合スルー
+            elif not is_alpha and mesh.material.diffuse.w > material_morph.material.diffuse.w:
+                # 不透明描写かつ非透過度が元々の非透過度未満の場合スルー
                 continue
 
-            if 1.0 <= mesh.material.diffuse.w:
-                # 材質自体が不透明時のみアルファテストなどを有効にする
-                # 半透明材質はそもそもアルファテストを有効にしない
+            # アルファテストを有効にする
+            gl.glEnable(gl.GL_ALPHA_TEST)
 
-                # アルファテストを有効にする
-                gl.glEnable(gl.GL_ALPHA_TEST)
-
-                # ブレンディングを有効にする
-                gl.glEnable(gl.GL_BLEND)
-                gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+            # ブレンディングを有効にする
+            gl.glEnable(gl.GL_BLEND)
+            gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
             # モデル描画
             self.shader.use(ProgramType.MODEL)
