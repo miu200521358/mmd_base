@@ -252,132 +252,144 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
             mfs.sort_indexes()
 
     def read_cameras(self, motion: VmdMotion):
-        total_index_count = self.read_uint()
-        for i in range(total_index_count):
-            cf = VmdCameraFrame(register=True, read=True)
-            degrees = MVector3D()
+        try:
+            total_index_count = self.read_uint()
+            for i in range(total_index_count):
+                cf = VmdCameraFrame(register=True, read=True)
+                degrees = MVector3D()
 
-            (
-                cf.index,
-                cf.distance,
-                cf.position.x,
-                cf.position.y,
-                cf.position.z,
-                degrees.x,
-                degrees.y,
-                degrees.z,
-                cf.interpolations.translation_x.start.x,
-                cf.interpolations.translation_y.start.x,
-                cf.interpolations.translation_z.start.x,
-                cf.interpolations.rotation.start.x,
-                cf.interpolations.distance.start.x,
-                cf.interpolations.viewing_angle.start.x,
-                cf.interpolations.translation_x.start.y,
-                cf.interpolations.translation_y.start.y,
-                cf.interpolations.translation_z.start.y,
-                cf.interpolations.rotation.start.y,
-                cf.interpolations.distance.start.y,
-                cf.interpolations.viewing_angle.start.y,
-                cf.interpolations.translation_x.end.x,
-                cf.interpolations.translation_y.end.x,
-                cf.interpolations.translation_z.end.x,
-                cf.interpolations.rotation.end.x,
-                cf.interpolations.distance.end.x,
-                cf.interpolations.viewing_angle.end.x,
-                cf.interpolations.translation_x.end.y,
-                cf.interpolations.translation_y.end.y,
-                cf.interpolations.translation_z.end.y,
-                cf.interpolations.rotation.end.y,
-                cf.interpolations.distance.end.y,
-                cf.interpolations.viewing_angle.end.y,
-            ) = self.unpack(
-                self.read_by_format[VmdCameraFrame].unpack,
-                self.read_by_format[VmdCameraFrame].size,
-            )
+                (
+                    cf.index,
+                    cf.distance,
+                    cf.position.x,
+                    cf.position.y,
+                    cf.position.z,
+                    degrees.x,
+                    degrees.y,
+                    degrees.z,
+                    cf.interpolations.translation_x.start.x,
+                    cf.interpolations.translation_y.start.x,
+                    cf.interpolations.translation_z.start.x,
+                    cf.interpolations.rotation.start.x,
+                    cf.interpolations.distance.start.x,
+                    cf.interpolations.viewing_angle.start.x,
+                    cf.interpolations.translation_x.start.y,
+                    cf.interpolations.translation_y.start.y,
+                    cf.interpolations.translation_z.start.y,
+                    cf.interpolations.rotation.start.y,
+                    cf.interpolations.distance.start.y,
+                    cf.interpolations.viewing_angle.start.y,
+                    cf.interpolations.translation_x.end.x,
+                    cf.interpolations.translation_y.end.x,
+                    cf.interpolations.translation_z.end.x,
+                    cf.interpolations.rotation.end.x,
+                    cf.interpolations.distance.end.x,
+                    cf.interpolations.viewing_angle.end.x,
+                    cf.interpolations.translation_x.end.y,
+                    cf.interpolations.translation_y.end.y,
+                    cf.interpolations.translation_z.end.y,
+                    cf.interpolations.rotation.end.y,
+                    cf.interpolations.distance.end.y,
+                    cf.interpolations.viewing_angle.end.y,
+                ) = self.unpack(
+                    self.read_by_format[VmdCameraFrame].unpack,
+                    self.read_by_format[VmdCameraFrame].size,
+                )
 
-            cf.rotation.degrees = degrees
-            motion.cameras.append(cf)
+                cf.rotation.degrees = degrees
+                motion.cameras.append(cf)
 
-            logger.count(
-                "カメラデータ読み取り",
-                index=i,
-                total_index_count=total_index_count,
-                display_block=10000,
-            )
+                logger.count(
+                    "カメラデータ読み取り",
+                    index=i,
+                    total_index_count=total_index_count,
+                    display_block=10000,
+                )
 
-        motion.cameras.sort_indexes()
+            motion.cameras.sort_indexes()
+        except:
+            pass
 
     def read_lights(self, motion: VmdMotion):
-        total_index_count = self.read_uint()
-        for i in range(total_index_count):
-            lf = VmdLightFrame(register=True, read=True)
+        try:
+            total_index_count = self.read_uint()
+            for i in range(total_index_count):
+                lf = VmdLightFrame(register=True, read=True)
 
-            (
-                lf.index,
-                lf.color.x,
-                lf.color.y,
-                lf.color.z,
-                lf.position.x,
-                lf.position.y,
-                lf.position.z,
-            ) = self.unpack(
-                self.read_by_format[VmdLightFrame].unpack,
-                self.read_by_format[VmdLightFrame].size,
-            )
+                (
+                    lf.index,
+                    lf.color.x,
+                    lf.color.y,
+                    lf.color.z,
+                    lf.position.x,
+                    lf.position.y,
+                    lf.position.z,
+                ) = self.unpack(
+                    self.read_by_format[VmdLightFrame].unpack,
+                    self.read_by_format[VmdLightFrame].size,
+                )
 
-            motion.lights.append(lf)
+                motion.lights.append(lf)
 
-            logger.count(
-                "照明データ読み取り",
-                index=i,
-                total_index_count=total_index_count,
-                display_block=10000,
-            )
+                logger.count(
+                    "照明データ読み取り",
+                    index=i,
+                    total_index_count=total_index_count,
+                    display_block=10000,
+                )
 
-        motion.lights.sort_indexes()
+            motion.lights.sort_indexes()
+        except:
+            pass
 
     def read_shadows(self, motion: VmdMotion):
-        total_index_count = self.read_uint()
-        for i in range(total_index_count):
-            sf = VmdShadowFrame(register=True, read=True)
+        try:
+            total_index_count = self.read_uint()
+            for i in range(total_index_count):
+                sf = VmdShadowFrame(register=True, read=True)
 
-            (
-                sf.index,
-                sf.type,
-                sf.distance,
-            ) = self.unpack(
-                self.read_by_format[VmdShadowFrame].unpack,
-                self.read_by_format[VmdShadowFrame].size,
-            )
+                (
+                    sf.index,
+                    sf.type,
+                    sf.distance,
+                ) = self.unpack(
+                    self.read_by_format[VmdShadowFrame].unpack,
+                    self.read_by_format[VmdShadowFrame].size,
+                )
 
-            motion.shadows.append(sf)
+                motion.shadows.append(sf)
 
-            logger.count(
-                "セルフ影データ読み取り",
-                index=i,
-                total_index_count=total_index_count,
-                display_block=10000,
-            )
+                logger.count(
+                    "セルフ影データ読み取り",
+                    index=i,
+                    total_index_count=total_index_count,
+                    display_block=10000,
+                )
 
-        motion.shadows.sort_indexes()
+            motion.shadows.sort_indexes()
+        except:
+            pass
 
     def read_show_iks(self, motion: VmdMotion):
-        total_index_count = self.read_uint()
-        for i in range(total_index_count):
-            kf = VmdShowIkFrame(register=True, read=True)
-            kf.index = self.read_uint()
-            kf.show = bool(self.read_byte())
+        try:
+            total_index_count = self.read_uint()
+            for i in range(total_index_count):
+                kf = VmdShowIkFrame(register=True, read=True)
+                kf.index = self.read_uint()
+                kf.show = bool(self.read_byte())
 
-            for _i in range(self.read_uint()):
-                kf.iks.append(VmdIkOnOff(self.read_text(20), bool(self.read_byte())))
+                for _i in range(self.read_uint()):
+                    kf.iks.append(VmdIkOnOff(self.read_text(20), bool(self.read_byte())))
 
-            motion.show_iks.append(kf)
+                motion.show_iks.append(kf)
 
-            logger.count(
-                "IKデータ読み取り",
-                index=i,
-                total_index_count=total_index_count,
-                display_block=10000,
-            )
+                logger.count(
+                    "IKデータ読み取り",
+                    index=i,
+                    total_index_count=total_index_count,
+                    display_block=10000,
+                )
 
-        motion.show_iks.sort_indexes()
+            motion.show_iks.sort_indexes()
+        except:
+            pass
