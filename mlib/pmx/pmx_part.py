@@ -1245,7 +1245,7 @@ class BoneSettings(Enum):
         ("上半身3", "首根元"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, 1, 0),
-        ("上半身2", "左胸", "右胸", "左肩", "右肩"),
+        ("上半身2", "左胸", "右胸", "首根元", "左肩", "右肩"),
     )
     UPPER3 = BoneSetting(
         "上半身3",
@@ -1254,7 +1254,7 @@ class BoneSettings(Enum):
         ("首根元",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, 1, 0),
-        ("上半身3", "左胸", "右胸", "左肩", "右肩"),
+        ("上半身3", "左胸", "右胸", "首根元", "左肩", "右肩"),
     )
     ARM_CENTER = BoneSetting(
         "首根元",
@@ -1588,7 +1588,7 @@ class BoneSettings(Enum):
         ("右ひざ",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, -1, 0),
-        ("右足", "右足D"),
+        ("右足", "右足D", "足中心"),
     )
     RIGHT_KNEE = BoneSetting(
         "右ひざ",
@@ -1957,7 +1957,7 @@ class BoneSettings(Enum):
         ("左ひざ",),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(0, -1, 0),
-        ("左足", "左足D"),
+        ("左足", "左足D", "足中心"),
     )
     LEFT_KNEE = BoneSetting(
         "左ひざ",
