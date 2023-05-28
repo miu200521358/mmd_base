@@ -370,8 +370,8 @@ def test_get_vertices_by_material() -> None:
 
     reader = PmxReader()
     model: PmxModel = reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
-    vertices_by_material = model.get_vertices_by_material()
-    assert vertices_by_material[0]
+    model.update_vertices_by_material()
+    assert model.vertices_by_materials
 
 
 def test_read_by_filepath_ok_tree() -> None:
@@ -632,6 +632,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -654,6 +655,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -676,6 +678,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -705,6 +708,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -727,6 +731,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -749,6 +754,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -771,6 +777,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -793,6 +800,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -815,6 +823,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -837,6 +846,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -850,7 +860,7 @@ def test_insert_standard_bone() -> None:
     model.insert_standard_bone("右手捩", bone_matrixes)
 
     for b in model.bones:
-        if b.name in ["右手首"]:
+        if b.name in ["右手首", "右袖"]:
             assert model.bones["右手捩"].index == b.parent_index
         elif b.name in parent_names:
             assert parent_names[b.name] == model.bones[b.parent_index].name
@@ -859,6 +869,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -872,7 +883,7 @@ def test_insert_standard_bone() -> None:
     model.insert_standard_bone("左手捩", bone_matrixes)
 
     for b in model.bones:
-        if b.name in ["左手首"]:
+        if b.name in ["左手首", "左袖"]:
             assert model.bones["左手捩"].index == b.parent_index
         elif b.name in parent_names:
             assert parent_names[b.name] == model.bones[b.parent_index].name
@@ -881,6 +892,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -903,6 +915,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -925,6 +938,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -947,6 +961,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -969,6 +984,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -991,6 +1007,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     parent_names = dict(
         [
@@ -1013,6 +1030,7 @@ def test_insert_standard_bone() -> None:
             assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
     model.insert_standard_bone("右足D", bone_matrixes)
@@ -1022,6 +1040,7 @@ def test_insert_standard_bone() -> None:
     assert model.bones["右足"].parent_index == model.bones["腰キャンセル右"].index
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
     model.insert_standard_bone("右ひざD", bone_matrixes)
@@ -1031,6 +1050,7 @@ def test_insert_standard_bone() -> None:
     assert model.bones["右ひざ"].parent_index == model.bones["右足"].index
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
     model.insert_standard_bone("右足首D", bone_matrixes)
@@ -1040,6 +1060,7 @@ def test_insert_standard_bone() -> None:
     assert model.bones["右足首"].parent_index == model.bones["右ひざ"].index
 
     model.setup()
+    model.update_vertices_by_bone()
     # -------
     bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
     model.insert_standard_bone("右足先EX", bone_matrixes)

@@ -466,6 +466,7 @@ class PmxModel(BaseHashModel):
         "meshes",
         "textures",
         "toon_textures",
+        "vertices_bones",
     )
 
     def __init__(
@@ -499,6 +500,8 @@ class PmxModel(BaseHashModel):
         self.joints: Joints = Joints()
         self.for_draw = False
         self.meshes: Optional[Meshes] = None
+        self.vertices_by_bones: dict[int, list[int]] = {}
+        self.vertices_by_materials: dict[int, list[int]] = {}
 
     @property
     def name(self) -> str:
@@ -531,15 +534,15 @@ class PmxModel(BaseHashModel):
                 )
         return vertex_bone_scales
 
-    def get_vertices_by_bone(self) -> dict[int, list[int]]:
+    def update_vertices_by_bone(self) -> None:
         """ボーン別頂点INDEXリスト+ウェイトの取得"""
-        vertices_bones: dict[int, list[int]] = {}
+        self.vertices_by_bones = {}
         total_index_count = len(self.vertices)
         for vertex in self.vertices:
             for bone_index in vertex.deform.get_indexes():
-                if bone_index not in vertices_bones:
-                    vertices_bones[bone_index] = []
-                vertices_bones[bone_index].append(vertex.index)
+                if bone_index not in self.vertices_by_bones:
+                    self.vertices_by_bones[bone_index] = []
+                self.vertices_by_bones[bone_index].append(vertex.index)
 
                 logger.count(
                     "ウェイトボーン分布",
@@ -547,20 +550,18 @@ class PmxModel(BaseHashModel):
                     total_index_count=total_index_count,
                     display_block=5000,
                 )
-        return vertices_bones
 
-    def get_vertices_by_material(self) -> dict[int, list[int]]:
+    def update_vertices_by_material(self) -> None:
         """材質別頂点INDEXリストの取得"""
         prev_face_count = 0
-        vertices_by_materials: dict[int, list[int]] = {}
+        self.vertices_by_materials = {}
         for material in self.materials:
             vertices: list[int] = []
             face_count = material.vertices_count // 3
             for face_index in range(prev_face_count, prev_face_count + face_count):
                 vertices.extend(self.faces[face_index].vertices)
-            vertices_by_materials[material.index] = list(set(vertices))
+            self.vertices_by_materials[material.index] = list(set(vertices))
             prev_face_count += face_count
-        return vertices_by_materials
 
     def init_draw(self, shader: MShader):
         if self.for_draw:
@@ -1062,20 +1063,20 @@ class PmxModel(BaseHashModel):
         return True
 
     def replace_standard_weights(self, bone_names: list[str]) -> None:
-        vertices_indexes = self.get_vertices_by_bone()
+        self.update_vertices_by_bone()
 
         if "上半身2" in bone_names:
-            self.separate_weights("上半身", "上半身2", VecAxis.Y, 0.2, vertices_indexes.get(self.bones["上半身"].index, []))
+            self.separate_weights("上半身", "上半身2", VecAxis.Y, 0.2, self.vertices_by_bones.get(self.bones["上半身"].index, []))
         if "右足先EX" in bone_names:
-            self.separate_weights("右足首D", "右足先EX", VecAxis.Z, 0.2, vertices_indexes.get(self.bones["右足首D"].index, []))
-            self.separate_weights("右足首", "右足先EX", VecAxis.Z, 0.2, vertices_indexes.get(self.bones["右足首"].index, []))
+            self.separate_weights("右足首D", "右足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["右足首D"].index, []))
+            self.separate_weights("右足首", "右足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["右足首"].index, []))
         if "左足先EX" in bone_names:
-            self.separate_weights("左足首D", "左足先EX", VecAxis.Z, 0.2, vertices_indexes.get(self.bones["左足首D"].index, []))
-            self.separate_weights("左足首", "左足先EX", VecAxis.Z, 0.2, vertices_indexes.get(self.bones["左足首"].index, []))
+            self.separate_weights("左足首D", "左足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["左足首D"].index, []))
+            self.separate_weights("左足首", "左足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["左足首"].index, []))
         if "右親指０" in bone_names:
-            self.separate_thumb_weights("右手首", "右親指０", "右親指１", vertices_indexes.get(self.bones["右手首"].index, []))
+            self.separate_thumb_weights("右手首", "右親指０", "右親指１", self.vertices_by_bones.get(self.bones["右手首"].index, []))
         if "左親指０" in bone_names:
-            self.separate_thumb_weights("左手首", "左親指０", "左親指１", vertices_indexes.get(self.bones["左手首"].index, []))
+            self.separate_thumb_weights("左手首", "左親指０", "左親指１", self.vertices_by_bones.get(self.bones["左手首"].index, []))
         if "右腕捩" in bone_names:
             self.separate_twist_weights(
                 "右腕",
@@ -1083,7 +1084,7 @@ class PmxModel(BaseHashModel):
                 "右腕捩2",
                 "右腕捩3",
                 "右ひじ",
-                vertices_indexes.get(self.bones["右腕"].index, []) + vertices_indexes.get(self.bones["右ひじ"].index, []),
+                self.vertices_by_bones.get(self.bones["右腕"].index, []) + self.vertices_by_bones.get(self.bones["右ひじ"].index, []),
             )
         if "左腕捩" in bone_names:
             self.separate_twist_weights(
@@ -1092,7 +1093,7 @@ class PmxModel(BaseHashModel):
                 "左腕捩2",
                 "左腕捩3",
                 "左ひじ",
-                vertices_indexes.get(self.bones["左腕"].index, []) + vertices_indexes.get(self.bones["左ひじ"].index, []),
+                self.vertices_by_bones.get(self.bones["左腕"].index, []) + self.vertices_by_bones.get(self.bones["左ひじ"].index, []),
             )
         if "右手捩" in bone_names:
             self.separate_twist_weights(
@@ -1101,7 +1102,7 @@ class PmxModel(BaseHashModel):
                 "右手捩2",
                 "右手捩3",
                 "右手首",
-                vertices_indexes.get(self.bones["右ひじ"].index, []) + vertices_indexes.get(self.bones["右手首"].index, []),
+                self.vertices_by_bones.get(self.bones["右ひじ"].index, []) + self.vertices_by_bones.get(self.bones["右手首"].index, []),
             )
         if "左手捩" in bone_names:
             self.separate_twist_weights(
@@ -1110,7 +1111,7 @@ class PmxModel(BaseHashModel):
                 "左手捩2",
                 "左手捩3",
                 "左手首",
-                vertices_indexes.get(self.bones["左ひじ"].index, []) + vertices_indexes.get(self.bones["左手首"].index, []),
+                self.vertices_by_bones.get(self.bones["左ひじ"].index, []) + self.vertices_by_bones.get(self.bones["左手首"].index, []),
             )
 
         replaced_map = dict([(b.index, b.index) for b in self.bones])
@@ -1126,7 +1127,7 @@ class PmxModel(BaseHashModel):
             v.deform.indexes = np.vectorize(replaced_map.get)(v.deform.indexes)
 
     def separate_twist_weights(
-        self, from_name: str, twist1_name: str, twist2_name: str, twist3_name: str, to_name: str, vertices_indexes: list[int]
+        self, from_name: str, twist1_name: str, twist2_name: str, twist3_name: str, to_name: str, vertices_bones: list[int]
     ):
         """捩りのウェイト置換"""
         x_direction = (self.bones[to_name].position - self.bones[from_name].position).normalized()
@@ -1145,7 +1146,7 @@ class PmxModel(BaseHashModel):
             separate_local_pos = mat.inverse() * self.bones[separate_name].position
             separate_to_pos = mat.inverse() * self.bones[to_name].position
 
-            for vertex_index in vertices_indexes:
+            for vertex_index in vertices_bones:
                 v = self.vertices[vertex_index]
                 vertex_local_pos = mat.inverse() * v.position
                 if np.sign(vertex_local_pos.z) != np.sign(separate_local_pos.z):
