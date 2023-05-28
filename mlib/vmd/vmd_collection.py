@@ -561,7 +561,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         ik_qq = self.get_ik_rotation(bone, fno, fk_qq, model) if append_ik else fk_qq
 
         # 付与親を加味した回転
-        effect_qq = self.get_effect_rotation(fno, bone, ik_qq, model, append_ik)
+        effect_qq = self.get_effect_rotation(fno, bone, ik_qq, model)
 
         return effect_qq
 
@@ -571,7 +571,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone: Bone,
         qq: MQuaternion,
         model: PmxModel,
-        append_ik: bool,
     ) -> MQuaternion:
         """
         付与親を加味した回転を求める
