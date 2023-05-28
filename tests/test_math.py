@@ -246,6 +246,27 @@ def test_MVector3D_get_local_matrix():
     ).all()
 
 
+def test_calculate_local_positions():
+    import numpy as np
+
+    from mlib.base.math import MVector3D, calc_local_positions
+
+    vertex_local_positions = calc_local_positions(
+        np.array([[1, 0, 0, 0], [0.5, 3, 2, 0], [-1, -2, 3, 0]]), MVector3D(0.5, 0.5, 1), MVector3D(0.7, 2, 1.5)
+    )
+
+    assert np.isclose(
+        vertex_local_positions,
+        np.array(
+            [
+                [-1.5184430484343439, 0.5616958103868263, 1.25],
+                [1.8698182993117125, -0.3304093002275448, -0.75],
+                [-2.7106090781968453, -1.1564325507964073, -1.75],
+            ]
+        ),
+    ).all()
+
+
 def test_operate_vector():
     import operator
 

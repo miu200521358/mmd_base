@@ -1458,7 +1458,7 @@ class MMatrix4x4List:
 
         self.vector = self.vector @ vs
 
-    def inverse(self):
+    def inverse(self) -> "MMatrix4x4List":
         """
         逆行列
         """
@@ -1466,13 +1466,13 @@ class MMatrix4x4List:
         new_mat.vector = inv(self.vector)
         return new_mat
 
-    def __matmul__(self, other):
+    def __matmul__(self, other) -> "MMatrix4x4List":
         # 行列同士のかけ算
         new_mat = MMatrix4x4List(self.row, self.col)
         new_mat.vector = self.vector @ other.vector
         return new_mat
 
-    def __imatmul__(self, other):
+    def __imatmul__(self, other) -> "MMatrix4x4List":
         # 行列同士のかけ算代入
         new_mat = MMatrix4x4List(self.row, self.col)
         new_mat.vector = self.vector @ other.vector
@@ -1567,9 +1567,6 @@ def intersect_line_plane(line_point: MVector3D, line_direction: MVector3D, plane
     return intersection
 
 
-import numpy as np
-
-
 def align_triangle(
     a1: MVector3D,
     a2: MVector3D,
@@ -1605,3 +1602,41 @@ def align_triangle(
     B3_prime = B1 + v3_prime
 
     return MVector3D(*B3_prime)
+
+
+def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bone_end: MVector3D) -> np.ndarray:
+    """
+    ボーンから見た頂点ローカル位置を求める
+
+    Parameters
+    ----------
+    vertex_positions : np.ndarray
+        グローバル頂点位置
+    bone_start : MVector3D
+        親ボーン位置
+    bone_end : MVector3D
+        子ボーン位置
+
+    Returns
+    -------
+    np.ndarray
+        ローカル頂点位置
+    """
+    # ボーンのベクトル
+    bone_vector = (bone_end - bone_start).normalized()
+
+    # ボーンのベクトルをローカル軸とした回転行列
+    bone_local_coordinates = bone_vector.to_local_matrix4x4()
+
+    # ボーンの中点を原点とする
+    origin = (bone_start + bone_end) / 2
+
+    # 頂点個数
+    vertex_size = len(vertex_positions)
+
+    # ローカル座標系からのローカル位置の計算
+    vertex_local_positions = (
+        np.array([bone_local_coordinates.vector.tolist()] * vertex_size) @ (vertex_positions - origin.vector4).reshape(vertex_size, 4, 1)
+    ).reshape(vertex_size, 4)[..., :3]
+
+    return vertex_local_positions
