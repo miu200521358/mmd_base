@@ -622,6 +622,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
             is_break = False
             for loop in range(ik_bone.ik.loop_count):
+                prev_rotation_dot = 0.0
                 for ik_link in ik_bone.ik.links:
                     # ikLink は末端から並んでる
                     if ik_link.bone_index not in model.bones:
@@ -668,7 +669,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     logger.debug(f"-- ボーンアニメーション[{model.name}][{fno}][{bone.name}:{link_bone.name}][{loop}][{1 - rotation_dot}]: IK計算")
 
-                    if 1e-7 > 1 - rotation_dot:
+                    if 1e-7 > 1 - rotation_dot or 1e-10 > abs(rotation_dot - prev_rotation_dot):
                         # 変形角度がほぼ変わらない場合、スルー
                         is_break = True
                         break
@@ -721,6 +722,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     link_bf.ik_rotation = ik_qq
                     self[link_bf.name].append(link_bf)
+                    prev_rotation_dot = rotation_dot
 
                 if is_break:
                     break
