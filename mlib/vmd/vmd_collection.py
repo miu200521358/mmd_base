@@ -28,7 +28,7 @@ from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
 from mlib.vmd.vmd_tree import VmdBoneFrameTrees
 
-logger = MLogger(os.path.basename(__file__), level=1)
+logger = MLogger(os.path.basename(__file__))
 
 
 class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
