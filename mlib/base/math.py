@@ -1637,9 +1637,6 @@ def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bo
     vertex_cross_positions[..., :3] = np.cross(bone_vector.vector, vertex_positions[..., :3])
 
     # ローカル座標系からのローカル位置の計算
-    vertex_local_positions = (
-        np.array([bone_local_coordinates.vector.tolist()] * vertex_size)
-        @ (vertex_positions - vertex_cross_positions).reshape(vertex_size, 4, 1)
-    ).reshape(vertex_size, 4)[..., :3]
+    vertex_local_positions = (vertex_cross_positions @ bone_local_coordinates.vector)[..., :3]
 
     return vertex_local_positions
