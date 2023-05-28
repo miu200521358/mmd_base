@@ -614,7 +614,7 @@ class MVectorDict:
 
 
 @lru_cache(maxsize=None)
-def cache_slerp_evaluate(q1: quaternion, q2: quaternion, t) -> quaternion:
+def cache_slerp_evaluate(q1: quaternion, q2: quaternion, t: float) -> quaternion:
     return slerp_evaluate(q1, q2, t)
 
 
