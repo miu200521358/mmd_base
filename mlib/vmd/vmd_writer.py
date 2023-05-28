@@ -15,7 +15,7 @@ class VmdWriter(BaseModel):
         self.output_path = output_path
         self.model_name = model_name
 
-    def save(self):
+    def save(self) -> None:
         with open(self.output_path, "wb") as fout:
             # header
             fout.write(b"Vocaloid Motion Data 0002\x00\x00\x00\x00\x00")
