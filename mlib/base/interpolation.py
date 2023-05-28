@@ -1,5 +1,4 @@
 from functools import lru_cache
-from typing import List, Tuple
 
 import bezier
 import numpy as np
@@ -55,7 +54,7 @@ class Interpolation(BaseModel):
         return int(round(round(t2, -6) / 1000000))
 
 
-def get_infections(values: List[float], threshold: float) -> np.ndarray:
+def get_infections(values: list[float], threshold: float) -> np.ndarray:
     extract_idxs = get_threshold_infections(np.array(values, dtype=np.float64), threshold)
     if 2 > len(extract_idxs):
         return np.array([])
@@ -65,7 +64,7 @@ def get_infections(values: List[float], threshold: float) -> np.ndarray:
     return infections
 
 
-def get_fix_infections(values: List[float]) -> np.ndarray:
+def get_fix_infections(values: list[float]) -> np.ndarray:
     return np.where(np.diff(np.where(np.isclose(np.abs(np.diff(values)), 0.0))[0]) > 2)[0]
 
 
@@ -84,7 +83,7 @@ def get_threshold_infections(values: np.ndarray, threshold: float) -> np.ndarray
     return np.array(sorted(list(set(extract_idxs))), dtype=np.float64)
 
 
-def create_interpolation(values: List[float]):
+def create_interpolation(values: list[float]):
     if 2 >= len(values) or 0.0001 >= abs(np.max(values) - np.min(values)):
         return Interpolation()
 
@@ -118,7 +117,7 @@ def create_interpolation(values: List[float]):
 # https://shspage.hatenadiary.org/entry/20140625/1403702735
 # https://bezier.readthedocs.io/en/stable/python/reference/bezier.curve.html#bezier.curve.Curve.evaluate
 # https://edvakf.hatenadiary.org/entry/20111016/1318716097
-def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> Tuple[float, float, float]:
+def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> tuple[float, float, float]:
     """
     補間曲線を求める
 
@@ -154,7 +153,7 @@ def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> Tu
 
 
 @lru_cache(maxsize=None)
-def cache_evaluate(x: float, x1: float, y1: float, x2: float, y2: float) -> Tuple[float, float, float]:
+def cache_evaluate(x: float, x1: float, y1: float, x2: float, y2: float) -> tuple[float, float, float]:
     t = newton(x1, x2, x)
     s = 1 - t
 
