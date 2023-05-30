@@ -1625,25 +1625,32 @@ def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bo
 
     # ボーンのベクトル
     bone_vector = (bone_end - bone_start).normalized()
-    norm_vector = bone_vector.vector
+    bone_direction = bone_vector.vector
 
-    # ボーンのベクトルをローカル軸とした回転行列
-    bone_local_coordinates = bone_vector.to_local_matrix4x4()
+    # ボーンの傾きをローカルX軸とする
+    local_x = bone_direction
 
-    # ボーンベクトルと直交する位置
-    orthogonal_vector = np.array([1, 0, -norm_vector[0] / norm_vector[2]])
-    if np.linalg.norm(orthogonal_vector) == 0:
-        orthogonal_vector = np.array([0, 1, -norm_vector[1] / norm_vector[2]])
+    # ローカルX軸とボーンベクトルの外積を求めてローカルY軸を計算
+    arbitrary_vector = np.array([0.0, 0.0, -1.0])
+    local_y = np.cross(local_x, arbitrary_vector)
+    local_y = np.nan_to_num(local_y)
+    local_y /= norm(local_y)
+    if np.count_nonzero(local_y) == local_y.shape[0]:
+        local_y = np.array([0.0, 1.0, 0.0])
 
-    # 交点の座標を計算する
-    intersection_points = []
-    for point in vertex_positions:
-        A = np.vstack((norm_vector, orthogonal_vector)).T
-        b = point[:3]
-        intersection = np.linalg.lstsq(A, b, rcond=None)[0]
-        intersection_points.append(np.append(intersection, 0))
+    # ローカルY軸とローカルX軸の外積を求めてローカルZ軸を計算
+    local_z = np.cross(local_y, local_x)
 
-    # ローカル座標系からのローカル位置の計算
-    vertex_local_positions = (np.array(intersection_points) @ bone_local_coordinates.vector)[..., :3]
+    # 各頂点のローカル位置を計算
+    local_positions = []
+    for vertex in vertex_positions:
+        vertex_relative = vertex - bone_start.vector
 
-    return vertex_local_positions
+        # ローカル座標系に変換
+        local_x_coord = np.dot(vertex_relative, local_x)
+        local_y_coord = np.dot(vertex_relative, local_y)
+        local_z_coord = np.dot(vertex_relative, local_z)
+
+        local_positions.append(np.array([local_x_coord, local_y_coord, local_z_coord]))
+
+    return np.array(local_positions)
