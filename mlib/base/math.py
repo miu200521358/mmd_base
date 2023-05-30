@@ -1639,7 +1639,7 @@ def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bo
     intersection_points = []
     for point in vertex_positions:
         A = np.vstack((norm_vector, orthogonal_vector)).T
-        b = point
+        b = point[:3]
         intersection = np.linalg.lstsq(A, b, rcond=None)[0]
         intersection_points.append(np.append(intersection, 0))
 
