@@ -271,12 +271,12 @@ class Bones(BaseIndexNameDictModel[Bone]):
 
         from_pos = bone.position
         bone_setting = STANDARD_BONE_NAMES[bone.name] if bone.name in STANDARD_BONE_NAMES else None
-        if bone_setting and isinstance(bone_setting.relative, MVector3D):
+        if bone_setting and isinstance(bone_setting.relatives, MVector3D):
             # 表示先位置が指定されてる場合、そのまま使用
-            return bone_setting.relative.normalized()
-        elif bone_setting and isinstance(bone_setting.relative, Iterable):
+            return bone_setting.relatives.normalized()
+        elif bone_setting and isinstance(bone_setting.relatives, Iterable):
             # 表示先ボーンが指定されており、いずれかある場合、そのまま使用
-            for tail_bone_name in bone_setting.relative:
+            for tail_bone_name in bone_setting.relatives:
                 if tail_bone_name in self:
                     return (self[tail_bone_name].position - from_pos).normalized()
 
@@ -1033,11 +1033,11 @@ class PmxModel(BaseHashModel):
             return False
 
         # 表示先
-        if isinstance(bone_setting.relative, MVector3D):
+        if isinstance(bone_setting.relatives, MVector3D):
             if BoneFlg.TAIL_IS_BONE in bone.bone_flg:
-                bone.tail_position = bone_setting.relative.copy()
-        elif isinstance(bone_setting.relative, list) and bone_setting.relative[0] in self.bones:
-            bone.tail_index = self.bones[bone_setting.relative[0]].index
+                bone.tail_position = bone_setting.relatives.copy()
+        elif isinstance(bone_setting.relatives, list) and bone_setting.relatives[0] in self.bones:
+            bone.tail_index = self.bones[bone_setting.relatives[0]].index
 
         # 回転付与
         if "肩C" in bone.name and f"{direction}肩P" in self.bones:

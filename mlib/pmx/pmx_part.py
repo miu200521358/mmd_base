@@ -1147,7 +1147,7 @@ class BoneSetting:
         self,
         name: str,
         parents: Iterable[str],
-        relative: Union[MVector3D, Iterable[str]],
+        relatives: Union[MVector3D, Iterable[str]],
         tails: Iterable[str],
         flag: BoneFlg,
         axis: MVector3D,
@@ -1164,7 +1164,7 @@ class BoneSetting:
         weight_names: 同一ウェイトで扱うボーン名リスト
         """
         self.name = name
-        self.relative = relative
+        self.relatives = relatives
         self.parents = parents
         self.tails = tails
         self.flag = flag
