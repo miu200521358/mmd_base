@@ -336,7 +336,7 @@ class MVector(BaseModel):
         return self.vector[index]
 
     @classmethod
-    def std_mean(cls: Type[MVectorT], values: list[MVectorT], range: float = 1.5) -> MVectorT:
+    def std_mean(cls: Type[MVectorT], values: list[MVectorT], err: float = 1.5) -> MVectorT:
         """標準偏差を加味したmean処理"""
         np_standard_vectors = np.array([v.vector for v in values])
         np_standard_lengths = np.array([v.length() for v in values])
@@ -345,8 +345,8 @@ class MVector(BaseModel):
 
         # 中央値から標準偏差の一定範囲までの値を取得
         filtered_standard_values = np_standard_vectors[
-            (np_standard_lengths >= median_standard_values - range * std_standard_values)
-            & (np_standard_lengths <= median_standard_values + range * std_standard_values)
+            (np_standard_lengths >= median_standard_values - err * std_standard_values)
+            & (np_standard_lengths <= median_standard_values + err * std_standard_values)
         ]
 
         return cls(*np.mean(filtered_standard_values, axis=0))
@@ -1623,20 +1623,27 @@ def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bo
         ローカル頂点位置
     """
 
-    # 頂点個数
-    vertex_size = len(vertex_positions)
-
     # ボーンのベクトル
     bone_vector = (bone_end - bone_start).normalized()
+    norm_vector = bone_vector.vector
 
     # ボーンのベクトルをローカル軸とした回転行列
     bone_local_coordinates = bone_vector.to_local_matrix4x4()
 
     # ボーンベクトルと直交する位置
-    vertex_cross_positions = np.zeros((vertex_size, 4))
-    vertex_cross_positions[..., :3] = np.cross(bone_vector.vector, vertex_positions[..., :3])
+    orthogonal_vector = np.array([1, 0, -norm_vector[0] / norm_vector[2]])
+    if np.linalg.norm(orthogonal_vector) == 0:
+        orthogonal_vector = np.array([0, 1, -norm_vector[1] / norm_vector[2]])
+
+    # 交点の座標を計算する
+    intersection_points = []
+    for point in vertex_positions:
+        A = np.vstack((norm_vector, orthogonal_vector)).T
+        b = point
+        intersection = np.linalg.lstsq(A, b, rcond=None)[0]
+        intersection_points.append(np.append(intersection, 0))
 
     # ローカル座標系からのローカル位置の計算
-    vertex_local_positions = (vertex_cross_positions @ bone_local_coordinates.vector)[..., :3]
+    vertex_local_positions = (np.array(intersection_points) @ bone_local_coordinates.vector)[..., :3]
 
     return vertex_local_positions
