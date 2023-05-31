@@ -482,10 +482,10 @@ class MVector3D(MVector):
 
         # ローカル軸に合わせた回転行列を作成する
         rotation_matrix = MMatrix4x4()
-        rotation_matrix.vector[0, :3] = x_axis
-        rotation_matrix.vector[1, :3] = y_axis
-        rotation_matrix.vector[2, :3] = z_axis
-        # rotation_matrix.vector[:3, :3] = as_rotation_matrix(from_rotation_matrix(np.array([x_axis, y_axis, z_axis])))
+        # rotation_matrix.vector[0, :3] = x_axis
+        # rotation_matrix.vector[1, :3] = y_axis
+        # rotation_matrix.vector[2, :3] = z_axis
+        rotation_matrix.vector[:3, :3] = as_rotation_matrix(from_rotation_matrix(np.array([x_axis, y_axis, z_axis])))
 
         return rotation_matrix
 
@@ -1626,13 +1626,10 @@ def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bo
     # ローカルX軸方向直線ベクトル
     vector_size = len(vertex_positions)
     bone_vector = bone_end - bone_start
-    bone_center_vector = (bone_start + (bone_vector / 2)).vector4
     bone_direction = bone_vector.normalized().vector4
 
     # 各頂点とローカル軸との交点
-    vertex_cross_positions = bone_center_vector + (
-        np.dot(vertex_positions - bone_center_vector, bone_direction).reshape(vector_size, 1) * bone_direction
-    )
+    vertex_cross_positions = vertex_positions + np.dot(vertex_positions, bone_direction).reshape(vector_size, 1) * bone_direction
 
     # ボーンベクトルをローカルX軸とする回転行列
     local_matrix = bone_vector.to_local_matrix4x4().vector
