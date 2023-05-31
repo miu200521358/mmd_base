@@ -1223,8 +1223,8 @@ class BoneSetting:
         weight_names: 同一ウェイトで扱うボーン名リスト
         """
         self.name = name
-        self.relatives = relatives
         self.parents = parents
+        self.relatives = relatives
         self.tails = tails
         self.flag = flag
         self.axis = axis
@@ -1273,7 +1273,7 @@ class BoneSettings(Enum):
     LOWER = BoneSetting(
         "下半身",
         ("腰", "グルーブ", "センター"),
-        MVector3D(0, -1, 0),
+        ("足中心",),
         ("足中心", "腰キャンセル左", "左足", "腰キャンセル右", "右足"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         MVector3D(0, -1, 0),
