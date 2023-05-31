@@ -460,7 +460,7 @@ class MVector3D(MVector):
             return MMatrix4x4()
 
         # ローカルX軸の方向ベクトル
-        x_axis = self.normalized().vector
+        x_axis = self.vector.copy()
         norm_x_axis = norm(x_axis)
         if not norm_x_axis:
             return MMatrix4x4()
@@ -482,9 +482,7 @@ class MVector3D(MVector):
 
         # ローカル軸に合わせた回転行列を作成する
         rotation_matrix = MMatrix4x4()
-        rotation_matrix.vector[0, :3] = x_axis
-        rotation_matrix.vector[1, :3] = y_axis
-        rotation_matrix.vector[2, :3] = z_axis
+        rotation_matrix.vector[:3, :3] = as_rotation_matrix(from_rotation_matrix(np.array([x_axis, y_axis, z_axis])))
 
         return rotation_matrix
 
@@ -1622,35 +1620,32 @@ def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bo
     np.ndarray
         ローカル頂点位置
     """
+    # ローカルX軸方向直線ベクトル
+    vector_size = len(vertex_positions)
+    bone_vector = bone_end - bone_start
+    bone_center_vector = (bone_start + (bone_vector / 2)).vector4
+    bone_direction = bone_vector.normalized().vector4
 
-    # ボーンのベクトル
-    bone_vector = (bone_end - bone_start).normalized()
-    bone_direction = bone_vector.vector
+    # 各頂点とローカル軸との交点
+    vertex_cross_positions = bone_center_vector + (
+        np.dot(vertex_positions - bone_center_vector, bone_direction).reshape(vector_size, 1) * bone_direction
+    )
 
-    # ボーンの傾きをローカルX軸とする
-    local_x = bone_direction
+    # ボーンベクトルをローカルX軸とする回転行列
+    local_matrix = bone_vector.to_local_matrix4x4().vector
 
-    # ローカルX軸とボーンベクトルの外積を求めてローカルY軸を計算
-    arbitrary_vector = np.array([0.0, 0.0, -1.0])
-    local_y = np.cross(local_x, arbitrary_vector)
-    local_y = np.nan_to_num(local_y)
-    local_y /= norm(local_y)
-    if np.count_nonzero(local_y) == local_y.shape[0]:
-        local_y = np.array([0.0, 1.0, 0.0])
+    # ボーンベクトルと頂点位置の交点を原点としてボーンベクトルをローカルX軸とする行列
+    cross_matrixes = np.full((vector_size, 4, 4), np.eye(4))
+    cross_matrixes[..., :3, 3] = vertex_cross_positions[..., :3]
+    cross_local_matrixes = cross_matrixes @ local_matrix
 
-    # ローカルY軸とローカルX軸の外積を求めてローカルZ軸を計算
-    local_z = np.cross(local_y, local_x)
+    # 頂点位置行列
+    vertex_matrixes = np.full((vector_size, 4, 4), np.eye(4))
+    vertex_matrixes[..., :3, 3] = np.array(vertex_positions)[..., :3]
 
-    # 各頂点のローカル位置を計算
-    local_positions = []
-    for vertex in vertex_positions:
-        vertex_relative = vertex - bone_start.vector
+    # 交点から見た頂点ローカル位置
+    vertex_local_positions = (inv(cross_local_matrixes) @ (vertex_positions - vertex_cross_positions).reshape(vector_size, 4, 1)).reshape(
+        vector_size, 4
+    )[..., :3]
 
-        # ローカル座標系に変換
-        local_x_coord = np.dot(vertex_relative, local_x)
-        local_y_coord = np.dot(vertex_relative, local_y)
-        local_z_coord = np.dot(vertex_relative, local_z)
-
-        local_positions.append(np.array([local_x_coord, local_y_coord, local_z_coord]))
-
-    return np.array(local_positions)
+    return vertex_local_positions
