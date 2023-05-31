@@ -1490,8 +1490,8 @@ class BoneSettings(Enum):
     RIGHT_WRIST = BoneSetting(
         "右手首",
         ("右手捩", "右ひじ"),
-        ("右中指３", "右中指１", "右人指１", "右薬指１", "右小指１"),
-        ("右中指３", "右中指１", "右人指１", "右薬指１", "右小指１"),
+        ("右中指１", "右人指１", "右薬指１", "右小指１"),
+        ("右中指１", "右人指１", "右薬指１", "右小指１"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
         ("右手首",),
@@ -1860,8 +1860,8 @@ class BoneSettings(Enum):
     LEFT_WRIST = BoneSetting(
         "左手首",
         ("左手捩", "左ひじ"),
-        ("右中指３", "左中指１", "左人指１", "左薬指１", "左小指１"),
-        ("左中指３", "左中指１", "左人指１", "左薬指１", "左小指１"),
+        ("左中指１", "左人指１", "左薬指１", "左小指１"),
+        ("左中指１", "左人指１", "左薬指１", "左小指１"),
         BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         MVector3D(-1, 0, 0),
         ("左手首",),
