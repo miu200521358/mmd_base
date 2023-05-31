@@ -1644,8 +1644,6 @@ def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bo
     vertex_matrixes[..., :3, 3] = np.array(vertex_positions)[..., :3]
 
     # 交点から見た頂点ローカル位置
-    vertex_local_positions = (inv(cross_local_matrixes) @ (vertex_positions - vertex_cross_positions).reshape(vector_size, 4, 1)).reshape(
-        vector_size, 4
-    )[..., :3]
+    vertex_local_positions = (inv(cross_local_matrixes) @ vertex_matrixes)[..., :3, 3]
 
     return vertex_local_positions
