@@ -1148,7 +1148,6 @@ class PmxModel(BaseHashModel):
             )
 
         replaced_map = dict([(b.index, b.index) for b in self.bones])
-        replaced_bone_indexes = set([self.bones[bname].index for bname in bone_names])
         for bone_name in bone_names:
             bone = self.bones[bone_name]
             # ウェイトの一括置換
@@ -1156,7 +1155,7 @@ class PmxModel(BaseHashModel):
                 # 足Dはそのまま置き換える
                 replaced_map[self.bones[bone_name[:-1]].index] = bone.index
         # 一括置換系はそのまま置き換える
-        for v in [v for v in self.vertices if set(v.deform.indexes) & replaced_bone_indexes]:
+        for v in self.vertices:
             v.deform.indexes = np.vectorize(replaced_map.get)(v.deform.indexes)
 
     def separate_twist_weights(
