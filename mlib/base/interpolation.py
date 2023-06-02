@@ -23,7 +23,7 @@ class Interpolation(BaseModel):
         self.start = MVector2D(20, 20)
         self.end = MVector2D(107, 107)
 
-    def normalize(self, finish: MVector2D, begin: MVector2D) -> None:
+    def normalize(self, begin: MVector2D, finish: MVector2D) -> None:
         diff = finish - begin
         self.start = Interpolation.round_mmd((self.start - begin) / diff, MVector2D())
         self.end = Interpolation.round_mmd((self.end - begin) / diff, MVector2D(IP_MAX, IP_MAX))
@@ -52,6 +52,38 @@ class Interpolation(BaseModel):
         t2 = t * 1000000
         # pythonは偶数丸めなので、整数部で丸めた後、元に戻す
         return int(round(round(t2, -6) / 1000000))
+
+
+def separate_interpolation(interpolation: Interpolation, start: int, now: int, end: int) -> tuple[Interpolation, Interpolation]:
+    if (now - start) == 0 or (end - start) == 0:
+        return Interpolation(), Interpolation()
+
+    x, y, t = evaluate(interpolation, start, now, end)
+
+    iA = MVector2D(0.0, 0.0)
+    iB = interpolation.start / IP_MAX
+    iC = interpolation.end / IP_MAX
+    iD = MVector2D(1.0, 1.0)
+
+    iE = iA * (1 - t) + iB * t
+    iF = iB * (1 - t) + iC * t
+    iG = iC * (1 - t) + iD * t
+    iH = iE * (1 - t) + iF * t
+    iI = iF * (1 - t) + iG * t
+    iJ = iH * (1 - t) + iI * t
+
+    # 新たな4つのベジェ曲線の制御点は、A側がAEHJ、C側がJIGDとなる。
+    before_bz = Interpolation()
+    before_bz.start = iE
+    before_bz.end = iH
+    before_bz.normalize(iA, iJ)
+
+    after_bz = Interpolation()
+    after_bz.start = iI
+    after_bz.end = iG
+    after_bz.normalize(iJ, iD)
+
+    return before_bz, after_bz
 
 
 def get_infections(values: list[float], threshold: float) -> np.ndarray:

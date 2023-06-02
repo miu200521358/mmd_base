@@ -2,7 +2,7 @@ from multiprocessing import freeze_support
 
 import pytest
 
-from mlib.base.math import MQuaternion, MVector3D
+from mlib.base.math import MMatrix4x4, MQuaternion, MVector3D
 
 
 def test_read_by_filepath_error():
@@ -1112,6 +1112,46 @@ def test_vmd_save_01():
         output_motion = f.read()
 
     assert output_motion
+
+
+def test_vmd_save_02():
+    from mlib.pmx.pmx_part import STANDARD_BONE_NAMES
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.vmd.vmd_part import VmdBoneFrame
+    from mlib.vmd.vmd_collection import VmdMotion
+    from mlib.vmd.vmd_reader import VmdReader
+    from mlib.vmd.vmd_writer import VmdWriter
+
+    vmd_reader = VmdReader()
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        "D:/MMD/MikuMikuDance_v926x64/UserFile/Motion/ダンス_1人/カミサマネジマキ 粉ふきスティック/sora_guiter1_2016.vmd"
+    )
+
+    pmx_reader = PmxReader()
+    model: PmxModel = pmx_reader.read_by_filepath(
+        "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/弱音ハク/Tda式改変弱音ハクccvセット1.05 coa/Tda式改変弱音ハクccv_nc 1.05/ギター用/Tda式改変弱音ハクccv_nc ver1.05_ギター.pmx"
+    )
+
+    fno = 3100
+    new_motion = VmdMotion()
+    poses, qqs, scales, local_poses, local_qqs, local_scales = motion.bones.get_bone_matrixes(
+        [fno], model, list(set(STANDARD_BONE_NAMES.keys()) & set(model.bones.names))
+    )
+    for bidx, bone_name in enumerate(STANDARD_BONE_NAMES.keys()):
+        if bone_name not in model.bones:
+            continue
+        new_bf = VmdBoneFrame(index=fno, name=bone_name)
+        new_bf.position = MMatrix4x4(*poses[0, bidx].flatten()).to_position()
+        new_bf.rotation = MMatrix4x4(*qqs[0, bidx].flatten()).to_quaternion()
+        new_motion.bones[bone_name].append(new_bf)
+        print(f"{bone_name}: {fno}")
+
+    VmdWriter(
+        new_motion, "D:/MMD/MikuMikuDance_v926x64/UserFile/Motion/ダンス_1人/カミサマネジマキ 粉ふきスティック/sora_guiter1_2016_焼き込み.vmd", "ハク腕焼き込み"
+    ).save()
+
+    assert True
 
 
 if __name__ == "__main__":
