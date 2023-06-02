@@ -1624,33 +1624,23 @@ def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bo
         ローカル頂点位置
     """
     # ローカルX軸方向直線ベクトル
-    vector_size = len(vertex_positions)
+    vertex_size = len(vertex_positions)
     bone_vector = bone_end - bone_start
-    # bone_center_vector = (bone_start + (bone_vector / 2)).vector4
     bone_direction = bone_vector.normalized().vector4
 
-    # 各頂点とローカル軸との交点
-    # vertex_cross_positions = bone_center_vector + (
-    #     np.dot(vertex_positions - bone_center_vector, bone_direction).reshape(vector_size, 1) * bone_direction
-    # )
-    vertex_cross_positions = vertex_positions - np.dot(vertex_positions, bone_direction).reshape(vector_size, 1) * bone_direction
+    # ボーン方向をローカルX軸とする回転行列
+    bone_direction_matrix = bone_vector.to_local_matrix4x4().vector
 
-    # ボーンベクトルをローカルX軸とする回転行列
-    local_matrix = bone_vector.to_local_matrix4x4().vector
+    # vertex_positionsとbone_directionとの直交座標
+    vertex_cross_positions = (
+        vertex_positions - np.dot(vertex_positions - bone_start.vector4, bone_direction)[:, np.newaxis] * bone_direction
+    )
 
-    # ボーンベクトルと頂点位置の交点を原点としてボーンベクトルをローカルX軸とする行列
-    cross_matrixes = np.full((vector_size, 4, 4), np.eye(4))
-    cross_matrixes[..., :3, 3] = vertex_cross_positions[..., :3]
-    cross_local_matrixes = cross_matrixes @ local_matrix
+    # vertex_cross_positions の各三次元位置を原点とし、bone_directionの向きを軸とした回転行列
+    cross_local_matrixes = np.full((vertex_size, 4, 4), bone_direction_matrix)
+    cross_local_matrixes[:, :3, 3] = -bone_direction[:3]
 
-    # 頂点位置行列
-    vertex_matrixes = np.full((vector_size, 4, 4), np.eye(4))
-    vertex_matrixes[..., :3, 3] = np.array(vertex_positions)[..., :3]
+    # cross_matrixes座標系におけるvertex_positionsの各ローカル位置
+    vertex_local_positions = np.einsum("ij,ikj->ik", vertex_positions - vertex_cross_positions, cross_local_matrixes)
 
-    # 交点から見た頂点ローカル位置
-    # vertex_local_positions = (inv(cross_local_matrixes) @ (vertex_positions - vertex_cross_positions).reshape(vector_size, 4, 1)).reshape(
-    #     vector_size, 4
-    # )[..., :3]
-    vertex_local_positions = (inv(cross_local_matrixes) @ vertex_matrixes)[..., :3, 3]
-
-    return vertex_local_positions
+    return vertex_local_positions[..., :3]
