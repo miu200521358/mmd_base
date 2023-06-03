@@ -597,6 +597,7 @@ class PmxModel(BaseHashModel):
         self,
         bone_matrixes: np.ndarray,
         vertex_morph_poses: np.ndarray,
+        after_vertex_morph_poses: np.ndarray,
         uv_morph_poses: np.ndarray,
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
@@ -604,7 +605,9 @@ class PmxModel(BaseHashModel):
     ) -> None:
         if not self.for_draw or not self.meshes:
             return
-        self.meshes.draw(bone_matrixes, vertex_morph_poses, uv_morph_poses, uv1_morph_poses, material_morphs, is_alpha)
+        self.meshes.draw(
+            bone_matrixes, vertex_morph_poses, after_vertex_morph_poses, uv_morph_poses, uv1_morph_poses, material_morphs, is_alpha
+        )
 
     def draw_bone(
         self,
@@ -1319,6 +1322,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         "vao",
         "vbo_components",
         "morph_pos_comps",
+        "morph_after_pos_comps",
         "morph_uv_comps",
         "morph_uv1_comps",
         "vbo_vertices",
@@ -1367,9 +1371,12 @@ class Meshes(BaseIndexDictModel[Mesh]):
                         0.0,
                         0.0,
                         0.0,
+                        0.0,
+                        0.0,
+                        0.0,
                     ],
                     dtype=np.float32,
-                    count=30,
+                    count=33,
                 )
                 for v in model.vertices
             ],
@@ -1430,10 +1437,12 @@ class Meshes(BaseIndexDictModel[Mesh]):
             VsLayout.BONE_ID.value: {"size": 4, "offset": 11},
             VsLayout.WEIGHT_ID.value: {"size": 4, "offset": 15},
             VsLayout.MORPH_POS_ID.value: {"size": 3, "offset": 19},
-            VsLayout.MORPH_UV_ID.value: {"size": 4, "offset": 22},
-            VsLayout.MORPH_UV1_ID.value: {"size": 4, "offset": 26},
+            VsLayout.MORPH_AFTER_POS_ID.value: {"size": 3, "offset": 22},
+            VsLayout.MORPH_UV_ID.value: {"size": 4, "offset": 25},
+            VsLayout.MORPH_UV1_ID.value: {"size": 4, "offset": 29},
         }
         self.morph_pos_comps = self.vbo_components[VsLayout.MORPH_POS_ID.value]
+        self.morph_after_pos_comps = self.vbo_components[VsLayout.MORPH_AFTER_POS_ID.value]
         self.morph_uv_comps = self.vbo_components[VsLayout.MORPH_UV_ID.value]
         self.morph_uv1_comps = self.vbo_components[VsLayout.MORPH_UV1_ID.value]
         self.vbo_vertices = VBO(
@@ -1544,6 +1553,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self,
         bone_matrixes: np.ndarray,
         vertex_morph_poses: np.ndarray,
+        after_vertex_morph_poses: np.ndarray,
         uv_morph_poses: np.ndarray,
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
@@ -1558,6 +1568,9 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.vbo_vertices.data[
             :, self.morph_pos_comps["offset"] : (self.morph_pos_comps["offset"] + self.morph_pos_comps["size"])
         ] = vertex_morph_poses
+        self.vbo_vertices.data[
+            :, self.morph_after_pos_comps["offset"] : (self.morph_after_pos_comps["offset"] + self.morph_after_pos_comps["size"])
+        ] = after_vertex_morph_poses
         self.vbo_vertices.data[
             :, self.morph_uv_comps["offset"] : (self.morph_uv_comps["offset"] + self.morph_uv_comps["size"])
         ] = uv_morph_poses
@@ -1576,6 +1589,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
             self.vbo_vertices.set_slot(VsLayout.BONE_ID)
             self.vbo_vertices.set_slot(VsLayout.WEIGHT_ID)
             self.vbo_vertices.set_slot(VsLayout.MORPH_POS_ID)
+            self.vbo_vertices.set_slot(VsLayout.MORPH_AFTER_POS_ID)
             self.vbo_vertices.set_slot(VsLayout.MORPH_UV_ID)
             self.vbo_vertices.set_slot(VsLayout.MORPH_UV1_ID)
             self.ibo_faces.bind()

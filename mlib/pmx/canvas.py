@@ -79,6 +79,7 @@ class MotionSet:
             (
                 self.gl_matrixes,
                 self.vertex_morph_poses,
+                self.after_vertex_morph_poses,
                 self.uv_morph_poses,
                 self.uv1_morph_poses,
                 self.material_morphs,
@@ -86,12 +87,14 @@ class MotionSet:
         else:
             self.gl_matrixes = np.array([np.eye(4) for _ in range(len(model.bones))])
             self.vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])
+            self.after_vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])
             self.uv_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
             self.uv1_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
             self.material_morphs = [ShaderMaterial(m, MShader.LIGHT_AMBIENT4) for m in model.materials]
 
     def update_morphs(self, model: PmxModel, motion: VmdMotion, fno: int):
         self.vertex_morph_poses = motion.morphs.animate_vertex_morphs(fno, model)
+        self.after_vertex_morph_poses = motion.morphs.animate_vertex_morphs(fno, model, after=True)
         self.uv_morph_poses = motion.morphs.animate_uv_morphs(fno, model, 0)
         self.uv1_morph_poses = motion.morphs.animate_uv_morphs(fno, model, 1)
         self.material_morphs = motion.morphs.animate_material_morphs(fno, model)
@@ -228,6 +231,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 model_set.model.draw(
                     animation.gl_matrixes,
                     animation.vertex_morph_poses,
+                    animation.after_vertex_morph_poses,
                     animation.uv_morph_poses,
                     animation.uv1_morph_poses,
                     animation.material_morphs,
@@ -241,6 +245,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 model_set.model.draw(
                     animation.gl_matrixes,
                     animation.vertex_morph_poses,
+                    animation.after_vertex_morph_poses,
                     animation.uv_morph_poses,
                     animation.uv1_morph_poses,
                     animation.material_morphs,
