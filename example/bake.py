@@ -21,7 +21,8 @@ motion: VmdMotion = vmd_reader.read_by_filepath(
 
 pmx_reader = PmxReader()
 model: PmxModel = pmx_reader.read_by_filepath(
-    "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/弱音ハク/Tda式改変弱音ハクccvセット1.05 coa/Tda式改変弱音ハクccv_nc 1.05/ギター用/Tda式改変弱音ハクccv_nc ver1.05_ギター.pmx"
+    # "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/弱音ハク/Tda式改変弱音ハクccvセット1.05 coa/Tda式改変弱音ハクccv_nc 1.05/ギター用/Tda式改変弱音ハクccv_nc ver1.05_ギター.pmx"
+    "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/他/天羽ソラ_set ISAO/天羽ソラpony/ギター/天羽ソラPony_ギター.pmx"
 )
 
 bone_names = (
@@ -77,9 +78,7 @@ bone_names = (
     "右足",
     "右ひざ",
     "右足首",
-    "左足IK親",
     "左足ＩＫ",
-    "右足IK親",
     "右足ＩＫ",
     "左つま先ＩＫ",
     "右つま先ＩＫ",
@@ -89,12 +88,12 @@ bone_names = (
 start_time = time.perf_counter()
 
 all_fnos = {0}
-for bone_frames in motion.bones:
-    all_fnos |= set(bone_frames.indexes)
+for bone_name in ("左手首", "右手首"):
+    all_fnos |= set(motion.bones[bone_name].indexes)
 
 new_motion = VmdMotion()
 
-for n in range(1, 61):
+for n in range(1, 5):
     fnos = sorted(set(range((n - 1) * 100, n * 100)) & set(all_fnos))
     poses, qqs, _, _, _, _ = motion.bones.get_bone_matrixes(fnos, model, model.bones.names)
     for fidx, fno in enumerate(fnos):
