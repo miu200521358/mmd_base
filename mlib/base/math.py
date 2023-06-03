@@ -459,6 +459,18 @@ class MVector3D(MVector):
         if not self:
             return MMatrix4x4()
 
+        # x_vector = self.normalized().vector
+
+        # # X軸の回転角度を計算
+        # theta_x = np.arctan2(x_vector[1], x_vector[0])
+
+        # # cos(theta_x)とsin(theta_x)を計算
+        # c = np.cos(theta_x)
+        # s = np.sin(theta_x)
+
+        # # 回転座標変換行列を計算
+        # rotation_matrix = MMatrix4x4(1, 0, 0, 0, 0, c, -s, 0, 0, s, c, 0, 0, 0, 0, 1)
+
         # ローカルX軸の方向ベクトル
         x_axis = self.vector.copy()
         norm_x_axis = norm(x_axis)
@@ -480,12 +492,15 @@ class MVector3D(MVector):
         if np.all(np.isnan(y_axis)):
             return MMatrix4x4()
 
+        z_axis = np.cross(x_axis, y_axis)
+        norm_z_axis = norm(z_axis)
+        z_axis /= norm_z_axis
+
         # ローカル軸に合わせた回転行列を作成する
         rotation_matrix = MMatrix4x4()
-        # rotation_matrix.vector[0, :3] = x_axis
-        # rotation_matrix.vector[1, :3] = y_axis
-        # rotation_matrix.vector[2, :3] = z_axis
-        rotation_matrix.vector[:3, :3] = as_rotation_matrix(from_rotation_matrix(np.array([x_axis, y_axis, z_axis])))
+        rotation_matrix.vector[:3, 0] = x_axis
+        rotation_matrix.vector[:3, 1] = y_axis
+        rotation_matrix.vector[:3, 2] = z_axis
 
         return rotation_matrix
 
@@ -1628,19 +1643,21 @@ def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bo
     bone_vector = bone_end - bone_start
     bone_direction = bone_vector.normalized().vector4
 
+    projected_positions = np.dot(vertex_positions, bone_direction)
+
+    # ボーンの方向と頂点座標の射影が垂直に交わる交点
+    intersections = np.outer(projected_positions, bone_direction)
+
+    vertex_matrixes = np.full((vertex_size, 4, 4), np.eye(4))
+    vertex_matrixes[..., :3, 3] = vertex_positions[..., :3]
+
     # ボーン方向をローカルX軸とする回転行列
     bone_direction_matrix = bone_vector.to_local_matrix4x4().vector
 
-    # vertex_positionsとbone_directionとの直交座標
-    vertex_cross_positions = (
-        vertex_positions - np.dot(vertex_positions - bone_start.vector4, bone_direction)[:, np.newaxis] * bone_direction
-    )
+    intersection_matrixes = np.full((vertex_size, 4, 4), bone_direction_matrix)
+    intersection_matrixes[..., :3, 3] = intersections[..., :3]
 
-    # vertex_cross_positions の各三次元位置を原点とし、bone_directionの向きを軸とした回転行列
-    cross_local_matrixes = np.full((vertex_size, 4, 4), bone_direction_matrix)
-    cross_local_matrixes[:, :3, 3] = -bone_direction[:3]
+    # intersectionsを原点としたvertex_positionsの各ローカル位置
+    vertex_local_positions = (inv(intersection_matrixes) @ vertex_matrixes)[..., :3, 3]
 
-    # cross_matrixes座標系におけるvertex_positionsの各ローカル位置
-    vertex_local_positions = np.einsum("ij,ikj->ik", vertex_positions - vertex_cross_positions, cross_local_matrixes)
-
-    return vertex_local_positions[..., :3]
+    return vertex_local_positions
