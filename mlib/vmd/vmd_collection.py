@@ -925,11 +925,11 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
     def max_fno(self) -> int:
         return max([max(self[fname].indexes + [0]) for fname in self.names] + [0])
 
-    def animate_vertex_morphs(self, fno: int, model: PmxModel, after: bool = False) -> np.ndarray:
+    def animate_vertex_morphs(self, fno: int, model: PmxModel) -> np.ndarray:
         row = len(model.vertices)
         poses = np.full((row, 3), np.zeros(3))
 
-        for morph in model.morphs.filter_by_type(MorphType.AFTER_VERTEX if after else MorphType.VERTEX):
+        for morph in model.morphs.filter_by_type(MorphType.VERTEX):
             if morph.name not in self.data:
                 # モーフそのものの定義がなければスルー
                 continue
@@ -1204,15 +1204,11 @@ class VmdMotion(BaseHashModel):
     def name(self) -> str:
         return self.model_name
 
-    def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
+    def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 開始")
 
         # 頂点モーフ
         vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 頂点モーフ")
-
-        # 変形後頂点モーフ
-        after_vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model, after=True)
         logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 頂点モーフ")
 
         # UVモーフ
@@ -1246,14 +1242,7 @@ class VmdMotion(BaseHashModel):
 
         logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: OpenGL座標系変換")
 
-        return (
-            gl_matrixes,
-            vertex_morph_poses + group_vertex_morph_poses,
-            after_vertex_morph_poses,
-            uv_morph_poses,
-            uv1_morph_poses,
-            group_materials,
-        )
+        return gl_matrixes, vertex_morph_poses + group_vertex_morph_poses, uv_morph_poses, uv1_morph_poses, group_materials
 
     def animate_bone(self, fnos: list[int], model: PmxModel, bone_names: list[str] = [], append_ik: bool = True) -> VmdBoneFrameTrees:
         all_morph_bone_frames = VmdBoneFrames()

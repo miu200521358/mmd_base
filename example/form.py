@@ -27,7 +27,7 @@ from mlib.service.form.widgets.float_slider_ctrl import FloatSliderCtrl
 from mlib.service.form.widgets.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
 from mlib.utils.file_utils import save_histories, separate_path
 from mlib.vmd.vmd_collection import VmdMotion
-from mlib.vmd.vmd_part import VmdMorphFrame
+from mlib.vmd.vmd_part import VmdBoneFrame, VmdMorphFrame
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -520,14 +520,14 @@ class TestFrame(BaseFrame):
         if not (self.file_panel.motion_ctrl.data and self.file_panel.model_ctrl.data and self.file_panel.dress_ctrl.data):
             return
 
-        dress_motion = self.file_panel.motion_ctrl.data.copy()
+        logger.info("全ての親追加")
+        bone_matrixes = VmdMotion().animate_bone([0], model)
+        model.insert_standard_bone("全ての親", bone_matrixes)
+        model.setup()
+        model.replace_standard_weights(["全ての親"])
+        logger.info("全ての親追加完了")
 
-        # logger.info("全ての親追加")
-        # bone_matrixes = VmdMotion().animate_bone([0], model)
-        # model.insert_standard_bone("全ての親", bone_matrixes)
-        # model.setup()
-        # model.replace_standard_weights(["全ての親"])
-        # logger.info("全ての親追加完了")
+        dress_motion = self.file_panel.motion_ctrl.data.copy()
 
         # bf = VmdBoneFrame(0, "右腕")
         # bf.local_position = MVector3D(0, 1, 0)
@@ -570,9 +570,9 @@ class TestFrame(BaseFrame):
         # bf.local_scale = MVector3D(0, 1.2, 1.2)
         # dress_motion.bones["左ひじ"].append(bf)
 
-        # bf = VmdBoneFrame(0, "頭")
-        # bf.local_scale = MVector3D(0, 1, 1)
-        # dress_motion.bones["頭"].append(bf)
+        bf = VmdBoneFrame(0, "頭")
+        bf.local_scale = MVector3D(0, 1, 1)
+        dress_motion.bones["頭"].append(bf)
 
         # モーフ追加
         morph = Morph(name="上半身")

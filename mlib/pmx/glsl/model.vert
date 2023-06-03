@@ -8,7 +8,6 @@ in layout(location = %d) float vertexEdge;
 in layout(location = %d) vec4  boneIndexes;
 in layout(location = %d) vec4  boneWeights;
 in layout(location = %d) vec3  morphPos;
-in layout(location = %d) vec3  morphAfterPos;
 in layout(location = %d) vec4  morphUv;
 in layout(location = %d) vec4  morphUv1;
 
@@ -65,7 +64,7 @@ void main() {
     mat3 normalTransformMatrix = mat3(boneTransformMatrix);
 
     // 頂点位置
-    gl_Position = modelViewProjectionMatrix * ((boneTransformMatrix * position4) + vec4(morphAfterPos, 0.0));
+    gl_Position = modelViewProjectionMatrix * boneTransformMatrix * position4;
 
     // 頂点法線
     vetexNormal = normalize(normalTransformMatrix * normalize(normal)).xyz;

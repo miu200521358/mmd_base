@@ -16,7 +16,6 @@ from mlib.pmx.pmx_part import (
     BoneMorphOffset,
     GroupMorphOffset,
     MaterialMorphOffset,
-    Morph,
     Sdef,
     ToonSharing,
     UvMorphOffset,
@@ -54,7 +53,6 @@ class PmxWriter(BaseModel):
 
         with open(self.output_path, "wb") as fout:
             target_bones = [b for b in self.model.bones if b.index >= 0] if self.include_system else self.model.bones.writable()
-            target_morphs = [m for m in self.model.morphs if m.index >= 0] if self.include_system else self.model.morphs.writable()
 
             # シグニチャ
             fout.write(b"PMX ")
@@ -78,7 +76,7 @@ class PmxWriter(BaseModel):
             bone_idx_size, bone_idx_type = self.define_write_index(len(target_bones), is_vertex=False)
             self.write_byte(fout, bone_idx_size)
             # モーフIndexサイズ | 1,2,4 のいずれか
-            morph_idx_size, morph_idx_type = self.define_write_index(len(target_morphs), is_vertex=False)
+            morph_idx_size, morph_idx_type = self.define_write_index(len(self.model.morphs), is_vertex=False)
             self.write_byte(fout, morph_idx_size)
             # 剛体Indexサイズ | 1,2,4 のいずれか
             rigidbody_idx_size, rigidbody_idx_type = self.define_write_index(len(self.model.rigidbodies), is_vertex=False)
@@ -109,7 +107,7 @@ class PmxWriter(BaseModel):
             self.write_bones(fout, bone_idx_type, target_bones)
 
             # モーフ出力
-            self.write_morphs(fout, vertex_idx_type, bone_idx_type, material_idx_type, morph_idx_type, target_morphs)
+            self.write_morphs(fout, vertex_idx_type, bone_idx_type, material_idx_type, morph_idx_type)
 
             # 表示枠出力
             self.write_display_slots(fout, bone_idx_type, morph_idx_type)
@@ -558,7 +556,6 @@ class PmxWriter(BaseModel):
         bone_idx_type: PmxBinaryType,
         material_idx_type: PmxBinaryType,
         morph_idx_type: PmxBinaryType,
-        target_morphs: list[Morph],
     ):
         """
         モーフ出力
@@ -577,6 +574,7 @@ class PmxWriter(BaseModel):
         PmxModel
         """
         # モーフの数
+        target_morphs = self.model.morphs.data.values() if self.include_system else self.model.morphs.writable()
         self.write_number(fout, PmxBinaryType.INT, len(target_morphs), is_positive_only=True)
 
         for midx, morph in enumerate(target_morphs):
@@ -651,7 +649,7 @@ class PmxWriter(BaseModel):
                     self.write_number(fout, morph_idx_type, offset.morph_index)
                     self.write_number(fout, PmxBinaryType.FLOAT, float(offset.morph_factor))
 
-        logger.debug("-- モーフデータ出力終了({c})", c=len(target_morphs))
+        logger.debug("-- モーフデータ出力終了({c})", c=len(self.model.morphs))
 
     def write_display_slots(
         self,

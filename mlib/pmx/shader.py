@@ -20,9 +20,8 @@ class VsLayout(IntEnum):
     BONE_ID = 5
     WEIGHT_ID = 6
     MORPH_POS_ID = 7
-    MORPH_AFTER_POS_ID = 8
-    MORPH_UV_ID = 9
-    MORPH_UV1_ID = 10
+    MORPH_UV_ID = 8
+    MORPH_UV1_ID = 9
 
 
 class ProgramType(IntEnum):
@@ -229,7 +228,6 @@ class MShader:
                 VsLayout.BONE_ID.value,
                 VsLayout.WEIGHT_ID.value,
                 VsLayout.MORPH_POS_ID.value,
-                VsLayout.MORPH_AFTER_POS_ID.value,
                 VsLayout.MORPH_UV_ID.value,
                 VsLayout.MORPH_UV1_ID.value,
             )

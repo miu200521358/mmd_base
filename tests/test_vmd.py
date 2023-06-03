@@ -402,7 +402,7 @@ def test_read_by_filepath_ok_matrix_animate() -> None:
     model = PmxReader().read_by_filepath("D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/ISAO式ミク/I_ミクv4/Miku_V4_準標準.pmx")
 
     # キーフレ
-    gl_matrixes, _, _, _, _, _ = motion.animate(999, model)
+    gl_matrixes, _, _, _, _ = motion.animate(999, model)
 
     assert gl_matrixes is not None
 
