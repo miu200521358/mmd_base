@@ -940,7 +940,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             # モーションによる頂点モーフ変動量
             for offset in morph.offsets:
                 if type(offset) is VertexMorphOffset and offset.vertex_index < row:
-                    ratio_pos: MVector3D = offset.position_offset * mf.ratio
+                    ratio_pos: MVector3D = offset.position * mf.ratio
                     poses[offset.vertex_index] += ratio_pos.gl.vector
 
         return np.array(poses)
@@ -1022,7 +1022,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
                     for offset in part_morph.offsets:
                         if type(offset) is VertexMorphOffset and offset.vertex_index < group_vertex_poses.shape[0]:
-                            ratio_pos: MVector3D = offset.position_offset * mf_factor
+                            ratio_pos: MVector3D = offset.position * mf_factor
                             group_vertex_poses[offset.vertex_index] += ratio_pos.gl.vector
                         elif type(offset) is BoneMorphOffset and offset.bone_index in model.bones:
                             bf = bone_frames[model.bones[offset.bone_index].name][fno]

@@ -592,9 +592,9 @@ class PmxWriter(BaseModel):
                 if type(offset) is VertexMorphOffset:
                     # 頂点モーフ
                     self.write_number(fout, vertex_idx_type, offset.vertex_index)
-                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position_offset.x))
-                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position_offset.y))
-                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position_offset.z))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position.x))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position.y))
+                    self.write_number(fout, PmxBinaryType.FLOAT, float(offset.position.z))
                 elif type(offset) is UvMorphOffset:
                     # UVモーフ
                     self.write_number(fout, vertex_idx_type, offset.vertex_index)

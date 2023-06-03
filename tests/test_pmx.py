@@ -270,7 +270,7 @@ def test_read_by_filepath_ok() -> None:
     assert 8185 == vertex_offset.vertex_index
     assert np.isclose(
         np.array([-0.0001545548, 0.002120972, -4.768372e-07]),
-        vertex_offset.position_offset.vector,
+        vertex_offset.position.vector,
     ).all()
     # 表示枠
     right_hand_display_slot = model.display_slots[9]

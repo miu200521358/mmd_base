@@ -535,7 +535,7 @@ class PmxModel(BaseHashModel):
         return vertex_bone_scales
 
     def update_vertices_by_bone(self) -> None:
-        """ボーン別頂点INDEXリスト+ウェイトの取得"""
+        """ボーン別頂点INDEXリストの更新"""
         self.vertices_by_bones = {}
         total_index_count = len(self.vertices)
         for vertex in self.vertices:
@@ -552,7 +552,7 @@ class PmxModel(BaseHashModel):
                 )
 
     def update_vertices_by_material(self) -> None:
-        """材質別頂点INDEXリストの取得"""
+        """材質別頂点INDEXリストの更新"""
         prev_face_count = 0
         self.vertices_by_materials = {}
         for material in self.materials:

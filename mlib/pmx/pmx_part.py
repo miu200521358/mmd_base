@@ -2185,16 +2185,16 @@ class VertexMorphOffset(MorphOffset):
     ----------
     vertex_index : int
         頂点INDEX
-    position_offset : MVector3D
+    position : MVector3D
         座標オフセット量(x,y,z)
     """
 
-    __slots__ = ("vertex_index", "position_offset")
+    __slots__ = ("vertex_index", "position")
 
-    def __init__(self, vertex_index: int, position_offset: MVector3D):
+    def __init__(self, vertex_index: int, position: MVector3D):
         super().__init__()
         self.vertex_index = vertex_index
-        self.position_offset = position_offset
+        self.position = position
 
 
 class UvMorphOffset(MorphOffset):
