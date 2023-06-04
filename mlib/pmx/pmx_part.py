@@ -1260,6 +1260,7 @@ class BoneSetting:
     def __init__(
         self,
         name: str,
+        category: str,
         parents: Iterable[str],
         relatives: Union[MVector3D, Iterable[str]],
         tails: Iterable[str],
@@ -1269,6 +1270,7 @@ class BoneSetting:
     ) -> None:
         """
         name : 準標準ボーン名
+        category : 種類名
         parents : 親ボーン名候補リスト
         relative : 軸計算時の相対位置
             vector の場合はそのまま使う。名前リストの場合、該当ボーンの位置との相対位置
@@ -1278,6 +1280,7 @@ class BoneSetting:
         weight_names: 同一ウェイトで扱うボーン名リスト
         """
         self.name = name
+        self.category = category
         self.parents = parents
         self.relatives = relatives
         self.tails = tails
@@ -1291,6 +1294,7 @@ class BoneSettings(Enum):
 
     ROOT = BoneSetting(
         "全ての親",
+        "全ての親",
         [],
         MVector3D(0, 1, 0),
         ("センター",),
@@ -1299,6 +1303,7 @@ class BoneSettings(Enum):
         [],
     )
     CENTER = BoneSetting(
+        "センター",
         "センター",
         ("全ての親",),
         MVector3D(0, 1, 0),
@@ -1309,6 +1314,7 @@ class BoneSettings(Enum):
     )
     GROOVE = BoneSetting(
         "グルーブ",
+        "グルーブ",
         ("センター",),
         MVector3D(0, -1, 0),
         ("上半身", "下半身"),
@@ -1318,6 +1324,7 @@ class BoneSettings(Enum):
     )
     WAIST = BoneSetting(
         "腰",
+        "体幹",
         ("グルーブ", "センター"),
         MVector3D(0, -1, 0),
         ("上半身", "下半身"),
@@ -1327,6 +1334,7 @@ class BoneSettings(Enum):
     )
     LOWER = BoneSetting(
         "下半身",
+        "体幹",
         ("腰", "グルーブ", "センター"),
         ("足中心",),
         ("足中心", "腰キャンセル左", "左足", "腰キャンセル右", "右足"),
@@ -1336,6 +1344,7 @@ class BoneSettings(Enum):
     )
     LEG_CENTER = BoneSetting(
         "足中心",
+        "体幹",
         ("腰", "グルーブ", "センター"),
         MVector3D(0, -1, 0),
         ("腰キャンセル左", "左足", "腰キャンセル右", "右足"),
@@ -1345,6 +1354,7 @@ class BoneSettings(Enum):
     )
     UPPER = BoneSetting(
         "上半身",
+        "体幹",
         ("腰", "グルーブ", "センター"),
         ("上半身2", "首根元"),
         ("上半身2", "首根元"),
@@ -1354,6 +1364,7 @@ class BoneSettings(Enum):
     )
     UPPER2 = BoneSetting(
         "上半身2",
+        "体幹",
         ("上半身",),
         ("上半身3", "首根元"),
         ("上半身3", "首根元"),
@@ -1363,6 +1374,7 @@ class BoneSettings(Enum):
     )
     UPPER3 = BoneSetting(
         "上半身3",
+        "体幹",
         ("上半身2",),
         ("首根元",),
         ("首根元",),
@@ -1372,6 +1384,7 @@ class BoneSettings(Enum):
     )
     ARM_CENTER = BoneSetting(
         "首根元",
+        "体幹",
         ("上半身3", "上半身2"),
         ("首",),
         ("首",),
@@ -1380,6 +1393,7 @@ class BoneSettings(Enum):
         [],
     )
     NECK = BoneSetting(
+        "首",
         "首",
         ("首根元",),
         ("頭",),
@@ -1390,6 +1404,7 @@ class BoneSettings(Enum):
     )
     HEAD = BoneSetting(
         "頭",
+        "頭",
         ("首",),
         MVector3D(0, 1, 0),
         [],
@@ -1399,6 +1414,7 @@ class BoneSettings(Enum):
     )
     EYES = BoneSetting(
         "両目",
+        "目",
         ("頭",),
         MVector3D(0, 1, 0),
         ("左目", "右目"),
@@ -1408,6 +1424,7 @@ class BoneSettings(Enum):
     )
     LEFT_EYE = BoneSetting(
         "左目",
+        "目",
         ("頭",),
         MVector3D(0, 1, 0),
         [],
@@ -1417,6 +1434,7 @@ class BoneSettings(Enum):
     )
     RIGHT_EYE = BoneSetting(
         "右目",
+        "目",
         ("頭",),
         MVector3D(0, 1, 0),
         [],
@@ -1427,6 +1445,7 @@ class BoneSettings(Enum):
 
     RIGHT_SHOULDER_P = BoneSetting(
         "右肩P",
+        "肩",
         ("首根元", "上半身3", "上半身2", "上半身"),
         MVector3D(0, 1, 0),
         ("右肩",),
@@ -1436,6 +1455,7 @@ class BoneSettings(Enum):
     )
     RIGHT_SHOULDER = BoneSetting(
         "右肩",
+        "肩",
         ("右肩P", "首根元", "上半身3", "上半身2", "上半身"),
         ("右腕",),
         ("右腕",),
@@ -1445,6 +1465,7 @@ class BoneSettings(Enum):
     )
     RIGHT_SHOULDER_C = BoneSetting(
         "右肩C",
+        "腕",
         ("右肩",),
         MVector3D(0, 1, 0),
         ("右腕",),
@@ -1454,6 +1475,7 @@ class BoneSettings(Enum):
     )
     RIGHT_ARM = BoneSetting(
         "右腕",
+        "腕",
         ("右肩C", "右肩"),
         ("右ひじ",),
         ("右ひじ",),
@@ -1463,6 +1485,7 @@ class BoneSettings(Enum):
     )
     RIGHT_ARM_TWIST = BoneSetting(
         "右腕捩",
+        "腕",
         ("右腕",),
         MVector3D(0, 1, 0),
         ("右ひじ",),
@@ -1472,6 +1495,7 @@ class BoneSettings(Enum):
     )
     RIGHT_ARM_TWIST1 = BoneSetting(
         "右腕捩1",
+        "腕",
         ("右腕捩",),
         MVector3D(0, 1, 0),
         ("右ひじ",),
@@ -1481,6 +1505,7 @@ class BoneSettings(Enum):
     )
     RIGHT_ARM_TWIST2 = BoneSetting(
         "右腕捩2",
+        "腕",
         ("右腕捩",),
         MVector3D(0, 1, 0),
         ("右ひじ",),
@@ -1490,6 +1515,7 @@ class BoneSettings(Enum):
     )
     RIGHT_ARM_TWIST3 = BoneSetting(
         "右腕捩3",
+        "腕",
         ("右腕捩",),
         MVector3D(0, 1, 0),
         ("右ひじ",),
@@ -1499,6 +1525,7 @@ class BoneSettings(Enum):
     )
     RIGHT_ELBOW = BoneSetting(
         "右ひじ",
+        "腕",
         ("右腕捩", "右腕"),
         ("右手首",),
         ("右手首",),
@@ -1508,6 +1535,7 @@ class BoneSettings(Enum):
     )
     RIGHT_HAND_TWIST = BoneSetting(
         "右手捩",
+        "腕",
         ("右ひじ",),
         MVector3D(0, 1, 0),
         ("右手首",),
@@ -1517,6 +1545,7 @@ class BoneSettings(Enum):
     )
     RIGHT_HAND_TWIST1 = BoneSetting(
         "右手捩1",
+        "腕",
         ("右手捩",),
         MVector3D(0, 1, 0),
         ("右手首",),
@@ -1526,6 +1555,7 @@ class BoneSettings(Enum):
     )
     RIGHT_HAND_TWIST2 = BoneSetting(
         "右手捩2",
+        "腕",
         ("右手捩",),
         MVector3D(0, 1, 0),
         ("右手首",),
@@ -1535,6 +1565,7 @@ class BoneSettings(Enum):
     )
     RIGHT_HAND_TWIST3 = BoneSetting(
         "右手捩3",
+        "腕",
         ("右手捩",),
         MVector3D(0, 1, 0),
         ("右手首",),
@@ -1544,6 +1575,7 @@ class BoneSettings(Enum):
     )
     RIGHT_WRIST = BoneSetting(
         "右手首",
+        "腕",
         ("右手捩", "右ひじ"),
         ("右中指１", "右人指１", "右薬指１", "右小指１"),
         ("右中指１", "右人指１", "右薬指１", "右小指１"),
@@ -1553,6 +1585,7 @@ class BoneSettings(Enum):
     )
     RIGHT_THUMB0 = BoneSetting(
         "右親指０",
+        "指",
         ("右手首",),
         ("右親指１",),
         ("右親指２",),
@@ -1562,6 +1595,7 @@ class BoneSettings(Enum):
     )
     RIGHT_THUMB1 = BoneSetting(
         "右親指１",
+        "指",
         ("右親指０",),
         ("右親指２",),
         ("右親指２",),
@@ -1571,6 +1605,7 @@ class BoneSettings(Enum):
     )
     RIGHT_THUMB2 = BoneSetting(
         "右親指２",
+        "指",
         ("右親指１",),
         MVector3D(0, 1, 0),
         [],
@@ -1580,6 +1615,7 @@ class BoneSettings(Enum):
     )
     RIGHT_INDEX0 = BoneSetting(
         "右人指１",
+        "指",
         ("右手首",),
         ("右人指２",),
         ("右人指３",),
@@ -1589,6 +1625,7 @@ class BoneSettings(Enum):
     )
     RIGHT_INDEX1 = BoneSetting(
         "右人指２",
+        "指",
         ("右人指１",),
         ("右人指３",),
         ("右人指３",),
@@ -1598,6 +1635,7 @@ class BoneSettings(Enum):
     )
     RIGHT_INDEX2 = BoneSetting(
         "右人指３",
+        "指",
         ("右人指２",),
         MVector3D(0, 1, 0),
         [],
@@ -1607,6 +1645,7 @@ class BoneSettings(Enum):
     )
     RIGHT_MIDDLE0 = BoneSetting(
         "右中指１",
+        "指",
         ("右手首",),
         ("右中指２",),
         ("右中指３",),
@@ -1616,6 +1655,7 @@ class BoneSettings(Enum):
     )
     RIGHT_MIDDLE1 = BoneSetting(
         "右中指２",
+        "指",
         ("右中指１",),
         ("右中指３",),
         ("右中指３",),
@@ -1625,6 +1665,7 @@ class BoneSettings(Enum):
     )
     RIGHT_MIDDLE2 = BoneSetting(
         "右中指３",
+        "指",
         ("右中指２",),
         MVector3D(0, 1, 0),
         [],
@@ -1634,6 +1675,7 @@ class BoneSettings(Enum):
     )
     RIGHT_RING0 = BoneSetting(
         "右薬指１",
+        "指",
         ("右手首",),
         ("右薬指２",),
         ("右薬指３",),
@@ -1643,6 +1685,7 @@ class BoneSettings(Enum):
     )
     RIGHT_RING1 = BoneSetting(
         "右薬指２",
+        "指",
         ("右薬指１",),
         ("右薬指３",),
         ("右薬指３",),
@@ -1652,6 +1695,7 @@ class BoneSettings(Enum):
     )
     RIGHT_RING2 = BoneSetting(
         "右薬指３",
+        "指",
         ("右薬指２",),
         MVector3D(0, 1, 0),
         [],
@@ -1661,6 +1705,7 @@ class BoneSettings(Enum):
     )
     RIGHT_PINKY0 = BoneSetting(
         "右小指１",
+        "指",
         ("右手首",),
         ("右小指２",),
         ("右小指３",),
@@ -1670,6 +1715,7 @@ class BoneSettings(Enum):
     )
     RIGHT_PINKY1 = BoneSetting(
         "右小指２",
+        "指",
         ("右小指１",),
         ("右小指３",),
         ("右小指３",),
@@ -1679,6 +1725,7 @@ class BoneSettings(Enum):
     )
     RIGHT_PINKY2 = BoneSetting(
         "右小指３",
+        "指",
         ("右小指２",),
         MVector3D(0, 1, 0),
         [],
@@ -1688,6 +1735,7 @@ class BoneSettings(Enum):
     )
     RIGHT_WRIST_CANCEL = BoneSetting(
         "腰キャンセル右",
+        "足",
         ("足中心", "下半身"),
         MVector3D(0, -1, 0),
         ("右足",),
@@ -1697,6 +1745,7 @@ class BoneSettings(Enum):
     )
     RIGHT_LEG = BoneSetting(
         "右足",
+        "足",
         ("腰キャンセル右", "足中心", "下半身"),
         ("右ひざ",),
         ("右ひざ",),
@@ -1706,6 +1755,7 @@ class BoneSettings(Enum):
     )
     RIGHT_KNEE = BoneSetting(
         "右ひざ",
+        "足",
         ("右足",),
         ("右足首",),
         ("右足首",),
@@ -1715,6 +1765,7 @@ class BoneSettings(Enum):
     )
     RIGHT_ANKLE = BoneSetting(
         "右足首",
+        "足首",
         ("右ひざ",),
         ("右つま先",),
         ("右つま先",),
@@ -1724,6 +1775,7 @@ class BoneSettings(Enum):
     )
     RIGHT_TOE = BoneSetting(
         "右つま先",
+        "足首",
         ("右足首",),
         MVector3D(0, -1, 0),
         [],
@@ -1733,6 +1785,7 @@ class BoneSettings(Enum):
     )
     RIGHT_LEG_IK = BoneSetting(
         "右足ＩＫ",
+        "足",
         ("右足IK親", "全ての親"),
         ("右つま先ＩＫ",),
         ("右つま先ＩＫ",),
@@ -1742,6 +1795,7 @@ class BoneSettings(Enum):
     )
     RIGHT_TOE_IK = BoneSetting(
         "右つま先ＩＫ",
+        "足",
         ("右足ＩＫ",),
         MVector3D(0, -1, 0),
         [],
@@ -1751,6 +1805,7 @@ class BoneSettings(Enum):
     )
     RIGHT_LEG_D = BoneSetting(
         "右足D",
+        "足",
         ("腰キャンセル右", "下半身"),
         ("右ひざD",),
         ("右ひざD",),
@@ -1760,6 +1815,7 @@ class BoneSettings(Enum):
     )
     RIGHT_KNEE_D = BoneSetting(
         "右ひざD",
+        "足",
         ("右足D",),
         ("右足首D",),
         ("右足首D",),
@@ -1769,6 +1825,7 @@ class BoneSettings(Enum):
     )
     RIGHT_ANKLE_D = BoneSetting(
         "右足首D",
+        "足首",
         ("右ひざD",),
         ("右足先EX",),
         ("右足先EX",),
@@ -1778,6 +1835,7 @@ class BoneSettings(Enum):
     )
     RIGHT_TOE_EX = BoneSetting(
         "右足先EX",
+        "足首",
         ("右足首D",),
         MVector3D(0, -1, 0),
         [],
@@ -1787,6 +1845,7 @@ class BoneSettings(Enum):
     )
     RIGHT_LEG_IK_PARENT = BoneSetting(
         "右足IK親",
+        "足",
         ("全ての親",),
         MVector3D(0, 1, 0),
         ("右足ＩＫ",),
@@ -1797,6 +1856,7 @@ class BoneSettings(Enum):
 
     LEFT_SHOULDER_P = BoneSetting(
         "左肩P",
+        "肩",
         ("首根元", "上半身3", "上半身2", "上半身"),
         MVector3D(0, 1, 0),
         ("左肩",),
@@ -1806,6 +1866,7 @@ class BoneSettings(Enum):
     )
     LEFT_SHOULDER = BoneSetting(
         "左肩",
+        "肩",
         ("左肩P", "首根元", "上半身3", "上半身2", "上半身"),
         ("左腕",),
         ("左腕",),
@@ -1815,6 +1876,7 @@ class BoneSettings(Enum):
     )
     LEFT_SHOULDER_C = BoneSetting(
         "左肩C",
+        "腕",
         ("左肩",),
         MVector3D(0, 1, 0),
         ("左腕",),
@@ -1824,6 +1886,7 @@ class BoneSettings(Enum):
     )
     LEFT_ARM = BoneSetting(
         "左腕",
+        "腕",
         ("左肩C", "左肩"),
         ("左ひじ",),
         ("左ひじ",),
@@ -1833,6 +1896,7 @@ class BoneSettings(Enum):
     )
     LEFT_ARM_TWIST = BoneSetting(
         "左腕捩",
+        "腕",
         ("左腕",),
         MVector3D(0, 1, 0),
         ("左ひじ",),
@@ -1842,6 +1906,7 @@ class BoneSettings(Enum):
     )
     LEFT_ARM_TWIST1 = BoneSetting(
         "左腕捩1",
+        "腕",
         ("左腕捩",),
         MVector3D(0, 1, 0),
         ("左ひじ",),
@@ -1851,6 +1916,7 @@ class BoneSettings(Enum):
     )
     LEFT_ARM_TWIST2 = BoneSetting(
         "左腕捩2",
+        "腕",
         ("左腕捩",),
         MVector3D(0, 1, 0),
         ("左ひじ",),
@@ -1860,6 +1926,7 @@ class BoneSettings(Enum):
     )
     LEFT_ARM_TWIST3 = BoneSetting(
         "左腕捩3",
+        "腕",
         ("左腕捩",),
         MVector3D(0, 1, 0),
         ("左ひじ",),
@@ -1869,6 +1936,7 @@ class BoneSettings(Enum):
     )
     LEFT_ELBOW = BoneSetting(
         "左ひじ",
+        "腕",
         ("左腕捩", "左腕"),
         ("左手首",),
         ("左手首",),
@@ -1878,6 +1946,7 @@ class BoneSettings(Enum):
     )
     LEFT_HAND_TWIST = BoneSetting(
         "左手捩",
+        "腕",
         ("左ひじ",),
         MVector3D(0, 1, 0),
         ("左手首",),
@@ -1887,6 +1956,7 @@ class BoneSettings(Enum):
     )
     LEFT_HAND_TWIST1 = BoneSetting(
         "左手捩1",
+        "腕",
         ("左手捩",),
         MVector3D(0, 1, 0),
         ("左手首",),
@@ -1896,6 +1966,7 @@ class BoneSettings(Enum):
     )
     LEFT_HAND_TWIST2 = BoneSetting(
         "左手捩2",
+        "腕",
         ("左手捩",),
         MVector3D(0, 1, 0),
         ("左手首",),
@@ -1905,6 +1976,7 @@ class BoneSettings(Enum):
     )
     LEFT_HAND_TWIST3 = BoneSetting(
         "左手捩3",
+        "腕",
         ("左手捩",),
         MVector3D(0, 1, 0),
         ("左手首",),
@@ -1914,6 +1986,7 @@ class BoneSettings(Enum):
     )
     LEFT_WRIST = BoneSetting(
         "左手首",
+        "腕",
         ("左手捩", "左ひじ"),
         ("左中指１", "左人指１", "左薬指１", "左小指１"),
         ("左中指１", "左人指１", "左薬指１", "左小指１"),
@@ -1923,6 +1996,7 @@ class BoneSettings(Enum):
     )
     LEFT_THUMB0 = BoneSetting(
         "左親指０",
+        "指",
         ("左手首",),
         ("左親指１",),
         ("左親指２",),
@@ -1932,6 +2006,7 @@ class BoneSettings(Enum):
     )
     LEFT_THUMB1 = BoneSetting(
         "左親指１",
+        "指",
         ("左親指０",),
         ("左親指２",),
         ("左親指２",),
@@ -1941,6 +2016,7 @@ class BoneSettings(Enum):
     )
     LEFT_THUMB2 = BoneSetting(
         "左親指２",
+        "指",
         ("左親指１",),
         MVector3D(0, 1, 0),
         [],
@@ -1950,6 +2026,7 @@ class BoneSettings(Enum):
     )
     LEFT_INDEX0 = BoneSetting(
         "左人指１",
+        "指",
         ("左手首",),
         ("左人指２",),
         ("左人指３",),
@@ -1959,6 +2036,7 @@ class BoneSettings(Enum):
     )
     LEFT_INDEX1 = BoneSetting(
         "左人指２",
+        "指",
         ("左人指１",),
         ("左人指３",),
         ("左人指３",),
@@ -1968,6 +2046,7 @@ class BoneSettings(Enum):
     )
     LEFT_INDEX2 = BoneSetting(
         "左人指３",
+        "指",
         ("左人指２",),
         MVector3D(0, 1, 0),
         [],
@@ -1977,6 +2056,7 @@ class BoneSettings(Enum):
     )
     LEFT_MIDDLE0 = BoneSetting(
         "左中指１",
+        "指",
         ("左手首",),
         ("左中指２",),
         ("左中指３",),
@@ -1986,6 +2066,7 @@ class BoneSettings(Enum):
     )
     LEFT_MIDDLE1 = BoneSetting(
         "左中指２",
+        "指",
         ("左中指１",),
         ("左中指３",),
         ("左中指３",),
@@ -1995,6 +2076,7 @@ class BoneSettings(Enum):
     )
     LEFT_MIDDLE2 = BoneSetting(
         "左中指３",
+        "指",
         ("左中指２",),
         MVector3D(0, 1, 0),
         [],
@@ -2004,6 +2086,7 @@ class BoneSettings(Enum):
     )
     LEFT_RING0 = BoneSetting(
         "左薬指１",
+        "指",
         ("左手首",),
         ("左薬指２",),
         ("左薬指３",),
@@ -2013,6 +2096,7 @@ class BoneSettings(Enum):
     )
     LEFT_RING1 = BoneSetting(
         "左薬指２",
+        "指",
         ("左薬指１",),
         ("左薬指３",),
         ("左薬指３",),
@@ -2022,6 +2106,7 @@ class BoneSettings(Enum):
     )
     LEFT_RING2 = BoneSetting(
         "左薬指３",
+        "指",
         ("左薬指２",),
         MVector3D(0, 1, 0),
         [],
@@ -2031,6 +2116,7 @@ class BoneSettings(Enum):
     )
     LEFT_PINKY0 = BoneSetting(
         "左小指１",
+        "指",
         ("左手首",),
         ("左小指２",),
         ("左小指３",),
@@ -2040,6 +2126,7 @@ class BoneSettings(Enum):
     )
     LEFT_PINKY1 = BoneSetting(
         "左小指２",
+        "指",
         ("左小指１",),
         ("左小指３",),
         ("左小指３",),
@@ -2049,6 +2136,7 @@ class BoneSettings(Enum):
     )
     LEFT_PINKY2 = BoneSetting(
         "左小指３",
+        "指",
         ("左小指２",),
         MVector3D(0, 1, 0),
         [],
@@ -2058,6 +2146,7 @@ class BoneSettings(Enum):
     )
     LEFT_WRIST_CANCEL = BoneSetting(
         "腰キャンセル左",
+        "足",
         ("足中心", "下半身"),
         MVector3D(0, -1, 0),
         ("左足",),
@@ -2067,6 +2156,7 @@ class BoneSettings(Enum):
     )
     LEFT_LEG = BoneSetting(
         "左足",
+        "足",
         ("腰キャンセル左", "足中心", "下半身"),
         ("左ひざ",),
         ("左ひざ",),
@@ -2076,6 +2166,7 @@ class BoneSettings(Enum):
     )
     LEFT_KNEE = BoneSetting(
         "左ひざ",
+        "足",
         ("左足",),
         ("左足首",),
         ("左足首",),
@@ -2085,6 +2176,7 @@ class BoneSettings(Enum):
     )
     LEFT_ANKLE = BoneSetting(
         "左足首",
+        "足首",
         ("左ひざ",),
         ("左つま先",),
         ("左つま先",),
@@ -2094,6 +2186,7 @@ class BoneSettings(Enum):
     )
     LEFT_TOE = BoneSetting(
         "左つま先",
+        "足首",
         ("左足首",),
         MVector3D(0, -1, 0),
         [],
@@ -2103,6 +2196,7 @@ class BoneSettings(Enum):
     )
     LEFT_LEG_IK = BoneSetting(
         "左足ＩＫ",
+        "足",
         ("左足IK親", "全ての親"),
         ("左つま先ＩＫ",),
         ("左つま先ＩＫ",),
@@ -2112,6 +2206,7 @@ class BoneSettings(Enum):
     )
     LEFT_TOE_IK = BoneSetting(
         "左つま先ＩＫ",
+        "足",
         ("左足ＩＫ",),
         MVector3D(0, -1, 0),
         [],
@@ -2121,6 +2216,7 @@ class BoneSettings(Enum):
     )
     LEFT_LEG_D = BoneSetting(
         "左足D",
+        "足",
         ("腰キャンセル左", "下半身"),
         ("左ひざD",),
         ("左ひざD",),
@@ -2130,6 +2226,7 @@ class BoneSettings(Enum):
     )
     LEFT_KNEE_D = BoneSetting(
         "左ひざD",
+        "足",
         ("左足D",),
         ("左足首D",),
         ("左足首D",),
@@ -2139,6 +2236,7 @@ class BoneSettings(Enum):
     )
     LEFT_ANKLE_D = BoneSetting(
         "左足首D",
+        "足首",
         ("左ひざD",),
         ("左足先EX",),
         ("左足先EX",),
@@ -2148,6 +2246,7 @@ class BoneSettings(Enum):
     )
     LEFT_TOE_EX = BoneSetting(
         "左足先EX",
+        "足首",
         ("左足首D",),
         MVector3D(0, -1, 0),
         [],
@@ -2157,6 +2256,7 @@ class BoneSettings(Enum):
     )
     LEFT_LEG_IK_PARENT = BoneSetting(
         "左足IK親",
+        "足",
         ("全ての親",),
         MVector3D(0, 1, 0),
         ("左足ＩＫ",),
