@@ -1763,7 +1763,7 @@ class BoneSettings(Enum):
     )
     RIGHT_ANKLE = BoneSetting(
         "右足首",
-        "足首",
+        "足",
         ("右ひざ",),
         ("右つま先",),
         ("右つま先",),
@@ -1773,7 +1773,7 @@ class BoneSettings(Enum):
     )
     RIGHT_TOE = BoneSetting(
         "右つま先",
-        "足首",
+        "足",
         ("右足首",),
         MVector3D(0, -1, 0),
         [],
@@ -1823,7 +1823,7 @@ class BoneSettings(Enum):
     )
     RIGHT_ANKLE_D = BoneSetting(
         "右足首D",
-        "足首",
+        "足",
         ("右ひざD",),
         ("右足先EX",),
         ("右足先EX",),
@@ -1833,7 +1833,7 @@ class BoneSettings(Enum):
     )
     RIGHT_TOE_EX = BoneSetting(
         "右足先EX",
-        "足首",
+        "足",
         ("右足首D",),
         MVector3D(0, -1, 0),
         [],
@@ -2174,7 +2174,7 @@ class BoneSettings(Enum):
     )
     LEFT_ANKLE = BoneSetting(
         "左足首",
-        "足首",
+        "足",
         ("左ひざ",),
         ("左つま先",),
         ("左つま先",),
@@ -2184,7 +2184,7 @@ class BoneSettings(Enum):
     )
     LEFT_TOE = BoneSetting(
         "左つま先",
-        "足首",
+        "足",
         ("左足首",),
         MVector3D(0, -1, 0),
         [],
@@ -2234,7 +2234,7 @@ class BoneSettings(Enum):
     )
     LEFT_ANKLE_D = BoneSetting(
         "左足首D",
-        "足首",
+        "足",
         ("左ひざD",),
         ("左足先EX",),
         ("左足先EX",),
@@ -2244,7 +2244,7 @@ class BoneSettings(Enum):
     )
     LEFT_TOE_EX = BoneSetting(
         "左足先EX",
-        "足首",
+        "足",
         ("左足首D",),
         MVector3D(0, -1, 0),
         [],
