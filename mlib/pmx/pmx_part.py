@@ -1041,7 +1041,7 @@ class Bone(BaseIndexNameModel):
         ローカル軸行列計算で親のキャンセルをさせないボーン
         準標準だけど捩りは親を伝播させる
         """
-        return self.is_twist or self.name not in STANDARD_BONE_NAMES
+        return self.is_twist
 
     @property
     def is_standard(self) -> bool:
