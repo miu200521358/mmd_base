@@ -1765,7 +1765,7 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=("右足首", "右足首D", "右つま先", "右足先EX"),
         translatable=True,
-        rotatable=True,
+        rotatable=False,
         scalable=True,
     )
     RIGHT_TOE = BoneSetting(
@@ -1848,7 +1848,7 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=[],
         translatable=True,
-        rotatable=True,
+        rotatable=False,
         scalable=True,
     )
     RIGHT_TOE_EX = BoneSetting(
@@ -2304,7 +2304,7 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=("左足首", "左足首D", "左つま先", "左足先EX"),
         translatable=True,
-        rotatable=True,
+        rotatable=False,
         scalable=True,
     )
     LEFT_TOE = BoneSetting(
@@ -2387,7 +2387,7 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=[],
         translatable=True,
-        rotatable=True,
+        rotatable=False,
         scalable=True,
     )
     LEFT_TOE_EX = BoneSetting(
