@@ -1341,7 +1341,7 @@ class BoneSettings(Enum):
 
     RIGHT_SHOULDER_P = BoneSetting(
         name="右肩P",
-        category="肩",
+        category="腕",
         parents=("首根元", "上半身3", "上半身2", "上半身"),
         relatives=MVector3D(0, 1, 0),
         tails=("右肩",),
@@ -1354,7 +1354,7 @@ class BoneSettings(Enum):
     )
     RIGHT_SHOULDER = BoneSetting(
         name="右肩",
-        category="肩",
+        category="腕",
         parents=("右肩P", "首根元", "上半身3", "上半身2", "上半身"),
         relatives=("右腕",),
         tails=("右腕",),
@@ -1880,7 +1880,7 @@ class BoneSettings(Enum):
 
     LEFT_SHOULDER_P = BoneSetting(
         name="左肩P",
-        category="肩",
+        category="腕",
         parents=("首根元", "上半身3", "上半身2", "上半身"),
         relatives=MVector3D(0, 1, 0),
         tails=("左肩",),
@@ -1893,7 +1893,7 @@ class BoneSettings(Enum):
     )
     LEFT_SHOULDER = BoneSetting(
         name="左肩",
-        category="肩",
+        category="腕",
         parents=("左肩P", "首根元", "上半身3", "上半身2", "上半身"),
         relatives=("左腕",),
         tails=("左腕",),
