@@ -1283,7 +1283,7 @@ class BoneSettings(Enum):
         axis=MVector3D(0, 1, 0),
         weight_names=("首"),
         translatable=True,
-        rotatable=True,
+        rotatable=False,
         scalable=True,
     )
     HEAD = BoneSetting(
@@ -1297,7 +1297,7 @@ class BoneSettings(Enum):
         weight_names=("頭",),
         translatable=True,
         rotatable=False,
-        scalable=False,
+        scalable=True,
     )
     EYES = BoneSetting(
         name="両目",
