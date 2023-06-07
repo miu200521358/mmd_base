@@ -1102,19 +1102,19 @@ class PmxModel(BaseHashModel):
     def replace_standard_weights(self, bone_names: list[str]) -> None:
         self.update_vertices_by_bone()
 
-        if "上半身2" in bone_names:
+        if "上半身2" in bone_names and self.bones.exists(("上半身", "上半身2")):
             self.separate_weights("上半身", "上半身2", VecAxis.Y, 0.2, self.vertices_by_bones.get(self.bones["上半身"].index, []))
-        if "右足先EX" in bone_names:
+        if "右足先EX" in bone_names and self.bones.exists(("右足首", "右足首D", "右足先EX")):
             self.separate_weights("右足首D", "右足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["右足首D"].index, []))
             self.separate_weights("右足首", "右足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["右足首"].index, []))
-        if "左足先EX" in bone_names:
+        if "左足先EX" in bone_names and self.bones.exists(("左足首", "左足首D", "左足先EX")):
             self.separate_weights("左足首D", "左足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["左足首D"].index, []))
             self.separate_weights("左足首", "左足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["左足首"].index, []))
-        if "右親指０" in bone_names:
+        if "右親指０" in bone_names and self.bones.exists(("右手首", "右親指０", "右親指１")):
             self.separate_thumb_weights("右手首", "右親指０", "右親指１", self.vertices_by_bones.get(self.bones["右手首"].index, []))
-        if "左親指０" in bone_names:
+        if "左親指０" in bone_names and self.bones.exists(("左手首", "左親指０", "左親指１")):
             self.separate_thumb_weights("左手首", "左親指０", "左親指１", self.vertices_by_bones.get(self.bones["左手首"].index, []))
-        if "右腕捩" in bone_names:
+        if "右腕捩" in bone_names and self.bones.exists(("右腕", "右腕捩1", "右腕捩2", "右腕捩3", "右ひじ")):
             self.separate_twist_weights(
                 "右腕",
                 "右腕捩1",
@@ -1123,7 +1123,7 @@ class PmxModel(BaseHashModel):
                 "右ひじ",
                 self.vertices_by_bones.get(self.bones["右腕"].index, []) + self.vertices_by_bones.get(self.bones["右ひじ"].index, []),
             )
-        if "左腕捩" in bone_names:
+        if "左腕捩" in bone_names and self.bones.exists(("左腕", "左腕捩1", "左腕捩2", "左腕捩3", "左ひじ")):
             self.separate_twist_weights(
                 "左腕",
                 "左腕捩1",
@@ -1132,7 +1132,7 @@ class PmxModel(BaseHashModel):
                 "左ひじ",
                 self.vertices_by_bones.get(self.bones["左腕"].index, []) + self.vertices_by_bones.get(self.bones["左ひじ"].index, []),
             )
-        if "右手捩" in bone_names:
+        if "右手捩" in bone_names and self.bones.exists(("右ひじ", "右手捩1", "右手捩2", "右手捩3", "右手首")):
             self.separate_twist_weights(
                 "右ひじ",
                 "右手捩1",
@@ -1141,7 +1141,7 @@ class PmxModel(BaseHashModel):
                 "右手首",
                 self.vertices_by_bones.get(self.bones["右ひじ"].index, []) + self.vertices_by_bones.get(self.bones["右手首"].index, []),
             )
-        if "左手捩" in bone_names:
+        if "左手捩" in bone_names and self.bones.exists(("左ひじ", "左手捩1", "左手捩2", "左手捩3", "左手首")):
             self.separate_twist_weights(
                 "左ひじ",
                 "左手捩1",
