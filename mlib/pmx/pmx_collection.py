@@ -526,12 +526,12 @@ class PmxModel(BaseHashModel):
                     vertex_bone_scales[bone_index] = {}
                 vertex_bone_scales[bone_index][vertex.index] = MVector3D(*(vertex.normal.vector * weights[indexes == bone_index][0]))
 
-                logger.count(
-                    "ウェイトボーン分布",
-                    index=vertex.index,
-                    total_index_count=total_index_count,
-                    display_block=5000,
-                )
+            logger.count(
+                "ウェイトボーン分布",
+                index=vertex.index,
+                total_index_count=total_index_count,
+                display_block=5000,
+            )
         return vertex_bone_scales
 
     def update_vertices_by_bone(self) -> None:
@@ -544,12 +544,12 @@ class PmxModel(BaseHashModel):
                     self.vertices_by_bones[bone_index] = []
                 self.vertices_by_bones[bone_index].append(vertex.index)
 
-                logger.count(
-                    "ウェイトボーン分布",
-                    index=vertex.index,
-                    total_index_count=total_index_count,
-                    display_block=5000,
-                )
+            logger.count(
+                "ウェイトボーン分布",
+                index=vertex.index,
+                total_index_count=total_index_count,
+                display_block=5000,
+            )
 
     def update_vertices_by_material(self) -> None:
         """材質別頂点INDEXリストの更新"""
