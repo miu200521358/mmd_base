@@ -3,7 +3,7 @@ from bisect import bisect_left
 from functools import lru_cache
 from itertools import product
 from math import acos, degrees
-from typing import Optional
+from typing import Iterable, Optional
 
 import numpy as np
 from numpy.linalg import inv
@@ -168,7 +168,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         fnos: list[int],
         model: PmxModel,
         morph_bone_frames: Optional["VmdBoneFrames"] = None,
-        bone_names: list[str] = [],
+        bone_names: Iterable[str] = [],
         append_ik: bool = True,
     ) -> VmdBoneFrameTrees:
         if not bone_names:
@@ -269,7 +269,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         self,
         fnos: list[int],
         model: PmxModel,
-        target_bone_names: list[str],
+        target_bone_names: Iterable[str],
         append_ik: bool = True,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """ボーン変形行列を求める"""
@@ -415,9 +415,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         self,
         fno_local_poses: dict[int, MVector3D],
         bone: Bone,
-        is_parent_bone_not_local_cancels: list[bool],
-        parent_local_poses: list[MVector3D],
-        parent_local_axises: list[MVector3D],
+        is_parent_bone_not_local_cancels: Iterable[bool],
+        parent_local_poses: Iterable[MVector3D],
+        parent_local_axises: Iterable[MVector3D],
     ) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル位置
@@ -434,7 +434,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             tuple(parent_local_axises),
         )
 
-    def calc_ik_rotations(self, fno: int, model: PmxModel, target_bone_names: list[str]):
+    def calc_ik_rotations(self, fno: int, model: PmxModel, target_bone_names: Iterable[str]):
         """IK関連ボーンの事前計算"""
         ik_target_names = [
             model.bone_trees[target_bone_name].last_name for target_bone_name in target_bone_names if model.bones[target_bone_name].is_ik
@@ -513,9 +513,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         self,
         fno_local_scales: dict[int, MVector3D],
         bone: Bone,
-        is_parent_bone_not_local_cancels: list[bool],
-        parent_local_scales: list[MVector3D],
-        parent_local_axises: list[MVector3D],
+        is_parent_bone_not_local_cancels: Iterable[bool],
+        parent_local_scales: Iterable[MVector3D],
+        parent_local_axises: Iterable[MVector3D],
     ) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル縮尺
@@ -741,9 +741,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         self,
         fno_local_qqs: dict[int, MQuaternion],
         bone: Bone,
-        is_parent_bone_not_local_cancels: list[bool],
-        parent_local_qqs: list[MQuaternion],
-        parent_local_axises: list[MVector3D],
+        is_parent_bone_not_local_cancels: Iterable[bool],
+        parent_local_qqs: Iterable[MQuaternion],
+        parent_local_axises: Iterable[MVector3D],
     ) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル回転
@@ -1204,7 +1204,7 @@ class VmdMotion(BaseHashModel):
     def name(self) -> str:
         return self.model_name
 
-    def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
+    def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, Iterable[ShaderMaterial]]:
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 開始")
 
         # 頂点モーフ
@@ -1244,7 +1244,9 @@ class VmdMotion(BaseHashModel):
 
         return gl_matrixes, vertex_morph_poses + group_vertex_morph_poses, uv_morph_poses, uv1_morph_poses, group_materials
 
-    def animate_bone(self, fnos: list[int], model: PmxModel, bone_names: list[str] = [], append_ik: bool = True) -> VmdBoneFrameTrees:
+    def animate_bone(
+        self, fnos: list[int], model: PmxModel, bone_names: Iterable[str] = [], append_ik: bool = True
+    ) -> VmdBoneFrameTrees:
         all_morph_bone_frames = VmdBoneFrames()
 
         for fno in fnos:
