@@ -883,11 +883,9 @@ class Bone(BaseIndexNameModel):
             "左足D",
             "左ひざD",
             "左足首D",
-            "左足先EX",
             "右足D",
             "右ひざD",
             "右足首D",
-            "右足先EX",
         ]
 
     @property

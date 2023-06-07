@@ -943,7 +943,7 @@ class PmxModel(BaseHashModel):
             bone.position = MVector3D()
         elif "グルーブ" == bone.name and "センター" in self.bones:
             bone.position = bone_matrixes[0, "センター"].position * 1.025
-        elif ((bone.is_leg_d and "D" == bone.name[-1]) or "肩P" == bone.name[-2:]) and bone.name[:-1] in self.bones:
+        elif (bone.is_leg_d or "肩P" == bone.name[-2:]) and bone.name[:-1] in self.bones:
             bone.position = bone_matrixes[0, bone.name[:-1]].position.copy()
         elif "肩C" in bone.name and f"{direction}腕" in self.bones:
             bone.position = bone_matrixes[0, f"{direction}腕"].position.copy()
@@ -1046,7 +1046,7 @@ class PmxModel(BaseHashModel):
         elif "腰キャンセル" in bone.name and "腰" in self.bones:
             bone.effect_index = self.bones["腰"].index
             bone.effect_factor = -1
-        elif bone.is_leg_d and "D" == bone.name[-1]:
+        elif bone.is_leg_d:
             bone.effect_index = self.bones[bone.name[:-1]].index
             bone.effect_factor = 1
 
@@ -1151,7 +1151,7 @@ class PmxModel(BaseHashModel):
         for bone_name in bone_names:
             bone = self.bones[bone_name]
             # ウェイトの一括置換
-            if bone.is_leg_d and "D" == bone.name[-1]:
+            if bone.is_leg_d:
                 # 足Dはそのまま置き換える
                 replaced_map[self.bones[bone_name[:-1]].index] = bone.index
         # 一括置換系はそのまま置き換える
