@@ -425,14 +425,23 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # 自身のローカル移動量
         local_pos = fno_local_poses[bone.index]
 
-        return calc_local_position(
-            bone.is_not_local_cancel,
-            local_pos,
-            bone.tail_relative_position,
-            tuple(is_parent_bone_not_local_cancels),
-            tuple(parent_local_poses),
-            tuple(parent_local_axises),
-        )
+        # ローカル軸に沿った回転行列
+        rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
+
+        local_pos_mat = np.eye(4)
+        local_pos_mat[:3, 3] = local_pos.vector
+
+        # ローカル軸に合わせた移動行列を作成する
+        return inv(rotation_matrix) @ local_pos_mat @ rotation_matrix
+
+        # return calc_local_position(
+        #     bone.is_not_local_cancel,
+        #     local_pos,
+        #     bone.tail_relative_position,
+        #     tuple(is_parent_bone_not_local_cancels),
+        #     tuple(parent_local_poses),
+        #     tuple(parent_local_axises),
+        # )
 
     def calc_ik_rotations(self, fno: int, model: PmxModel, target_bone_names: list[str]):
         """IK関連ボーンの事前計算"""
@@ -751,14 +760,22 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # 自身のローカル回転量
         local_qq = fno_local_qqs[bone.index]
 
-        return calc_local_rotation(
-            bone.is_not_local_cancel,
-            local_qq,
-            bone.tail_relative_position,
-            tuple(is_parent_bone_not_local_cancels),
-            tuple(parent_local_qqs),
-            tuple(parent_local_axises),
-        )
+        # ローカル軸に沿った回転行列
+        rotation_matrix = bone.tail_relative_position.to_local_matrix4x4().vector
+
+        local_rot_mat = local_qq.to_matrix4x4().vector
+
+        # ローカル軸に合わせた移動行列を作成する(親はキャンセルする)
+        return inv(rotation_matrix) @ local_rot_mat @ rotation_matrix
+
+        # return calc_local_rotation(
+        #     bone.is_not_local_cancel,
+        #     local_qq,
+        #     bone.tail_relative_position,
+        #     tuple(is_parent_bone_not_local_cancels),
+        #     tuple(parent_local_qqs),
+        #     tuple(parent_local_axises),
+        # )
 
 
 @lru_cache(maxsize=None)
