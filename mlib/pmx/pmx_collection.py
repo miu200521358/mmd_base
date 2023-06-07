@@ -1029,6 +1029,10 @@ class PmxModel(BaseHashModel):
             bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
         elif "両目" == bone.name and "左目" in self.bones and "右目" in self.bones:
             bone.position = (bone_matrixes[0, "左目"].position + bone_matrixes[0, "右目"].position) / 2
+        elif "親指先" in bone.name and f"{bone.name[0]}親指２":
+            bone.position = bone_matrixes[0, f"{bone.name[0]}親指２"].position
+        elif "指先" in bone.name and f"{bone.name[:2]}指３":
+            bone.position = bone_matrixes[0, f"{bone.name[:2]}指３"].position
         else:
             return False
 

@@ -440,7 +440,7 @@ def test_read_by_filepath_ok_tree() -> None:
 
     assert model.bone_trees.is_in_standard("右腕")
     assert model.bone_trees.is_in_standard("左腕捩YZ")
-    assert not model.bone_trees.is_in_standard("右薬指先")
+    assert model.bone_trees.is_in_standard("右薬指先")
     assert not model.bone_trees.is_in_standard("左エリIK")
     assert not model.bone_trees.is_in_standard("左ひざ2先")
 
