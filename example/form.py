@@ -520,12 +520,12 @@ class TestFrame(BaseFrame):
         if not (self.file_panel.motion_ctrl.data and self.file_panel.model_ctrl.data and self.file_panel.dress_ctrl.data):
             return
 
-        logger.info("全ての親追加")
-        bone_matrixes = VmdMotion().animate_bone([0], model)
-        model.insert_standard_bone("全ての親", bone_matrixes)
-        model.setup()
-        model.replace_standard_weights(["全ての親"])
-        logger.info("全ての親追加完了")
+        # logger.info("全ての親追加")
+        # bone_matrixes = VmdMotion().animate_bone([0], model)
+        # model.insert_standard_bone("全ての親", bone_matrixes)
+        # model.setup()
+        # model.replace_standard_weights(["全ての親"])
+        # logger.info("全ての親追加完了")
 
         dress_motion = self.file_panel.motion_ctrl.data.copy()
 
@@ -538,9 +538,9 @@ class TestFrame(BaseFrame):
         # dress_matrixes = dress_motion.bones.get_matrix_by_indexes([0], ["左肩"], dress, append_ik=False)
         # left_shoulder_position = dress_matrixes[0, "左肩"].position
 
-        # bf2 = VmdBoneFrame(0, "上半身2")
-        # bf2.local_scale = MVector3D(0, 1, 1)
-        # dress_motion.bones["上半身2"].append(bf2)
+        bf2 = VmdBoneFrame(0, "上半身")
+        bf2.local_scale = MVector3D(0, 0.5, 0.5)
+        dress_motion.bones["上半身"].append(bf2)
 
         # dress_motion.bones.clear()
         # dress_scaled_matrixes = dress_motion.bones.get_matrix_by_indexes([0], ["左肩"], dress, append_ik=False)

@@ -856,7 +856,7 @@ def calc_local_scale(
     local_scale_mat[:3, :3] += np.diag(local_scale.vector)
 
     # ローカル軸に合わせた移動行列を作成する(親はキャンセルする)
-    return inv(local_parent_matrix) @ inv(rotation_matrix) @ local_scale_mat @ rotation_matrix @ local_parent_matrix
+    return inv(local_parent_matrix) @ inv(rotation_matrix) @ local_scale_mat @ rotation_matrix
 
 
 class VmdMorphNameFrames(BaseIndexNameDictModel[VmdMorphFrame]):
