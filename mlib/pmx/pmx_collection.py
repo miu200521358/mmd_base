@@ -1153,6 +1153,8 @@ class PmxModel(BaseHashModel):
 
         replaced_map = dict([(b.index, b.index) for b in self.bones])
         for bone_name in bone_names:
+            if bone_name not in self.bones:
+                continue
             bone = self.bones[bone_name]
             # ウェイトの一括置換
             if bone.is_leg_d:
