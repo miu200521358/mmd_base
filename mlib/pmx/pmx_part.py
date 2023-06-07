@@ -1737,7 +1737,7 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=("右足", "右足D", "足中心"),
         translatable=True,
-        rotatable=True,
+        rotatable=False,
         scalable=True,
     )
     RIGHT_KNEE = BoneSetting(
@@ -1750,7 +1750,7 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=("右ひざ", "右ひざD"),
         translatable=True,
-        rotatable=True,
+        rotatable=False,
         scalable=True,
     )
     RIGHT_ANKLE = BoneSetting(
@@ -1820,7 +1820,7 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=[],
         translatable=True,
-        rotatable=True,
+        rotatable=False,
         scalable=True,
     )
     RIGHT_KNEE_D = BoneSetting(
@@ -1833,7 +1833,7 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=[],
         translatable=True,
-        rotatable=True,
+        rotatable=False,
         scalable=True,
     )
     RIGHT_ANKLE_D = BoneSetting(
@@ -2276,7 +2276,7 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=("左足", "左足D", "足中心"),
         translatable=True,
-        rotatable=True,
+        rotatable=False,
         scalable=True,
     )
     LEFT_KNEE = BoneSetting(
@@ -2289,7 +2289,7 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=("左ひざ", "左ひざD"),
         translatable=True,
-        rotatable=True,
+        rotatable=False,
         scalable=True,
     )
     LEFT_ANKLE = BoneSetting(
@@ -2359,7 +2359,7 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=[],
         translatable=True,
-        rotatable=True,
+        rotatable=False,
         scalable=True,
     )
     LEFT_KNEE_D = BoneSetting(
@@ -2372,7 +2372,7 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=[],
         translatable=True,
-        rotatable=True,
+        rotatable=False,
         scalable=True,
     )
     LEFT_ANKLE_D = BoneSetting(
