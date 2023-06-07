@@ -1165,6 +1165,9 @@ class PmxModel(BaseHashModel):
     def separate_twist_weights(
         self, from_name: str, twist1_name: str, twist2_name: str, twist3_name: str, to_name: str, vertices_bones: list[int]
     ):
+        if not self.bones.exists((from_name, to_name, twist1_name, twist2_name, twist3_name)):
+            return
+
         """捩りのウェイト置換"""
         x_direction = (self.bones[to_name].position - self.bones[from_name].position).normalized()
         z_direction = MVector3D(0, 0, -1)
@@ -1219,6 +1222,9 @@ class PmxModel(BaseHashModel):
 
     def separate_thumb_weights(self, original_name: str, separate_name: str, tail_name: str, vertex_indexes: list[int]):
         """親指０のウェイト置換"""
+        if not self.bones.exists((original_name, separate_name, tail_name)):
+            return
+
         # 親指０から親指１への距離
         tail_distance = self.bones[tail_name].position.distance(self.bones[separate_name].position)
         for vertex_index in vertex_indexes:
@@ -1268,6 +1274,9 @@ class PmxModel(BaseHashModel):
         ratio: float,
         vertex_indexes: list[int],
     ):
+        if not self.bones.exists((original_name, separate_name)):
+            return
+
         separate_axis_distance = self.bones[separate_name].position[axis] - self.bones[original_name].position[axis]
 
         for vertex_index in vertex_indexes:
