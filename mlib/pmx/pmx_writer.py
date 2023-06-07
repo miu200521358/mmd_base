@@ -974,12 +974,12 @@ class PmxWriter(BaseModel):
         is_positive_only : bool, optional
             正の数値しか出力しないか, by default False
         """
-        if isnan(val) or isinf(val):
-            # 正常な値を強制設定
-            val = 0
-        val = max(0, val) if is_positive_only else val
-
         try:
+            if val is None or isnan(val) or isinf(val):
+                # 正常な値を強制設定
+                val = 0
+            val = max(0, val) if is_positive_only else val
+
             # INT型の場合、INT変換
             if val_type == PmxBinaryType.FLOAT:
                 fout.write(struct.pack(val_type.value, float(val)))
@@ -988,11 +988,10 @@ class PmxWriter(BaseModel):
         except Exception as e:
             logger.error("val_type in [float]: %s", val_type in [PmxBinaryType.FLOAT])
             logger.error(
-                "self.write_number失敗: type: %s, val: %s, int(val): %s",
+                "self.write_number失敗: type: %s, val: %s",
                 e,
                 val_type,
                 val,
-                int(val),
             )
             try:
                 if val_type == PmxBinaryType.FLOAT:
