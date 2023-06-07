@@ -856,7 +856,7 @@ def calc_local_scale(
     local_scale_mat[:3, :3] += np.diag(local_scale.vector)
 
     # ローカル軸に合わせた移動行列を作成する(親はキャンセルする)
-    return inv(local_parent_matrix) @ inv(rotation_matrix) @ local_scale_mat @ rotation_matrix
+    return inv(local_parent_matrix) @ inv(rotation_matrix) @ local_scale_mat @ rotation_matrix @ local_parent_matrix
 
 
 class VmdMorphNameFrames(BaseIndexNameDictModel[VmdMorphFrame]):
@@ -1244,9 +1244,7 @@ class VmdMotion(BaseHashModel):
 
         return gl_matrixes, vertex_morph_poses + group_vertex_morph_poses, uv_morph_poses, uv1_morph_poses, group_materials
 
-    def animate_bone(
-        self, fnos: list[int], model: PmxModel, bone_names: Iterable[str] = [], append_ik: bool = True
-    ) -> VmdBoneFrameTrees:
+    def animate_bone(self, fnos: list[int], model: PmxModel, bone_names: Iterable[str] = [], append_ik: bool = True) -> VmdBoneFrameTrees:
         all_morph_bone_frames = VmdBoneFrames()
 
         for fno in fnos:
