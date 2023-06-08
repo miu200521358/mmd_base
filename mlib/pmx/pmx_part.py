@@ -2442,7 +2442,7 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=("左足首", "左足首D", "左つま先", "左足先EX"),
         translatable=True,
-        rotatable=False,
+        rotatable=True,
         scalable=True,
     )
     LEFT_TOE = BoneSetting(
