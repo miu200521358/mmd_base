@@ -1641,21 +1641,22 @@ def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bo
     # ローカルX軸方向直線ベクトル
     vertex_size = len(vertex_positions)
     bone_vector = bone_end - bone_start
-    bone_direction = bone_vector.normalized().vector4
+    bone_direction = bone_vector.normalized().vector
 
-    projected_positions = np.dot(vertex_positions, bone_direction)
+    # 頂点位置からボーンの方向に向かって直交するベクトルの射影を求める
+    orthogonal_positions = np.dot(vertex_positions - bone_start.vector, bone_direction)[:, np.newaxis] * bone_direction
 
-    # ボーンの方向と頂点座標の射影が垂直に交わる交点
-    intersections = np.outer(projected_positions, bone_direction)
+    # ボーンの方向ベクトル上に存在する直交位置を求める
+    orthogonal_positions += bone_start.vector
 
     vertex_matrixes = np.full((vertex_size, 4, 4), np.eye(4))
-    vertex_matrixes[..., :3, 3] = vertex_positions[..., :3]
+    vertex_matrixes[..., :3, 3] = vertex_positions
 
     # ボーン方向をローカルX軸とする回転行列
     bone_direction_matrix = bone_vector.to_local_matrix4x4().vector
 
     intersection_matrixes = np.full((vertex_size, 4, 4), bone_direction_matrix)
-    intersection_matrixes[..., :3, 3] = intersections[..., :3]
+    intersection_matrixes[..., :3, 3] = orthogonal_positions
 
     # intersectionsを原点としたvertex_positionsの各ローカル位置
     vertex_local_positions = (inv(intersection_matrixes) @ vertex_matrixes)[..., :3, 3]
