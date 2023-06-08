@@ -1798,7 +1798,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=False,
     )
@@ -1811,7 +1811,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=("右足", "右足D", "足中心"),
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=True,
     )
@@ -1824,7 +1824,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=("右ひざ", "右ひざD"),
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=True,
     )
@@ -1837,7 +1837,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, -1, 0),
         weight_names=("右足首", "右足首D", "右つま先", "右足先EX"),
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=True,
     )
@@ -1868,7 +1868,7 @@ class BoneSettings(Enum):
         | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, 1, 0),
         weight_names=[],
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=False,
     )
@@ -1881,7 +1881,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=False,
     )
@@ -1894,7 +1894,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=True,
     )
@@ -1907,7 +1907,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=True,
     )
@@ -1920,7 +1920,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=True,
     )
@@ -1946,7 +1946,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, 1, 0),
         weight_names=[],
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=False,
     )
@@ -2402,7 +2402,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=False,
     )
@@ -2415,7 +2415,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=("左足", "左足D", "足中心"),
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=True,
     )
@@ -2428,7 +2428,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=("左ひざ", "左ひざD"),
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=True,
     )
@@ -2441,7 +2441,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, -1, 0),
         weight_names=("左足首", "左足首D", "左つま先", "左足先EX"),
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=True,
     )
@@ -2472,7 +2472,7 @@ class BoneSettings(Enum):
         | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, 1, 0),
         weight_names=[],
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=False,
     )
@@ -2485,7 +2485,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=False,
     )
@@ -2498,7 +2498,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=True,
     )
@@ -2511,7 +2511,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=True,
     )
@@ -2524,7 +2524,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=True,
     )
@@ -2550,7 +2550,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, 1, 0),
         weight_names=[],
-        translatable=False,
+        translatable=True,
         rotatable=False,
         scalable=False,
     )
