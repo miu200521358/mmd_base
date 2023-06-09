@@ -657,10 +657,10 @@ class PmxModel(BaseHashModel):
             if bone.is_ik and bone.ik:
                 # IKボーンの場合
                 for link in bone.ik.links:
-                    if link.bone_index in self.bones:
+                    if link.bone_index in self.bones and bone.index not in self.bones[link.bone_index].ik_link_indexes:
                         # リンクボーンにフラグを立てる
                         self.bones[link.bone_index].ik_link_indexes.append(bone.index)
-                if bone.ik.bone_index in self.bones:
+                if bone.ik.bone_index in self.bones and bone.index not in self.bones[bone.ik.bone_index].ik_target_indexes:
                     # ターゲットボーンにもフラグを立てる
                     self.bones[bone.ik.bone_index].ik_target_indexes.append(bone.index)
 
