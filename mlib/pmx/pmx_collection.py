@@ -653,6 +653,13 @@ class PmxModel(BaseHashModel):
         logger.info("モデルセットアップ：システム用ボーン")
 
         for bone in self.bones:
+            # IKのリンクとターゲットを一旦クリア
+            if bone.is_ik and bone.ik:
+                for link in bone.ik.links:
+                    self.bones[link.bone_index].ik_link_indexes = []
+                self.bones[bone.ik.bone_index].ik_target_indexes = []
+
+        for bone in self.bones:
             # IKのリンクとターゲット
             if bone.is_ik and bone.ik:
                 # IKボーンの場合
