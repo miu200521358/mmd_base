@@ -1473,8 +1473,8 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
-        translatable=True,
-        rotatable=True,
+        translatable=False,
+        rotatable=False,
         scalable=False,
     )
     RIGHT_HAND_TWIST1 = BoneSetting(
@@ -1486,7 +1486,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
-        translatable=True,
+        translatable=False,
         rotatable=False,
         scalable=False,
     )
@@ -1499,7 +1499,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
-        translatable=True,
+        translatable=False,
         rotatable=False,
         scalable=False,
     )
@@ -1512,7 +1512,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
-        translatable=True,
+        translatable=False,
         rotatable=False,
         scalable=False,
     )
@@ -2012,8 +2012,8 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
-        translatable=True,
-        rotatable=True,
+        translatable=False,
+        rotatable=False,
         scalable=False,
     )
     LEFT_ARM_TWIST1 = BoneSetting(
@@ -2025,7 +2025,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
-        translatable=True,
+        translatable=False,
         rotatable=False,
         scalable=False,
     )
@@ -2038,7 +2038,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
-        translatable=True,
+        translatable=False,
         rotatable=False,
         scalable=False,
     )
@@ -2051,7 +2051,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
-        translatable=True,
+        translatable=False,
         rotatable=False,
         scalable=False,
     )
@@ -2077,8 +2077,8 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
-        translatable=True,
-        rotatable=True,
+        translatable=False,
+        rotatable=False,
         scalable=False,
     )
     LEFT_HAND_TWIST1 = BoneSetting(
@@ -2090,7 +2090,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
-        translatable=True,
+        translatable=False,
         rotatable=False,
         scalable=False,
     )
@@ -2103,7 +2103,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
-        translatable=True,
+        translatable=False,
         rotatable=False,
         scalable=False,
     )
@@ -2116,7 +2116,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
-        translatable=True,
+        translatable=False,
         rotatable=False,
         scalable=False,
     )
