@@ -1662,3 +1662,18 @@ def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bo
     vertex_local_positions = (inv(intersection_matrixes) @ vertex_matrixes)[..., :3, 3]
 
     return vertex_local_positions
+
+
+def filter_values(values: np.ndarray, err: float = 1.5) -> np.ndarray:
+    """一定範囲内の値だけ取得する"""
+
+    # 中央値と標準偏差を計算
+    median_values = np.median(values, axis=0)
+    std_values = np.std(values, axis=0)
+
+    # 中央値から標準偏差の一定範囲までの値を取得
+    filtered_values = values[
+        (np.all(values >= median_values - (std_values * err), axis=1)) & (np.all(values <= median_values + (std_values * err), axis=1))
+    ]
+
+    return filtered_values
