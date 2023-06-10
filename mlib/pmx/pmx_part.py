@@ -1409,7 +1409,7 @@ class BoneSettings(Enum):
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
         translatable=True,
-        rotatable=False,
+        rotatable=True,
         scalable=False,
     )
     RIGHT_ARM_TWIST1 = BoneSetting(
@@ -1474,7 +1474,7 @@ class BoneSettings(Enum):
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
         translatable=True,
-        rotatable=False,
+        rotatable=True,
         scalable=False,
     )
     RIGHT_HAND_TWIST1 = BoneSetting(
@@ -2013,7 +2013,7 @@ class BoneSettings(Enum):
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
         translatable=True,
-        rotatable=False,
+        rotatable=True,
         scalable=False,
     )
     LEFT_ARM_TWIST1 = BoneSetting(
@@ -2078,7 +2078,7 @@ class BoneSettings(Enum):
         axis=MVector3D(-1, 0, 0),
         weight_names=[],
         translatable=True,
-        rotatable=False,
+        rotatable=True,
         scalable=False,
     )
     LEFT_HAND_TWIST1 = BoneSetting(
