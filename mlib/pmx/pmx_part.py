@@ -1518,7 +1518,7 @@ class BoneSettings(Enum):
     )
     RIGHT_WRIST = BoneSetting(
         name="右手首",
-        category="指",
+        category="手首",
         parents=("右手捩", "右ひじ"),
         relatives=("右中指１", "右人指１", "右薬指１", "右小指１"),
         tails=("右中指１", "右人指１", "右薬指１", "右小指１"),
@@ -2122,7 +2122,7 @@ class BoneSettings(Enum):
     )
     LEFT_WRIST = BoneSetting(
         name="左手首",
-        category="指",
+        category="手首",
         parents=("左手捩", "左ひじ"),
         relatives=("左中指１", "左人指１", "左薬指１", "左小指１"),
         tails=("左中指１", "左人指１", "左薬指１", "左小指１"),
