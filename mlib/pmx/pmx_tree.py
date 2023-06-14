@@ -46,6 +46,16 @@ class BoneTree(BaseIndexNameDictModel[Bone]):
                 new_tree.append(t)
         return new_tree
 
+    def get_standard(self) -> "BoneTree":
+        """準標準ボーンのみを取得する"""
+
+        new_tree = BoneTree(self.last_name)
+        for t in self:
+            if t.name in STANDARD_BONE_NAMES:
+                new_tree.append(t)
+
+        return new_tree
+
 
 class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
     """
