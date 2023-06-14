@@ -39,7 +39,7 @@ from mlib.pmx.pmx_tree import BoneTree, BoneTrees
 from mlib.pmx.shader import MShader, ProgramType, VsLayout
 from mlib.vmd.vmd_tree import VmdBoneFrameTrees
 
-logger = MLogger(os.path.basename(__file__))
+logger = MLogger(os.path.basename(__file__), level=1)
 __ = logger.get_text
 
 
@@ -671,9 +671,14 @@ class PmxModel(BaseHashModel):
                     # ターゲットボーンにもフラグを立てる
                     self.bones[bone.ik.bone_index].ik_target_indexes.append(bone.index)
 
+        # ボーン変形行列を計算するのに影響する全てのボーンINDEXのリストを取得する
+        bone_relative_indexes: dict[int, set[int]] = {}
         for bone in self.bones:
             # ボーンセットアップ
             self.setup_bone(bone)
+
+            # 影響があるボーンINDEXリスト
+            bone_relative_indexes[bone.index] = self.get_tree_relative_bone_indexes(bone.index, set([]))
 
             # 一旦子ボーンリストをクリア
             bone.child_bone_indexes = []
@@ -688,17 +693,13 @@ class PmxModel(BaseHashModel):
         # ボーンツリー生成
         self.bone_trees = self.bones.create_bone_trees()
 
-        # ボーン変形行列を計算するのに影響する全てのボーンINDEXのリストを取得する
-        bone_relative_indexes: dict[int, list[int]] = {}
         for bone in self.bones:
             # ボーンセットアップ
-            bone_relative_indexes[bone.index] = sorted(
-                set(
-                    [
-                        bone_index
-                        for relative_index in bone.relative_bone_indexes
-                        for bone_index in self.bone_trees[self.bones[relative_index].name].indexes
-                    ]
+
+            # ボーン変形行列を計算するのに影響する全てのボーンINDEXのリストを取得する
+            bone.relative_bone_indexes = list(
+                sorted(
+                    set([bone_index for relative_index in bone_relative_indexes for bone_index in bone_relative_indexes[relative_index]])
                 )
             )
 
@@ -713,21 +714,22 @@ class PmxModel(BaseHashModel):
                 display_block=100,
             )
 
-        for bone in self.bones:
-            bone.relative_bone_indexes = bone_relative_indexes[bone.index]
-
         # ボーンリストセットアップ
         self.bones.setup()
 
         logger.info("モデルセットアップ：ボーンツリー")
 
-    def get_relative_bone_indexes(self, bone_index: int, relative_bone_indexes: set[int]) -> set[int]:
-        """ボーンに直接影響するボーンINDEXリスト"""
+    def get_tree_relative_bone_indexes(self, bone_index: int, tree_relative_bone_indexes: set[int]) -> set[int]:
+        logger.debug(f"get_tree_relative_bone_indexes: {bone_index}({self.bones[bone_index].name}), {tree_relative_bone_indexes}")
 
-        if 0 > bone_index or bone_index not in self.bones.indexes:
-            return relative_bone_indexes
+        if 0 >= bone_index or bone_index not in self.bones.indexes:
+            return set([])
+
+        # 直接関係するボーンINDEXセット
         bone = self.bones[bone_index]
-        relative_bone_indexes |= {bone.index, bone.parent_index, bone.effect_index}
+        relative_bone_indexes: set[int] = set(self.bone_trees[self.bones[bone_index].name].indexes[:-1])
+        if (bone.is_external_rotation or bone.is_external_translation) and 0 <= bone.effect_index:
+            relative_bone_indexes |= {bone.effect_index}
         if bone.ik:
             relative_bone_indexes |= {bone.ik.bone_index}
             for link in bone.ik.links:
@@ -737,7 +739,15 @@ class PmxModel(BaseHashModel):
         if bone.ik_target_indexes:
             relative_bone_indexes |= set(bone.ik_target_indexes)
 
-        return relative_bone_indexes - {-1}
+        for relative_index in relative_bone_indexes:
+            tree_relative_bone_indexes |= set(self.bone_trees[self.bones[relative_index].name].indexes[:-1])
+
+        for relative_index in relative_bone_indexes - tree_relative_bone_indexes:
+            tree_relative_bone_indexes |= self.get_tree_relative_bone_indexes(
+                relative_index, relative_bone_indexes | tree_relative_bone_indexes
+            )
+
+        return tree_relative_bone_indexes
 
     def setup_bone(self, bone: Bone):
         """各ボーンのセットアップ"""
@@ -756,9 +766,6 @@ class PmxModel(BaseHashModel):
 
         # 逆オフセット行列は親ボーンからの相対位置分を戻す
         bone.parent_revert_matrix[:3, 3] = bone.parent_relative_position.vector
-
-        # ボーンを計算するのに最低限必要なボーンINDEXリスト
-        bone.relative_bone_indexes = list(sorted(self.get_relative_bone_indexes(bone.index, set([]))))
 
     def remove_bone(self, bone: Bone):
         """ボーンの削除に伴う諸々のボーンINDEXの置き換え"""
