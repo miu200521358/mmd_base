@@ -39,7 +39,7 @@ from mlib.pmx.pmx_tree import BoneTree, BoneTrees
 from mlib.pmx.shader import MShader, ProgramType, VsLayout
 from mlib.vmd.vmd_tree import VmdBoneFrameTrees
 
-logger = MLogger(os.path.basename(__file__), level=1)
+logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
 
