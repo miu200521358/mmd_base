@@ -1205,7 +1205,7 @@ class BoneSettings(Enum):
     )
     LOWER = BoneSetting(
         name="下半身",
-        category="体幹",
+        category="下半身",
         parents=("腰", "グルーブ", "センター"),
         relatives=("足中心",),
         tails=("足中心",),
@@ -1218,7 +1218,7 @@ class BoneSettings(Enum):
     )
     LEG_CENTER = BoneSetting(
         name="足中心",
-        category="体幹",
+        category="下半身",
         parents=("腰", "グルーブ", "センター"),
         relatives=MVector3D(0, -1, 0),
         tails=[],
@@ -1231,7 +1231,7 @@ class BoneSettings(Enum):
     )
     UPPER = BoneSetting(
         name="上半身",
-        category="体幹",
+        category="上半身",
         parents=("腰", "グルーブ", "センター"),
         relatives=("上半身2", "首根元"),
         tails=("上半身2", "首根元"),
@@ -1244,7 +1244,7 @@ class BoneSettings(Enum):
     )
     UPPER2 = BoneSetting(
         name="上半身2",
-        category="体幹",
+        category="上半身",
         parents=("上半身",),
         relatives=("上半身3", "首根元"),
         tails=("上半身3", "首根元"),
@@ -1257,7 +1257,7 @@ class BoneSettings(Enum):
     )
     UPPER3 = BoneSetting(
         name="上半身3",
-        category="体幹",
+        category="上半身",
         parents=("上半身2",),
         relatives=("首根元",),
         tails=("首根元",),
@@ -1270,7 +1270,7 @@ class BoneSettings(Enum):
     )
     ARM_CENTER = BoneSetting(
         name="首根元",
-        category="体幹",
+        category="上半身",
         parents=("上半身3", "上半身2"),
         relatives=("首",),
         tails=("首",),
@@ -1292,7 +1292,7 @@ class BoneSettings(Enum):
         weight_names=("首"),
         translatable=True,
         rotatable=True,
-        scalable=True,
+        scalable=False,
     )
     HEAD = BoneSetting(
         name="頭",
@@ -1305,7 +1305,7 @@ class BoneSettings(Enum):
         weight_names=("頭",),
         translatable=True,
         rotatable=True,
-        scalable=True,
+        scalable=False,
     )
     EYES = BoneSetting(
         name="両目",
