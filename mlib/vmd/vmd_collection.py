@@ -289,8 +289,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 self.calc_ik_rotations(fno, model, target_bone_names)
 
         for i, fno in enumerate(fnos):
-            fno_poses: dict[int, MVector3D] = {}
-            fno_scales: dict[int, MVector3D] = {}
             fno_local_poses: dict[int, MVector3D] = {}
             fno_local_qqs: dict[int, MQuaternion] = {}
             fno_local_scales: dict[int, MVector3D] = {}
@@ -301,11 +299,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
             for bone_name in target_bone_names:
                 bone = model.bones[bone_name]
-                if bone.index in fno_poses:
+                if bone.index in fno_local_poses:
                     continue
                 bf = self[bone.name][fno]
-                fno_poses[bone.index] = bf.position
-                fno_scales[bone.index] = bf.scale
                 fno_local_poses[bone.index] = bf.local_position
                 fno_local_qqs[bone.index] = bf.local_rotation
                 fno_local_scales[bone.index] = bf.local_scale
@@ -336,7 +332,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     parent_local_qqs.append(fno_local_qqs[parent_bone.index])
                     parent_local_scales.append(fno_local_scales[parent_bone.index])
 
-                poses[i, bone.index] = self.get_position(fno_poses, bone, model)
+                poses[i, bone.index] = self.get_position(bone, model, fno)
 
                 # モーションによるローカル移動量
                 if is_valid_local_pos:
@@ -365,7 +361,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     local_qqs[i, bone.index] = local_rot_mat
 
                 # モーションによるスケール変化
-                scale_mat = self.get_scale(fno_scales, bone, model)
+                scale_mat = self.get_scale(bone, model, fno)
                 scales[i, bone.index] = scale_mat
 
                 # ローカルスケール
@@ -381,18 +377,18 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return poses, qqs, scales, local_poses, local_qqs, local_scales
 
-    def get_position(self, fno_poses: dict[int, MVector3D], bone: Bone, model: PmxModel) -> np.ndarray:
+    def get_position(self, bone: Bone, model: PmxModel, fno: int) -> np.ndarray:
         """
         該当キーフレにおけるボーンの移動位置
         """
         # 自身の位置
         mat = np.eye(4)
-        mat[:3, 3] = fno_poses[bone.index].vector
+        mat[:3, 3] = self[bone.name][fno].position.vector
 
         # 付与親を加味して返す
-        return mat @ self.get_effect_position(fno_poses, bone, model)
+        return mat @ self.get_effect_position(bone, model, fno)
 
-    def get_effect_position(self, fno_poses: dict[int, MVector3D], bone: Bone, model: PmxModel) -> np.ndarray:
+    def get_effect_position(self, bone: Bone, model: PmxModel, fno: int) -> np.ndarray:
         """
         付与親を加味した移動を求める
         """
@@ -405,7 +401,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 付与親の移動量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_pos_mat = self.get_position(fno_poses, effect_bone, model)
+        effect_pos_mat = self.get_position(effect_bone, model, fno)
         # 付与率を加味する
         effect_pos_mat[:3, 3] *= bone.effect_factor
 
@@ -481,18 +477,18 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for relative_bone_name in ik_relative_bone_names:
                 self.get_rotation(fno, bone, model, append_ik=True)
 
-    def get_scale(self, fno_scales: dict[int, MVector3D], bone: Bone, model: PmxModel) -> np.ndarray:
+    def get_scale(self, bone: Bone, model: PmxModel, fno: int) -> np.ndarray:
         """
         該当キーフレにおけるボーンの縮尺
         """
         # 自身のスケール
         scale_mat = np.eye(4)
-        scale_mat[:3, :3] += np.diag(fno_scales[bone.index].vector)
+        scale_mat[:3, :3] += np.diag(self[bone.name][fno].scale.vector)
 
         # 付与親を加味して返す
-        return self.get_effect_scale(scale_mat, fno_scales, bone, model)
+        return self.get_effect_scale(scale_mat, bone, model, fno)
 
-    def get_effect_scale(self, scale_mat: np.ndarray, fno_scales: dict[int, MVector3D], bone: Bone, model: PmxModel) -> np.ndarray:
+    def get_effect_scale(self, scale_mat: np.ndarray, bone: Bone, model: PmxModel, fno: int) -> np.ndarray:
         """
         付与親を加味した縮尺を求める
         """
@@ -505,7 +501,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_scale_mat = self.get_scale(fno_scales, effect_bone, model)
+        effect_scale_mat = self.get_scale(effect_bone, model, fno)
 
         return scale_mat @ effect_scale_mat
 
