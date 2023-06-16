@@ -202,8 +202,23 @@ class MShader:
         self.fit(self.width, self.height)
 
     def __del__(self) -> None:
-        gl.glDeleteProgram(self.model_program)
-        gl.glDeleteProgram(self.edge_program)
+        if self.model_program:
+            try:
+                gl.glDeleteProgram(self.model_program)
+            except Exception as e:
+                raise MViewerException(f"MShader glDeleteProgram Failure\n{self.model_program}", e)
+
+        if self.edge_program:
+            try:
+                gl.glDeleteProgram(self.edge_program)
+            except Exception as e:
+                raise MViewerException(f"MShader glDeleteProgram Failure\n{self.edge_program}", e)
+
+        if self.bone_program:
+            try:
+                gl.glDeleteProgram(self.bone_program)
+            except Exception as e:
+                raise MViewerException(f"MShader glDeleteProgram Failure\n{self.bone_program}", e)
 
     def load_shader(self, src: str, shader_type: int) -> int:
         shader = gl.glCreateShader(shader_type)
