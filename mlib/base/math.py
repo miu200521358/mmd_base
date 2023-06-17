@@ -459,18 +459,6 @@ class MVector3D(MVector):
         if not self:
             return MMatrix4x4()
 
-        # x_vector = self.normalized().vector
-
-        # # X軸の回転角度を計算
-        # theta_x = np.arctan2(x_vector[1], x_vector[0])
-
-        # # cos(theta_x)とsin(theta_x)を計算
-        # c = np.cos(theta_x)
-        # s = np.sin(theta_x)
-
-        # # 回転座標変換行列を計算
-        # rotation_matrix = MMatrix4x4(1, 0, 0, 0, 0, c, -s, 0, 0, s, c, 0, 0, 0, 0, 1)
-
         # ローカルX軸の方向ベクトル
         x_axis = self.vector.copy()
         norm_x_axis = norm(x_axis)
@@ -498,9 +486,9 @@ class MVector3D(MVector):
 
         # ローカル軸に合わせた回転行列を作成する
         rotation_matrix = MMatrix4x4()
-        rotation_matrix.vector[0, :3] = x_axis
-        rotation_matrix.vector[1, :3] = y_axis
-        rotation_matrix.vector[2, :3] = z_axis
+        rotation_matrix.vector[:3, 0] = x_axis
+        rotation_matrix.vector[:3, 1] = y_axis
+        rotation_matrix.vector[:3, 2] = z_axis
 
         return rotation_matrix
 
