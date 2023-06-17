@@ -498,9 +498,9 @@ class MVector3D(MVector):
 
         # ローカル軸に合わせた回転行列を作成する
         rotation_matrix = MMatrix4x4()
-        rotation_matrix.vector[0, :3] = x_axis
-        rotation_matrix.vector[1, :3] = y_axis
-        rotation_matrix.vector[2, :3] = z_axis
+        rotation_matrix.vector[:3, 0] = x_axis
+        rotation_matrix.vector[:3, 1] = y_axis
+        rotation_matrix.vector[:3, 2] = z_axis
 
         return rotation_matrix
 
