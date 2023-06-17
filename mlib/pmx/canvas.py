@@ -377,7 +377,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.parent.fno = 0
         self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
         self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-        self.shader.camera_rotation = MQuaternion()
+        self.shader.camera_degrees = MVector3D()
         self.shader.camera_position = self.shader.INITIAL_CAMERA_POSITION.copy()
         self.shader.camera_offset_position = self.shader.INITIAL_CAMERA_OFFSET_POSITION.copy()
         self.Refresh()
@@ -388,38 +388,38 @@ class PmxCanvas(glcanvas.GLCanvas):
             # 真下から
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
             self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-            self.shader.camera_rotation = MQuaternion.from_euler_degrees(-90, 0, 0)
+            self.shader.camera_degrees = MVector3D(-90, 0, 0)
             self.shader.camera_offset_position = MVector3D(0, self.shader.INITIAL_CAMERA_POSITION_Y, 0)
         elif keycode in [wx.WXK_NUMPAD2, wx.WXK_ESCAPE]:
             # 真正面から(=リセット)
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
             self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-            self.shader.camera_rotation = MQuaternion()
+            self.shader.camera_degrees = MVector3D()
             self.shader.camera_position = self.shader.INITIAL_CAMERA_POSITION.copy()
             self.shader.camera_offset_position = self.shader.INITIAL_CAMERA_OFFSET_POSITION.copy()
         elif keycode == wx.WXK_NUMPAD6:
             # 左から
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
             self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-            self.shader.camera_rotation = MQuaternion.from_euler_degrees(0, 90, 0)
+            self.shader.camera_degrees = MVector3D(0, 90, 0)
             self.shader.camera_offset_position = MVector3D()
         elif keycode == wx.WXK_NUMPAD4:
             # 右から
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
             self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-            self.shader.camera_rotation = MQuaternion.from_euler_degrees(0, -90, 0)
+            self.shader.camera_degrees = MVector3D(0, -90, 0)
             self.shader.camera_offset_position = MVector3D()
         elif keycode == wx.WXK_NUMPAD8:
             # 真後ろから
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
             self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-            self.shader.camera_rotation = MQuaternion.from_euler_degrees(0, 180, 0)
+            self.shader.camera_degrees = MVector3D(0, 180, 0)
             self.shader.camera_offset_position = MVector3D()
         elif keycode == wx.WXK_NUMPAD5:
             # 真上から
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
             self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-            self.shader.camera_rotation = MQuaternion.from_euler_degrees(90, 0, 0)
+            self.shader.camera_degrees = MVector3D(90, 0, 0)
             self.shader.camera_offset_position = MVector3D(0, self.shader.INITIAL_CAMERA_POSITION_Y, -self.shader.INITIAL_CAMERA_POSITION_Y)
         elif keycode in [
             wx.WXK_NUMPAD9,
@@ -490,12 +490,12 @@ class PmxCanvas(glcanvas.GLCanvas):
             x = (self.now_pos.x - self.last_pos.x) * 0.02
             y = (self.now_pos.y - self.last_pos.y) * 0.02
             if event.MiddleIsDown():
-                self.shader.look_at_center += self.shader.camera_rotation * MVector3D(x, y, 0)
+                self.shader.look_at_center += MQuaternion.from_euler_degrees(self.shader.camera_degrees) * MVector3D(x, y, 0)
 
                 self.shader.camera_offset_position.x += x
                 self.shader.camera_offset_position.y += y
             elif event.RightIsDown():
-                self.shader.camera_rotation *= MQuaternion.from_euler_degrees(y * 5, -x * 5, 0)
+                self.shader.camera_degrees += MVector3D(y * 10, -x * 10, 0)
             self.last_pos = self.now_pos
             self.Refresh()
 

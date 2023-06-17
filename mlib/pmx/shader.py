@@ -129,8 +129,8 @@ class MShader:
         self.camera_position = self.INITIAL_CAMERA_POSITION.copy()
         # カメラの補正位置
         self.camera_offset_position = self.INITIAL_CAMERA_OFFSET_POSITION.copy()
-        # カメラの回転
-        self.camera_rotation = MQuaternion()
+        # カメラの回転(eulerで扱う)
+        self.camera_degrees = MVector3D()
 
         # light position
         self.light_position = MVector3D(-20, self.INITIAL_CAMERA_POSITION_Y * 2, self.INITIAL_CAMERA_POSITION_Z * 2)
@@ -345,21 +345,22 @@ class MShader:
         )
 
         self.projection_matrix = np.array(gl.glGetFloatv(gl.GL_PROJECTION_MATRIX), dtype=np.float32)
+        camera_rotation = MQuaternion.from_euler_degrees(self.camera_degrees)
 
         # カメラ位置
         camera_mat = MMatrix4x4()
         camera_mat.translate(self.camera_offset_position)
-        camera_mat.rotate(self.camera_rotation)
+        camera_mat.rotate(camera_rotation)
         camera_mat.translate(self.camera_position)
         camera_pos = camera_mat * MVector3D()
 
         # カメラの上方向
-        look_at_right = (self.camera_rotation * MVector3D(1, 0, 0)).normalized()
+        look_at_right = (camera_rotation * MVector3D(1, 0, 0)).normalized()
         look_at_up = look_at_right.cross(camera_pos - self.look_at_center).normalized()
-        # print(
-        #     f"camera_pos: {camera_pos}, camera_rotation: {self.camera_rotation.to_euler_degrees()},
-        #     look_at_right: {look_at_right}, look_at_up: {look_at_up}, look_at_center: {self.look_at_center}"
-        # )
+        print(
+            f"camera_pos: {camera_pos}, camera_degrees: {self.camera_degrees}, camera_rotation: {camera_rotation.to_euler_degrees()}"
+            + f", look_at_right: {look_at_right}, look_at_up: {look_at_up}, look_at_center: {self.look_at_center}"
+        )
 
         # 視点位置の決定
         gl.glMatrixMode(gl.GL_MODELVIEW)
