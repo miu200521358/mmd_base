@@ -424,7 +424,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         return calc_local_position(
             bone.is_not_local_cancel,
             local_pos,
-            bone.tail_relative_position,
+            bone.local_axis,
             tuple(is_parent_bone_not_local_cancels),
             tuple(parent_local_poses),
             tuple(parent_local_axises),
@@ -522,7 +522,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         return calc_local_scale(
             bone.is_not_local_cancel,
             local_scale,
-            bone.tail_relative_position,
+            bone.local_axis,
             tuple(is_parent_bone_not_local_cancels),
             tuple(parent_local_scales),
             tuple(parent_local_axises),
@@ -750,7 +750,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         return calc_local_rotation(
             bone.is_not_local_cancel,
             local_qq,
-            bone.tail_relative_position,
+            bone.local_axis,
             tuple(is_parent_bone_not_local_cancels),
             tuple(parent_local_qqs),
             tuple(parent_local_axises),
