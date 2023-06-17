@@ -334,7 +334,7 @@ class MLogger:
         return "\n".join(msg_block)
 
     def create_line_message(self, msg, level, title=None) -> str:
-        msg_block = [f"-- {msg_line} --------------------" for msg_line in msg.split("\n")]
+        msg_block = [f"■ {msg_line} --------------------" for msg_line in msg.split("\n")]
         return "\n".join(msg_block)
 
     def create_in_box_message(self, msg, level, title=None) -> str:
