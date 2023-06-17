@@ -459,48 +459,48 @@ class MVector3D(MVector):
         if not self:
             return MMatrix4x4()
 
-        # x_vector = self.normalized().vector
+        x_vector = self.normalized().vector
 
-        # # X軸の回転角度を計算
-        # theta_x = np.arctan2(x_vector[1], x_vector[0])
+        # X軸の回転角度を計算
+        theta_x = np.arctan2(x_vector[1], x_vector[0])
 
-        # # cos(theta_x)とsin(theta_x)を計算
-        # c = np.cos(theta_x)
-        # s = np.sin(theta_x)
+        # cos(theta_x)とsin(theta_x)を計算
+        c = np.cos(theta_x)
+        s = np.sin(theta_x)
 
-        # # 回転座標変換行列を計算
-        # rotation_matrix = MMatrix4x4(1, 0, 0, 0, 0, c, -s, 0, 0, s, c, 0, 0, 0, 0, 1)
+        # 回転座標変換行列を計算
+        rotation_matrix = MMatrix4x4(1, 0, 0, 0, 0, c, -s, 0, 0, s, c, 0, 0, 0, 0, 1)
 
-        # ローカルX軸の方向ベクトル
-        x_axis = self.vector.copy()
-        norm_x_axis = norm(x_axis)
-        if not norm_x_axis:
-            return MMatrix4x4()
-        x_axis = x_axis / norm_x_axis
-        if np.all(np.isnan(x_axis)):
-            return MMatrix4x4()
+        # # ローカルX軸の方向ベクトル
+        # x_axis = self.vector.copy()
+        # norm_x_axis = norm(x_axis)
+        # if not norm_x_axis:
+        #     return MMatrix4x4()
+        # x_axis = x_axis / norm_x_axis
+        # if np.all(np.isnan(x_axis)):
+        #     return MMatrix4x4()
 
-        # ローカルZ軸の方向ベクトル
-        z_axis = np.array([0.0, 0.0, -1.0])
+        # # ローカルZ軸の方向ベクトル
+        # z_axis = np.array([0.0, 0.0, -1.0])
 
-        # ローカルY軸の方向ベクトル
-        y_axis = np.cross(z_axis, x_axis)
-        norm_y_axis = norm(y_axis)
-        if not norm_y_axis:
-            return MMatrix4x4()
-        y_axis /= norm_y_axis
-        if np.all(np.isnan(y_axis)):
-            return MMatrix4x4()
+        # # ローカルY軸の方向ベクトル
+        # y_axis = np.cross(z_axis, x_axis)
+        # norm_y_axis = norm(y_axis)
+        # if not norm_y_axis:
+        #     return MMatrix4x4()
+        # y_axis /= norm_y_axis
+        # if np.all(np.isnan(y_axis)):
+        #     return MMatrix4x4()
 
-        z_axis = np.cross(x_axis, y_axis)
-        norm_z_axis = norm(z_axis)
-        z_axis /= norm_z_axis
+        # z_axis = np.cross(x_axis, y_axis)
+        # norm_z_axis = norm(z_axis)
+        # z_axis /= norm_z_axis
 
-        # ローカル軸に合わせた回転行列を作成する
-        rotation_matrix = MMatrix4x4()
-        rotation_matrix.vector[:3, 0] = x_axis
-        rotation_matrix.vector[:3, 1] = y_axis
-        rotation_matrix.vector[:3, 2] = z_axis
+        # # ローカル軸に合わせた回転行列を作成する
+        # rotation_matrix = MMatrix4x4()
+        # rotation_matrix.vector[:3, 0] = x_axis
+        # rotation_matrix.vector[:3, 1] = y_axis
+        # rotation_matrix.vector[:3, 2] = z_axis
 
         return rotation_matrix
 
