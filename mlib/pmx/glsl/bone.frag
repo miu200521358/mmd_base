@@ -1,8 +1,8 @@
 # version 440
 
-uniform vec4 edgeColor;
+in vec4 boneColor;
 out vec4  outColor;
 
 void main() {
-    outColor = edgeColor;
+    outColor = boneColor;
 }

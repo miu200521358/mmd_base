@@ -587,6 +587,12 @@ class TestFrame(BaseFrame):
             self.config_panel.canvas.set_context()
             self.config_panel.canvas.append_model_set(self.file_panel.model_ctrl.data, self.file_panel.motion_ctrl.data.copy(), 0.5)
             self.config_panel.canvas.append_model_set(dress, dress_motion, 0.7)
+            self.config_panel.canvas.animations[0].selected_bone_indexes = [
+                bone.index for bone in self.file_panel.model_ctrl.data.bones if bone.name in ["右肩", "右肩C", "右腕", "右腕捩"]
+            ]
+            self.config_panel.canvas.animations[1].selected_bone_indexes = [
+                bone.index for bone in dress.bones if bone.name in ["右肩", "右肩C", "右腕", "右腕捩"]
+            ]
             self.config_panel.canvas.Refresh()
             self.notebook.ChangeSelection(self.config_panel.tab_idx)
         except:

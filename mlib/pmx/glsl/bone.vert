@@ -2,6 +2,7 @@
 
 in layout(location = 0) vec3  position;
 in layout(location = 1) float indexPer;
+in layout(location = 2) float selected;
 
 // ボーン変形行列を格納するテクスチャ
 uniform sampler2D boneMatrixTexture;
@@ -10,6 +11,11 @@ uniform int boneMatrixHeight;
 
 uniform mat4 modelViewProjectionMatrix;
 uniform int boneCount;
+
+uniform vec4 selectBoneColor;
+uniform vec4 unselectBoneColor;
+
+out vec4 boneColor;
 
 void main() {
     vec4 position4 = vec4(position, 1.0);
@@ -29,4 +35,7 @@ void main() {
         transformMatrix = mat4(row0, row1, row2, row3);
     }
     gl_Position = modelViewProjectionMatrix * transformMatrix * position4;
+
+    // ボーンが選択されている場合、選択色
+    boneColor = mix(unselectBoneColor, selectBoneColor, selected);
 }

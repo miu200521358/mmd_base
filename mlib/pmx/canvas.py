@@ -51,17 +51,17 @@ def animate(queue: Queue, fno: int, max_fno: int, model_set: "ModelSet"):
     queue.put(None)
 
 
-MODEL_BONE_COLORS = [
+MODEL_BONE_SELECT_COLORS = [
     np.array([1, 0, 0, 1]),
     np.array([0, 0, 1, 1]),
     np.array([0, 1, 0, 1]),
 ]
 
 
-MODEL_AXIS_COLORS = [
-    np.array([0.6, 0, 1, 1]),
+MODEL_BONE_UNSELECT_COLORS = [
     np.array([0, 1, 0.6, 1]),
-    np.array([1, 0, 0.6, 1]),
+    np.array([1, 0.6, 0, 1]),
+    np.array([0.6, 0, 1, 1]),
 ]
 
 
@@ -75,6 +75,8 @@ class ModelSet:
 
 class MotionSet:
     def __init__(self, model: PmxModel, motion: VmdMotion, fno: int) -> None:
+        self.selected_bone_indexes: list[int] = []
+
         if motion is not None:
             (
                 self.gl_matrixes,
@@ -248,14 +250,18 @@ class PmxCanvas(glcanvas.GLCanvas):
                 )
         self.shader.msaa.unbind()
 
-        for model_set, animation, color in zip(self.model_sets, self.animations, MODEL_BONE_COLORS):
+        for model_set, animation, select_color, unselect_color in zip(
+            self.model_sets, self.animations, MODEL_BONE_SELECT_COLORS, MODEL_BONE_UNSELECT_COLORS
+        ):
             # ボーンを表示
             if model_set.model:
-                logger.test(f"-- ボーン描画(透過): {model_set.model.name}")
+                logger.test(f"-- ボーン描画: {model_set.model.name}")
 
                 model_set.model.draw_bone(
                     animation.gl_matrixes,
-                    color * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
+                    select_color * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
+                    unselect_color * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
+                    np.array([(1 if bone_index in animation.selected_bone_indexes else 0) for bone_index in model_set.model.bones.indexes]),
                 )
 
         # if logging.DEBUG >= logger.total_level:

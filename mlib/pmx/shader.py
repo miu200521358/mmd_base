@@ -148,6 +148,8 @@ class MShader:
         self.ambient_uniform: dict[int, Any] = {}
         self.specular_uniform: dict[int, Any] = {}
         self.edge_color_uniform: dict[int, Any] = {}
+        self.select_bone_color_uniform: dict[int, Any] = {}
+        self.unselect_bone_color_uniform: dict[int, Any] = {}
         self.edge_size_uniform: dict[int, Any] = {}
         self.use_texture_uniform: dict[int, Any] = {}
         self.texture_uniform: dict[int, Any] = {}
@@ -296,8 +298,10 @@ class MShader:
             self.edge_color_uniform[program_type.value] = gl.glGetUniformLocation(program, "edgeColor")
             self.edge_size_uniform[program_type.value] = gl.glGetUniformLocation(program, "edgeSize")
         if program_type == ProgramType.BONE:
-            # ボーン色としてエッジ色を使う
-            self.edge_color_uniform[program_type.value] = gl.glGetUniformLocation(program, "edgeColor")
+            # 選択ボーン色
+            self.select_bone_color_uniform[program_type.value] = gl.glGetUniformLocation(program, "selectBoneColor")
+            # 非選択ボーン色
+            self.unselect_bone_color_uniform[program_type.value] = gl.glGetUniformLocation(program, "unselectBoneColor")
             self.bone_count_uniform[program_type.value] = gl.glGetUniformLocation(program, "boneCount")
         else:
             # モデルシェーダーへの割り当て

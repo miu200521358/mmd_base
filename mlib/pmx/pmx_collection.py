@@ -566,11 +566,13 @@ class PmxModel(BaseHashModel):
     def draw_bone(
         self,
         bone_matrixes: np.ndarray,
-        bone_color: np.ndarray,
+        select_bone_color: np.ndarray,
+        unselect_bone_color: np.ndarray,
+        selected_bone_indexes: np.ndarray,
     ) -> None:
         if not self.for_draw or not self.meshes:
             return
-        self.meshes.draw_bone(bone_matrixes, bone_color)
+        self.meshes.draw_bone(bone_matrixes, select_bone_color, unselect_bone_color, selected_bone_indexes)
 
     # def draw_axis(
     #     self,
@@ -1437,6 +1439,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
                     [
                         *b.position.gl.vector,
                         b.index / len(model.bones),
+                        0.0,
                     ],
                     dtype=np.float32,
                 )
@@ -1465,6 +1468,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.bone_vbo_components = {
             0: {"size": 3, "offset": 0},
             1: {"size": 1, "offset": 3},
+            2: {"size": 1, "offset": 4},
         }
         self.bone_vbo_vertices = VBO(
             self.bones,
@@ -1608,7 +1612,13 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
         gl.glDisable(gl.GL_DEPTH_TEST)
 
-    def draw_bone(self, bone_matrixes: np.ndarray, bone_color: np.ndarray):
+    def draw_bone(
+        self,
+        bone_matrixes: np.ndarray,
+        select_bone_color: np.ndarray,
+        unselect_bone_color: np.ndarray,
+        selected_bone_indexes: np.ndarray,
+    ):
         # ボーンをモデルメッシュの前面に描画するために深度テストを無効化
         gl.glEnable(gl.GL_DEPTH_TEST)
         gl.glDepthFunc(gl.GL_ALWAYS)
@@ -1620,15 +1630,20 @@ class Meshes(BaseIndexDictModel[Mesh]):
         gl.glEnable(gl.GL_BLEND)
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
+        # 選択ボーンを切り替える
+        self.bone_vbo_vertices.data[:, -1] = selected_bone_indexes
+
         self.bone_vao.bind()
         self.bone_vbo_vertices.bind()
         self.bone_vbo_vertices.set_slot_by_value(0)
         self.bone_vbo_vertices.set_slot_by_value(1)
+        self.bone_vbo_vertices.set_slot_by_value(2)
         self.bone_ibo_faces.bind()
 
         self.shader.use(ProgramType.BONE)
 
-        gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *bone_color)
+        gl.glUniform4f(self.shader.select_bone_color_uniform[ProgramType.BONE.value], *select_bone_color)
+        gl.glUniform4f(self.shader.unselect_bone_color_uniform[ProgramType.BONE.value], *unselect_bone_color)
         gl.glUniform1i(self.shader.bone_count_uniform[ProgramType.BONE.value], len(self.model.bones))
 
         if self.model.meshes:
