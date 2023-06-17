@@ -419,8 +419,8 @@ class PmxCanvas(glcanvas.GLCanvas):
             # 真上から
             self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
             self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-            self.shader.camera_rotation = MQuaternion.from_euler_degrees(90, 180, 0)
-            self.shader.camera_offset_position = MVector3D(0, self.shader.INITIAL_CAMERA_POSITION_Y, 0)
+            self.shader.camera_rotation = MQuaternion.from_euler_degrees(90, 0, 0)
+            self.shader.camera_offset_position = MVector3D(0, self.shader.INITIAL_CAMERA_POSITION_Y, -self.shader.INITIAL_CAMERA_POSITION_Y)
         elif keycode in [
             wx.WXK_NUMPAD9,
             wx.WXK_RIGHT,
@@ -495,7 +495,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.shader.camera_offset_position.x += x
                 self.shader.camera_offset_position.y += y
             elif event.RightIsDown():
-                self.shader.camera_rotation *= MQuaternion.from_euler_degrees(y * 10, -x * 10, 0)
+                self.shader.camera_rotation *= MQuaternion.from_euler_degrees(y * 5, -x * 5, 0)
             self.last_pos = self.now_pos
             self.Refresh()
 

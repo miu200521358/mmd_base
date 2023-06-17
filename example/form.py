@@ -577,7 +577,7 @@ class TestFrame(BaseFrame):
         # モーフ追加
         morph = Morph(name="左腕")
         morph.morph_type = MorphType.BONE
-        offset = BoneMorphOffset(dress.bones["左腕"].index, local_scale=MVector3D(0, 1.5, 0))
+        offset = BoneMorphOffset(dress.bones["左腕"].index, local_scale=MVector3D(0, 0, 0))
         morph.offsets.append(offset)
         dress.morphs.append(morph)
 

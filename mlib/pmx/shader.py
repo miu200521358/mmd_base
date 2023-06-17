@@ -105,7 +105,7 @@ class MShader:
     INITIAL_VERTICAL_DEGREES = 40.0
     INITIAL_CAMERA_POSITION_Y = 11.0
     INITIAL_CAMERA_POSITION_Z = -40.0
-    INITIAL_LOOK_AT_CENTER_Y = INITIAL_CAMERA_POSITION_Y * 1.1
+    INITIAL_LOOK_AT_CENTER_Y = INITIAL_CAMERA_POSITION_Y
     INITIAL_CAMERA_POSITION_X = 40.0
     LIGHT_AMBIENT4 = MVector4D(154 / 255, 154 / 255, 154 / 255, 1)
     INITIAL_CAMERA_POSITION = MVector3D(
@@ -124,7 +124,6 @@ class MShader:
         self.near_plane = 1
         self.far_plane = 100
         self.look_at_center = self.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-        self.look_at_up = MVector3D(0.0, 1.0, 0.0)
 
         # カメラの位置
         self.camera_position = self.INITIAL_CAMERA_POSITION.copy()
@@ -352,12 +351,20 @@ class MShader:
         camera_mat.translate(self.camera_offset_position)
         camera_mat.rotate(self.camera_rotation)
         camera_mat.translate(self.camera_position)
-        camera_pos: MVector3D = camera_mat * MVector3D()
+        camera_pos = camera_mat * MVector3D()
+
+        # カメラの上方向
+        look_at_right = (self.camera_rotation * MVector3D(1, 0, 0)).normalized()
+        look_at_up = look_at_right.cross(camera_pos - self.look_at_center).normalized()
+        # print(
+        #     f"camera_pos: {camera_pos}, camera_rotation: {self.camera_rotation.to_euler_degrees()},
+        #     look_at_right: {look_at_right}, look_at_up: {look_at_up}, look_at_center: {self.look_at_center}"
+        # )
 
         # 視点位置の決定
         gl.glMatrixMode(gl.GL_MODELVIEW)
         gl.glLoadIdentity()
-        glu.gluLookAt(*camera_pos.vector, *self.look_at_center.vector, *self.look_at_up.vector)
+        glu.gluLookAt(*camera_pos.vector, *self.look_at_center.vector, *look_at_up.vector)
 
         model_view_matrix = np.array(gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX), dtype=np.float32)
         model_view_projection_matrix = np.matmul(model_view_matrix, self.projection_matrix)
