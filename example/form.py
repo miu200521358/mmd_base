@@ -538,9 +538,9 @@ class TestFrame(BaseFrame):
         # dress_matrixes = dress_motion.bones.get_matrix_by_indexes([0], ["左肩"], dress, append_ik=False)
         # left_shoulder_position = dress_matrixes[0, "左肩"].position
 
-        bf2 = VmdBoneFrame(0, "上半身")
-        bf2.local_scale = MVector3D(0, 0.5, 0.5)
-        dress_motion.bones["上半身"].append(bf2)
+        # bf2 = VmdBoneFrame(0, "右肩")
+        # bf2.local_scale = MVector3D(0, 0.5, 0.5)
+        # dress_motion.bones["右肩"].append(bf2)
 
         # dress_motion.bones.clear()
         # dress_scaled_matrixes = dress_motion.bones.get_matrix_by_indexes([0], ["左肩"], dress, append_ik=False)
@@ -570,19 +570,18 @@ class TestFrame(BaseFrame):
         # bf.local_scale = MVector3D(0, 1.2, 1.2)
         # dress_motion.bones["左ひじ"].append(bf)
 
-        bf = VmdBoneFrame(0, "頭")
-        bf.local_scale = MVector3D(0, 1, 1)
-        dress_motion.bones["頭"].append(bf)
+        # bf = VmdBoneFrame(0, "頭")
+        # bf.local_scale = MVector3D(0, 1, 1)
+        # dress_motion.bones["頭"].append(bf)
 
         # モーフ追加
-        morph = Morph(name="上半身")
+        morph = Morph(name="左腕")
         morph.morph_type = MorphType.BONE
-        offset = BoneMorphOffset(dress.bones["上半身"].index, MVector3D(), MQuaternion())
-        offset.local_scale = MVector3D(0, 1.5, 1.5)
+        offset = BoneMorphOffset(dress.bones["左腕"].index, local_scale=MVector3D(0, 1.5, 0))
         morph.offsets.append(offset)
         dress.morphs.append(morph)
 
-        dress_motion.morphs["上半身"].append(VmdMorphFrame(0, "上半身", 1))
+        dress_motion.morphs["左腕"].append(VmdMorphFrame(0, "左腕", 1))
 
         try:
             self.config_panel.canvas.set_context()
