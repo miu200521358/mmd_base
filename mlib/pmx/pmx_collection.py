@@ -752,7 +752,7 @@ class PmxModel(BaseHashModel):
             else:
                 b.parent_index = replaced_map[bone.parent_index]
 
-            if b.tail_index in replaced_map:
+            if b.tail_index in replaced_map and b.name != bone_name:
                 b.tail_index = replaced_map[b.tail_index]
             else:
                 b.tail_index = replaced_map[bone.tail_index]
