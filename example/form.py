@@ -520,9 +520,9 @@ class TestFrame(BaseFrame):
         if not (self.file_panel.motion_ctrl.data and self.file_panel.model_ctrl.data and self.file_panel.dress_ctrl.data):
             return
 
-        logger.info("上半身3削除")
-        model.remove_bone("上半身3")
-        logger.info("上半身3削除完了")
+        # logger.info("上半身3削除")
+        # model.remove_bone("上半身3")
+        # logger.info("上半身3削除完了")
 
         dress_motion = self.file_panel.motion_ctrl.data.copy()
 
@@ -571,23 +571,23 @@ class TestFrame(BaseFrame):
         # bf.local_scale = MVector3D(0, 1, 1)
         # dress_motion.bones["頭"].append(bf)
 
-        # # モーフ追加
-        # morph = Morph(name="左肩")
-        # morph.morph_type = MorphType.BONE
-        # offset = BoneMorphOffset(dress.bones["左肩"].index, local_scale=MVector3D(0, 1, 0))
-        # morph.offsets.append(offset)
-        # dress.morphs.append(morph)
-
-        # dress_motion.morphs["左肩"].append(VmdMorphFrame(0, "左肩", 1))
-
         # モーフ追加
-        morph = Morph(name="上半身")
+        morph = Morph(name="左足")
         morph.morph_type = MorphType.BONE
-        offset = BoneMorphOffset(dress.bones["上半身"].index, local_qq=MQuaternion.from_euler_degrees(0, 30, 0))
+        offset = BoneMorphOffset(dress.bones["左足"].index, local_scale=MVector3D(0, 1, 0))
         morph.offsets.append(offset)
         dress.morphs.append(morph)
 
-        dress_motion.morphs["上半身"].append(VmdMorphFrame(0, "上半身", 1))
+        dress_motion.morphs["左足"].append(VmdMorphFrame(0, "左足", 1))
+
+        # # モーフ追加
+        # morph = Morph(name="上半身")
+        # morph.morph_type = MorphType.BONE
+        # offset = BoneMorphOffset(dress.bones["上半身"].index, local_qq=MQuaternion.from_euler_degrees(0, 30, 0))
+        # morph.offsets.append(offset)
+        # dress.morphs.append(morph)
+
+        # dress_motion.morphs["上半身"].append(VmdMorphFrame(0, "上半身", 1))
 
         try:
             self.config_panel.canvas.set_context()
