@@ -735,7 +735,7 @@ class PmxModel(BaseHashModel):
         replaced_map = self.bones.remove(bone)
 
         # 自身のINDEXは親ボーンのINDEXで置き換える
-        replaced_map[bone.index] = bone.parent_index
+        replaced_map[bone.index] = replaced_map[bone.parent_index]
 
         if not replaced_map:
             return
