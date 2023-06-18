@@ -1815,6 +1815,24 @@ class BoneSettings(Enum):
         rotatable=False,
         scalable=True,
     )
+    RIGHT_LEG_IK = BoneSetting(
+        name="右足ＩＫ",
+        category="足",
+        parents=("右足IK親", "全ての親"),
+        relatives=("右つま先ＩＫ",),
+        tails=("右つま先ＩＫ",),
+        flag=BoneFlg.CAN_ROTATE
+        | BoneFlg.CAN_TRANSLATE
+        | BoneFlg.CAN_MANIPULATE
+        | BoneFlg.IS_VISIBLE
+        | BoneFlg.IS_IK
+        | BoneFlg.TAIL_IS_BONE,
+        axis=MVector3D(0, 1, 0),
+        weight_names=[],
+        translatable=True,
+        rotatable=False,
+        scalable=False,
+    )
     RIGHT_KNEE = BoneSetting(
         name="右ひざ",
         category="足",
@@ -1841,37 +1859,6 @@ class BoneSettings(Enum):
         rotatable=False,
         scalable=True,
     )
-    RIGHT_TOE = BoneSetting(
-        name="右つま先",
-        category="足",
-        parents=("右足首",),
-        relatives=MVector3D(0, -1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=("右つま先",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_LEG_IK = BoneSetting(
-        name="右足ＩＫ",
-        category="足",
-        parents=("右足IK親", "全ての親"),
-        relatives=("右つま先ＩＫ",),
-        tails=("右つま先ＩＫ",),
-        flag=BoneFlg.CAN_ROTATE
-        | BoneFlg.CAN_TRANSLATE
-        | BoneFlg.CAN_MANIPULATE
-        | BoneFlg.IS_VISIBLE
-        | BoneFlg.IS_IK
-        | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
     RIGHT_TOE_IK = BoneSetting(
         name="右つま先ＩＫ",
         category="足",
@@ -1882,6 +1869,19 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=[],
         translatable=True,
+        rotatable=False,
+        scalable=False,
+    )
+    RIGHT_TOE = BoneSetting(
+        name="右つま先",
+        category="足",
+        parents=("右足首",),
+        relatives=MVector3D(0, -1, 0),
+        tails=[],
+        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
+        axis=MVector3D(0, -1, 0),
+        weight_names=("右つま先",),
+        translatable=False,
         rotatable=False,
         scalable=False,
     )
@@ -2419,6 +2419,24 @@ class BoneSettings(Enum):
         rotatable=False,
         scalable=True,
     )
+    LEFT_LEG_IK = BoneSetting(
+        name="左足ＩＫ",
+        category="足",
+        parents=("左足IK親", "全ての親"),
+        relatives=("左つま先ＩＫ",),
+        tails=("左つま先ＩＫ",),
+        flag=BoneFlg.CAN_ROTATE
+        | BoneFlg.CAN_TRANSLATE
+        | BoneFlg.CAN_MANIPULATE
+        | BoneFlg.IS_VISIBLE
+        | BoneFlg.IS_IK
+        | BoneFlg.TAIL_IS_BONE,
+        axis=MVector3D(0, 1, 0),
+        weight_names=[],
+        translatable=True,
+        rotatable=False,
+        scalable=False,
+    )
     LEFT_KNEE = BoneSetting(
         name="左ひざ",
         category="足",
@@ -2445,37 +2463,6 @@ class BoneSettings(Enum):
         rotatable=False,
         scalable=True,
     )
-    LEFT_TOE = BoneSetting(
-        name="左つま先",
-        category="足",
-        parents=("左足首",),
-        relatives=MVector3D(0, -1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=("左つま先",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_LEG_IK = BoneSetting(
-        name="左足ＩＫ",
-        category="足",
-        parents=("左足IK親", "全ての親"),
-        relatives=("左つま先ＩＫ",),
-        tails=("左つま先ＩＫ",),
-        flag=BoneFlg.CAN_ROTATE
-        | BoneFlg.CAN_TRANSLATE
-        | BoneFlg.CAN_MANIPULATE
-        | BoneFlg.IS_VISIBLE
-        | BoneFlg.IS_IK
-        | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
     LEFT_TOE_IK = BoneSetting(
         name="左つま先ＩＫ",
         category="足",
@@ -2486,6 +2473,19 @@ class BoneSettings(Enum):
         axis=MVector3D(0, -1, 0),
         weight_names=[],
         translatable=True,
+        rotatable=False,
+        scalable=False,
+    )
+    LEFT_TOE = BoneSetting(
+        name="左つま先",
+        category="足",
+        parents=("左足首",),
+        relatives=MVector3D(0, -1, 0),
+        tails=[],
+        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
+        axis=MVector3D(0, -1, 0),
+        weight_names=("左つま先",),
+        translatable=False,
         rotatable=False,
         scalable=False,
     )
