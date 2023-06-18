@@ -29,7 +29,7 @@ from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
 from mlib.vmd.vmd_tree import VmdBoneFrameTrees
 
-logger = MLogger(os.path.basename(__file__), level=logging.DEBUG)
+logger = MLogger(os.path.basename(__file__))
 
 
 class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
@@ -660,7 +660,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 回転角
                     rotation_dot = norm_effector_pos.dot(norm_target_pos)
 
-                    logger.debug(f"[{model.name}][{fno}][{bone.name}:{link_bone.name}][{loop:02d}][{1 - rotation_dot}]: IK計算")
+                    logger.test(f"[{model.name}][{fno}][{bone.name}:{link_bone.name}][{loop:02d}][{1 - rotation_dot}]: IK計算")
 
                     if 1e-8 > 1 - rotation_dot:
                         # 変形角度がほぼ変わらない場合、スルー
