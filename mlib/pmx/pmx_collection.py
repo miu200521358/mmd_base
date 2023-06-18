@@ -951,6 +951,12 @@ class PmxModel(BaseHashModel):
             bone.local_x_vector = (bone_matrixes[0, "首"].position - bone_matrixes[0, "上半身"].position).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
+        elif "上半身3" == bone.name and "上半身2" in self.bones and "首" in self.bones:
+            bone.position = (bone_matrixes[0, "上半身2"].position + bone_matrixes[0, "首"].position) / 2
+            bone.position.z += abs(bone_matrixes[0, "首"].position.z - bone_matrixes[0, "上半身2"].position.z) * 0.5
+            bone.local_x_vector = (bone_matrixes[0, "首"].position - bone_matrixes[0, "上半身2"].position).normalized()
+            bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
+            bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
         elif "腕捩" in bone.name and f"{direction}腕" in self.bones and f"{direction}ひじ" in self.bones:
             bone.position = MVector3D(
                 *np.average(
@@ -1088,6 +1094,8 @@ class PmxModel(BaseHashModel):
 
         if "上半身2" in bone_names and self.bones.exists(("上半身", "上半身2")):
             self.separate_weights("上半身", "上半身2", VecAxis.Y, 0.2, self.vertices_by_bones.get(self.bones["上半身"].index, []))
+        if "上半身3" in bone_names and self.bones.exists(("上半身2", "上半身3")):
+            self.separate_weights("上半身2", "上半身3", VecAxis.Y, 0.2, self.vertices_by_bones.get(self.bones["上半身2"].index, []))
         if "右足先EX" in bone_names and self.bones.exists(("右足首", "右足首D", "右足先EX")):
             self.separate_weights("右足首D", "右足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["右足首D"].index, []))
             self.separate_weights("右足首", "右足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["右足首"].index, []))
