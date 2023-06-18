@@ -1,4 +1,4 @@
-# version 440
+#version 440 core
 
 in layout(location = %d) vec3  position;
 in layout(location = %d) vec3  normal;

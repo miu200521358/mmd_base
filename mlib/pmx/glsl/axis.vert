@@ -1,4 +1,4 @@
-# version 440
+#version 440 core
 
 in layout(location = 0) vec3  position;
 in layout(location = 1) float indexPer;

@@ -28,7 +28,7 @@ COLOR_AMBIENT_ID = 5
 COLOR_SPECULAR_ID = 6
 
 vertex_shader = """
-# version 440
+#version 440 core
 in layout(location = %d) vec3 position;
 in layout(location = %d) vec3 normal;
 in layout(location = %d) vec2 uv;
@@ -88,7 +88,7 @@ void main() {
 )
 
 fragments_shader = """
-# version 440
+#version 440 core
 
 uniform mat4 modelMatrix;
 uniform sampler2D textureSampler;
