@@ -645,7 +645,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 注目ノードを起点とした、IK目標のローカル位置
                     local_target_pos = link_inverse_matrix * global_target_pos
 
-                    if 1e-5 > (local_effector_pos - local_target_pos).length_squared():
+                    if 1e-6 > (local_effector_pos - local_target_pos).length_squared():
                         # 位置の差がほとんどない場合、スルー
                         is_break = True
                         break
@@ -661,7 +661,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # logger.test(f"-- ボーンアニメーション[{model.name}][{fno}][{bone.name}:{link_bone.name}][{loop}][{1 - rotation_dot}]: IK計算")
 
-                    if 1e-7 > 1 - rotation_dot:
+                    if 1e-8 > 1 - rotation_dot:
                         # 変形角度がほぼ変わらない場合、スルー
                         is_break = True
                         break
