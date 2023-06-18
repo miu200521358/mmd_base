@@ -786,9 +786,6 @@ class PmxModel(BaseHashModel):
             if r.bone_index in replaced_map:
                 r.bone_index = replaced_map[r.bone_index]
 
-        # 再セットアップ
-        self.setup()
-
     def insert_bone(self, bone: Bone):
         """ボーンの追加に伴う諸々のボーンINDEXの置き換え"""
         # 挿入
@@ -889,9 +886,6 @@ class PmxModel(BaseHashModel):
                     r.bone_index = bone.index
                 else:
                     r.bone_index = replaced_map[r.bone_index]
-
-        # 再セットアップ
-        self.setup()
 
     def insert_standard_bone(self, bone_name: str, bone_matrixes: VmdBoneFrameTrees) -> bool:
         bone_setting = STANDARD_BONE_NAMES[bone_name]
