@@ -175,7 +175,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
                 break
 
         # 既に同じINDEXがある場合、前からずらす
-        for i in range(value.index + 1, self.last_index + 1):
+        for i in range(value.index, self.last_index + 1):
             v = self.data[i]
             # ズラした結果を保持する
             replaced_map[v.index] = v.index - 1

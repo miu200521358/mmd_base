@@ -574,14 +574,23 @@ class TestFrame(BaseFrame):
         # bf.local_scale = MVector3D(0, 1, 1)
         # dress_motion.bones["頭"].append(bf)
 
+        # # モーフ追加
+        # morph = Morph(name="左肩")
+        # morph.morph_type = MorphType.BONE
+        # offset = BoneMorphOffset(dress.bones["左肩"].index, local_scale=MVector3D(0, 1, 0))
+        # morph.offsets.append(offset)
+        # dress.morphs.append(morph)
+
+        # dress_motion.morphs["左肩"].append(VmdMorphFrame(0, "左肩", 1))
+
         # モーフ追加
-        morph = Morph(name="左肩")
+        morph = Morph(name="上半身")
         morph.morph_type = MorphType.BONE
-        offset = BoneMorphOffset(dress.bones["左肩"].index, local_scale=MVector3D(0, 1, 0))
+        offset = BoneMorphOffset(dress.bones["上半身"].index, local_qq=MQuaternion.from_euler_degrees(0, 30, 0))
         morph.offsets.append(offset)
         dress.morphs.append(morph)
 
-        dress_motion.morphs["左肩"].append(VmdMorphFrame(0, "左肩", 1))
+        dress_motion.morphs["上半身"].append(VmdMorphFrame(0, "上半身", 1))
 
         try:
             self.config_panel.canvas.set_context()
