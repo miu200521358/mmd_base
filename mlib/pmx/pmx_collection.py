@@ -1471,6 +1471,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
                     dtype=bone_face_dtype,
                 )
                 for b in model.bones
+                if 0 <= b.parent_index
             ],
         )
 
