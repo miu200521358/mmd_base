@@ -726,8 +726,12 @@ class PmxModel(BaseHashModel):
         # 逆オフセット行列は親ボーンからの相対位置分を戻す
         bone.parent_revert_matrix[:3, 3] = bone.parent_relative_position.vector
 
-    def remove_bone(self, bone: Bone):
+    def remove_bone(self, bone_name: str) -> None:
         """ボーンの削除に伴う諸々のボーンINDEXの置き換え"""
+        if bone_name not in self.bones:
+            return
+
+        bone = self.bones[bone_name]
         replaced_map = self.bones.remove(bone)
 
         # 自身のINDEXは親ボーンのINDEXで置き換える
