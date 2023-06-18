@@ -229,8 +229,8 @@ class Bones(BaseIndexNameDictModel[Bone]):
         to_pos = MVector3D()
 
         from_pos = bone.position
-        bone_setting = STANDARD_BONE_NAMES[bone.name] if bone.name in STANDARD_BONE_NAMES else None
-        if bone_setting and isinstance(bone_setting.tails, Iterable):
+        bone_setting = STANDARD_BONE_NAMES.get(bone.name)
+        if bone_setting and isinstance(bone_setting.tails, (Iterable, list, tuple)):
             # 表示先ボーンが指定されており、いずれかある場合、そのまま使用
             for tail_bone_name in bone_setting.tails:
                 if tail_bone_name in self:
