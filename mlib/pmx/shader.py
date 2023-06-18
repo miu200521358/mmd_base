@@ -361,10 +361,10 @@ class MShader:
         # カメラの上方向
         look_at_right = (camera_rotation * MVector3D(1, 0, 0)).normalized()
         look_at_up = look_at_right.cross(camera_pos - self.look_at_center).normalized()
-        print(
-            f"camera_pos: {camera_pos}, camera_degrees: {self.camera_degrees}, camera_rotation: {camera_rotation.to_euler_degrees()}"
-            + f", look_at_right: {look_at_right}, look_at_up: {look_at_up}, look_at_center: {self.look_at_center}"
-        )
+        # print(
+        #     f"camera_pos: {camera_pos}, camera_degrees: {self.camera_degrees}, camera_rotation: {camera_rotation.to_euler_degrees()}"
+        #     + f", look_at_right: {look_at_right}, look_at_up: {look_at_up}, look_at_center: {self.look_at_center}"
+        # )
 
         # 視点位置の決定
         gl.glMatrixMode(gl.GL_MODELVIEW)
