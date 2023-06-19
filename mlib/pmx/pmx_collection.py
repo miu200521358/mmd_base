@@ -548,9 +548,6 @@ class PmxModel(BaseHashModel):
             # 描画初期化してなければスルー
             return
 
-        while 0 < len(self.toon_textures):
-            del self.toon_textures[0]
-
         self.meshes.delete_draw()
         self.for_draw = False
 
