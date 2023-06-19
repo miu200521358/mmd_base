@@ -1894,8 +1894,8 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=True,
-        rotatable=True,
+        translatable=False,
+        rotatable=False,
         scalable=True,
     )
     RIGHT_KNEE_D = BoneSetting(
@@ -1907,8 +1907,8 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=True,
-        rotatable=True,
+        translatable=False,
+        rotatable=False,
         scalable=True,
     )
     RIGHT_ANKLE_D = BoneSetting(
@@ -1920,8 +1920,8 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=True,
-        rotatable=True,
+        translatable=False,
+        rotatable=False,
         scalable=True,
     )
     RIGHT_TOE_EX = BoneSetting(
@@ -2498,8 +2498,8 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=True,
-        rotatable=True,
+        translatable=False,
+        rotatable=False,
         scalable=True,
     )
     LEFT_KNEE_D = BoneSetting(
@@ -2511,8 +2511,8 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=True,
-        rotatable=True,
+        translatable=False,
+        rotatable=False,
         scalable=True,
     )
     LEFT_ANKLE_D = BoneSetting(
@@ -2524,8 +2524,8 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
         weight_names=[],
-        translatable=True,
-        rotatable=True,
+        translatable=False,
+        rotatable=False,
         scalable=True,
     )
     LEFT_TOE_EX = BoneSetting(
