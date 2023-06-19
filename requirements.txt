@@ -1,11 +1,8 @@
-mypy
-black
-isort
-flake8
-pytest
+Babel==2.12.1
+numpy==1.25.0
+numpy-quaternion==2022.4.3
+Cython==0.29.35
+PyOpenGL==3.1.7
+Pillow==9.5.0
+wxpython==4.2.1
 
-pyinstaller==5.2
-numpy==1.23.1
-numpy-quaternion==2022.4.2
-bezier==2021.2.12
-wxPython==4.1.1
