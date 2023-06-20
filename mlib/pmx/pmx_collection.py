@@ -11,13 +11,12 @@ from mlib.base.exception import MViewerException
 from mlib.base.logger import MLogger
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
 from mlib.base.part import Switch
+from mlib.pmx.bone_setting import STANDARD_BONE_NAMES, BoneFlg
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
-    STANDARD_BONE_NAMES,
     Bdef2,
     Bdef4,
     Bone,
-    BoneFlg,
     BoneMorphOffset,
     DisplaySlot,
     DisplayType,

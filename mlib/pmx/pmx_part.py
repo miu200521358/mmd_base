@@ -11,7 +11,7 @@ from mlib.base.base import BaseModel
 from mlib.base.exception import MViewerException
 from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
-from mlib.pmx.bone_setting import BoneSetting, BoneSettings
+from mlib.pmx.bone_setting import STANDARD_BONE_NAMES, BoneFlg
 
 
 @unique
@@ -637,40 +637,6 @@ class Ik(BaseModel):
         return 0 <= self.bone_index
 
 
-@unique
-class BoneFlg(Flag):
-    """ボーンフラグ"""
-
-    NONE = 0x0000
-    """"初期値"""
-    TAIL_IS_BONE = 0x0001
-    """接続先(PMD子ボーン指定)表示方法 -> 0:座標オフセットで指定 1:ボーンで指定"""
-    CAN_ROTATE = 0x0002
-    """回転可能"""
-    CAN_TRANSLATE = 0x0004
-    """移動可能"""
-    IS_VISIBLE = 0x0008
-    """表示"""
-    CAN_MANIPULATE = 0x0010
-    """操作可"""
-    IS_IK = 0x0020
-    """IK"""
-    IS_EXTERNAL_LOCAL = 0x0080
-    """ローカル付与 | 付与対象 0:ユーザー変形値／IKリンク／多重付与 1:親のローカル変形量"""
-    IS_EXTERNAL_ROTATION = 0x0100
-    """回転付与"""
-    IS_EXTERNAL_TRANSLATION = 0x0200
-    """移動付与"""
-    HAS_FIXED_AXIS = 0x0400
-    """軸固定"""
-    HAS_LOCAL_COORDINATE = 0x0800
-    """ローカル軸"""
-    IS_AFTER_PHYSICS_DEFORM = 0x1000
-    """物理後変形"""
-    IS_EXTERNAL_PARENT_DEFORM = 0x2000
-    """外部親変形"""
-
-
 class Bone(BaseIndexNameModel):
     """
     ボーン
@@ -1088,10 +1054,6 @@ class Bone(BaseIndexNameModel):
     def is_standard(self) -> bool:
         """準標準であるか"""
         return self.name in STANDARD_BONE_NAMES
-
-
-STANDARD_BONE_NAMES: dict[str, BoneSetting] = dict([(bs.value.name, bs.value) for bs in BoneSettings])
-"""準標準ボーン名前とEnumのキーの辞書"""
 
 
 class MorphOffset(BaseModel):

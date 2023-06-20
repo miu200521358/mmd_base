@@ -7,13 +7,13 @@ from mlib.base.logger import MLogger
 from mlib.base.math import MVector3D
 from mlib.base.part import Switch
 from mlib.base.reader import BaseReader, StructUnpackType
+from mlib.pmx.bone_setting import BoneFlg
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import (
     Bdef1,
     Bdef2,
     Bdef4,
     Bone,
-    BoneFlg,
     BoneMorphOffset,
     DeformType,
     DisplaySlot,

@@ -2,7 +2,8 @@ from typing import Optional
 
 from mlib.base.collection import BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
 from mlib.base.math import MVector3D
-from mlib.pmx.pmx_part import STANDARD_BONE_NAMES, Bone
+from mlib.pmx.bone_setting import STANDARD_BONE_NAMES
+from mlib.pmx.pmx_part import Bone
 
 
 class BoneTree(BaseIndexNameDictModel[Bone]):
