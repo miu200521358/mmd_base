@@ -2,7 +2,6 @@ from enum import Enum
 from typing import Iterable, Union
 
 from mlib.base.math import MVector3D
-from mlib.pmx.pmx_part import BoneFlg
 
 
 class BoneSetting:
@@ -15,7 +14,6 @@ class BoneSetting:
         parents: Iterable[str],
         relatives: Union[MVector3D, Iterable[str]],
         tails: Iterable[str],
-        flag: BoneFlg,
         axis: MVector3D,
     ) -> None:
         """
@@ -33,7 +31,6 @@ class BoneSetting:
         self.parents = parents
         self.relatives = relatives
         self.tails = tails
-        self.flag = flag
         self.axis = axis
 
 
@@ -46,7 +43,6 @@ class BoneSettings(Enum):
         parents=[],
         relatives=MVector3D(0, 1, 0),
         tails=("センター",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, 1, 0),
     )
     CENTER = BoneSetting(
@@ -55,7 +51,6 @@ class BoneSettings(Enum):
         parents=("全ての親",),
         relatives=MVector3D(0, 1, 0),
         tails=("上半身", "下半身"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, 1, 0),
     )
     GROOVE = BoneSetting(
@@ -64,7 +59,6 @@ class BoneSettings(Enum):
         parents=("センター",),
         relatives=MVector3D(0, -1, 0),
         tails=("上半身", "下半身"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, -1, 0),
     )
     WAIST = BoneSetting(
@@ -73,7 +67,6 @@ class BoneSettings(Enum):
         parents=("グルーブ", "センター"),
         relatives=MVector3D(0, -1, 0),
         tails=("上半身", "下半身"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, -1, 0),
     )
     LOWER = BoneSetting(
@@ -82,7 +75,6 @@ class BoneSettings(Enum):
         parents=("腰", "グルーブ", "センター"),
         relatives=("足中心",),
         tails=("足中心",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, -1, 0),
     )
     LEG_CENTER = BoneSetting(
@@ -91,7 +83,6 @@ class BoneSettings(Enum):
         parents=("腰", "グルーブ", "センター"),
         relatives=MVector3D(0, -1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, -1, 0),
     )
     UPPER = BoneSetting(
@@ -100,7 +91,6 @@ class BoneSettings(Enum):
         parents=("腰", "グルーブ", "センター"),
         relatives=("上半身2", "首根元"),
         tails=("上半身2", "首根元"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, 1, 0),
     )
     UPPER2 = BoneSetting(
@@ -109,7 +99,6 @@ class BoneSettings(Enum):
         parents=("上半身",),
         relatives=("上半身3", "首根元"),
         tails=("上半身3", "首根元"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, 1, 0),
     )
     UPPER3 = BoneSetting(
@@ -118,7 +107,6 @@ class BoneSettings(Enum):
         parents=("上半身2",),
         relatives=("首根元",),
         tails=("首根元",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, 1, 0),
     )
     ARM_CENTER = BoneSetting(
@@ -127,7 +115,6 @@ class BoneSettings(Enum):
         parents=("上半身3", "上半身2"),
         relatives=("首",),
         tails=("首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, 1, 0),
     )
     NECK = BoneSetting(
@@ -136,7 +123,6 @@ class BoneSettings(Enum):
         parents=("首根元",),
         relatives=("頭",),
         tails=("頭",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, 1, 0),
     )
     HEAD = BoneSetting(
@@ -145,7 +131,6 @@ class BoneSettings(Enum):
         parents=("首",),
         relatives=MVector3D(0, 1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, 1, 0),
     )
     EYES = BoneSetting(
@@ -154,7 +139,6 @@ class BoneSettings(Enum):
         parents=("頭",),
         relatives=MVector3D(0, 1, 0),
         tails=("左目", "右目"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, 1, 0),
     )
     LEFT_EYE = BoneSetting(
@@ -163,7 +147,6 @@ class BoneSettings(Enum):
         parents=("頭",),
         relatives=MVector3D(0, 1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION,
         axis=MVector3D(0, 1, 0),
     )
     RIGHT_EYE = BoneSetting(
@@ -172,7 +155,6 @@ class BoneSettings(Enum):
         parents=("頭",),
         relatives=MVector3D(0, 1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION,
         axis=MVector3D(0, 1, 0),
     )
 
@@ -182,7 +164,6 @@ class BoneSettings(Enum):
         parents=("首根元", "上半身3", "上半身2", "上半身"),
         relatives=MVector3D(0, 1, 0),
         tails=("右肩",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_SHOULDER = BoneSetting(
@@ -191,7 +172,6 @@ class BoneSettings(Enum):
         parents=("右肩P", "首根元", "上半身3", "上半身2", "上半身"),
         relatives=("右腕",),
         tails=("右腕",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_SHOULDER_C = BoneSetting(
@@ -200,7 +180,6 @@ class BoneSettings(Enum):
         parents=("右肩",),
         relatives=MVector3D(0, 1, 0),
         tails=("右ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_ARM = BoneSetting(
@@ -209,7 +188,6 @@ class BoneSettings(Enum):
         parents=("右肩C", "右肩"),
         relatives=("右ひじ",),
         tails=("右ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_ARM_TWIST = BoneSetting(
@@ -218,7 +196,6 @@ class BoneSettings(Enum):
         parents=("右腕",),
         relatives=MVector3D(0, 1, 0),
         tails=("右ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_ARM_TWIST1 = BoneSetting(
@@ -227,7 +204,6 @@ class BoneSettings(Enum):
         parents=("右腕捩",),
         relatives=MVector3D(0, 1, 0),
         tails=("右ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_ARM_TWIST2 = BoneSetting(
@@ -236,7 +212,6 @@ class BoneSettings(Enum):
         parents=("右腕捩",),
         relatives=MVector3D(0, 1, 0),
         tails=("右ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_ARM_TWIST3 = BoneSetting(
@@ -245,7 +220,6 @@ class BoneSettings(Enum):
         parents=("右腕捩",),
         relatives=MVector3D(0, 1, 0),
         tails=("右ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_ELBOW = BoneSetting(
@@ -254,7 +228,6 @@ class BoneSettings(Enum):
         parents=("右腕捩", "右腕"),
         relatives=("右手首",),
         tails=("右手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_HAND_TWIST = BoneSetting(
@@ -263,7 +236,6 @@ class BoneSettings(Enum):
         parents=("右ひじ",),
         relatives=MVector3D(0, 1, 0),
         tails=("右手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_HAND_TWIST1 = BoneSetting(
@@ -272,7 +244,6 @@ class BoneSettings(Enum):
         parents=("右手捩",),
         relatives=MVector3D(0, 1, 0),
         tails=("右手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_HAND_TWIST2 = BoneSetting(
@@ -281,7 +252,6 @@ class BoneSettings(Enum):
         parents=("右手捩",),
         relatives=MVector3D(0, 1, 0),
         tails=("右手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_HAND_TWIST3 = BoneSetting(
@@ -290,7 +260,6 @@ class BoneSettings(Enum):
         parents=("右手捩",),
         relatives=MVector3D(0, 1, 0),
         tails=("右手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_WRIST = BoneSetting(
@@ -299,7 +268,6 @@ class BoneSettings(Enum):
         parents=("右手捩", "右ひじ"),
         relatives=("右中指１", "右人指１", "右薬指１", "右小指１"),
         tails=("右中指１", "右人指１", "右薬指１", "右小指１"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_THUMB0 = BoneSetting(
@@ -308,7 +276,6 @@ class BoneSettings(Enum):
         parents=("右手首",),
         relatives=("右親指１",),
         tails=("右親指２",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_THUMB1 = BoneSetting(
@@ -317,7 +284,6 @@ class BoneSettings(Enum):
         parents=("右親指０",),
         relatives=("右親指２",),
         tails=("右親指２",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_THUMB2 = BoneSetting(
@@ -326,7 +292,6 @@ class BoneSettings(Enum):
         parents=("右親指１",),
         relatives=MVector3D(0, 1, 0),
         tails=("右親指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_THUMB_TAIL = BoneSetting(
@@ -335,7 +300,6 @@ class BoneSettings(Enum):
         parents=("右親指２",),
         relatives=MVector3D(0, 1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_INDEX0 = BoneSetting(
@@ -344,7 +308,6 @@ class BoneSettings(Enum):
         parents=("右手首",),
         relatives=("右人指２",),
         tails=("右人指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_INDEX1 = BoneSetting(
@@ -353,7 +316,6 @@ class BoneSettings(Enum):
         parents=("右人指１",),
         relatives=("右人指３",),
         tails=("右人指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_INDEX2 = BoneSetting(
@@ -362,7 +324,6 @@ class BoneSettings(Enum):
         parents=("右人指２",),
         relatives=MVector3D(0, 1, 0),
         tails=("右人指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_INDEX_TAIL = BoneSetting(
@@ -371,7 +332,6 @@ class BoneSettings(Enum):
         parents=("右人指３",),
         relatives=MVector3D(0, 1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_MIDDLE0 = BoneSetting(
@@ -380,7 +340,6 @@ class BoneSettings(Enum):
         parents=("右手首",),
         relatives=("右中指２",),
         tails=("右中指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_MIDDLE1 = BoneSetting(
@@ -389,7 +348,6 @@ class BoneSettings(Enum):
         parents=("右中指１",),
         relatives=("右中指３",),
         tails=("右中指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_MIDDLE2 = BoneSetting(
@@ -398,7 +356,6 @@ class BoneSettings(Enum):
         parents=("右中指２",),
         relatives=MVector3D(0, 1, 0),
         tails=("右中指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_MIDDLE_TAIL = BoneSetting(
@@ -407,7 +364,6 @@ class BoneSettings(Enum):
         parents=("右中指３",),
         relatives=MVector3D(0, 1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_RING0 = BoneSetting(
@@ -416,7 +372,6 @@ class BoneSettings(Enum):
         parents=("右手首",),
         relatives=("右薬指２",),
         tails=("右薬指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_RING1 = BoneSetting(
@@ -425,7 +380,6 @@ class BoneSettings(Enum):
         parents=("右薬指１",),
         relatives=("右薬指３",),
         tails=("右薬指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_RING2 = BoneSetting(
@@ -434,7 +388,6 @@ class BoneSettings(Enum):
         parents=("右薬指２",),
         relatives=MVector3D(0, 1, 0),
         tails=("右薬指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_RING_TAIL = BoneSetting(
@@ -443,7 +396,6 @@ class BoneSettings(Enum):
         parents=("右薬指３",),
         relatives=MVector3D(0, 1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_PINKY0 = BoneSetting(
@@ -452,7 +404,6 @@ class BoneSettings(Enum):
         parents=("右手首",),
         relatives=("右小指２",),
         tails=("右小指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_PINKY1 = BoneSetting(
@@ -461,7 +412,6 @@ class BoneSettings(Enum):
         parents=("右小指１",),
         relatives=("右小指３",),
         tails=("右小指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_PINKY2 = BoneSetting(
@@ -470,7 +420,6 @@ class BoneSettings(Enum):
         parents=("右小指２",),
         relatives=MVector3D(0, 1, 0),
         tails=("右小指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_PINKY_TAIL = BoneSetting(
@@ -479,7 +428,6 @@ class BoneSettings(Enum):
         parents=("右小指３",),
         relatives=MVector3D(0, 1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_WRIST_CANCEL = BoneSetting(
@@ -488,7 +436,6 @@ class BoneSettings(Enum):
         parents=("足中心", "下半身"),
         relatives=MVector3D(0, -1, 0),
         tails=("右足",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
         axis=MVector3D(0, -1, 0),
     )
     RIGHT_LEG = BoneSetting(
@@ -497,7 +444,6 @@ class BoneSettings(Enum):
         parents=("腰キャンセル右", "足中心", "下半身"),
         relatives=("右ひざ",),
         tails=("右ひざ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
     )
     RIGHT_KNEE = BoneSetting(
@@ -506,7 +452,6 @@ class BoneSettings(Enum):
         parents=("右足",),
         relatives=("右足首",),
         tails=("右足首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
     )
     RIGHT_ANKLE = BoneSetting(
@@ -515,7 +460,6 @@ class BoneSettings(Enum):
         parents=("右ひざ",),
         relatives=("右つま先",),
         tails=("右つま先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, -1, 0),
     )
     RIGHT_TOE = BoneSetting(
@@ -524,7 +468,6 @@ class BoneSettings(Enum):
         parents=("右足首",),
         relatives=MVector3D(0, -1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, -1, 0),
     )
     RIGHT_LEG_IK = BoneSetting(
@@ -533,12 +476,6 @@ class BoneSettings(Enum):
         parents=("右足IK親", "全ての親"),
         relatives=("右つま先ＩＫ",),
         tails=("右つま先ＩＫ",),
-        flag=BoneFlg.CAN_ROTATE
-        | BoneFlg.CAN_TRANSLATE
-        | BoneFlg.CAN_MANIPULATE
-        | BoneFlg.IS_VISIBLE
-        | BoneFlg.IS_IK
-        | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, 1, 0),
     )
     RIGHT_TOE_IK = BoneSetting(
@@ -547,7 +484,6 @@ class BoneSettings(Enum):
         parents=("右足ＩＫ",),
         relatives=MVector3D(0, -1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK,
         axis=MVector3D(0, -1, 0),
     )
     RIGHT_LEG_D = BoneSetting(
@@ -556,7 +492,6 @@ class BoneSettings(Enum):
         parents=("腰キャンセル右", "下半身"),
         relatives=("右ひざD",),
         tails=("右ひざD",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
     )
     RIGHT_KNEE_D = BoneSetting(
@@ -565,7 +500,6 @@ class BoneSettings(Enum):
         parents=("右足D",),
         relatives=("右足首D",),
         tails=("右足首D",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
     )
     RIGHT_ANKLE_D = BoneSetting(
@@ -574,7 +508,6 @@ class BoneSettings(Enum):
         parents=("右ひざD",),
         relatives=("右足先EX",),
         tails=("右足先EX",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
     )
     RIGHT_TOE_EX = BoneSetting(
@@ -583,7 +516,6 @@ class BoneSettings(Enum):
         parents=("右足首D",),
         relatives=MVector3D(0, -1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, -1, 0),
     )
     RIGHT_LEG_IK_PARENT = BoneSetting(
@@ -592,7 +524,6 @@ class BoneSettings(Enum):
         parents=("全ての親",),
         relatives=MVector3D(0, 1, 0),
         tails=("右足ＩＫ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, 1, 0),
     )
 
@@ -602,7 +533,6 @@ class BoneSettings(Enum):
         parents=("首根元", "上半身3", "上半身2", "上半身"),
         relatives=MVector3D(0, 1, 0),
         tails=("左肩",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_SHOULDER = BoneSetting(
@@ -611,7 +541,6 @@ class BoneSettings(Enum):
         parents=("左肩P", "首根元", "上半身3", "上半身2", "上半身"),
         relatives=("左腕",),
         tails=("左腕",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_SHOULDER_C = BoneSetting(
@@ -620,7 +549,6 @@ class BoneSettings(Enum):
         parents=("左肩",),
         relatives=MVector3D(0, 1, 0),
         tails=("左ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_ARM = BoneSetting(
@@ -629,7 +557,6 @@ class BoneSettings(Enum):
         parents=("左肩C", "左肩"),
         relatives=("左ひじ",),
         tails=("左ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_ARM_TWIST = BoneSetting(
@@ -638,7 +565,6 @@ class BoneSettings(Enum):
         parents=("左腕",),
         relatives=MVector3D(0, 1, 0),
         tails=("左ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_ARM_TWIST1 = BoneSetting(
@@ -647,7 +573,6 @@ class BoneSettings(Enum):
         parents=("左腕捩",),
         relatives=MVector3D(0, 1, 0),
         tails=("左ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_ARM_TWIST2 = BoneSetting(
@@ -656,7 +581,6 @@ class BoneSettings(Enum):
         parents=("左腕捩",),
         relatives=MVector3D(0, 1, 0),
         tails=("左ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_ARM_TWIST3 = BoneSetting(
@@ -665,7 +589,6 @@ class BoneSettings(Enum):
         parents=("左腕捩",),
         relatives=MVector3D(0, 1, 0),
         tails=("左ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_ELBOW = BoneSetting(
@@ -674,7 +597,6 @@ class BoneSettings(Enum):
         parents=("左腕捩", "左腕"),
         relatives=("左手首",),
         tails=("左手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_HAND_TWIST = BoneSetting(
@@ -683,7 +605,6 @@ class BoneSettings(Enum):
         parents=("左ひじ",),
         relatives=MVector3D(0, 1, 0),
         tails=("左手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_HAND_TWIST1 = BoneSetting(
@@ -692,7 +613,6 @@ class BoneSettings(Enum):
         parents=("左手捩",),
         relatives=MVector3D(0, 1, 0),
         tails=("左手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_HAND_TWIST2 = BoneSetting(
@@ -701,7 +621,6 @@ class BoneSettings(Enum):
         parents=("左手捩",),
         relatives=MVector3D(0, 1, 0),
         tails=("左手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_HAND_TWIST3 = BoneSetting(
@@ -710,7 +629,6 @@ class BoneSettings(Enum):
         parents=("左手捩",),
         relatives=MVector3D(0, 1, 0),
         tails=("左手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_WRIST = BoneSetting(
@@ -719,7 +637,6 @@ class BoneSettings(Enum):
         parents=("左手捩", "左ひじ"),
         relatives=("左中指１", "左人指１", "左薬指１", "左小指１"),
         tails=("左中指１", "左人指１", "左薬指１", "左小指１"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_THUMB0 = BoneSetting(
@@ -728,7 +645,6 @@ class BoneSettings(Enum):
         parents=("左手首",),
         relatives=("左親指１",),
         tails=("左親指２",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_THUMB1 = BoneSetting(
@@ -737,7 +653,6 @@ class BoneSettings(Enum):
         parents=("左親指０",),
         relatives=("左親指２",),
         tails=("左親指２",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_THUMB2 = BoneSetting(
@@ -746,7 +661,6 @@ class BoneSettings(Enum):
         parents=("左親指１",),
         relatives=MVector3D(0, 1, 0),
         tails=("左親指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_THUMB_TAIL = BoneSetting(
@@ -755,7 +669,6 @@ class BoneSettings(Enum):
         parents=("左親指２",),
         relatives=MVector3D(0, 1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_INDEX0 = BoneSetting(
@@ -764,7 +677,6 @@ class BoneSettings(Enum):
         parents=("左手首",),
         relatives=("左人指２",),
         tails=("左人指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_INDEX1 = BoneSetting(
@@ -773,7 +685,6 @@ class BoneSettings(Enum):
         parents=("左人指１",),
         relatives=("左人指３",),
         tails=("左人指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_INDEX2 = BoneSetting(
@@ -782,7 +693,6 @@ class BoneSettings(Enum):
         parents=("左人指２",),
         relatives=MVector3D(0, 1, 0),
         tails=("左人指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_INDEX_TAIL = BoneSetting(
@@ -791,7 +701,6 @@ class BoneSettings(Enum):
         parents=("左人指３",),
         relatives=MVector3D(0, 1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_MIDDLE0 = BoneSetting(
@@ -800,7 +709,6 @@ class BoneSettings(Enum):
         parents=("左手首",),
         relatives=("左中指２",),
         tails=("左中指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_MIDDLE1 = BoneSetting(
@@ -809,7 +717,6 @@ class BoneSettings(Enum):
         parents=("左中指１",),
         relatives=("左中指３",),
         tails=("左中指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_MIDDLE2 = BoneSetting(
@@ -818,7 +725,6 @@ class BoneSettings(Enum):
         parents=("左中指２",),
         relatives=MVector3D(0, 1, 0),
         tails=("左中指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_MIDDLE_TAIL = BoneSetting(
@@ -827,7 +733,6 @@ class BoneSettings(Enum):
         parents=("左中指３",),
         relatives=MVector3D(0, 1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_RING0 = BoneSetting(
@@ -836,7 +741,6 @@ class BoneSettings(Enum):
         parents=("左手首",),
         relatives=("左薬指２",),
         tails=("左薬指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_RING1 = BoneSetting(
@@ -845,7 +749,6 @@ class BoneSettings(Enum):
         parents=("左薬指１",),
         relatives=("左薬指３",),
         tails=("左薬指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_RING2 = BoneSetting(
@@ -854,7 +757,6 @@ class BoneSettings(Enum):
         parents=("左薬指２",),
         relatives=MVector3D(0, 1, 0),
         tails=("左薬指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_RING_TAIL = BoneSetting(
@@ -863,7 +765,6 @@ class BoneSettings(Enum):
         parents=("左薬指３",),
         relatives=MVector3D(0, 1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_PINKY0 = BoneSetting(
@@ -872,7 +773,6 @@ class BoneSettings(Enum):
         parents=("左手首",),
         relatives=("左小指２",),
         tails=("左小指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_PINKY1 = BoneSetting(
@@ -881,7 +781,6 @@ class BoneSettings(Enum):
         parents=("左小指１",),
         relatives=("左小指３",),
         tails=("左小指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_PINKY2 = BoneSetting(
@@ -890,7 +789,6 @@ class BoneSettings(Enum):
         parents=("左小指２",),
         relatives=MVector3D(0, 1, 0),
         tails=("左小指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_PINKY_TAIL = BoneSetting(
@@ -899,7 +797,6 @@ class BoneSettings(Enum):
         parents=("左小指３",),
         relatives=MVector3D(0, 1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_WRIST_CANCEL = BoneSetting(
@@ -908,7 +805,6 @@ class BoneSettings(Enum):
         parents=("足中心", "下半身"),
         relatives=MVector3D(0, -1, 0),
         tails=("左足",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
         axis=MVector3D(0, -1, 0),
     )
     LEFT_LEG = BoneSetting(
@@ -917,7 +813,6 @@ class BoneSettings(Enum):
         parents=("腰キャンセル左", "足中心", "下半身"),
         relatives=("左ひざ",),
         tails=("左ひざ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
     )
     LEFT_KNEE = BoneSetting(
@@ -926,7 +821,6 @@ class BoneSettings(Enum):
         parents=("左足",),
         relatives=("左足首",),
         tails=("左足首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
     )
     LEFT_ANKLE = BoneSetting(
@@ -935,7 +829,6 @@ class BoneSettings(Enum):
         parents=("左ひざ",),
         relatives=("左つま先",),
         tails=("左つま先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, -1, 0),
     )
     LEFT_TOE = BoneSetting(
@@ -944,7 +837,6 @@ class BoneSettings(Enum):
         parents=("左足首",),
         relatives=MVector3D(0, -1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, -1, 0),
     )
     LEFT_LEG_IK = BoneSetting(
@@ -953,12 +845,6 @@ class BoneSettings(Enum):
         parents=("左足IK親", "全ての親"),
         relatives=("左つま先ＩＫ",),
         tails=("左つま先ＩＫ",),
-        flag=BoneFlg.CAN_ROTATE
-        | BoneFlg.CAN_TRANSLATE
-        | BoneFlg.CAN_MANIPULATE
-        | BoneFlg.IS_VISIBLE
-        | BoneFlg.IS_IK
-        | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, 1, 0),
     )
     LEFT_TOE_IK = BoneSetting(
@@ -967,7 +853,6 @@ class BoneSettings(Enum):
         parents=("左足ＩＫ",),
         relatives=MVector3D(0, -1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK,
         axis=MVector3D(0, -1, 0),
     )
     LEFT_LEG_D = BoneSetting(
@@ -976,7 +861,6 @@ class BoneSettings(Enum):
         parents=("腰キャンセル左", "下半身"),
         relatives=("左ひざD",),
         tails=("左ひざD",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
     )
     LEFT_KNEE_D = BoneSetting(
@@ -985,7 +869,6 @@ class BoneSettings(Enum):
         parents=("左足D",),
         relatives=("左足首D",),
         tails=("左足首D",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
     )
     LEFT_ANKLE_D = BoneSetting(
@@ -994,7 +877,6 @@ class BoneSettings(Enum):
         parents=("左ひざD",),
         relatives=("左足先EX",),
         tails=("左足先EX",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(0, -1, 0),
     )
     LEFT_TOE_EX = BoneSetting(
@@ -1003,7 +885,6 @@ class BoneSettings(Enum):
         parents=("左足首D",),
         relatives=MVector3D(0, -1, 0),
         tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, -1, 0),
     )
     LEFT_LEG_IK_PARENT = BoneSetting(
@@ -1012,10 +893,5 @@ class BoneSettings(Enum):
         parents=("全ての親",),
         relatives=MVector3D(0, 1, 0),
         tails=("左足ＩＫ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(0, 1, 0),
     )
-
-
-STANDARD_BONE_NAMES: dict[str, BoneSetting] = dict([(bs.value.name, bs.value) for bs in BoneSettings])
-"""準標準ボーン名前とEnumのキーの辞書"""

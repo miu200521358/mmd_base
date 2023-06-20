@@ -11,7 +11,7 @@ from mlib.base.base import BaseModel
 from mlib.base.exception import MViewerException
 from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
 from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
-from mlib.pmx.bone_setting import STANDARD_BONE_NAMES
+from mlib.pmx.bone_setting import BoneSetting, BoneSettings
 
 
 @unique
@@ -1088,6 +1088,10 @@ class Bone(BaseIndexNameModel):
     def is_standard(self) -> bool:
         """準標準であるか"""
         return self.name in STANDARD_BONE_NAMES
+
+
+STANDARD_BONE_NAMES: dict[str, BoneSetting] = dict([(bs.value.name, bs.value) for bs in BoneSettings])
+"""準標準ボーン名前とEnumのキーの辞書"""
 
 
 class MorphOffset(BaseModel):
