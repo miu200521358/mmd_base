@@ -1089,9 +1089,9 @@ class PmxModel(BaseHashModel):
         self.update_vertices_by_bone()
 
         if "上半身2" in bone_names and self.bones.exists(("上半身", "上半身2")):
-            self.separate_weights("上半身", "上半身2", VecAxis.Y, 0.3, self.vertices_by_bones.get(self.bones["上半身"].index, []))
+            self.separate_weights("上半身", "上半身2", VecAxis.Y, 0.4, self.vertices_by_bones.get(self.bones["上半身"].index, []))
         if "上半身3" in bone_names and self.bones.exists(("上半身2", "上半身3")):
-            self.separate_weights("上半身2", "上半身3", VecAxis.Y, 0.3, self.vertices_by_bones.get(self.bones["上半身2"].index, []))
+            self.separate_weights("上半身2", "上半身3", VecAxis.Y, 0.4, self.vertices_by_bones.get(self.bones["上半身2"].index, []))
         if "右足先EX" in bone_names and self.bones.exists(("右足首", "右足首D", "右足先EX")):
             self.separate_weights("右足首D", "右足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["右足首D"].index, []))
             self.separate_weights("右足首", "右足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["右足首"].index, []))
