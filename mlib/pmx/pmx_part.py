@@ -98,10 +98,17 @@ class Deform(BaseModel, ABC):
             countのボーン数に揃えるか, by default False
         """
         if align:
+            # ウェイトを統合する
+            index_weights: dict[int, float] = {}
+            for n in range(len(self.indexes)):
+                if self.indexes[n] not in index_weights:
+                    index_weights[self.indexes[n]] = 0.0
+                index_weights[self.indexes[n]] += self.weights[n]
+
             # 揃える必要がある場合
             # 数が足りるよう、かさ増しする
-            ilist = np.array(self.indexes.tolist() + [0, 0, 0, 0], dtype=np.int64)
-            wlist = np.array(self.weights.tolist() + [0, 0, 0, 0], dtype=np.float32)
+            ilist = np.array(list(index_weights.keys()) + [0, 0, 0, 0], dtype=np.int64)
+            wlist = np.array(list(index_weights.values()) + [0, 0, 0, 0], dtype=np.float32)
             # 正規化
             wlist /= wlist.sum(axis=0, keepdims=True)
 
