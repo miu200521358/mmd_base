@@ -191,6 +191,14 @@ class BoneSettings(Enum):
         axis=MVector3D(0, 1, 0),
     )
 
+    RIGHT_BUST = BoneSetting(
+        name="右胸",
+        parents=("上半身3", "上半身2", "上半身"),
+        relatives=("上半身3", "上半身2", "上半身"),
+        tails=[],
+        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
+        axis=MVector3D(0, 0, -1),
+    )
     RIGHT_SHOULDER_P = BoneSetting(
         name="右肩P",
         parents=("首根元", "上半身3", "上半身2", "上半身"),
@@ -565,6 +573,14 @@ class BoneSettings(Enum):
         axis=MVector3D(0, 1, 0),
     )
 
+    LEFT_BUST = BoneSetting(
+        name="左胸",
+        parents=("上半身3", "上半身2", "上半身"),
+        relatives=("上半身3", "上半身2", "上半身"),
+        tails=[],
+        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
+        axis=MVector3D(0, 0, -1),
+    )
     LEFT_SHOULDER_P = BoneSetting(
         name="左肩P",
         parents=("首根元", "上半身3", "上半身2", "上半身"),
