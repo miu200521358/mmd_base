@@ -770,17 +770,6 @@ class PmxModel(BaseHashModel):
                     if link.bone_index in replaced_map:
                         link.bone_index = replaced_map[link.bone_index]
 
-        # 不要なのを削除
-        for m in self.morphs:
-            if m.morph_type == MorphType.BONE:
-                j = -1
-                for j, offset in enumerate(m.offsets):
-                    bone_offset_j: BoneMorphOffset = offset
-                    if bone_offset_j.bone_index == bone.index:
-                        break
-                if 0 <= j:
-                    del m.offsets[j]
-
         for m in self.morphs:
             if m.morph_type == MorphType.BONE:
                 for offset in m.offsets:
@@ -788,24 +777,10 @@ class PmxModel(BaseHashModel):
                     if bone_offset.bone_index in replaced_map:
                         bone_offset.bone_index = replaced_map[bone_offset.bone_index]
 
-        # 不要なのを削除
-        for d in self.display_slots:
-            j = -1
-            for j, r in enumerate(d.references):
-                if r.display_type == DisplayType.BONE and r.display_index == bone.index:
-                    break
-            if 0 <= j:
-                del d.references[j]
-
         for d in self.display_slots:
             for r in d.references:
                 if r.display_type == DisplayType.BONE and r.display_index in replaced_map:
                     r.display_index = replaced_map[r.display_index]
-
-        # 剛体自体は削除しないで結合だけ削除する
-        for r in self.rigidbodies:
-            if r.bone_index == bone.index:
-                r.bone_index = -1
 
         for r in self.rigidbodies:
             if r.bone_index in replaced_map:
@@ -817,8 +792,8 @@ class PmxModel(BaseHashModel):
         replaced_map = self.bones.insert(bone)
 
         if not replaced_map:
-            if bone.can_manipulate:
-                # 操作可能な場合、親と同じ表示枠に追加
+            if bone.is_visible:
+                # 表示対象な場合、親と同じ表示枠に追加
                 is_add_display = False
                 for d in self.display_slots:
                     if d.special_flg == Switch.ON:
@@ -931,8 +906,8 @@ class PmxModel(BaseHashModel):
                 else:
                     r.bone_index = replaced_map[r.bone_index]
 
-        if bone.can_manipulate:
-            # 操作可能な場合、最後に親と同じ表示枠に追加
+        if bone.is_visible:
+            # 表示対象な場合、最後に親と同じ表示枠に追加
             is_add_display = False
             for d in self.display_slots:
                 if d.special_flg == Switch.ON:
