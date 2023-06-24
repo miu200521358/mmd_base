@@ -1053,9 +1053,9 @@ class Bone(BaseIndexNameModel):
     def is_not_local_cancel(self) -> bool:
         """
         ローカル軸行列計算で親のキャンセルをさせないボーン
-        準標準だけど捩りと足先EXは親を伝播させる
+        準標準だけど捩り・指・足先EXは親を伝播させる
         """
-        return self.is_twist or "足先EX" in self.name
+        return self.is_twist or self.is_finger or "足先EX" in self.name
 
     @property
     def is_standard(self) -> bool:
