@@ -892,11 +892,25 @@ class PmxModel(BaseHashModel):
                     if bone_offset.bone_index in replaced_map:
                         bone_offset.bone_index = replaced_map[bone_offset.bone_index]
 
-        # 先に親と同じ表示枠に追加
-        for d in self.display_slots:
-            for r in d.references:
-                if r.display_type == DisplayType.BONE and bone.parent_index == replaced_map[r.display_index]:
-                    d.references.append(DisplaySlotReference(DisplayType.BONE, bone.index))
+        if bone.can_manipulate:
+            # 操作可能な場合、先に親と同じ表示枠に追加
+            is_add_display = False
+            for d in self.display_slots:
+                if d.special_flg == Switch.ON:
+                    continue
+                for r in d.references:
+                    if r.display_type == DisplayType.BONE and bone.parent_index == replaced_map[r.display_index]:
+                        d.references.append(DisplaySlotReference(DisplayType.BONE, bone.index))
+                        is_add_display = True
+                        break
+                if is_add_display:
+                    break
+
+            if not is_add_display:
+                # 表示枠に追加できなかった場合、ボーン名の表示枠を作ってそこに追加する
+                display_slot = DisplaySlot(name=bone.name, english_name=bone.english_name)
+                display_slot.references.append(DisplaySlotReference(DisplayType.BONE, display_index=bone.index))
+                self.display_slots.append(display_slot)
 
         for d in self.display_slots:
             for r in d.references:
