@@ -870,16 +870,10 @@ class PmxModel(BaseHashModel):
 
         for d in self.display_slots:
             for r in d.references:
-                if r.display_type == DisplayType.BONE:
-                    if r.display_index in replaced_map:
-                        r.display_index = replaced_map[r.display_index]
-
-        # 親と同じ表示枠に追加
-        for d in self.display_slots:
-            for r in d.references:
-                if r.display_type == DisplayType.BONE:
-                    if r.display_index == bone.parent_index:
-                        d.references.append(DisplaySlotReference(DisplayType.BONE, bone.index))
+                if r.display_type == DisplayType.BONE and r.display_index in replaced_map:
+                    r.display_index = replaced_map[r.display_index]
+                if r.display_type == DisplayType.BONE and bone.parent_index == replaced_map[r.display_index]:
+                    d.references.append(DisplaySlotReference(DisplayType.BONE, bone.index))
 
         for r in self.rigidbodies:
             if r.bone_index in replaced_map:
