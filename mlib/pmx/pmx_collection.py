@@ -1252,9 +1252,7 @@ class PmxModel(BaseHashModel):
 
         # ローカル位置
         local_from_pos = mat.inverse() * from_bone.position
-        local_to_pos = mat.inverse() * to_pos
-
-        separate_from_local_position = (local_from_pos - local_to_pos) * from_ratio
+        separate_from_local_position = local_from_pos * from_ratio
 
         for vertex_index in vertex_indexes:
             v = self.vertices[vertex_index]
@@ -1268,7 +1266,7 @@ class PmxModel(BaseHashModel):
 
             if is_thumb:
                 # 親指の場合、親指の周囲だけウェイトを塗る
-                if to_tail_pos.z > local_vpos.z:
+                if to_tail_pos.z > local_vpos.z or v.position.z > from_bone.position.z:
                     # FROMの一定距離より内側のボーン方向にある場合、スルー
                     continue
                 else:
@@ -1280,10 +1278,10 @@ class PmxModel(BaseHashModel):
                         # 親指０より手首よりの場合、ウェイト計算
                         ratio = 1 - abs(local_vpos.z / to_tail_pos.z)
             else:
-                if separate_from_local_position.x > local_vpos.x:
-                    # FROMの一定距離より元側のボーン方向にある場合、スルー
-                    continue
-                elif 0 > local_vpos.x:
+                if 0 > local_vpos.x:
+                    if separate_from_local_position.x > local_vpos.x:
+                        # FROMの一定距離より元側のボーン方向にある場合、スルー
+                        continue
                     # FROM側はFROMの比率
                     ratio = 1 - abs(local_vpos.x / separate_from_local_position.x)
                 else:
