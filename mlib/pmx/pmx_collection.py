@@ -1217,7 +1217,7 @@ class PmxModel(BaseHashModel):
             (from_name, twist1_name, twist1_name),
             (twist1_name, twist2_name, twist2_name),
             (twist2_name, twist3_name, twist3_name),
-            (twist3_name, twist_name, twist_name),
+            (twist3_name, to_name, twist_name),
         ):
             mat = MMatrix4x4()
             mat.translate(self.bones[original_name].position)
