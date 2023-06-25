@@ -1090,7 +1090,7 @@ class PmxModel(BaseHashModel):
             # 捩りの場合、分散用ボーンも追加する
             from_name = f"{direction}腕" if "腕捩" in bone.name else f"{direction}ひじ"
             to_name = f"{direction}ひじ" if "腕捩" in bone.name else f"{direction}手首"
-            for no, ratio in ((1, 0.3), (2, 0.5), (3, 0.7)):
+            for no, ratio in ((1, 0.25), (2, 0.5), (3, 0.75)):
                 twist_bone_name = f"{bone.name}{no}"
                 if twist_bone_name in self.bones:
                     continue
@@ -1148,25 +1148,29 @@ class PmxModel(BaseHashModel):
         if "左親指０" in bone_names and self.bones.exists(("左手首", "左親指０", "左親指１")):
             self.separate_weights("左手首", "左親指０", 0.1, ("左手首",), is_thumb=True)
         if "右腕捩" in bone_names and self.bones.exists(("右腕", "右腕捩", "右腕捩1", "右腕捩2", "右腕捩3", "右ひじ")):
-            self.separate_weights("右腕", "右腕捩1", 0.3, ("右腕",))
-            self.separate_weights("右腕捩1", "右腕捩2", 0.3, ("右腕", "右腕捩1"))
-            self.separate_weights("右腕捩2", "右腕捩3", 0.3, ("右腕", "右腕捩1", "右腕捩2"))
+            self.separate_weights("右腕", "右腕捩1", 0.1, ("右腕",))
+            self.separate_weights("右腕捩1", "右腕捩2", 0.2, ("右腕", "右腕捩1"))
+            self.separate_weights("右腕捩2", "右腕捩3", 0.2, ("右腕", "右腕捩1", "右腕捩2"))
             self.separate_weights("右腕捩3", "右ひじ", 0.2, ("右腕", "右腕捩1", "右腕捩2", "右腕捩3"))
+            self.separate_weights("右腕捩", "右ひじ", 0.2, ("右腕捩3",))
         if "左腕捩" in bone_names and self.bones.exists(("左腕", "左腕捩", "左腕捩1", "左腕捩2", "左腕捩3", "左ひじ")):
-            self.separate_weights("左腕", "左腕捩1", 0.3, ("左腕",))
-            self.separate_weights("左腕捩1", "左腕捩2", 0.3, ("左腕", "左腕捩1"))
-            self.separate_weights("左腕捩2", "左腕捩3", 0.3, ("左腕", "左腕捩1", "左腕捩2"))
+            self.separate_weights("左腕", "左腕捩1", 0.1, ("左腕",))
+            self.separate_weights("左腕捩1", "左腕捩2", 0.2, ("左腕", "左腕捩1"))
+            self.separate_weights("左腕捩2", "左腕捩3", 0.2, ("左腕", "左腕捩1", "左腕捩2"))
             self.separate_weights("左腕捩3", "左ひじ", 0.2, ("左腕", "左腕捩1", "左腕捩2", "左腕捩3"))
+            self.separate_weights("左腕捩", "左ひじ", 0.2, ("左腕捩3",))
         if "右手捩" in bone_names and self.bones.exists(("右ひじ", "右手捩", "右手捩1", "右手捩2", "右手捩3", "右手首")):
             self.separate_weights("右ひじ", "右手捩1", 0.0, ("右ひじ",))
-            self.separate_weights("右手捩1", "右手捩2", 0.3, ("右ひじ", "右手捩1"))
-            self.separate_weights("右手捩2", "右手捩3", 0.3, ("右ひじ", "右手捩1", "右手捩2"))
+            self.separate_weights("右手捩1", "右手捩2", 0.2, ("右ひじ", "右手捩1"))
+            self.separate_weights("右手捩2", "右手捩3", 0.2, ("右ひじ", "右手捩1", "右手捩2"))
             self.separate_weights("右手捩3", "右手首", 0.2, ("右ひじ", "右手捩1", "右手捩2", "右手捩3"))
+            self.separate_weights("右手捩", "右手首", 0.2, ("右手捩3",))
         if "左手捩" in bone_names and self.bones.exists(("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3", "左手首")):
             self.separate_weights("左ひじ", "左手捩1", 0.0, ("左ひじ",))
-            self.separate_weights("左手捩1", "左手捩2", 0.3, ("左ひじ", "左手捩1"))
-            self.separate_weights("左手捩2", "左手捩3", 0.3, ("左ひじ", "左手捩1", "左手捩2"))
+            self.separate_weights("左手捩1", "左手捩2", 0.2, ("左ひじ", "左手捩1"))
+            self.separate_weights("左手捩2", "左手捩3", 0.2, ("左ひじ", "左手捩1", "左手捩2"))
             self.separate_weights("左手捩3", "左手首", 0.2, ("左ひじ", "左手捩1", "左手捩2", "左手捩3"))
+            self.separate_weights("左手捩", "左手首", 0.2, ("左手捩3",))
 
         if True in [self.bones[bone_name].is_leg_d for bone_name in bone_names]:
             # 足Dはそのまま置き換える
