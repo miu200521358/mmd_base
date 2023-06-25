@@ -1190,7 +1190,7 @@ class PmxModel(BaseHashModel):
         from_ratio: float,
         to_ratio: float,
         weight_bone_names: Iterable[str] = [],
-        to_tail_pos: Optional[MVector3D] = None,
+        to_tail_pos: MVector3D = MVector3D(),
         is_thumb: bool = False,
     ):
         """ウェイト置換"""
