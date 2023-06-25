@@ -914,7 +914,7 @@ class PmxModel(BaseHashModel):
                     if d.special_flg == Switch.ON:
                         continue
                     for r in d.references:
-                        if r.display_type == DisplayType.BONE and self.bones[tree_name].index == r.display_index:
+                        if r.display_type == DisplayType.BONE and tree_name == self.bones[r.display_index].name:
                             d.references.append(DisplaySlotReference(DisplayType.BONE, display_index=bone.index))
                             is_add_display_reference = True
                             break
