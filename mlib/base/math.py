@@ -565,6 +565,9 @@ class MVectorDict:
     def __iter__(self):
         return self.vectors.items()
 
+    def __len__(self):
+        return len(self.vectors.keys())
+
     def keys(self) -> list:
         return list(self.vectors.keys())
 
