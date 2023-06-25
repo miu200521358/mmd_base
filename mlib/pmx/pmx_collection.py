@@ -5,7 +5,6 @@ from typing import Iterable, Optional
 import numpy as np
 import OpenGL.GL as gl
 
-from mlib.base.base import VecAxis
 from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictModel
 from mlib.base.exception import MViewerException
 from mlib.base.logger import MLogger
