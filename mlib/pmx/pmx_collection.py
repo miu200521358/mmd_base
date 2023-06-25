@@ -1160,17 +1160,17 @@ class PmxModel(BaseHashModel):
             self.separate_weights("左腕捩3", "左ひじ", 0.2, ("左腕", "左腕捩1", "左腕捩2", "左腕捩3"))
             self.separate_weights("左ひじ", "左腕捩", 0.1, ("左腕", "左腕捩1", "左腕捩2", "左腕捩3", "左ひじ"))
         if "右手捩" in bone_names and self.bones.exists(("右ひじ", "右手捩", "右手捩1", "右手捩2", "右手捩3", "右手首")):
-            self.separate_weights("右ひじ", "右手捩1", 0.2, ("右ひじ",))
-            self.separate_weights("右手捩1", "右手捩2", 0.2, ("右ひじ", "右手捩1"))
-            self.separate_weights("右手捩2", "右手捩3", 0.2, ("右ひじ", "右手捩1", "右手捩2"))
-            self.separate_weights("右手捩3", "右手首", 0.2, ("右ひじ", "右手捩1", "右手捩2", "右手捩3"))
-            self.separate_weights("右手首", "右手捩", 0.1, ("右ひじ", "右手捩1", "右手捩2", "右手捩3", "右手首"))
+            self.separate_weights("右ひじ", "右手捩1", 0.2, ("右腕捩", "右ひじ"))
+            self.separate_weights("右手捩1", "右手捩2", 0.2, ("右腕捩", "右ひじ", "右手捩1"))
+            self.separate_weights("右手捩2", "右手捩3", 0.2, ("右腕捩", "右ひじ", "右手捩1", "右手捩2"))
+            self.separate_weights("右手捩3", "右手首", 0.2, ("右腕捩", "右ひじ", "右手捩1", "右手捩2", "右手捩3"))
+            self.separate_weights("右手首", "右手捩", 0.1, ("右腕捩", "右ひじ", "右手捩1", "右手捩2", "右手捩3", "右手首"))
         if "左手捩" in bone_names and self.bones.exists(("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3", "左手首")):
-            self.separate_weights("左ひじ", "左手捩1", 0.2, ("左ひじ",))
-            self.separate_weights("左手捩1", "左手捩2", 0.2, ("左ひじ", "左手捩1"))
-            self.separate_weights("左手捩2", "左手捩3", 0.2, ("左ひじ", "左手捩1", "左手捩2"))
-            self.separate_weights("左手捩3", "左手首", 0.2, ("左ひじ", "左手捩1", "左手捩2", "左手捩3"))
-            self.separate_weights("左手首", "左手捩", 0.1, ("左ひじ", "左手捩1", "左手捩2", "左手捩3", "左手首"))
+            self.separate_weights("左ひじ", "左手捩1", 0.2, ("左腕捩", "左ひじ"))
+            self.separate_weights("左手捩1", "左手捩2", 0.2, ("左腕捩", "左ひじ", "左手捩1"))
+            self.separate_weights("左手捩2", "左手捩3", 0.2, ("左腕捩", "左ひじ", "左手捩1", "左手捩2"))
+            self.separate_weights("左手捩3", "左手首", 0.2, ("左腕捩", "左ひじ", "左手捩1", "左手捩2", "左手捩3"))
+            self.separate_weights("左手首", "左手捩", 0.1, ("左腕捩", "左ひじ", "左手捩1", "左手捩2", "左手捩3", "左手首"))
 
         if True in [self.bones[bone_name].is_leg_d for bone_name in bone_names]:
             # 足Dはそのまま置き換える
