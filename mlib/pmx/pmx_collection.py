@@ -1009,7 +1009,6 @@ class PmxModel(BaseHashModel):
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.tail_position = MVector3D()
             bone.bone_flg &= ~BoneFlg.TAIL_IS_BONE
-            bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
         elif "手捩" in bone.name and f"{direction}ひじ" in self.bones and f"{direction}手首" in self.bones:
             bone.position = MVector3D(
                 *np.average(
@@ -1023,7 +1022,6 @@ class PmxModel(BaseHashModel):
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.tail_position = MVector3D()
             bone.bone_flg &= ~BoneFlg.TAIL_IS_BONE
-            bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
         elif (
             "足先EX" in bone.name
             and f"{direction}足首" in self.bones
