@@ -220,7 +220,7 @@ class BoneSettings(Enum):
         parents=("右肩",),
         relatives=MVector3D(0, 1, 0),
         tails=("右ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
+        flag=BoneFlg.CAN_ROTATE | BoneFlg.IS_EXTERNAL_ROTATION,
         axis=MVector3D(-1, 0, 0),
     )
     RIGHT_ARM = BoneSetting(
@@ -602,7 +602,7 @@ class BoneSettings(Enum):
         parents=("左肩",),
         relatives=MVector3D(0, 1, 0),
         tails=("左ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
+        flag=BoneFlg.CAN_ROTATE | BoneFlg.IS_EXTERNAL_ROTATION,
         axis=MVector3D(-1, 0, 0),
     )
     LEFT_ARM = BoneSetting(
