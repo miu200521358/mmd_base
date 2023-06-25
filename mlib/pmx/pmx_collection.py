@@ -907,6 +907,9 @@ class PmxModel(BaseHashModel):
                     r.bone_index = replaced_map[r.bone_index]
 
         if bone.is_visible:
+            # ボーンツリーだけ再生成
+            self.bone_trees = self.bones.create_bone_trees()
+
             # 親ボーンで表示枠に入ってるとこに入れる
             is_add_display_reference = False
             for tree_name in reversed(self.bone_trees[bone.name].names):
@@ -914,7 +917,7 @@ class PmxModel(BaseHashModel):
                     if d.special_flg == Switch.ON:
                         continue
                     for r in d.references:
-                        if r.display_type == DisplayType.BONE and tree_name == self.bones[r.display_index].name:
+                        if r.display_type == DisplayType.BONE and self.bones[tree_name].index == r.display_index:
                             d.references.append(DisplaySlotReference(DisplayType.BONE, display_index=bone.index))
                             is_add_display_reference = True
                             break
