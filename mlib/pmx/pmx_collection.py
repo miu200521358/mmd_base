@@ -1134,39 +1134,39 @@ class PmxModel(BaseHashModel):
         self.update_vertices_by_bone()
 
         if "上半身2" in bone_names and self.bones.exists(("上半身", "上半身2")):
-            self.separate_weights("上半身", "上半身2", 0.3, 0.4, ("上半身", "首"))
+            self.separate_weights("上半身", "上半身2", 0.2, ("上半身", "首"))
         if "上半身3" in bone_names and self.bones.exists(("上半身2", "上半身3")):
-            self.separate_weights("上半身2", "上半身3", 0.3, 0.4, ("上半身", "上半身2", "首"))
+            self.separate_weights("上半身2", "上半身3", 0.2, ("上半身", "上半身2", "首"))
         if "右足先EX" in bone_names and self.bones.exists(("右足首", "右足首D", "右足先EX")):
-            self.separate_weights("右足首D", "右足先EX", 0.2, 1.0)
-            self.separate_weights("右足首", "右足先EX", 0.2, 1.0)
+            self.separate_weights("右足首D", "右足先EX", 0.1)
+            self.separate_weights("右足首", "右足先EX", 0.1)
         if "左足先EX" in bone_names and self.bones.exists(("左足首", "左足首D", "左足先EX")):
-            self.separate_weights("左足首D", "左足先EX", 0.2, 1.0)
-            self.separate_weights("左足首", "左足先EX", 0.2, 1.0)
+            self.separate_weights("左足首D", "左足先EX", 0.1)
+            self.separate_weights("左足首", "左足先EX", 0.1)
         if "右親指０" in bone_names and self.bones.exists(("右手首", "右親指０", "右親指１")):
-            self.separate_weights("右手首", "右親指０", 0.5, 0.5, ("右手首",), is_axis=False)
+            self.separate_weights("右手首", "右親指０", 0.1, ("右手首",), is_thumb=True)
         if "左親指０" in bone_names and self.bones.exists(("左手首", "左親指０", "左親指１")):
-            self.separate_weights("左手首", "左親指０", 0.5, 0.5, ("左手首",), is_axis=False)
+            self.separate_weights("左手首", "左親指０", 0.1, ("左手首",), is_thumb=True)
         if "右腕捩" in bone_names and self.bones.exists(("右腕", "右腕捩", "右腕捩1", "右腕捩2", "右腕捩3", "右ひじ")):
-            self.separate_weights("右腕", "右腕捩1", 0.1, 0.2, ("右腕", "右ひじ"))
-            self.separate_weights("右腕捩1", "右腕捩2", 0.1, 0.2, ("右腕", "右腕捩1", "右ひじ"))
-            self.separate_weights("右腕捩2", "右腕捩3", 0.1, 0.2, ("右腕", "右腕捩1", "右腕捩2", "右ひじ"))
-            self.separate_weights("右腕捩3", "右ひじ", 0.1, 1.0, ("右腕", "右腕捩1", "右腕捩2", "右腕捩3", "右ひじ"))
+            self.separate_weights("右腕", "右腕捩1", 0.1, ("右腕", "右ひじ"))
+            self.separate_weights("右腕捩1", "右腕捩2", 0.1, ("右腕", "右腕捩1", "右ひじ"))
+            self.separate_weights("右腕捩2", "右腕捩3", 0.1, ("右腕", "右腕捩1", "右腕捩2", "右ひじ"))
+            self.separate_weights("右腕捩3", "右ひじ", 0.1, ("右腕", "右腕捩1", "右腕捩2", "右腕捩3", "右ひじ"))
         if "左腕捩" in bone_names and self.bones.exists(("左腕", "左腕捩", "左腕捩1", "左腕捩2", "左腕捩3", "左ひじ")):
-            self.separate_weights("左腕", "左腕捩1", 0.1, 0.2, ("左腕", "左ひじ"))
-            self.separate_weights("左腕捩1", "左腕捩2", 0.1, 0.2, ("左腕", "左腕捩1", "左ひじ"))
-            self.separate_weights("左腕捩2", "左腕捩3", 0.1, 0.2, ("左腕", "左腕捩1", "左腕捩2", "左ひじ"))
-            self.separate_weights("左腕捩3", "左ひじ", 0.1, 1.0, ("左腕", "左腕捩1", "左腕捩2", "左腕捩3", "左ひじ"))
+            self.separate_weights("左腕", "左腕捩1", 0.1, ("左腕", "左ひじ"))
+            self.separate_weights("左腕捩1", "左腕捩2", 0.1, ("左腕", "左腕捩1", "左ひじ"))
+            self.separate_weights("左腕捩2", "左腕捩3", 0.1, ("左腕", "左腕捩1", "左腕捩2", "左ひじ"))
+            self.separate_weights("左腕捩3", "左ひじ", 0.1, ("左腕", "左腕捩1", "左腕捩2", "左腕捩3", "左ひじ"))
         if "右手捩" in bone_names and self.bones.exists(("右ひじ", "右手捩", "右手捩1", "右手捩2", "右手捩3", "右手首")):
-            self.separate_weights("右ひじ", "右手捩1", 0.1, 0.2, ("右腕捩3", "右ひじ", "右手首"))
-            self.separate_weights("右手捩1", "右手捩2", 0.1, 0.2, ("右腕捩3", "右ひじ", "右手捩1", "右手首"))
-            self.separate_weights("右手捩2", "右手捩3", 0.1, 0.2, ("右腕捩3", "右ひじ", "右手捩1", "右手捩2", "右手首"))
-            self.separate_weights("右手捩3", "右手首", 0.1, 0.15, ("右腕捩3", "右ひじ", "右手捩1", "右手捩2", "右手捩3", "右手首"))
+            self.separate_weights("右ひじ", "右手捩1", 0.1, ("右腕捩3", "右ひじ", "右手首"))
+            self.separate_weights("右手捩1", "右手捩2", 0.1, ("右腕捩3", "右ひじ", "右手捩1", "右手首"))
+            self.separate_weights("右手捩2", "右手捩3", 0.1, ("右腕捩3", "右ひじ", "右手捩1", "右手捩2", "右手首"))
+            self.separate_weights("右手捩3", "右手首", 0.1, ("右腕捩3", "右ひじ", "右手捩1", "右手捩2", "右手捩3", "右手首"))
         if "左手捩" in bone_names and self.bones.exists(("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3", "左手首")):
-            self.separate_weights("左ひじ", "左手捩1", 0.1, 0.2, ("左腕捩3", "左ひじ", "左手首"))
-            self.separate_weights("左手捩1", "左手捩2", 0.1, 0.2, ("左腕捩3", "左ひじ", "左手捩1", "左手首"))
-            self.separate_weights("左手捩2", "左手捩3", 0.1, 0.2, ("左腕捩3", "左ひじ", "左手捩1", "左手捩2", "左手首"))
-            self.separate_weights("左手捩3", "左手首", 0.1, 0.15, ("左腕捩3", "左ひじ", "左手捩1", "左手捩2", "左手捩3", "左手首"))
+            self.separate_weights("左ひじ", "左手捩1", 0.1, ("左腕捩3", "左ひじ", "左手首"))
+            self.separate_weights("左手捩1", "左手捩2", 0.1, ("左腕捩3", "左ひじ", "左手捩1", "左手首"))
+            self.separate_weights("左手捩2", "左手捩3", 0.1, ("左腕捩3", "左ひじ", "左手捩1", "左手捩2", "左手首"))
+            self.separate_weights("左手捩3", "左手首", 0.1, ("左腕捩3", "左ひじ", "左手捩1", "左手捩2", "左手捩3", "左手首"))
 
         if True in [self.bones[bone_name].is_leg_d for bone_name in bone_names]:
             # 足Dはそのまま置き換える
@@ -1189,9 +1189,8 @@ class PmxModel(BaseHashModel):
         from_name: str,
         separate_name: str,
         from_ratio: float,
-        to_ratio: float,
         weight_bone_names: Iterable[str] = [],
-        is_axis: bool = True,
+        is_thumb: bool = False,
     ):
         """ウェイト置換"""
         from_bone = self.bones[from_name]
@@ -1255,12 +1254,7 @@ class PmxModel(BaseHashModel):
         local_from_pos = mat.inverse() * from_bone.position
         local_to_pos = mat.inverse() * to_pos
 
-        separate_from_local_position = local_from_pos * from_ratio
-        separate_to_local_position = local_to_pos * to_ratio
-
-        # ボーンの上下の長さ
-        separate_from_distance = abs(separate_from_local_position.x) if is_axis else separate_from_local_position.length()
-        separate_to_distance = abs(separate_to_local_position.x) if is_axis else separate_to_local_position.length()
+        separate_from_local_position = (local_from_pos - local_to_pos) * from_ratio
 
         for vertex_index in vertex_indexes:
             v = self.vertices[vertex_index]
@@ -1268,25 +1262,34 @@ class PmxModel(BaseHashModel):
 
             # 頂点のローカル位置
             local_vpos = mat.inverse() * v.position
-            v_distance = abs(local_vpos.x) if is_axis else local_vpos.length()
 
             # 同じボーンINDEXで複数の欄にウェイトを持っている可能性があるので、matchで確認
             bone_matches = np.array([i in match_bone_indexes for i in v.deform.indexes])
 
-            if np.sign(local_vpos.x) == np.sign(local_from_pos.x):
-                # 分割したボーンから見て元側のボーン方向にある頂点の場合
-                if v_distance > separate_from_distance:
-                    # 置き換えは行わない
+            if is_thumb:
+                # 親指の場合、親指の周囲だけウェイトを塗る
+                if to_tail_pos.z > local_vpos.z:
+                    # FROMの一定距離より内側のボーン方向にある場合、スルー
                     continue
-                ratio = 1 - v_distance / separate_from_distance
-            else:
-                # 分割したボーンから見て、先側のボーン方向にある頂点の場合
-                if v_distance > separate_to_distance:
-                    if is_axis:
-                        # 距離を超えて先に近い場合、分割ボーンに置き換える
+                else:
+                    if 0 < local_vpos.z:
+                        # ウェイト割り当てボーンより外側にある場合、TO側で置換してスルー
                         v.deform.indexes = np.where(bone_matches, separate_bone.index, v.deform.indexes)
+                        continue
+                    else:
+                        # 親指０より手首よりの場合、ウェイト計算
+                        ratio = 1 - abs(local_vpos.z / to_tail_pos.z)
+            else:
+                if separate_from_local_position.x > local_vpos.x:
+                    # FROMの一定距離より元側のボーン方向にある場合、スルー
                     continue
-                ratio = 1 - v_distance / separate_to_distance
+                elif 0 > local_vpos.x:
+                    # FROM側はFROMの比率
+                    ratio = 1 - abs(local_vpos.x / separate_from_local_position.x)
+                else:
+                    # TOの一定距離より先側のボーン方向にある場合、TO側で置換してスルー
+                    v.deform.indexes = np.where(bone_matches, separate_bone.index, v.deform.indexes)
+                    continue
 
             original_weight = np.sum(v.deform.weights[bone_matches])
             separate_weight = original_weight * ratio / (np.count_nonzero(bone_matches) or 1)
