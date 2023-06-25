@@ -624,6 +624,53 @@ class MVectorDict:
         """
         return np.array(self.keys())[np.argmin(self.distances(v))]
 
+    def farthest_distance(self, v: MVectorT) -> float:
+        """
+        指定ベクトル最遠値
+
+        Parameters
+        ----------
+        v : MVector
+            比較対象ベクトル
+
+        Returns
+        -------
+        float
+            最遠距離
+        """
+        return float(np.max(self.distances(v)))
+
+    def farthest_value(self, v: MVectorT):
+        """
+        指定ベクトル最遠値
+
+        Parameters
+        ----------
+        v : MVector
+            比較対象ベクトル
+
+        Returns
+        -------
+        MVector
+            最遠値
+        """
+        return v.__class__(*np.array(self.values())[np.argmax(self.distances(v))])
+
+    def farthest_key(self, v: MVectorT) -> np.ndarray:
+        """
+        指定ベクトル最遠キー
+
+        Parameters
+        ----------
+        v : MVector
+            比較対象ベクトル
+
+        Returns
+        -------
+        最遠キー
+        """
+        return np.array(self.keys())[np.argmax(self.distances(v))]
+
 
 @lru_cache(maxsize=None)
 def cache_slerp_evaluate(q1: quaternion, q2: quaternion, t: float) -> quaternion:
