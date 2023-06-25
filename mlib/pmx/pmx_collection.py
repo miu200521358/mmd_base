@@ -8,13 +8,13 @@ import OpenGL.GL as gl
 from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictModel
 from mlib.base.exception import MViewerException
 from mlib.base.logger import MLogger
-from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
+from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D, MVectorDict
 from mlib.base.part import Switch
 from mlib.pmx.bone_setting import STANDARD_BONE_NAMES, BoneFlg
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
+    Bdef1,
     Bdef2,
-    Bdef4,
     Bone,
     BoneMorphOffset,
     DisplaySlot,
@@ -27,7 +27,6 @@ from mlib.pmx.pmx_part import (
     Morph,
     MorphType,
     RigidBody,
-    Sdef,
     ShaderMaterial,
     Texture,
     TextureType,
@@ -1035,7 +1034,7 @@ class PmxModel(BaseHashModel):
             bone.position = MVector3D(
                 *np.average(
                     [bone_matrixes[0, f"{direction}足首"].position.vector, bone_matrixes[0, toe_target_bone.name].position.vector],
-                    weights=[0.3, 0.7],
+                    weights=[0.25, 0.75],
                     axis=0,
                 )
             )
@@ -1135,39 +1134,39 @@ class PmxModel(BaseHashModel):
         self.update_vertices_by_bone()
 
         if "上半身2" in bone_names and self.bones.exists(("上半身", "上半身2")):
-            self.separate_weights("上半身", "上半身2", 0.4, 0.5)
+            self.separate_weights("上半身", "上半身2", 0.3, 0.4, ("上半身", "首"))
         if "上半身3" in bone_names and self.bones.exists(("上半身2", "上半身3")):
-            self.separate_weights("上半身2", "上半身3", 0.4, 0.5)
+            self.separate_weights("上半身2", "上半身3", 0.3, 0.4, ("上半身", "上半身2", "首"))
         if "右足先EX" in bone_names and self.bones.exists(("右足首", "右足首D", "右足先EX")):
-            self.separate_weights("右足首D", "右足先EX", 0.2, 0.2)
-            self.separate_weights("右足首", "右足先EX", 0.2, 0.2)
+            self.separate_weights("右足首D", "右足先EX", 0.2, 1.0)
+            self.separate_weights("右足首", "右足先EX", 0.2, 1.0)
         if "左足先EX" in bone_names and self.bones.exists(("左足首", "左足首D", "左足先EX")):
-            self.separate_weights("左足首D", "左足先EX", 0.2, 0.2)
-            self.separate_weights("左足首", "左足先EX", 0.2, 0.2)
+            self.separate_weights("左足首D", "左足先EX", 0.2, 1.0)
+            self.separate_weights("左足首", "左足先EX", 0.2, 1.0)
         if "右親指０" in bone_names and self.bones.exists(("右手首", "右親指０", "右親指１")):
-            self.separate_weights("右手首", "右親指０", 0.4, 0.3)
+            self.separate_weights("右手首", "右親指０", 0.5, 0.5, ("右手首",), is_axis=False)
         if "左親指０" in bone_names and self.bones.exists(("左手首", "左親指０", "左親指１")):
-            self.separate_weights("左手首", "左親指０", 0.4, 0.3)
+            self.separate_weights("左手首", "左親指０", 0.5, 0.5, ("左手首",), is_axis=False)
         if "右腕捩" in bone_names and self.bones.exists(("右腕", "右腕捩", "右腕捩1", "右腕捩2", "右腕捩3", "右ひじ")):
-            self.separate_weights("右腕", "右腕捩1", 0.3, 0.3)
-            self.separate_weights("右腕捩1", "右腕捩2", 0.3, 0.3)
-            self.separate_weights("右腕捩2", "右腕捩3", 0.3, 0.3)
-            self.separate_weights("右腕捩3", "右ひじ", 0.3, 0.3)
+            self.separate_weights("右腕", "右腕捩1", 0.1, 0.2, ("右腕", "右ひじ"))
+            self.separate_weights("右腕捩1", "右腕捩2", 0.1, 0.2, ("右腕", "右腕捩1", "右ひじ"))
+            self.separate_weights("右腕捩2", "右腕捩3", 0.1, 0.2, ("右腕", "右腕捩1", "右腕捩2", "右ひじ"))
+            self.separate_weights("右腕捩3", "右ひじ", 0.1, 1.0, ("右腕", "右腕捩1", "右腕捩2", "右腕捩3", "右ひじ"))
         if "左腕捩" in bone_names and self.bones.exists(("左腕", "左腕捩", "左腕捩1", "左腕捩2", "左腕捩3", "左ひじ")):
-            self.separate_weights("左腕", "左腕捩1", 0.3, 0.3)
-            self.separate_weights("左腕捩1", "左腕捩2", 0.3, 0.3)
-            self.separate_weights("左腕捩2", "左腕捩3", 0.3, 0.3)
-            self.separate_weights("左腕捩3", "左ひじ", 0.3, 0.3)
+            self.separate_weights("左腕", "左腕捩1", 0.1, 0.2, ("左腕", "左ひじ"))
+            self.separate_weights("左腕捩1", "左腕捩2", 0.1, 0.2, ("左腕", "左腕捩1", "左ひじ"))
+            self.separate_weights("左腕捩2", "左腕捩3", 0.1, 0.2, ("左腕", "左腕捩1", "左腕捩2", "左ひじ"))
+            self.separate_weights("左腕捩3", "左ひじ", 0.1, 1.0, ("左腕", "左腕捩1", "左腕捩2", "左腕捩3", "左ひじ"))
         if "右手捩" in bone_names and self.bones.exists(("右ひじ", "右手捩", "右手捩1", "右手捩2", "右手捩3", "右手首")):
-            self.separate_weights("右ひじ", "右手捩1", 0.3, 0.3)
-            self.separate_weights("右手捩1", "右手捩2", 0.3, 0.3)
-            self.separate_weights("右手捩2", "右手捩3", 0.3, 0.3)
-            self.separate_weights("右手捩3", "右手首", 0.3, 0.3)
+            self.separate_weights("右ひじ", "右手捩1", 0.1, 0.2, ("右腕捩3", "右ひじ", "右手首"))
+            self.separate_weights("右手捩1", "右手捩2", 0.1, 0.2, ("右腕捩3", "右ひじ", "右手捩1", "右手首"))
+            self.separate_weights("右手捩2", "右手捩3", 0.1, 0.2, ("右腕捩3", "右ひじ", "右手捩1", "右手捩2", "右手首"))
+            self.separate_weights("右手捩3", "右手首", 0.1, 0.15, ("右腕捩3", "右ひじ", "右手捩1", "右手捩2", "右手捩3", "右手首"))
         if "左手捩" in bone_names and self.bones.exists(("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3", "左手首")):
-            self.separate_weights("左ひじ", "左手捩1", 0.3, 0.3)
-            self.separate_weights("左手捩1", "左手捩2", 0.3, 0.3)
-            self.separate_weights("左手捩2", "左手捩3", 0.3, 0.3)
-            self.separate_weights("左手捩3", "左手首", 0.3, 0.3)
+            self.separate_weights("左ひじ", "左手捩1", 0.1, 0.2, ("左腕捩3", "左ひじ", "左手首"))
+            self.separate_weights("左手捩1", "左手捩2", 0.1, 0.2, ("左腕捩3", "左ひじ", "左手捩1", "左手首"))
+            self.separate_weights("左手捩2", "左手捩3", 0.1, 0.2, ("左腕捩3", "左ひじ", "左手捩1", "左手捩2", "左手首"))
+            self.separate_weights("左手捩3", "左手首", 0.1, 0.15, ("左腕捩3", "左ひじ", "左手捩1", "左手捩2", "左手捩3", "左手首"))
 
         if True in [self.bones[bone_name].is_leg_d for bone_name in bone_names]:
             # 足Dはそのまま置き換える
@@ -1191,71 +1190,106 @@ class PmxModel(BaseHashModel):
         separate_name: str,
         from_ratio: float,
         to_ratio: float,
+        weight_bone_names: Iterable[str] = [],
+        is_axis: bool = True,
     ):
         """ウェイト置換"""
         from_bone = self.bones[from_name]
         separate_bone = self.bones[separate_name]
 
-        if 0 > separate_bone.tail_index or separate_bone.tail_index not in self.bones:
+        # ウェイト乗せ替え対象頂点はFROMとTOの間
+        vertex_index_list = [
+            vertex_index
+            for weight_bone_name in weight_bone_names
+            for vertex_index in self.vertices_by_bones.get(self.bones[weight_bone_name].index, [])
+        ]
+        vertex_indexes = set(
+            vertex_index_list + self.vertices_by_bones.get(from_bone.index, []) + self.vertices_by_bones.get(separate_bone.tail_index, [])
+        )
+
+        if not vertex_indexes:
             return
 
+        match_bone_indexes = [self.bones[from_name].index]
+        match_bone_indexes += [
+            self.bones[weight_bone_name].index for weight_bone_name in weight_bone_names if weight_bone_name in self.bones
+        ]
+        if 0 <= separate_bone.tail_index:
+            match_bone_indexes.append(separate_bone.tail_index)
+
         # 先は分割したボーンの表示先
-        to_bone = self.bones[separate_bone.tail_index]
+        to_tail_pos = self.bones.get_tail_relative_position(separate_bone.index)
+        if np.isclose(to_tail_pos.length(), 0.0):
+            # 表示先がない場合、表示先に類するボーンのうち最も遠いものを選ぶ
+            bone_pos_dict = MVectorDict()
+            # 分割ボーンの付与親ボーンの末端
+            if (separate_bone.is_external_translation or separate_bone.is_external_rotation) and 0 <= separate_bone.effect_index:
+                bone_pos_dict.append(separate_bone.effect_index, self.bones[separate_bone.effect_index].tail_relative_position)
+            # 分割ボーンの親ボーン
+            separate_parent_bone = self.bones[separate_bone.parent_index]
+            # 分割ボーンの親ボーンの末端
+            if separate_parent_bone.is_tail_bone and separate_bone.tail_index in self.bones:
+                bone_pos_dict.append(separate_parent_bone.index, self.bones[separate_parent_bone.index].tail_relative_position)
+            if (
+                separate_parent_bone.is_external_translation or separate_parent_bone.is_external_rotation
+            ) and 0 <= separate_parent_bone.effect_index:
+                # 分割ボーンの親ボーンの付与親ボーンの末端
+                separate_parent_effect_bone = self.bones[separate_parent_bone.effect_index]
+                bone_pos_dict.append(
+                    separate_parent_effect_bone.index, self.bones[separate_parent_effect_bone.index].tail_relative_position
+                )
 
-        x_direction = (to_bone.position - separate_bone.position).normalized()
-        z_direction = MVector3D(0, 0, -1)
-        y_direction = x_direction.cross(z_direction)
-        slope_qq = MQuaternion.from_direction(x_direction, y_direction)
+            if not len(bone_pos_dict):
+                # 見つからない場合、親ボーンからの距離を加味する
+                to_tail_pos = from_bone.position - separate_bone.position
+            else:
+                # 見つかった場合、そのうちに最も遠いものをTOターゲットにする
+                to_tail_pos = bone_pos_dict.farthest_value(MVector3D())
 
+        to_pos = separate_bone.position + to_tail_pos
         mat = MMatrix4x4()
         mat.translate(separate_bone.position)
-        mat.rotate(slope_qq)
+        mat = mat @ (to_pos - separate_bone.position).to_local_matrix4x4()
 
-        # ローカル位置（ローカルの奥行きは潰す）
+        # ローカル位置
         local_from_pos = mat.inverse() * from_bone.position
-        local_from_pos.y = 0
-        local_to_pos = mat.inverse() * to_bone.position
-        local_to_pos.y = 0
+        local_to_pos = mat.inverse() * to_pos
 
         separate_from_local_position = local_from_pos * from_ratio
         separate_to_local_position = local_to_pos * to_ratio
 
         # ボーンの上下の長さ
-        separate_from_distance = separate_from_local_position.length()
-        separate_to_distance = separate_to_local_position.length()
-
-        # ウェイト乗せ替え対象頂点はFROMとTOの間
-        vertex_indexes = self.vertices_by_bones.get(from_bone.index, []) + self.vertices_by_bones.get(to_bone.index, [])
+        separate_from_distance = abs(separate_from_local_position.x) if is_axis else separate_from_local_position.length()
+        separate_to_distance = abs(separate_to_local_position.x) if is_axis else separate_to_local_position.length()
 
         for vertex_index in vertex_indexes:
             v = self.vertices[vertex_index]
             v.deform.normalize(align=True)
 
-            # 頂点のローカル位置（奥行きOFF）
+            # 頂点のローカル位置
             local_vpos = mat.inverse() * v.position
-            local_vpos.y = 0
+            v_distance = abs(local_vpos.x) if is_axis else local_vpos.length()
 
-            v_distance = local_vpos.length()
+            # 同じボーンINDEXで複数の欄にウェイトを持っている可能性があるので、matchで確認
+            bone_matches = np.array([i in match_bone_indexes for i in v.deform.indexes])
 
             if np.sign(local_vpos.x) == np.sign(local_from_pos.x):
                 # 分割したボーンから見て元側のボーン方向にある頂点の場合
-                ratio = 1 - v_distance / separate_from_distance
-                if 0 > ratio:
-                    # 距離を超えて元に近い場合、先のウェイトだけ分割ボーンに置き換える
-                    v.deform.indexes = np.where(v.deform.indexes == to_bone.index, separate_bone.index, v.deform.indexes)
+                if v_distance > separate_from_distance:
+                    # 置き換えは行わない
                     continue
+                ratio = 1 - v_distance / separate_from_distance
             else:
                 # 分割したボーンから見て、先側のボーン方向にある頂点の場合
-                ratio = 1 - v_distance / separate_to_distance
-                if 0 > ratio:
-                    # 距離を超えて先に近い場合、元のウェイトだけ分割ボーンに置き換える
-                    v.deform.indexes = np.where(v.deform.indexes == from_bone.index, separate_bone.index, v.deform.indexes)
+                if v_distance > separate_to_distance:
+                    if is_axis:
+                        # 距離を超えて先に近い場合、分割ボーンに置き換える
+                        v.deform.indexes = np.where(bone_matches, separate_bone.index, v.deform.indexes)
                     continue
+                ratio = 1 - v_distance / separate_to_distance
 
-            # 同じボーンINDEXで複数の欄にウェイトを持っている可能性があるので、matchで確認
-            bone_matches = np.array([i in [from_bone.index, to_bone.index] for i in v.deform.indexes])
             original_weight = np.sum(v.deform.weights[bone_matches])
-            separate_weight = original_weight * ratio / np.count_nonzero(bone_matches)
+            separate_weight = original_weight * ratio / (np.count_nonzero(bone_matches) or 1)
             # 元ボーンは分割先ボーンの残り
             v.deform.weights = np.where(bone_matches, (v.deform.weights * (1 - ratio)) - separate_weight, v.deform.weights)
             v.deform.weights[0.01 > v.deform.weights] = 0
@@ -1264,12 +1298,19 @@ class PmxModel(BaseHashModel):
             # 一旦最大値で正規化
             v.deform.count = 4
             v.deform.normalize(align=True)
-            if np.count_nonzero(v.deform.weights) <= 2:
+            if np.count_nonzero(v.deform.weights) == 0:
+                # 念のためウェイトが割り当てられなかったら、元ボーンを割り当てとく
+                v.deform = Bdef1(from_bone.index)
+            elif np.count_nonzero(v.deform.weights) == 1:
+                # Bdef1で再定義
+                v.deform = Bdef1(v.deform.indexes[np.argmax(v.deform.weights)])
+            elif np.count_nonzero(v.deform.weights) == 2:
                 # Bdef2で再定義
-                v.deform = Bdef2(v.deform.indexes[0], v.deform.indexes[1], v.deform.weights[0])
-            elif not isinstance(v.deform, Sdef):
-                # SdefではなければBdef4で再定義
-                v.deform = Bdef4(*(v.deform.indexes.tolist() + [0, 0, 0, 0])[:4], *(v.deform.weights.tolist() + [0.0, 0.0, 0.0, 0.0])[:4])
+                v.deform = Bdef2(
+                    v.deform.indexes[np.argsort(v.deform.weights)[-1]],
+                    v.deform.indexes[np.argsort(v.deform.weights)[-2]],
+                    float(np.max(v.deform.weights)),
+                )
             v.deform.normalize(align=True)
 
 

@@ -315,7 +315,7 @@ class BoneSettings(Enum):
         name="右親指０",
         parents=("右手首",),
         relatives=("右親指１",),
-        tails=("右親指２",),
+        tails=("右親指１",),
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
@@ -697,7 +697,7 @@ class BoneSettings(Enum):
         name="左親指０",
         parents=("左手首",),
         relatives=("左親指１",),
-        tails=("左親指２",),
+        tails=("左親指１",),
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
         axis=MVector3D(-1, 0, 0),
     )
