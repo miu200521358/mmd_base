@@ -872,6 +872,7 @@ class PmxModel(BaseHashModel):
                         and is_same_direction
                         and original_parent_distance
                         and (0.5 > replaced_parent_distance / original_parent_distance or original_parent.position == bone.position)
+                        and "捩" not in b.name
                     ):
                         # 準標準ボーンの範囲外かつ挿入ボーンのと親子関係があり、距離が挿入ボーンの方が近いか全く同じ位置の場合、挿入ボーンで置き換える
                         b.parent_index = bone.index
