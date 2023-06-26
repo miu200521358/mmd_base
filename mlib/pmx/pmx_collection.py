@@ -1100,7 +1100,8 @@ class PmxModel(BaseHashModel):
                         axis=0,
                     )
                 )
-                twist_bone.parent_index = bone.index
+                # 親ボーンは捩りの親（腕ないしひじ）
+                twist_bone.parent_index = bone.parent_index
                 twist_bone.bone_flg = BoneFlg.CAN_ROTATE | BoneFlg.IS_EXTERNAL_ROTATION
                 twist_bone.effect_index = bone.index
                 twist_bone.effect_factor = factor
