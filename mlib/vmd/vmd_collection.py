@@ -563,7 +563,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bf = self[bone.name][fno]
         qq = bf.rotation.copy()
 
-        if bf.ik_rotation is not None:
+        if bf.ik_rotation is not None and append_ik:
             # IK用回転を持っている場合、追加
             qq *= bf.ik_rotation
 
@@ -1278,6 +1278,11 @@ class VmdMotion(BaseHashModel):
 
             for bfs in morph_bone_frames:
                 bf = bfs[fno]
+
+                if not append_ik:
+                    # IK計算しない場合、IK計算結果を渡さない
+                    bf.ik_rotation = None
+
                 mbf = all_morph_bone_frames[bf.name][bf.index]
                 all_morph_bone_frames[bf.name][bf.index] = mbf + bf
 
@@ -1288,6 +1293,12 @@ class VmdMotion(BaseHashModel):
             for bfs in group_morph_bone_frames:
                 bf = bfs[fno]
                 mbf = all_morph_bone_frames[bf.name][bf.index]
+
+                if not append_ik:
+                    # IK計算しない場合、IK計算結果を渡さない
+                    bf.ik_rotation = None
+                    mbf.ik_rotation = None
+
                 all_morph_bone_frames[bf.name][bf.index] = mbf + bf
 
             logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: モーフキーフレ加算")
