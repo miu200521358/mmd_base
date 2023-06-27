@@ -178,6 +178,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     def max_fno(self) -> int:
         return max([max(self[bname].indexes + [0]) for bname in self.names] + [0])
 
+    def cache_clear(self) -> None:
+        for bname in self.data.keys():
+            self.data[bname].cache_clear()
+
     def animate_bone_matrixes(
         self,
         fnos: list[int],
@@ -1214,6 +1218,9 @@ class VmdMotion(BaseHashModel):
     @property
     def name(self) -> str:
         return self.model_name
+
+    def cache_clear(self) -> None:
+        self.bones.cache_clear()
 
     def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 開始")
