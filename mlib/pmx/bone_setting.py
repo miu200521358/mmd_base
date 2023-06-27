@@ -112,7 +112,7 @@ class BoneSettings(Enum):
     )
     LEG_CENTER = BoneSetting(
         name="足中心",
-        parents=("腰", "グルーブ", "センター"),
+        parents=("下半身", "腰", "グルーブ", "センター"),
         relatives=MVector3D(0, -1, 0),
         tails=[],
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
