@@ -1267,6 +1267,9 @@ class VmdMotion(BaseHashModel):
     ) -> VmdBoneFrameTrees:
         all_morph_bone_frames = VmdBoneFrames()
 
+        if clear_ik:
+            self.cache_clear()
+
         for fno in fnos:
             logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 開始")
 
