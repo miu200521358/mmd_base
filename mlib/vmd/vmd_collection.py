@@ -1262,7 +1262,9 @@ class VmdMotion(BaseHashModel):
 
         return gl_matrixes, vertex_morph_poses + group_vertex_morph_poses, uv_morph_poses, uv1_morph_poses, group_materials
 
-    def animate_bone(self, fnos: list[int], model: PmxModel, bone_names: Iterable[str] = [], append_ik: bool = True) -> VmdBoneFrameTrees:
+    def animate_bone(
+        self, fnos: list[int], model: PmxModel, bone_names: Iterable[str] = [], append_ik: bool = True, clear_ik: bool = False
+    ) -> VmdBoneFrameTrees:
         all_morph_bone_frames = VmdBoneFrames()
 
         for fno in fnos:
@@ -1279,7 +1281,7 @@ class VmdMotion(BaseHashModel):
             for bfs in morph_bone_frames:
                 bf = bfs[fno]
 
-                if not append_ik:
+                if clear_ik:
                     # IK計算しない場合、IK計算結果を渡さない
                     bf.ik_rotation = None
 
@@ -1294,7 +1296,7 @@ class VmdMotion(BaseHashModel):
                 bf = bfs[fno]
                 mbf = all_morph_bone_frames[bf.name][bf.index]
 
-                if not append_ik:
+                if clear_ik:
                     # IK計算しない場合、IK計算結果を渡さない
                     bf.ik_rotation = None
                     mbf.ik_rotation = None
