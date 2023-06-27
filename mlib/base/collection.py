@@ -365,6 +365,9 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             next_index,
         )
 
+    def cache_clear(self) -> None:
+        self.cache = {}
+
 
 TBaseIndexNameDictModel = TypeVar("TBaseIndexNameDictModel", bound=BaseIndexNameDictModel)
 

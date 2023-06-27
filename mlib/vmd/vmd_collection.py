@@ -68,6 +68,15 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             next_index,
         )
 
+    def cache_clear(self) -> None:
+        """キャッシュクリアとしてIK情報を削除"""
+        super().cache_clear()
+
+        for index in self.data.keys():
+            self.data[index].ik_rotation = None
+            self.data[index].corrected_position = None
+            self.data[index].corrected_rotation = None
+
     def append(self, value: VmdBoneFrame, is_sort: bool = True):
         if value.ik_rotation is not None and value.index not in self._ik_indexes:
             self._ik_indexes.append(value.index)
@@ -97,6 +106,12 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             bf.local_rotation = next_bf.local_rotation.copy()
             bf.scale = next_bf.scale.copy()
             bf.local_scale = next_bf.local_scale.copy()
+            if next_bf.ik_rotation:
+                bf.ik_rotation = next_bf.ik_rotation.copy()
+            if next_bf.corrected_position:
+                bf.corrected_position = next_bf.corrected_position.copy()
+            if next_bf.corrected_rotation:
+                bf.corrected_rotation = next_bf.corrected_rotation.copy()
             return bf
 
         prev_bf = self.data[prev_index] if prev_index in self else VmdBoneFrame(name=self.name, index=prev_index)
