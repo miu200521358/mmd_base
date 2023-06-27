@@ -587,26 +587,32 @@ class PmxModel(BaseHashModel):
         total_index_count = len(self.bones)
 
         # システム用ボーン追加
-        if "右腕" in self.bones and "左腕" in self.bones and "上半身" in self.bones and "首根元" not in self.bones:
-            neck_root_bone = Bone(name="首根元")
-            parent_bone_name = "上半身3" if "上半身3" in self.bones else "上半身2" if "上半身2" in self.bones else "上半身"
-            neck_root_bone.parent_index = self.bones[parent_bone_name].index
-            neck_root_bone.index = self.bones[parent_bone_name].index + 1
-            neck_root_bone.position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
-            self.insert_bone(neck_root_bone)
-            for replace_bone_name in ("右肩P", "左肩P", "右肩", "左肩"):
-                if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones[parent_bone_name].index:
-                    self.bones[replace_bone_name].parent_index = self.bones["首根元"].index
+        if "右腕" in self.bones and "左腕" in self.bones and "上半身" in self.bones:
+            if "首根元" in self.bones:
+                self.bones["首根元"].position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
+            else:
+                neck_root_bone = Bone(name="首根元")
+                parent_bone_name = "上半身3" if "上半身3" in self.bones else "上半身2" if "上半身2" in self.bones else "上半身"
+                neck_root_bone.parent_index = self.bones[parent_bone_name].index
+                neck_root_bone.index = self.bones[parent_bone_name].index + 1
+                neck_root_bone.position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
+                self.insert_bone(neck_root_bone)
+                for replace_bone_name in ("右肩P", "左肩P", "右肩", "左肩"):
+                    if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones[parent_bone_name].index:
+                        self.bones[replace_bone_name].parent_index = self.bones["首根元"].index
 
-        if "右足" in self.bones and "左足" in self.bones and "下半身" in self.bones and "足中心" not in self.bones:
-            leg_root_bone = Bone(name="足中心")
-            leg_root_bone.parent_index = self.bones["下半身"].index
-            leg_root_bone.index = self.bones["下半身"].index + 1
-            leg_root_bone.position = (self.bones["右足"].position + self.bones["左足"].position) / 2
-            self.insert_bone(leg_root_bone)
-            for replace_bone_name in ("腰キャンセル右", "腰キャンセル左", "右足", "左足", "右足D", "左足D"):
-                if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones["下半身"].index:
-                    self.bones[replace_bone_name].parent_index = self.bones["足中心"].index
+        if "右足" in self.bones and "左足" in self.bones and "下半身" in self.bones:
+            if "足中心" not in self.bones:
+                self.bones["足中心"].position = (self.bones["右足"].position + self.bones["左足"].position) / 2
+            else:
+                leg_root_bone = Bone(name="足中心")
+                leg_root_bone.parent_index = self.bones["下半身"].index
+                leg_root_bone.index = self.bones["下半身"].index + 1
+                leg_root_bone.position = (self.bones["右足"].position + self.bones["左足"].position) / 2
+                self.insert_bone(leg_root_bone)
+                for replace_bone_name in ("腰キャンセル右", "腰キャンセル左", "右足", "左足", "右足D", "左足D"):
+                    if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones["下半身"].index:
+                        self.bones[replace_bone_name].parent_index = self.bones["足中心"].index
 
         logger.info("モデルセットアップ：システム用ボーン")
 
