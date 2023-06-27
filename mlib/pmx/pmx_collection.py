@@ -602,7 +602,7 @@ class PmxModel(BaseHashModel):
                         self.bones[replace_bone_name].parent_index = self.bones["首根元"].index
 
         if "右足" in self.bones and "左足" in self.bones and "下半身" in self.bones:
-            if "足中心" not in self.bones:
+            if "足中心" in self.bones:
                 self.bones["足中心"].position = (self.bones["右足"].position + self.bones["左足"].position) / 2
             else:
                 leg_root_bone = Bone(name="足中心")
