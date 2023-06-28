@@ -144,7 +144,7 @@ class BoneSettings(Enum):
     )
     ARM_CENTER = BoneSetting(
         name="首根元",
-        parents=("上半身3", "上半身2"),
+        parents=("上半身3", "上半身2", "上半身"),
         relatives=("首",),
         tails=("首",),
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
