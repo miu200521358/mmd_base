@@ -732,6 +732,7 @@ class Bone(BaseIndexNameModel):
         "offset_matrix",
         "relative_bone_indexes",
         "child_bone_indexes",
+        "effective_target_indexes",
     )
 
     SYSTEM_ROOT_NAME = "SYSTEM_ROOT"
@@ -760,6 +761,7 @@ class Bone(BaseIndexNameModel):
         self.is_system: bool = False
         self.ik_link_indexes: list[int] = []
         self.ik_target_indexes: list[int] = []
+        self.effective_target_indexes: list[int] = []
 
         self.corrected_local_x_vector = self.local_x_vector.copy()
         self.corrected_local_y_vector = self.local_z_vector.cross(self.corrected_local_x_vector)

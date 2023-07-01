@@ -10,7 +10,7 @@ from mlib.base.exception import MViewerException
 from mlib.base.logger import MLogger
 from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D, MVectorDict
 from mlib.base.part import Switch
-from mlib.pmx.bone_setting import STANDARD_BONE_NAMES, BoneFlg
+from mlib.pmx.bone_setting import STANDARD_BONE_NAMES, BoneFlg, BoneSettings
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
     Bdef1,
@@ -617,16 +617,15 @@ class PmxModel(BaseHashModel):
         logger.info("モデルセットアップ：システム用ボーン")
 
         for bone in self.bones:
-            # IKのリンクとターゲットを一旦クリア
-            if bone.is_ik and bone.ik:
-                for link in bone.ik.links:
-                    self.bones[link.bone_index].ik_link_indexes = []
-                self.bones[bone.ik.bone_index].ik_target_indexes = []
+            # 関係ボーンリストを一旦クリア
+            bone.ik_link_indexes = []
+            bone.ik_target_indexes = []
+            bone.effective_target_indexes = []
+            bone.child_bone_indexes = []
 
         for bone in self.bones:
-            # IKのリンクとターゲット
             if bone.is_ik and bone.ik:
-                # IKボーンの場合
+                # IKのリンクとターゲット
                 for link in bone.ik.links:
                     if link.bone_index in self.bones and bone.index not in self.bones[link.bone_index].ik_link_indexes:
                         # リンクボーンにフラグを立てる
@@ -634,45 +633,27 @@ class PmxModel(BaseHashModel):
                 if bone.ik.bone_index in self.bones and bone.index not in self.bones[bone.ik.bone_index].ik_target_indexes:
                     # ターゲットボーンにもフラグを立てる
                     self.bones[bone.ik.bone_index].ik_target_indexes.append(bone.index)
+            if 0 <= bone.effect_index and bone.effect_index in self.bones:
+                # 付与親の方に付与子情報を保持
+                self.bones[bone.effect_index].effective_target_indexes.append(bone.index)
+
+        # ボーンツリー生成
+        self.bone_trees = self.bones.create_bone_trees()
 
         # ボーン変形行列を計算するのに影響する全てのボーンINDEXのリストを取得する
-        bone_relative_indexes: dict[int, set[int]] = {}
         for bone in self.bones:
             # ボーンセットアップ
             self.setup_bone(bone)
 
             # 影響があるボーンINDEXリスト
-            bone_relative_indexes[bone.index] = self.get_tree_relative_bone_indexes(bone.index, set([]))
-
-            # 一旦子ボーンリストをクリア
-            bone.child_bone_indexes = []
-
-            logger.count(
-                "モデルセットアップ：ボーン",
-                index=bone.index,
-                total_index_count=total_index_count,
-                display_block=100,
-            )
-
-        # ボーンツリー生成
-        self.bone_trees = self.bones.create_bone_trees()
-
-        for bone in self.bones:
-            # ボーンセットアップ
-
-            # ボーン変形行列を計算するのに影響する全てのボーンINDEXのリストを取得する
-            bone.relative_bone_indexes = list(
-                sorted(
-                    set([bone_index for relative_index in bone_relative_indexes for bone_index in bone_relative_indexes[relative_index]])
-                )
-            )
+            bone.relative_bone_indexes = list(sorted(self.get_tree_relative_bone_indexes(bone.index, recursive=True)))
 
             if bone.parent_index in self.bones:
                 # 親ボーンに子ボーンとして登録する
                 self.bones[bone.parent_index].child_bone_indexes.append(bone.index)
 
             logger.count(
-                "モデルセットアップ：関連ボーン",
+                "モデルセットアップ：ボーン",
                 index=bone.index,
                 total_index_count=total_index_count,
                 display_block=100,
@@ -683,8 +664,8 @@ class PmxModel(BaseHashModel):
 
         logger.info("モデルセットアップ：ボーンツリー")
 
-    def get_tree_relative_bone_indexes(self, bone_index: int, tree_relative_bone_indexes: set[int]) -> set[int]:
-        logger.debug(f"get_tree_relative_bone_indexes: {bone_index}({self.bones[bone_index].name}), {tree_relative_bone_indexes}")
+    def get_tree_relative_bone_indexes(self, bone_index: int, recursive: bool = False) -> set[int]:
+        logger.debug(f"get_tree_relative_bone_indexes: {bone_index}({self.bones[bone_index].name})")
 
         if 0 >= bone_index or bone_index not in self.bones.indexes:
             return set([])
@@ -692,26 +673,28 @@ class PmxModel(BaseHashModel):
         # 直接関係するボーンINDEXセット
         bone = self.bones[bone_index]
         relative_bone_indexes: set[int] = set(self.bone_trees[self.bones[bone_index].name].indexes[:-1])
-        if (bone.is_external_rotation or bone.is_external_translation) and 0 <= bone.effect_index:
-            relative_bone_indexes |= {bone.effect_index}
-        if bone.ik:
-            relative_bone_indexes |= {bone.ik.bone_index}
-            for link in bone.ik.links:
-                relative_bone_indexes |= {link.bone_index}
+        # if 0 <= bone.parent_index:
+        #     relative_bone_indexes |= {bone.parent_index}
+        # if (bone.is_external_rotation or bone.is_external_translation) and 0 <= bone.effect_index:
+        #     relative_bone_indexes |= {bone.effect_index}
+        if bone.effective_target_indexes:
+            relative_bone_indexes |= set(bone.effective_target_indexes)
+        # if bone.ik:
+        #     relative_bone_indexes |= {bone.ik.bone_index}
+        #     for link in bone.ik.links:
+        #         relative_bone_indexes |= {link.bone_index}
         if bone.ik_link_indexes:
             relative_bone_indexes |= set(bone.ik_link_indexes)
         if bone.ik_target_indexes:
             relative_bone_indexes |= set(bone.ik_target_indexes)
 
-        for relative_index in relative_bone_indexes:
-            tree_relative_bone_indexes |= set(self.bone_trees[self.bones[relative_index].name].indexes[:-1])
+        tree_relative_bone_indexes: set[int] = set([])
+        if recursive:
+            for relative_index in relative_bone_indexes:
+                for tree_index in self.bone_trees[self.bones[relative_index].name].indexes[1:]:
+                    tree_relative_bone_indexes |= self.get_tree_relative_bone_indexes(tree_index)
 
-        for relative_index in relative_bone_indexes - tree_relative_bone_indexes:
-            tree_relative_bone_indexes |= self.get_tree_relative_bone_indexes(
-                relative_index, relative_bone_indexes | tree_relative_bone_indexes
-            )
-
-        return tree_relative_bone_indexes
+        return tree_relative_bone_indexes | relative_bone_indexes | {bone_index}
 
     def setup_bone(self, bone: Bone):
         """各ボーンのセットアップ"""
@@ -979,10 +962,6 @@ class PmxModel(BaseHashModel):
             bone.position = bone_matrixes[0, f"{direction}腕"].position.copy()
             bone.tail_position = MVector3D()
             bone.bone_flg &= ~BoneFlg.TAIL_IS_BONE
-        elif "腰キャンセル" in bone.name and f"{bone.name[-1]}足" in self.bones:
-            bone.position = bone_matrixes[0, f"{bone.name[-1]}足"].position.copy()
-            bone.tail_position = MVector3D()
-            bone.bone_flg &= ~BoneFlg.TAIL_IS_BONE
         elif "足IK親" in bone.name and f"{direction}足首" in self.bones:
             bone.position = bone_matrixes[0, f"{direction}足首"].position.copy()
             bone.position.y = 0
@@ -1081,9 +1060,6 @@ class PmxModel(BaseHashModel):
         if "肩C" in bone.name and f"{direction}肩P" in self.bones:
             bone.effect_index = self.bones[f"{direction}肩P"].index
             bone.effect_factor = -1
-        elif "腰キャンセル" in bone.name and "腰" in self.bones:
-            bone.effect_index = self.bones["腰"].index
-            bone.effect_factor = -1
         elif bone.is_leg_d:
             bone.effect_index = self.bones[bone.name[:-1]].index
             bone.effect_factor = 1
@@ -1114,6 +1090,64 @@ class PmxModel(BaseHashModel):
                 twist_bone.effect_factor = factor
 
                 self.insert_bone(twist_bone)
+
+            # ひじの親は捩りボーンそのもの
+            if "腕捩" in bone.name:
+                self.bones[f"{direction}ひじ"].parent_index = bone.index
+            elif "手捩" in bone.name:
+                self.bones[f"{direction}手首"].parent_index = bone.index
+
+        elif bone_name == "腰":
+            # 腰の場合、腰キャンセルも追加する
+            left_leg_bone = self.bones["左足"]
+            waist_cancel_left_parent_bone = [
+                self.bones[parent_name] for parent_name in BoneSettings.LEFT_WRIST_CANCEL.value.parents if parent_name in self.bones
+            ][0]
+            # 親のひとつ下
+            waist_cancel_left_bone = Bone(name="腰キャンセル左", index=waist_cancel_left_parent_bone.index + 1)
+            # 親ボーンは足中心 or 腰
+            waist_cancel_left_bone.parent_index = waist_cancel_left_parent_bone.index
+
+            waist_cancel_left_bone.position = bone_matrixes[0, left_leg_bone.name].position.copy()
+            waist_cancel_left_bone.tail_position = MVector3D()
+            waist_cancel_left_bone.bone_flg = BoneSettings.LEFT_WRIST_CANCEL.value.flag
+            # 変形階層
+            waist_cancel_left_bone.layer = parent_bone.layer
+            # 付与親でキャンセル
+            waist_cancel_left_bone.effect_index = bone.index
+            waist_cancel_left_bone.effect_factor = -1
+            # 腰キャンセル左を追加
+            self.insert_bone(waist_cancel_left_bone)
+
+            right_leg_bone = self.bones["右足"]
+            waist_cancel_right_parent_bone = [
+                self.bones[parent_name] for parent_name in BoneSettings.RIGHT_WRIST_CANCEL.value.parents if parent_name in self.bones
+            ][0]
+            # 親のひとつ下
+            waist_cancel_right_bone = Bone(name="腰キャンセル右", index=waist_cancel_right_parent_bone.index + 1)
+            # 親ボーンは足中心 or 腰
+            waist_cancel_right_bone.parent_index = waist_cancel_right_parent_bone.index
+
+            waist_cancel_right_bone.position = bone_matrixes[0, right_leg_bone.name].position.copy()
+            waist_cancel_right_bone.tail_position = MVector3D()
+            waist_cancel_right_bone.bone_flg = BoneSettings.RIGHT_WRIST_CANCEL.value.flag
+            # 変形階層
+            waist_cancel_right_bone.layer = parent_bone.layer
+            # 付与親でキャンセル
+            waist_cancel_right_bone.effect_index = bone.index
+            waist_cancel_right_bone.effect_factor = -1
+            # 腰キャンセル右を追加
+            self.insert_bone(waist_cancel_right_bone)
+
+            if "左足" in self.bones:
+                self.bones["左足"].parent_index = waist_cancel_left_bone.index
+            if "左足D" in self.bones:
+                self.bones["左足D"].parent_index = waist_cancel_left_bone.index
+
+            if "右足" in self.bones:
+                self.bones["右足"].parent_index = waist_cancel_right_bone.index
+            if "右足D" in self.bones:
+                self.bones["右足D"].parent_index = waist_cancel_right_bone.index
 
         # 付与親の設定
         if "両目" == bone.name:

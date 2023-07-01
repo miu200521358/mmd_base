@@ -671,6 +671,10 @@ def test_insert_standard_bone() -> None:
     for b in model.bones:
         if b.name in ["上半身", "下半身", "ﾈｸﾀｲＩＫ", "左髪ＩＫ", "右髪ＩＫ"]:
             assert model.bones["腰"].index == b.parent_index
+        elif b.name in ["左足", "左足D"]:
+            assert model.bones["腰キャンセル左"].index == b.parent_index
+        elif b.name in ["右足", "右足D"]:
+            assert model.bones["腰キャンセル右"].index == b.parent_index
         elif b.name in parent_names:
             assert parent_names[b.name] == model.bones[b.parent_index].name
 
@@ -893,49 +897,6 @@ def test_insert_standard_bone() -> None:
 
     model.setup()
     model.update_vertices_by_bone()
-    # -------
-    parent_names = dict(
-        [
-            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
-            for b in model.bones
-            if b.index >= 0 and b.name != "全ての親"
-        ]
-    )
-    tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
-    model.insert_standard_bone("腰キャンセル右", bone_matrixes)
-
-    for b in model.bones:
-        if b.name in ["右足"]:
-            assert model.bones["腰キャンセル右"].index == b.parent_index
-        elif b.name in parent_names:
-            assert parent_names[b.name] == model.bones[b.parent_index].name
-
-        if b.name in tail_names and b.tail_index >= 0:
-            assert tail_names[b.name] == model.bones[b.tail_index].name
-
-    model.setup()
-    model.update_vertices_by_bone()
-    # -------
-    parent_names = dict(
-        [
-            (b.name, (model.bones[b.parent_index].name if b.parent_index >= 0 else None))
-            for b in model.bones
-            if b.index >= 0 and b.name != "全ての親"
-        ]
-    )
-    tail_names = dict([(b.name, model.bones[b.tail_index].name) for b in model.bones if b.tail_index >= 0])
-    bone_matrixes = VmdMotion().animate_bone([0], model, model.bones.tail_bone_names)
-    model.insert_standard_bone("腰キャンセル左", bone_matrixes)
-
-    for b in model.bones:
-        if b.name in ["左足"]:
-            assert model.bones["腰キャンセル左"].index == b.parent_index
-        elif b.name in parent_names:
-            assert parent_names[b.name] == model.bones[b.parent_index].name
-
-        if b.name in tail_names and b.tail_index >= 0:
-            assert tail_names[b.name] == model.bones[b.tail_index].name
 
     model.setup()
     model.update_vertices_by_bone()
