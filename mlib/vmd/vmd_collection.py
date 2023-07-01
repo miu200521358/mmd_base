@@ -270,15 +270,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone_matrixes = VmdBoneFrameTrees()
         for fidx, fno in enumerate(fnos):
             for bone in model.bones:
-                local_matrix = MMatrix4x4()
-                local_matrix.vector = result_matrixes[fidx, bone.index]
-
-                pos_mat = np.eye(4)
-                pos_mat[:3, 3] = bone.position.vector
+                local_matrix = MMatrix4x4(*result_matrixes[fidx, bone.index].flatten())
 
                 # グローバル行列は最後にボーン位置に移動させる
-                global_matrix = MMatrix4x4()
-                global_matrix.vector = result_matrixes[fidx, bone.index] @ pos_mat
+                global_matrix = MMatrix4x4(*result_matrixes[fidx, bone.index].flatten())
+                global_matrix.translate(bone.position)
 
                 bone_matrixes.append(fno, bone.index, bone.name, global_matrix, local_matrix, global_matrix.to_position())
 
@@ -563,7 +559,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bf = self[bone.name][fno]
         qq = bf.rotation.copy()
 
-        if bf.ik_rotation is not None and append_ik:
+        if bf.ik_rotation is not None:
             # IK用回転を持っている場合、追加
             qq *= bf.ik_rotation
 
@@ -689,7 +685,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     rotation_radian = acos(max(-1, min(1, rotation_dot)))
 
                     # 回転軸
-                    rotation_axis = norm_effector_pos.cross(norm_target_pos)
+                    rotation_axis = norm_effector_pos.cross(norm_target_pos).normalized()
                     # 回転角度
                     rotation_degree = degrees(rotation_radian)
 
