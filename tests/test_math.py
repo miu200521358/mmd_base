@@ -2597,7 +2597,7 @@ def test_align_triangle():
     from mlib.base.math import MVector3D, align_triangle
 
     assert np.isclose(
-        MVector3D(-0.00166671, 15.257457750178212, -0.8144445770103483).vector,
+        MVector3D(-0.0005278992773858041, 15.126109523919748, 0.006334573849846925).vector,
         align_triangle(
             MVector3D(0, 15.75281, 0.3646003),
             MVector3D(0, 11.93415, -0.2263783),

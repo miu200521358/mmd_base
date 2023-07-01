@@ -1643,19 +1643,29 @@ def align_triangle(
     -------
     the new positions of B2 and B3 (3D vectors)
     """
-    A1, A2, A3, B1, B2 = np.array([a1.vector, a2.vector, a3.vector, b1.vector, b2.vector])
+    local_a1_mat = MMatrix4x4()
+    local_a1_mat.translate(a1)
+    local_a1_mat.rotate((a2 - a1).to_local_matrix4x4().to_quaternion())
 
-    # A-1, A-2, B-1, B-2を固定したベクトルを作成
-    v1 = A2 - A1
-    v2 = B2 - B1
+    local_a2_vec = local_a1_mat.inverse() * a2
+    local_a3_vec = local_a1_mat.inverse() * a3
+
+    local_b1_mat = MMatrix4x4()
+    local_b1_mat.translate(b1)
+    local_b1_mat.rotate((b2 - b1).to_local_matrix4x4().to_quaternion())
+
+    local_b2_vec = local_b1_mat.inverse() * b2
+
+    # A-1, A-2, B-1, B-2のローカルベクトルを作成
+    A2, A3, B2 = np.array([local_a2_vec.vector, local_a3_vec.vector, local_b2_vec.vector])
 
     # B-3'を求めるためのベクトルを計算
-    v3_prime = (A3 - A1) / norm(v1) * norm(v2)
+    v3_prime = A3 / norm(A2) * norm(B2)
 
     # B-3'をB-1, B-2からオフセット
-    B3_prime = B1 + v3_prime
+    B3_prime = local_b1_mat * MVector3D(*v3_prime)
 
-    return MVector3D(*B3_prime)
+    return B3_prime
 
 
 def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bone_end: MVector3D) -> np.ndarray:
