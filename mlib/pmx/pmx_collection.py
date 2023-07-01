@@ -144,7 +144,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
             end_bone.tree_indexes = []
             bone_tree = BoneTree(name=end_bone.name)
             for _, bidx in sorted(self.create_bone_link_indexes(end_bone.index)):
-                bone_tree.append(self.data[bidx])
+                bone_tree.append(self.data[bidx].copy())
                 end_bone.tree_indexes.append(bidx)
             bone_trees.append(bone_tree, name=end_bone.name)
 
