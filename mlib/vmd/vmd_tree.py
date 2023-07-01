@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterator
 from mlib.base.math import MMatrix4x4, MVector3D
 
 
@@ -63,6 +63,9 @@ class VmdBoneFrameTrees:
         self.data[(fno, bone_name)] = VmdBoneFrameTree(fno, bone_index, bone_name, global_matrix, local_matrix, position)
         self._indexes[(fno, bone_index)] = (fno, bone_name)
 
+    def __iter__(self) -> Iterator[VmdBoneFrameTree]:
+        return iter([self.data[k] for k in sorted(self.data.keys())])
+
     def __getitem__(self, key) -> VmdBoneFrameTree:
         return self.data[key]
 
@@ -72,6 +75,3 @@ class VmdBoneFrameTrees:
 
     def __len__(self) -> int:
         return len(self._indexes)
-
-    def __iter__(self) -> Iterable[VmdBoneFrameTree]:
-        return iter([self.data[k] for k in sorted(self.data.keys())])

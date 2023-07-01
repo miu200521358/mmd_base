@@ -116,7 +116,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
     def writable(self) -> list[Bone]:
         """出力対象となるボーン一覧を取得する"""
         bones: list[Bone] = []
-        for b in self:
+        for b in iter(self):
             if b.is_system:
                 continue
             bones.append(b)
@@ -135,7 +135,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
         total_index_count = len(self)
 
         # 計算ボーンリスト
-        for i, end_bone in enumerate(self):
+        for i, end_bone in enumerate(iter(self)):
             if 0 > end_bone.index:
                 continue
             # レイヤー込みのINDEXリスト取得を末端ボーンをキーとして保持
@@ -162,10 +162,10 @@ class Bones(BaseIndexNameDictModel[Bone]):
         """
         tail_bone_names = []
         parent_bone_indexes = []
-        for end_bone in self:
+        for end_bone in iter(self):
             parent_bone_indexes.append(end_bone.parent_index)
 
-        for end_bone in self:
+        for end_bone in iter(self):
             if end_bone.index not in parent_bone_indexes:
                 tail_bone_names.append(end_bone.name)
 
@@ -306,7 +306,7 @@ class Morphs(BaseIndexNameDictModel[Morph]):
     def writable(self) -> list[Morph]:
         """出力対象となるモーフ一覧を取得する"""
         morphs: list[Morph] = []
-        for m in self:
+        for m in iter(self):
             if m.is_system:
                 continue
             morphs.append(m)
@@ -758,18 +758,19 @@ class PmxModel(BaseHashModel):
         for m in self.morphs:
             if m.morph_type == MorphType.BONE:
                 for offset in m.offsets:
-                    bone_offset: BoneMorphOffset = offset
-                    if bone_offset.bone_index in replaced_map:
-                        bone_offset.bone_index = replaced_map[bone_offset.bone_index]
+                    if not isinstance(offset, BoneMorphOffset):
+                        continue
+                    if offset.bone_index in replaced_map:
+                        offset.bone_index = replaced_map[offset.bone_index]
 
         for d in self.display_slots:
             for r in d.references:
                 if r.display_type == DisplayType.BONE and r.display_index in replaced_map:
                     r.display_index = replaced_map[r.display_index]
 
-        for r in self.rigidbodies:
-            if r.bone_index in replaced_map:
-                r.bone_index = replaced_map[r.bone_index]
+        for rb in self.rigidbodies:
+            if rb.bone_index in replaced_map:
+                rb.bone_index = replaced_map[rb.bone_index]
 
     def insert_bone(self, bone: Bone):
         """ボーンの追加に伴う諸々のボーンINDEXの置き換え"""
@@ -869,28 +870,29 @@ class PmxModel(BaseHashModel):
         for m in self.morphs:
             if m.morph_type == MorphType.BONE:
                 for offset in m.offsets:
-                    bone_offset: BoneMorphOffset = offset
-                    if bone_offset.bone_index in replaced_map:
-                        bone_offset.bone_index = replaced_map[bone_offset.bone_index]
+                    if not isinstance(offset, BoneMorphOffset):
+                        continue
+                    if offset.bone_index in replaced_map:
+                        offset.bone_index = replaced_map[offset.bone_index]
 
         for d in self.display_slots:
             for r in d.references:
                 if r.display_type == DisplayType.BONE and r.display_index in replaced_map:
                     r.display_index = replaced_map[r.display_index]
 
-        for r in self.rigidbodies:
-            if r.bone_index in replaced_map:
-                original_parent = self.bones[replaced_map[r.bone_index]]
-                original_parent_distance = r.shape_position.distance(original_parent.position)
-                replaced_parent_distance = r.shape_position.distance(bone.position)
+        for rb in self.rigidbodies:
+            if rb.bone_index in replaced_map:
+                original_parent = self.bones[replaced_map[rb.bone_index]]
+                original_parent_distance = rb.shape_position.distance(original_parent.position)
+                replaced_parent_distance = rb.shape_position.distance(bone.position)
                 if (
-                    bone.parent_index == replaced_map[r.bone_index]
+                    bone.parent_index == replaced_map[rb.bone_index]
                     and original_parent_distance
                     and 0.5 > replaced_parent_distance / original_parent_distance
                 ):
-                    r.bone_index = bone.index
+                    rb.bone_index = bone.index
                 else:
-                    r.bone_index = replaced_map[r.bone_index]
+                    rb.bone_index = replaced_map[rb.bone_index]
 
         if bone.is_visible:
             # ボーンツリーだけ再生成
