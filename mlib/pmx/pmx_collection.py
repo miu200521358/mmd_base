@@ -97,8 +97,6 @@ class Bones(BaseIndexNameDictModel[Bone]):
         "cache",
         "indexes",
         "_names",
-        "_iter_index",
-        "_size",
         "is_bone_not_local_cancels",
         "local_axises",
         "parent_revert_matrixes",
@@ -1367,8 +1365,6 @@ class Meshes(BaseIndexDictModel[Mesh]):
     __slots__ = (
         "data",
         "indexes",
-        "_iter_index",
-        "_size",
         "shader",
         "model",
         "vertices",

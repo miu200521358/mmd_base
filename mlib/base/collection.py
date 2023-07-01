@@ -16,8 +16,6 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
     __slots__ = (
         "data",
         "indexes",
-        "_iter_index",
-        "_size",
     )
 
     def __init__(self) -> None:
@@ -25,8 +23,6 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         super().__init__()
         self.data: dict[int, TBaseIndexModel] = {}
         self.indexes: list[int] = []
-        self._iter_index = 0
-        self._size = 0
 
     def create(self) -> "TBaseIndexModel":
         raise NotImplementedError
@@ -76,15 +72,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         return len(self.data)
 
     def __iter__(self):
-        self._iter_index = -1
-        self._size = len(self.indexes)
-        return self
-
-    def __next__(self) -> TBaseIndexModel:
-        self._iter_index += 1
-        if self._iter_index >= self._size:
-            raise StopIteration
-        return self.data[self.indexes[self._iter_index]]
+        return iter([self.data[k] for k in sorted(self.data.keys())])
 
     def __contains__(self, key: int) -> bool:
         return key in self.data
@@ -109,8 +97,6 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         "cache",
         "indexes",
         "_names",
-        "_iter_index",
-        "_size",
     )
 
     def __init__(self, name: str = "") -> None:
@@ -121,8 +107,6 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         self.cache: dict[int, TBaseIndexNameModel] = {}
         self.indexes: list[int] = []
         self._names: dict[str, int] = {}
-        self._iter_index = 0
-        self._size = 0
 
     def __getitem__(self, key: int | str) -> TBaseIndexNameModel:
         if isinstance(key, str):
@@ -306,15 +290,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         return len(self.data)
 
     def __iter__(self):
-        self._iter_index = -1
-        self._size = len(self.indexes)
-        return self
-
-    def __next__(self) -> TBaseIndexNameModel:
-        self._iter_index += 1
-        if self._iter_index >= self._size:
-            raise StopIteration
-        return self.data[self.indexes[self._iter_index]]
+        return iter([self.data[k] for k in sorted(self.data.keys())])
 
     def __contains__(self, key: int | str) -> bool:
         if isinstance(key, str):
@@ -379,8 +355,6 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
         "data",
         "cache",
         "_names",
-        "_iter_index",
-        "_size",
     )
 
     def __init__(self) -> None:
@@ -389,8 +363,6 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
         self.data: dict[str, TBaseIndexNameDictModel] = {}
         self.cache: dict[str, TBaseIndexNameDictModel] = {}
         self._names: list[str] = []
-        self._iter_index = 0
-        self._size = 0
 
     @verify_thread
     def create(self, key: str) -> TBaseIndexNameDictModel:
@@ -430,15 +402,7 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
         return len(self.data)
 
     def __iter__(self):
-        self._iter_index = -1
-        self._size = len(self.data)
-        return self
-
-    def __next__(self) -> TBaseIndexNameDictModel:
-        self._iter_index += 1
-        if self._iter_index >= self._size:
-            raise StopIteration
-        return self.data[self._names[self._iter_index]]
+        return iter([self.data[k] for k in sorted(self.data.keys())])
 
     def __contains__(self, key: str) -> bool:
         return key in self._names
