@@ -259,16 +259,16 @@ def test_calc_local_positions():
     from mlib.base.math import MVector3D, calc_local_positions
 
     vertex_local_positions = calc_local_positions(
-        np.array([[1, 0, 0, 0], [0.5, 3, 2, 0], [-1, -2, 3, 0]]), MVector3D(0.5, 0.5, 1), MVector3D(0.7, 2, 1.5)
+        np.array([[1, 0, 0], [0.5, 3, 2], [-1, -2, 3]]), MVector3D(0.5, 0.5, 1), MVector3D(0.7, 2, 1.5)
     )
 
     assert np.isclose(
         vertex_local_positions,
         np.array(
             [
-                [0.00000000e00, 9.91227901e-01, 4.14634467e-02],
-                [-8.88178420e-16, 9.91227901e-02, -9.45366585e-01],
-                [2.22044605e-16, -7.26900461e-01, -3.51195394e00],
+                [1.38777878e-16, 5.61695810e-01, 8.14756728e-01],
+                [0.00000000e00, -3.30409300e-01, -1.72073304e-01],
+                [2.22044605e-16, -1.15643255e00, -2.73866065e00],
             ]
         ),
     ).all()
