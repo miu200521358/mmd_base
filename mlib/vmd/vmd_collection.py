@@ -42,9 +42,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         "cache",
         "_names",
         "_indexes",
-        "_iter_index",
         "_ik_indexes",
-        "_size",
     )
 
     def __init__(self, name: str = "") -> None:
