@@ -760,14 +760,15 @@ class PmxModel(BaseHashModel):
         for m in self.morphs:
             if m.morph_type == MorphType.BONE:
                 for offset in m.offsets:
-                    bone_offset: BoneMorphOffset = offset
-                    if bone_offset.bone_index in replaced_map:
-                        bone_offset.bone_index = replaced_map[bone_offset.bone_index]
+                    if not isinstance(offset, BoneMorphOffset):
+                        continue
+                    if offset.bone_index in replaced_map:
+                        offset.bone_index = replaced_map[offset.bone_index]
 
         for d in self.display_slots:
-            for r in d.references:
-                if r.display_type == DisplayType.BONE and r.display_index in replaced_map:
-                    r.display_index = replaced_map[r.display_index]
+            for dr in d.references:
+                if dr.display_type == DisplayType.BONE and dr.display_index in replaced_map:
+                    dr.display_index = replaced_map[dr.display_index]
 
         for r in self.rigidbodies:
             if r.bone_index in replaced_map:
@@ -785,8 +786,8 @@ class PmxModel(BaseHashModel):
                 for d in self.display_slots:
                     if d.special_flg == Switch.ON:
                         continue
-                    for r in d.references:
-                        if r.display_type == DisplayType.BONE and bone.parent_index == r.display_index:
+                    for dr in d.references:
+                        if dr.display_type == DisplayType.BONE and bone.parent_index == dr.display_index:
                             d.references.append(DisplaySlotReference(DisplayType.BONE, bone.index))
                             is_add_display = True
                             break
@@ -871,14 +872,15 @@ class PmxModel(BaseHashModel):
         for m in self.morphs:
             if m.morph_type == MorphType.BONE:
                 for offset in m.offsets:
-                    bone_offset: BoneMorphOffset = offset
-                    if bone_offset.bone_index in replaced_map:
-                        bone_offset.bone_index = replaced_map[bone_offset.bone_index]
+                    if not isinstance(offset, BoneMorphOffset):
+                        continue
+                    if offset.bone_index in replaced_map:
+                        offset.bone_index = replaced_map[offset.bone_index]
 
         for d in self.display_slots:
-            for r in d.references:
-                if r.display_type == DisplayType.BONE and r.display_index in replaced_map:
-                    r.display_index = replaced_map[r.display_index]
+            for dr in d.references:
+                if dr.display_type == DisplayType.BONE and dr.display_index in replaced_map:
+                    dr.display_index = replaced_map[dr.display_index]
 
         for r in self.rigidbodies:
             if r.bone_index in replaced_map:
@@ -904,8 +906,8 @@ class PmxModel(BaseHashModel):
                 for d in self.display_slots:
                     if d.special_flg == Switch.ON:
                         continue
-                    for r in d.references:
-                        if r.display_type == DisplayType.BONE and self.bones[tree_name].index == r.display_index:
+                    for dr in d.references:
+                        if dr.display_type == DisplayType.BONE and self.bones[tree_name].index == dr.display_index:
                             d.references.append(DisplaySlotReference(DisplayType.BONE, display_index=bone.index))
                             is_add_display_reference = True
                             break
