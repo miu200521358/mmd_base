@@ -1097,6 +1097,9 @@ class PmxModel(BaseHashModel):
             elif "手捩" in bone.name:
                 self.bones[f"{direction}手首"].parent_index = bone.index
 
+        elif "肩P" in bone_name:
+            # 肩Pの場合、肩Cも追加する
+            self.insert_standard_bone(f"{bone_name[:2]}C", bone_matrixes)
         elif bone_name == "腰":
             # 腰の場合、腰キャンセルも追加する
             left_leg_bone = self.bones["左足"]
