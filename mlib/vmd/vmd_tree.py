@@ -1,4 +1,3 @@
-from typing import Iterator
 from mlib.base.math import MMatrix4x4, MVector3D
 
 
@@ -31,12 +30,18 @@ class VmdBoneFrameTree:
 
 class VmdBoneFrameTrees:
     __slots__ = (
+        "_iter_index",
         "_indexes",
+        "_iter_keys",
+        "_size",
         "data",
     )
 
     def __init__(self) -> None:
+        self._iter_index = -1
+        self._size = 0
         self._indexes: dict[tuple[int, int], tuple[int, str]] = {}
+        self._iter_keys: list[tuple[int, int]] = []
         self.data: dict[tuple[int, str], VmdBoneFrameTree] = {}
 
     def append(
@@ -63,9 +68,6 @@ class VmdBoneFrameTrees:
         self.data[(fno, bone_name)] = VmdBoneFrameTree(fno, bone_index, bone_name, global_matrix, local_matrix, position)
         self._indexes[(fno, bone_index)] = (fno, bone_name)
 
-    def __iter__(self) -> Iterator[VmdBoneFrameTree]:
-        return iter([self.data[k] for k in sorted(self.data.keys())])
-
     def __getitem__(self, key) -> VmdBoneFrameTree:
         return self.data[key]
 
@@ -75,3 +77,15 @@ class VmdBoneFrameTrees:
 
     def __len__(self) -> int:
         return len(self._indexes)
+
+    def __iter__(self):
+        self._iter_index = -1
+        self._iter_keys = list(self._indexes.keys())
+        self._size = len(self._indexes)
+        return self
+
+    def __next__(self) -> VmdBoneFrameTree:
+        self._iter_index += 1
+        if self._iter_index >= self._size:
+            raise StopIteration
+        return self.data[self._indexes[self._iter_keys[self._iter_index]]]
