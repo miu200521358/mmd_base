@@ -1,6 +1,6 @@
 import operator
 from functools import lru_cache
-from math import acos, atan2, cos, degrees, isclose, pi, radians, sin, sqrt
+from math import acos, atan2, cos, degrees, pi, radians, sin, sqrt
 from typing import Type, TypeVar, Union
 
 import numpy as np
