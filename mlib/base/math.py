@@ -1,6 +1,6 @@
 import operator
 from functools import lru_cache
-from math import acos, atan2, cos, degrees, pi, radians, sin, sqrt
+from math import acos, atan2, cos, degrees, isclose, pi, radians, sin, sqrt
 from typing import Type, TypeVar, Union
 
 import numpy as np
@@ -470,6 +470,9 @@ class MVector3D(MVector):
 
         # ローカルZ軸の方向ベクトル
         z_axis = np.array([0.0, 0.0, -1.0])
+        if np.isclose(z_axis, self.vector):
+            # 自身がほぼZ軸ベクトルの場合、別ベクトルを与える
+            z_axis = np.array([0.0, 1.0, 0.0])
 
         # ローカルY軸の方向ベクトル
         y_axis = np.cross(z_axis, x_axis)
