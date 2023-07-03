@@ -470,7 +470,7 @@ class MVector3D(MVector):
 
         # ローカルZ軸の方向ベクトル
         z_axis = np.array([0.0, 0.0, -1.0])
-        if np.isclose(z_axis, self.vector):
+        if np.isclose(z_axis, self.vector).all():
             # 自身がほぼZ軸ベクトルの場合、別ベクトルを与える
             z_axis = np.array([0.0, 1.0, 0.0])
 
