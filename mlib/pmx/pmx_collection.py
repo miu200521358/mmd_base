@@ -100,6 +100,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
         "is_bone_not_local_cancels",
         "local_axises",
         "parent_revert_matrixes",
+        "bone_link_indexes",
     )
 
     def __init__(self) -> None:
@@ -107,11 +108,13 @@ class Bones(BaseIndexNameDictModel[Bone]):
         self.is_bone_not_local_cancels: list[bool] = [False]
         self.local_axises: list[MVector3D] = [MVector3D()]
         self.parent_revert_matrixes: np.ndarray = np.full((1, 4, 4), np.eye(4))
+        self.bone_link_indexes: list[int] = []
 
     def setup(self) -> None:
         self.is_bone_not_local_cancels = [bone.is_not_local_cancel for bone in self.data.values()]
         self.local_axises = [bone.local_axis for bone in self.data.values()]
         self.parent_revert_matrixes = np.array([bone.parent_revert_matrix for bone in self.data.values()])
+        self.bone_link_indexes = [bidx for (_, bidx) in sorted([(bone.layer, bone.index) for bone in self.data.values()])]
 
     def writable(self) -> list[Bone]:
         """出力対象となるボーン一覧を取得する"""
