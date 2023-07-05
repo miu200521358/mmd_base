@@ -1107,7 +1107,7 @@ class PmxModel(BaseHashModel):
             # 腰の場合、腰キャンセルも追加する
             left_leg_bone = self.bones["左足"]
             waist_cancel_left_parent_bone = [
-                self.bones[parent_name] for parent_name in BoneSettings.LEFT_WRIST_CANCEL.value.parents if parent_name in self.bones
+                self.bones[parent_name] for parent_name in BoneSettings.LEFT_WAIST_CANCEL.value.parents if parent_name in self.bones
             ][0]
             # 親のひとつ下
             waist_cancel_left_bone = Bone(name="腰キャンセル左", index=waist_cancel_left_parent_bone.index + 1)
@@ -1116,7 +1116,7 @@ class PmxModel(BaseHashModel):
 
             waist_cancel_left_bone.position = bone_matrixes[0, left_leg_bone.name].position.copy()
             waist_cancel_left_bone.tail_position = MVector3D()
-            waist_cancel_left_bone.bone_flg = BoneSettings.LEFT_WRIST_CANCEL.value.flag
+            waist_cancel_left_bone.bone_flg = BoneSettings.LEFT_WAIST_CANCEL.value.flag
             # 変形階層
             waist_cancel_left_bone.layer = parent_bone.layer
             # 付与親でキャンセル
@@ -1127,7 +1127,7 @@ class PmxModel(BaseHashModel):
 
             right_leg_bone = self.bones["右足"]
             waist_cancel_right_parent_bone = [
-                self.bones[parent_name] for parent_name in BoneSettings.RIGHT_WRIST_CANCEL.value.parents if parent_name in self.bones
+                self.bones[parent_name] for parent_name in BoneSettings.RIGHT_WAIST_CANCEL.value.parents if parent_name in self.bones
             ][0]
             # 親のひとつ下
             waist_cancel_right_bone = Bone(name="腰キャンセル右", index=waist_cancel_right_parent_bone.index + 1)
@@ -1136,7 +1136,7 @@ class PmxModel(BaseHashModel):
 
             waist_cancel_right_bone.position = bone_matrixes[0, right_leg_bone.name].position.copy()
             waist_cancel_right_bone.tail_position = MVector3D()
-            waist_cancel_right_bone.bone_flg = BoneSettings.RIGHT_WRIST_CANCEL.value.flag
+            waist_cancel_right_bone.bone_flg = BoneSettings.RIGHT_WAIST_CANCEL.value.flag
             # 変形階層
             waist_cancel_right_bone.layer = parent_bone.layer
             # 付与親でキャンセル
