@@ -471,7 +471,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE,
         axis=MVector3D(-1, 0, 0),
     )
-    RIGHT_WRIST_CANCEL = BoneSetting(
+    RIGHT_WAIST_CANCEL = BoneSetting(
         name="腰キャンセル右",
         parents=("足中心", "下半身"),
         relatives=MVector3D(0, -1, 0),
@@ -853,7 +853,7 @@ class BoneSettings(Enum):
         flag=BoneFlg.CAN_ROTATE,
         axis=MVector3D(1, 0, 0),
     )
-    LEFT_WRIST_CANCEL = BoneSetting(
+    LEFT_WAIST_CANCEL = BoneSetting(
         name="腰キャンセル左",
         parents=("足中心", "下半身"),
         relatives=MVector3D(0, -1, 0),
