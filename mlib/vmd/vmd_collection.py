@@ -390,7 +390,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return poses, qqs, scales, local_poses, local_qqs, local_scales
 
-    def get_position(self, bone: Bone, model: PmxModel, fno: int) -> np.ndarray:
+    def get_position(self, bone: Bone, model: PmxModel, fno: int, loop: int = 0) -> np.ndarray:
         """
         該当キーフレにおけるボーンの移動位置
         """
@@ -399,22 +399,22 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         mat[:3, 3] = self[bone.name][fno].position.vector
 
         # 付与親を加味して返す
-        return mat @ self.get_effect_position(bone, model, fno)
+        return mat @ self.get_effect_position(bone, model, fno, loop=loop + 1)
 
-    def get_effect_position(self, bone: Bone, model: PmxModel, fno: int) -> np.ndarray:
+    def get_effect_position(self, bone: Bone, model: PmxModel, fno: int, loop: int = 0) -> np.ndarray:
         """
         付与親を加味した移動を求める
         """
         if not (bone.is_external_translation and bone.effect_index in model.bones):
             return np.eye(4)
 
-        if 0 == bone.effect_factor:
+        if 0 == bone.effect_factor or 20 < loop:
             # 付与率が0の場合、常に0になる
             return np.eye(4)
 
         # 付与親の移動量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_pos_mat = self.get_position(effect_bone, model, fno)
+        effect_pos_mat = self.get_position(effect_bone, model, fno, loop=loop + 1)
         # 付与率を加味する
         effect_pos_mat[:3, 3] *= bone.effect_factor
 
@@ -427,6 +427,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         is_parent_bone_not_local_cancels: Iterable[bool],
         parent_local_poses: Iterable[MVector3D],
         parent_local_axises: Iterable[MVector3D],
+        loop: int = 0,
     ) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル位置
@@ -441,6 +442,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             tuple(is_parent_bone_not_local_cancels),
             tuple(parent_local_poses),
             tuple(parent_local_axises),
+            loop=loop + 1,
         )
 
     def calc_ik_rotations(self, fno: int, model: PmxModel, target_bone_names: Iterable[str]):
@@ -490,7 +492,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for relative_bone_name in ik_relative_bone_names:
                 self.get_rotation(fno, bone, model, append_ik=True)
 
-    def get_scale(self, bone: Bone, model: PmxModel, fno: int) -> np.ndarray:
+    def get_scale(self, bone: Bone, model: PmxModel, fno: int, loop: int = 0) -> np.ndarray:
         """
         該当キーフレにおけるボーンの縮尺
         """
@@ -499,22 +501,22 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         scale_mat[:3, :3] += np.diag(self[bone.name][fno].scale.vector)
 
         # 付与親を加味して返す
-        return self.get_effect_scale(scale_mat, bone, model, fno)
+        return self.get_effect_scale(scale_mat, bone, model, fno, loop=loop + 1)
 
-    def get_effect_scale(self, scale_mat: np.ndarray, bone: Bone, model: PmxModel, fno: int) -> np.ndarray:
+    def get_effect_scale(self, scale_mat: np.ndarray, bone: Bone, model: PmxModel, fno: int, loop: int = 0) -> np.ndarray:
         """
         付与親を加味した縮尺を求める
         """
         if not (bone.is_external_translation and bone.effect_index in model.bones):
             return scale_mat
 
-        if 0 == bone.effect_factor:
+        if 0 == bone.effect_factor or 20 < loop:
             # 付与率が0の場合、常に1になる
             return np.eye(4)
 
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_scale_mat = self.get_scale(effect_bone, model, fno)
+        effect_scale_mat = self.get_scale(effect_bone, model, fno, loop=loop + 1)
 
         return scale_mat @ effect_scale_mat
 
@@ -547,7 +549,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone: Bone,
         model: PmxModel,
         append_ik: bool = False,
-        cnt: int = 0,
+        loop: int = 0,
     ) -> MQuaternion:
         """
         該当キーフレにおけるボーンの相対位置
@@ -568,7 +570,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         ik_qq = self.get_ik_rotation(bone, fno, fk_qq, model) if append_ik else fk_qq
 
         # 付与親を加味した回転
-        effect_qq = self.get_effect_rotation(fno, bone, ik_qq, model, cnt=cnt + 1)
+        effect_qq = self.get_effect_rotation(fno, bone, ik_qq, model, loop=loop + 1)
 
         return effect_qq
 
@@ -578,7 +580,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone: Bone,
         qq: MQuaternion,
         model: PmxModel,
-        cnt: int = 0,
+        loop: int = 0,
     ) -> MQuaternion:
         """
         付与親を加味した回転を求める
@@ -586,14 +588,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         if not (bone.is_external_rotation and bone.effect_index in model.bones):
             return qq
 
-        if 0 == bone.effect_factor or cnt > 20:
+        if 0 == bone.effect_factor or loop > 20:
             # 付与率が0の場合、常に0になる
             # MMDエンジン対策で無限ループを避ける
             return MQuaternion()
 
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_qq = self.get_rotation(fno, effect_bone, model, cnt=cnt + 1)
+        effect_qq = self.get_rotation(fno, effect_bone, model, loop=loop + 1)
         if 0 < bone.effect_factor:
             # 正の付与親
             qq *= effect_qq.multiply_factor(bone.effect_factor)
