@@ -547,6 +547,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone: Bone,
         model: PmxModel,
         append_ik: bool = False,
+        cnt: int = 0,
     ) -> MQuaternion:
         """
         該当キーフレにおけるボーンの相対位置
@@ -567,7 +568,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         ik_qq = self.get_ik_rotation(bone, fno, fk_qq, model) if append_ik else fk_qq
 
         # 付与親を加味した回転
-        effect_qq = self.get_effect_rotation(fno, bone, ik_qq, model)
+        effect_qq = self.get_effect_rotation(fno, bone, ik_qq, model, cnt=cnt + 1)
 
         return effect_qq
 
@@ -577,6 +578,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone: Bone,
         qq: MQuaternion,
         model: PmxModel,
+        cnt: int = 0,
     ) -> MQuaternion:
         """
         付与親を加味した回転を求める
@@ -584,13 +586,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         if not (bone.is_external_rotation and bone.effect_index in model.bones):
             return qq
 
-        if 0 == bone.effect_factor:
+        if 0 == bone.effect_factor or cnt > 20:
             # 付与率が0の場合、常に0になる
+            # MMDエンジン対策で無限ループを避ける
             return MQuaternion()
 
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_qq = self.get_rotation(fno, effect_bone, model)
+        effect_qq = self.get_rotation(fno, effect_bone, model, cnt=cnt + 1)
         if 0 < bone.effect_factor:
             # 正の付与親
             qq *= effect_qq.multiply_factor(bone.effect_factor)
