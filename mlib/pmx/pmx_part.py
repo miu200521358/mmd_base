@@ -1000,7 +1000,7 @@ class Bone(BaseIndexNameModel):
     @property
     def is_standard_extend(self) -> bool:
         """準標準の拡張ボーンであるか"""
-        if f"{self.name}先" in STANDARD_BONE_NAMES:
+        if f"{self.name}先" in STANDARD_BONE_NAMES or (self.name[:-1] in STANDARD_BONE_NAMES and self.name[-1] in ("先", "端")):
             return True
         return False
 
