@@ -458,6 +458,7 @@ class PmxModel(BaseHashModel):
         self.meshes: Optional[Meshes] = None
         self.vertices_by_bones: dict[int, list[int]] = {}
         self.vertices_by_materials: dict[int, list[int]] = {}
+        self.faces_by_materials: dict[int, list[int]] = {}
 
     @property
     def name(self) -> str:
@@ -511,11 +512,14 @@ class PmxModel(BaseHashModel):
         """材質別頂点INDEXリストの更新"""
         prev_face_count = 0
         self.vertices_by_materials = {}
+        self.faces_by_materials = {}
         for material in self.materials:
             vertices: list[int] = []
+            self.faces_by_materials[material.index] = []
             face_count = material.vertices_count // 3
             for face_index in range(prev_face_count, prev_face_count + face_count):
                 vertices.extend(self.faces[face_index].vertices)
+                self.faces_by_materials[material.index].append(face_index)
             self.vertices_by_materials[material.index] = list(set(vertices))
             prev_face_count += face_count
 

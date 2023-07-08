@@ -615,7 +615,7 @@ class MVectorDict:
         """
         return v.__class__(*np.array(self.values())[np.argmin(self.distances(v))])
 
-    def nearest_key(self, v: MVectorT) -> np.ndarray:
+    def nearest_key(self, v: MVectorT) -> int:
         """
         指定ベクトル直近キー
 
@@ -628,7 +628,7 @@ class MVectorDict:
         -------
         直近キー
         """
-        return np.array(self.keys())[np.argmin(self.distances(v))]
+        return int(np.array(self.keys())[np.argmin(self.distances(v))])
 
     def farthest_distance(self, v: MVectorT) -> float:
         """
