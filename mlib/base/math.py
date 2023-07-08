@@ -677,6 +677,22 @@ class MVectorDict:
         """
         return np.array(self.keys())[np.argmax(self.distances(v))]
 
+    def mean_value(self) -> np.ndarray:
+        """平均値"""
+        return np.mean(self.values(), axis=0)
+
+    def max_value(self) -> np.ndarray:
+        """最大値"""
+        return np.max(self.values(), axis=0)
+
+    def min_value(self) -> np.ndarray:
+        """最小値"""
+        return np.min(self.values(), axis=0)
+
+    def median_value(self) -> np.ndarray:
+        """中央値"""
+        return np.median(self.values(), axis=0)
+
 
 @lru_cache(maxsize=None)
 def cache_slerp_evaluate(q1: quaternion, q2: quaternion, t: float) -> quaternion:
