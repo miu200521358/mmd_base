@@ -1216,6 +1216,12 @@ class PmxModel(BaseHashModel):
             self.separate_weights("左手捩1", "左手捩2", 0.5, 0.5, ("左ひじ", "左手捩", "左手捩1"))
             self.separate_weights("左手捩2", "左手捩3", 0.5, 0.5, ("左ひじ", "左手捩", "左手捩1", "左手捩2"))
             self.separate_weights("左手捩3", "左手首", 0.5, 0.0, ("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3"))
+        if "左肩" in bone_names and self.bones.exists(("上半身", "上半身2", "左肩")):
+            self.separate_weights("上半身", "左肩", 0.4, 0.4, ("上半身",))
+            self.separate_weights("上半身2", "左肩", 0.4, 0.4, ("上半身2",))
+        # if "右肩" in bone_names and self.bones.exists(("上半身", "上半身2", "右肩")):
+        #     self.separate_weights("上半身", "右肩", 0.4, 0.4, ("上半身",))
+        #     self.separate_weights("上半身2", "右肩", 0.4, 0.4, ("上半身2",))
 
         if True in [self.bones[bone_name].is_leg_d for bone_name in bone_names]:
             # 足Dはそのまま置き換える
