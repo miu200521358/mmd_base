@@ -194,6 +194,8 @@ class Mesh(BaseIndexModel):
         material_morphs: ShaderMaterial,
         shader: MShader,
         ibo: IBO,
+        is_show_bone_weight: bool,
+        show_bone_indexes: list[int],
     ):
         if DrawFlg.DOUBLE_SIDED_DRAWING in self.material.draw_flg:
             # 両面描画
@@ -242,6 +244,10 @@ class Mesh(BaseIndexModel):
             if self.sphere_texture.texture_type:
                 gl.glUniform1i(shader.sphere_uniform[ProgramType.MODEL.value], self.sphere_texture.texture_type.value)
             gl.glUniform4f(shader.sphere_factor_uniform[ProgramType.MODEL.value], *material_morphs.sphere_texture_factor)
+
+        # ウェイト描写
+        gl.glUniform1i(shader.is_show_bone_weight_uniform[ProgramType.MODEL.value], int(is_show_bone_weight))
+        gl.glUniform1iv(shader.show_bone_indexes_uniform[ProgramType.MODEL.value], len(show_bone_indexes), show_bone_indexes)
 
         try:
             gl.glDrawElements(

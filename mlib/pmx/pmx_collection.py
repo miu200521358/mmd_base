@@ -563,10 +563,21 @@ class PmxModel(BaseHashModel):
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
         is_alpha: bool,
+        is_show_bone_weight: bool,
+        show_bone_indexes: list[int],
     ) -> None:
         if not self.for_draw or not self.meshes:
             return
-        self.meshes.draw(bone_matrixes, vertex_morph_poses, uv_morph_poses, uv1_morph_poses, material_morphs, is_alpha)
+        self.meshes.draw(
+            bone_matrixes,
+            vertex_morph_poses,
+            uv_morph_poses,
+            uv1_morph_poses,
+            material_morphs,
+            is_alpha,
+            is_show_bone_weight,
+            show_bone_indexes,
+        )
 
     def draw_bone(
         self,
@@ -1658,6 +1669,8 @@ class Meshes(BaseIndexDictModel[Mesh]):
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
         is_alpha: bool,
+        is_show_bone_weight: bool,
+        show_bone_indexes: list[int],
     ):
         # 隠面消去
         # https://learnopengl.com/Advanced-OpenGL/Depth-testing
@@ -1674,6 +1687,9 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.vbo_vertices.data[
             :, self.morph_uv1_comps["offset"] : (self.morph_uv1_comps["offset"] + self.morph_uv1_comps["size"])
         ] = uv1_morph_poses
+
+        # 必ず40個渡すようにする（ただし該当しないボーンINDEXにしておく）
+        limited_show_bone_indexes = (show_bone_indexes + [-2 for _ in range(40)])[:40]
 
         for mesh in self:
             self.vao.bind()
@@ -1712,7 +1728,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
             # モデル描画
             self.shader.use(ProgramType.MODEL)
-            mesh.draw_model(bone_matrixes, material_morph, self.shader, self.ibo_faces)
+            mesh.draw_model(bone_matrixes, material_morph, self.shader, self.ibo_faces, is_show_bone_weight, limited_show_bone_indexes)
             self.shader.unuse()
 
             if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and 0 < material_morph.material.diffuse.w:

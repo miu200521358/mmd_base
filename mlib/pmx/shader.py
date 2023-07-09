@@ -162,6 +162,8 @@ class MShader:
         self.sphere_uniform: dict[int, Any] = {}
         self.sphere_factor_uniform: dict[int, Any] = {}
         self.bone_count_uniform: dict[int, Any] = {}
+        self.is_show_bone_weight_uniform: dict[int, Any] = {}
+        self.show_bone_indexes_uniform: dict[int, Any] = {}
 
         # モデル描画シェーダー ------------------
         self.model_program = gl.glCreateProgram()
@@ -336,6 +338,10 @@ class MShader:
             self.sphere_mode_uniform[program_type.value] = gl.glGetUniformLocation(program, "sphereMode")
             self.sphere_uniform[program_type.value] = gl.glGetUniformLocation(program, "sphereSampler")
             self.sphere_factor_uniform[program_type.value] = gl.glGetUniformLocation(program, "sphereFactor")
+
+            # ウェイトの描写
+            self.is_show_bone_weight_uniform[program_type.value] = gl.glGetUniformLocation(program, "isShowBoneWeight")
+            self.show_bone_indexes_uniform[program_type.value] = gl.glGetUniformLocation(program, "showBoneIndexes")
 
     def update_camera(self) -> None:
         # 視野領域の決定

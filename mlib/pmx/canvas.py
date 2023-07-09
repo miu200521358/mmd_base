@@ -76,6 +76,7 @@ class ModelSet:
 class MotionSet:
     def __init__(self, model: PmxModel, motion: VmdMotion, fno: int) -> None:
         self.selected_bone_indexes: list[int] = []
+        self.is_show_bone_weight: bool = False
 
         if motion is not None:
             (
@@ -234,6 +235,8 @@ class PmxCanvas(glcanvas.GLCanvas):
                     animation.uv1_morph_poses,
                     animation.material_morphs,
                     False,
+                    animation.is_show_bone_weight,
+                    animation.selected_bone_indexes,
                 )
         # その後透過度設定ありのメッシュを描画する
         for model_set, animation in zip(self.model_sets, self.animations):
@@ -247,6 +250,8 @@ class PmxCanvas(glcanvas.GLCanvas):
                     animation.uv1_morph_poses,
                     animation.material_morphs,
                     True,
+                    animation.is_show_bone_weight,
+                    animation.selected_bone_indexes,
                 )
         self.shader.msaa.unbind()
 
