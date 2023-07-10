@@ -335,6 +335,7 @@ class Texture(BaseIndexNameModel):
         "texture_id",
         "texture_idx",
         "valid",
+        "path",
     )
 
     def __init__(self, index: int = -1, name: str = ""):
@@ -345,6 +346,7 @@ class Texture(BaseIndexNameModel):
         self.texture_type: Optional[TextureType] = None
         self.texture_idx = None
         self.valid = True
+        self.path = ""
 
     def delete_draw(self) -> None:
         if not self.for_draw or not self.texture_id:
@@ -374,6 +376,7 @@ class Texture(BaseIndexNameModel):
         # テクスチャがちゃんとある場合のみ初期化処理実施
         self.valid = os.path.exists(tex_path) & os.path.isfile(tex_path)
         if self.valid:
+            self.path = tex_path
             try:
                 self.image = Image.open(tex_path).convert("RGBA")
                 self.image = ImageOps.flip(self.image)
