@@ -47,8 +47,9 @@ class PmxWriter(BaseModel):
 
     def save(self) -> None:
         if not self.include_system:
-            for bone_name in ("足中心", "首根元"):
-                self.model.remove_bone(bone_name)
+            for bone in self.model.bones:
+                if bone.is_system:
+                    self.model.remove_bone(bone.name)
 
         with open(self.output_path, "wb") as fout:
             target_bones = [b for b in self.model.bones if b.index >= 0] if self.include_system else self.model.bones.writable()

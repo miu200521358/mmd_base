@@ -609,14 +609,34 @@ class PmxModel(BaseHashModel):
                 self.bones["首根元"].position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
             else:
                 neck_root_bone = Bone(name="首根元")
+                neck_root_bone.is_system = True
                 parent_bone_name = "上半身3" if "上半身3" in self.bones else "上半身2" if "上半身2" in self.bones else "上半身"
                 neck_root_bone.parent_index = self.bones[parent_bone_name].index
                 neck_root_bone.index = self.bones[parent_bone_name].index + 1
                 neck_root_bone.position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
                 self.insert_bone(neck_root_bone)
-                for replace_bone_name in ("右肩P", "左肩P", "右肩", "左肩"):
+
+                # 肩根元を追加
+                right_shoulder_root = Bone(name="右肩根元", index=neck_root_bone.index + 1)
+                right_shoulder_root.parent_index = neck_root_bone.index
+                right_shoulder_root.is_system = True
+                self.insert_bone(right_shoulder_root)
+
+                for replace_bone_name in ("右肩P", "右肩"):
                     if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones[parent_bone_name].index:
-                        self.bones[replace_bone_name].parent_index = self.bones["首根元"].index
+                        self.bones[replace_bone_name].parent_index = self.bones["右肩根元"].index
+
+                left_shoulder_root = Bone(name="左肩根元", index=neck_root_bone.index + 1)
+                left_shoulder_root.parent_index = neck_root_bone.index
+                left_shoulder_root.is_system = True
+                self.insert_bone(left_shoulder_root)
+
+                for replace_bone_name in ("左肩P", "左肩"):
+                    if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones[parent_bone_name].index:
+                        self.bones[replace_bone_name].parent_index = self.bones["左肩根元"].index
+
+            self.bones["左肩根元"].position = self.bones["首根元"].position.copy()
+            self.bones["右肩根元"].position = self.bones["首根元"].position.copy()
 
         if "右足" in self.bones and "左足" in self.bones and "下半身" in self.bones:
             if "足中心" in self.bones:
