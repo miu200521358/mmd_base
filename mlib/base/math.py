@@ -551,9 +551,20 @@ class MVector4D(MVector):
     def xy(self) -> "MVector2D":
         return MVector2D(*self.vector[:2])  # type: ignore
 
+    @xy.setter
+    def xy(self, v: "MVector2D") -> None:
+        self.vector[0] = v.x
+        self.vector[1] = v.y
+
     @property
     def xyz(self) -> "MVector3D":
         return MVector3D(*self.vector[:3])  # type: ignore
+
+    @xyz.setter
+    def xyz(self, v: "MVector3D") -> None:
+        self.vector[0] = v.x
+        self.vector[1] = v.y
+        self.vector[2] = v.z
 
 
 class MVectorDict:
