@@ -203,7 +203,7 @@ class BoneSettings(Enum):
         name="右肩根元",
         parents=("首根元", "上半身3", "上半身2", "上半身"),
         relatives=MVector3D(0, 1, 0),
-        tails=("右腕",),
+        tails=("右肩",),
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(-1, 0, 0),
     )
@@ -593,7 +593,7 @@ class BoneSettings(Enum):
         name="左肩根元",
         parents=("首根元", "上半身3", "上半身2", "上半身"),
         relatives=MVector3D(0, 1, 0),
-        tails=("左腕",),
+        tails=("左肩",),
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
         axis=MVector3D(-1, 0, 0),
     )
