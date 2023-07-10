@@ -1209,30 +1209,22 @@ class PmxModel(BaseHashModel):
             self.separate_weights("右手首", "右親指０", "右親指１", 0.1, 0.0, ("右手首", "右親指１"), is_thumb=True)
         if "左親指０" in bone_names and self.bones.exists(("左手首", "左親指０", "左親指１")):
             self.separate_weights("左手首", "左親指０", "左親指１", 0.1, 0.0, ("左手首", "左親指１"), is_thumb=True)
-        if "右腕捩" in bone_names and self.bones.exists(("右腕", "右腕捩", "右腕捩1", "右腕捩2", "右腕捩3", "右手捩")):
-            self.separate_weights("右腕", "右腕捩", "右ひじ", 0.5, 0.0, ("右腕",))
-            self.separate_weights("右腕", "右腕捩1", "右ひじ", 0.5, 0.5, ("右腕", "右腕捩"))
-            self.separate_weights("右腕捩1", "右腕捩2", "右ひじ", 0.5, 0.5, ("右腕", "右腕捩", "右腕捩1"))
-            self.separate_weights("右腕捩2", "右腕捩3", "右ひじ", 0.5, 0.5, ("右腕", "右腕捩", "右腕捩1", "右腕捩2"))
-            self.separate_weights("右腕捩3", "右手捩", "右ひじ", 0.5, 0.0, ("右腕", "右腕捩", "右腕捩1", "右腕捩2", "右腕捩3"))
-        if "左腕捩" in bone_names and self.bones.exists(("左腕", "左腕捩", "左腕捩1", "左腕捩2", "左腕捩3", "左手捩")):
-            self.separate_weights("左腕", "左腕捩", "左ひじ", 0.5, 0.0, ("左腕",))
-            self.separate_weights("左腕", "左腕捩1", "左ひじ", 0.5, 0.5, ("左腕", "左腕捩"))
-            self.separate_weights("左腕捩1", "左腕捩2", "左ひじ", 0.5, 0.5, ("左腕", "左腕捩", "左腕捩1"))
-            self.separate_weights("左腕捩2", "左腕捩3", "左ひじ", 0.5, 0.5, ("左腕", "左腕捩", "左腕捩1", "左腕捩2"))
-            self.separate_weights("左腕捩3", "左手捩", "左ひじ", 0.5, 0.0, ("左腕", "左腕捩", "左腕捩1", "左腕捩2", "左腕捩3"))
-        if "右手捩" in bone_names and self.bones.exists(("右ひじ", "右手捩", "右手捩1", "右手捩2", "右手捩3", "右手首")):
-            self.separate_weights("右ひじ", "右手捩", "右手首", 0.5, 0.0, ("右ひじ",))
-            self.separate_weights("右ひじ", "右手捩1", "右手首", 0.5, 0.5, ("右ひじ", "右手捩", "右手捩1"))
-            self.separate_weights("右手捩1", "右手捩2", "右手首", 0.5, 0.5, ("右ひじ", "右手捩", "右手捩1"))
-            self.separate_weights("右手捩2", "右手捩3", "右手首", 0.5, 0.5, ("右ひじ", "右手捩", "右手捩1", "右手捩2"))
-            self.separate_weights("右手捩3", "右手首", "右手首", 0.5, 0.0, ("右ひじ", "右手捩", "右手捩1", "右手捩2", "右手捩3"))
-        if "左手捩" in bone_names and self.bones.exists(("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3", "左手首")):
-            self.separate_weights("左ひじ", "左手捩", "左手首", 0.5, 0.0, ("左ひじ",))
-            self.separate_weights("左ひじ", "左手捩1", "左手首", 0.5, 0.5, ("左ひじ", "左手捩", "左手捩1"))
-            self.separate_weights("左手捩1", "左手捩2", "左手首", 0.5, 0.5, ("左ひじ", "左手捩", "左手捩1"))
-            self.separate_weights("左手捩2", "左手捩3", "左手首", 0.5, 0.5, ("左ひじ", "左手捩", "左手捩1", "左手捩2"))
-            self.separate_weights("左手捩3", "左手首", "左手首", 0.5, 0.0, ("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3"))
+        if "右腕捩" in bone_names and self.bones.exists(("右腕", "右腕捩", "右腕捩1", "右腕捩2", "右腕捩3")):
+            self.separate_weights("右腕", "右腕捩1", "右腕捩2", 1.2, 1.0, ("右腕", "右腕捩", "右腕捩1", "右腕捩2", "右腕捩3"), is_twist=True)
+            self.separate_weights("右腕捩1", "右腕捩2", "右腕捩3", 1.2, 1.0, ("右腕", "右腕捩", "右腕捩1", "右腕捩2", "右腕捩3"), is_twist=True)
+            self.separate_weights("右腕捩2", "右腕捩3", "右腕捩", 1.2, 1.0, ("右腕", "右腕捩", "右腕捩1", "右腕捩2", "右腕捩3"), is_twist=True)
+        if "左腕捩" in bone_names and self.bones.exists(("左腕", "左腕捩", "左腕捩1", "左腕捩2", "左腕捩3")):
+            self.separate_weights("左腕", "左腕捩1", "左腕捩2", 1.2, 1.0, ("左腕", "左腕捩", "左腕捩1", "左腕捩2", "左腕捩3"), is_twist=True)
+            self.separate_weights("左腕捩1", "左腕捩2", "左腕捩3", 1.2, 1.0, ("左腕", "左腕捩", "左腕捩1", "左腕捩2", "左腕捩3"), is_twist=True)
+            self.separate_weights("左腕捩2", "左腕捩3", "左腕捩", 1.2, 1.0, ("左腕", "左腕捩", "左腕捩1", "左腕捩2", "左腕捩3"), is_twist=True)
+        if "右手捩" in bone_names and self.bones.exists(("右手", "右手捩", "右手捩1", "右手捩2", "右手捩3")):
+            self.separate_weights("右ひじ", "右手捩1", "右手捩2", 1.2, 1.0, ("右ひじ", "右手捩", "右手捩1", "右手捩2", "右手捩3"), is_twist=True)
+            self.separate_weights("右手捩1", "右手捩2", "右手捩3", 1.2, 1.0, ("右ひじ", "右手捩", "右手捩1", "右手捩2", "右手捩3"), is_twist=True)
+            self.separate_weights("右手捩2", "右手捩3", "右手捩", 1.2, 1.0, ("右ひじ", "右手捩", "右手捩1", "右手捩2", "右手捩3"), is_twist=True)
+        if "左手捩" in bone_names and self.bones.exists(("左手", "左手捩", "左手捩1", "左手捩2", "左手捩3")):
+            self.separate_weights("左ひじ", "左手捩1", "左手捩2", 1.2, 1.0, ("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3"), is_twist=True)
+            self.separate_weights("左手捩1", "左手捩2", "左手捩3", 1.2, 1.0, ("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3"), is_twist=True)
+            self.separate_weights("左手捩2", "左手捩3", "左手捩", 1.2, 1.0, ("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3"), is_twist=True)
 
         if True in [self.bones[bone_name].is_leg_d for bone_name in bone_names]:
             # 足Dはそのまま置き換える
@@ -1261,6 +1253,7 @@ class PmxModel(BaseHashModel):
         to_tail_pos: MVector3D = MVector3D(),
         is_thumb: bool = False,
         is_shoulder: bool = False,
+        is_twist: bool = False,
     ):
         """ウェイト置換"""
         from_bone = self.bones[from_name]
@@ -1327,7 +1320,7 @@ class PmxModel(BaseHashModel):
         for vertex_index in vertex_indexes:
             v = self.vertices[vertex_index]
             v.deform.normalize(align=True)
-            to_separate_ratio = 0
+            to_separate_ratio = 0.0
 
             # 頂点のローカル位置
             local_vpos = mat.inverse() * v.position
@@ -1372,6 +1365,25 @@ class PmxModel(BaseHashModel):
                 if 0 < local_vpos.x:
                     # 腕側の場合のみ分割先に割り当てる
                     to_separate_ratio = 1 - ratio
+            elif is_twist:
+                if 0 > local_vpos.x:
+                    ratio = 1 - (local_vpos.x / (local_from_pos.x * from_ratio)) if from_ratio else 1
+                    if 1 <= ratio:
+                        continue
+                else:
+                    if local_vpos.x <= local_to_pos.x * from_ratio * -1:
+                        # FROM寄りで、頂点のX位置が捩りから遠い場合、スルー
+                        continue
+
+                    if local_vpos.x >= local_to_pos.x * to_ratio:
+                        # TO寄りで、頂点のX位置が捩りから遠い場合、TOに割り当ててスルー
+                        v.deform.indexes = np.where(bone_matches, to_bone.index, v.deform.indexes)
+                        continue
+
+                    ratio = 1 - (abs(local_vpos.x) / local_to_pos.x)
+                    if 0 < local_vpos.x:
+                        # 腕側の場合のみ分割先に割り当てる
+                        to_separate_ratio = 1 - ratio
             else:
                 if 0 > local_vpos.x:
                     ratio = 1 - (local_vpos.x / (local_from_pos.x * from_ratio)) if from_ratio else 1
