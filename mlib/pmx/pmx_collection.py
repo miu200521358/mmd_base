@@ -622,18 +622,18 @@ class PmxModel(BaseHashModel):
                 right_shoulder_root.is_system = True
                 self.insert_bone(right_shoulder_root)
 
-                for replace_bone_name in ("右肩P", "右肩"):
-                    if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones[parent_bone_name].index:
-                        self.bones[replace_bone_name].parent_index = self.bones["右肩根元"].index
-
                 left_shoulder_root = Bone(name="左肩根元", index=neck_root_bone.index + 1)
                 left_shoulder_root.parent_index = neck_root_bone.index
                 left_shoulder_root.is_system = True
                 self.insert_bone(left_shoulder_root)
 
-                for replace_bone_name in ("左肩P", "左肩"):
-                    if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones[parent_bone_name].index:
-                        self.bones[replace_bone_name].parent_index = self.bones["左肩根元"].index
+                # 腕系で左右に分かれてるのは親を肩根元に置き換える
+                for bone in self.bones:
+                    if bone.parent_index == neck_root_bone.index:
+                        if "右" in bone.name:
+                            bone.parent_index = self.bones["右肩根元"].index
+                        elif "左" in bone.name:
+                            bone.parent_index = self.bones["左肩根元"].index
 
             self.bones["左肩根元"].position = self.bones["首根元"].position.copy()
             self.bones["右肩根元"].position = self.bones["首根元"].position.copy()
