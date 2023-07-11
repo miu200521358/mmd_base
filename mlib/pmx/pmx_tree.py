@@ -94,6 +94,21 @@ class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
 
         return False
 
+    def has_standard_child(self, name: str) -> bool:
+        """準標準の子どもをもつボーンであるか否か"""
+        # チェック対象ボーンが含まれるボーンツリー
+        if name in STANDARD_BONE_NAMES:
+            return False
+
+        for bone_tree in [bt for bt in self.data.values() if name in bt.names and name != bt.last_name]:
+            bone_find_index = [i for i, b in enumerate(bone_tree) if b.name == name][0]
+            # 子系統に準標準ボーンが含まれている場合、TRUE
+            for child_name in bone_tree.names[bone_find_index + 1 :]:
+                if child_name in STANDARD_BONE_NAMES:
+                    return True
+
+        return False
+
     def is_standard_tail(self, name: str) -> bool:
         """準標準までのボーンツリーに含まれるボーンの表示先であるか否か"""
         if name in STANDARD_BONE_NAMES:
