@@ -635,7 +635,7 @@ class PmxModel(BaseHashModel):
 
                 # 腕系で左右に分かれてるのは親を肩根元に置き換える
                 for bone in self.bones:
-                    if bone.parent_index == neck_root_bone.index:
+                    if bone.parent_index == neck_root_bone.index and "肩根元" not in bone.name:
                         if "右" in bone.name:
                             bone.parent_index = self.bones["右肩根元"].index
                         elif "左" in bone.name:
