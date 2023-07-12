@@ -30,7 +30,7 @@ uniform int sphereMode;
 uniform vec3 lightDirection;
 
 uniform int isShowBoneWeight;
-uniform int showBoneIndexes[40];
+uniform int showBoneIndexes[50];
 
 out float alpha;
 out vec4 vertexColor;
@@ -42,7 +42,7 @@ out vec3 eye;
 out float totalBoneWeight;
 
 bool containBone(int boneIndex) {
-    for (int i = 0; i < 40; i++) {
+    for (int i = 0; i < 50; i++) {
         if (showBoneIndexes[i] == boneIndex) {
             return true;
         }

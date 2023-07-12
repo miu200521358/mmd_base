@@ -1724,8 +1724,8 @@ class Meshes(BaseIndexDictModel[Mesh]):
             :, self.morph_uv1_comps["offset"] : (self.morph_uv1_comps["offset"] + self.morph_uv1_comps["size"])
         ] = uv1_morph_poses
 
-        # 必ず40個渡すようにする（ただし該当しないボーンINDEXにしておく）
-        limited_show_bone_indexes = (show_bone_indexes + [-2 for _ in range(40)])[:40]
+        # 必ず50個渡すようにする（ただし該当しないボーンINDEXにしておく）
+        limited_show_bone_indexes = (show_bone_indexes + [-2 for _ in range(50)])[:50]
 
         for mesh in self:
             self.vao.bind()
