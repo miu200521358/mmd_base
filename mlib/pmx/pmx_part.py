@@ -5,7 +5,7 @@ from typing import Optional, Union
 
 import numpy as np
 import OpenGL.GL as gl
-from PIL import Image
+from PIL import Image, ImageOps
 
 from mlib.base.base import BaseModel
 from mlib.base.exception import MViewerException
@@ -379,7 +379,7 @@ class Texture(BaseIndexNameModel):
             self.path = tex_path
             try:
                 self.image = Image.open(tex_path).convert("RGBA")
-                # self.image = ImageOps.flip(self.image)
+                self.image = ImageOps.flip(self.image)
             except:
                 self.valid = False
 
