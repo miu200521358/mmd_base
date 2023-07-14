@@ -138,17 +138,21 @@ def validate_save_file(path: str, title: str) -> bool:
             # ディレクトリが無い場合、一旦作る
             os.makedirs(dir_path)
             is_makedir = True
-        open(path, "w")
+        # 一旦出力ファイルを作って、書き込めるかテスト（書き込めない場合、下記いずれかの原因が相当）
+        with open(path, "w") as f:
+            f.write("test")
         os.remove(path)
         if is_makedir:
             os.rmdir(dir_path)
     except Exception:
+        logger.info("ファイルパス保存可否チェック: {p}", p=path)
         logger.warning(
-            f"{title}のチェックに失敗しました。以下の原因が考えられます。\n"
-            + f"・{title}が255文字を超えている\n"
-            + f'・{title}に使えない文字列が含まれている（例) \\ / : * ? " < > |）\n'
-            + f"・{title}の親フォルダに書き込み権限がない\n"
-            + f"・{title}に書き込み権限がない\n"
+            "{t}のチェックに失敗しました。以下の原因が考えられます。\n"
+            + "・{t}が255文字を超えている\n"
+            + '・{t}に使えない文字列が含まれている（例) \\ / : * ? " < > |）\n'
+            + "・{t}の親フォルダに書き込み権限がない\n"
+            + "・{t}に書き込み権限がない\n",
+            t=title,
         )
         return False
     return True
