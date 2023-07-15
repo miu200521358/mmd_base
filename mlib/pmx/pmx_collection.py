@@ -230,6 +230,10 @@ class Bones(BaseIndexNameDictModel[Bone]):
         from_pos = bone.position
         bone_setting = STANDARD_BONE_NAMES.get(bone.name)
         if bone_setting:
+            for tail_bone_name in bone_setting.tails:
+                if tail_bone_name in self:
+                    return self[tail_bone_name].position - from_pos
+
             if isinstance(bone_setting.relatives, (Iterable, list, tuple)):
                 # 表示先ボーンが指定されており、いずれかある場合、そのまま使用
                 for tail_bone_name in bone_setting.relatives:
