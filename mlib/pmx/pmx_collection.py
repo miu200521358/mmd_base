@@ -1366,23 +1366,22 @@ class PmxModel(BaseHashModel):
                         # 親指０より手首よりの場合、ウェイト計算
                         ratio = 1 - abs(local_vpos.z / to_tail_pos.z)
             elif is_shoulder:
+                if local_vpos.x <= local_to_pos.x * from_ratio * -1:
+                    # 上半身寄りで、頂点のX位置が肩から腕の距離の一定割合より遠い場合、上半身に割り当ててスルー
+                    v.deform.indexes = np.where(bone_matches, from_bone.index, v.deform.indexes)
+                    continue
+                if local_vpos.x >= local_to_pos.x * to_ratio:
+                    # 腕寄りで、頂点のX位置が肩から腕の距離の一定割合より遠い場合、腕に割り当ててスルー
+                    v.deform.indexes = np.where(bone_matches, to_bone.index, v.deform.indexes)
+                    continue
+
                 # 肩の場合、肩の周囲だけウェイトを塗る
-                if v.position.y < separate_bone.position.y:
+                if v.position.y < separate_bone.position.y - (local_to_pos.x * from_ratio):
                     # Y方向的に肩より下の場合、上半身側に渡してスルー
                     v.deform.indexes = np.where(bone_matches, from_bone.index, v.deform.indexes)
                     continue
                 if np.sign(v.position.x) != np.sign(separate_bone.position.x):
                     # 上半身より反対側の場合、スルー
-                    continue
-
-                if local_vpos.x <= local_to_pos.x * from_ratio * -1:
-                    # 上半身寄りで、頂点のX位置が肩から腕の距離の一定割合より遠い場合、上半身に割り当ててスルー
-                    v.deform.indexes = np.where(bone_matches, from_bone.index, v.deform.indexes)
-                    continue
-
-                if local_vpos.x >= local_to_pos.x * to_ratio:
-                    # 腕寄りで、頂点のX位置が肩から腕の距離の一定割合より遠い場合、腕に割り当ててスルー
-                    v.deform.indexes = np.where(bone_matches, to_bone.index, v.deform.indexes)
                     continue
 
                 ratio = 1 - (abs(local_vpos.x) / local_to_pos.x)
