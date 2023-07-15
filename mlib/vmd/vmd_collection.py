@@ -427,7 +427,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         is_parent_bone_not_local_cancels: Iterable[bool],
         parent_local_poses: Iterable[MVector3D],
         parent_local_axises: Iterable[MVector3D],
-        loop: int = 0,
     ) -> np.ndarray:
         """
         該当キーフレにおけるボーンのローカル位置
@@ -442,7 +441,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             tuple(is_parent_bone_not_local_cancels),
             tuple(parent_local_poses),
             tuple(parent_local_axises),
-            loop=loop + 1,
         )
 
     def calc_ik_rotations(self, fno: int, model: PmxModel, target_bone_names: Iterable[str]):
