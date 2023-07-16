@@ -1225,9 +1225,9 @@ class PmxModel(BaseHashModel):
         if "左足先EX" in bone_names and self.bones.exists(("左足首", "左足首D", "左足先EX")):
             self.separate_weights("左足首", "左足先EX", "左足先EX", 0.2, 0.1, ("左足首", "左足首D", "左足先EX"), to_tail_pos=MVector3D(0, 0, -1))
         if "右肩" in bone_names and self.bones.exists(("上半身", "上半身2", "右肩", "右腕")):
-            self.separate_weights("上半身2", "右肩", "右腕", 0.5, 0.6, ("上半身2", "右肩"), is_shoulder=True)
+            self.separate_weights("上半身2", "右肩", "右腕", 0.1, 0.6, ("上半身2", "右肩"), is_shoulder=True)
         if "左肩" in bone_names and self.bones.exists(("上半身", "上半身2", "左肩", "左腕")):
-            self.separate_weights("上半身2", "左肩", "左腕", 0.5, 0.6, ("上半身2", "左肩"), is_shoulder=True)
+            self.separate_weights("上半身2", "左肩", "左腕", 0.1, 0.6, ("上半身2", "左肩"), is_shoulder=True)
         if "右親指０" in bone_names and self.bones.exists(("右手首", "右親指０", "右親指１")):
             self.separate_weights("右手首", "右親指０", "右親指１", 0.1, 0.0, ("右手首", "右親指１"), is_thumb=True)
         if "左親指０" in bone_names and self.bones.exists(("左手首", "左親指０", "左親指１")):
