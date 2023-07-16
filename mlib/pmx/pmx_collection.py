@@ -247,7 +247,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
         if bone.is_tail_bone and 0 <= bone.tail_index and bone.tail_index in self:
             # 表示先が指定されているの場合、保持
             to_pos = self[bone.tail_index].position
-        elif not bone.is_tail_bone:
+        elif not bone.is_tail_bone and 0 < bone.tail_position.length():
             # 表示先が相対パスの場合、保持
             to_pos = from_pos + bone.tail_position
         else:
