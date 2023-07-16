@@ -234,15 +234,6 @@ class Bones(BaseIndexNameDictModel[Bone]):
                 if tail_bone_name in self:
                     return self[tail_bone_name].position - from_pos
 
-            if isinstance(bone_setting.display_tail, (Iterable, list, tuple)):
-                # 表示先ボーンが指定されており、いずれかある場合、そのまま使用
-                for tail_bone_name in bone_setting.display_tail:
-                    if tail_bone_name in self:
-                        return self[tail_bone_name].position - from_pos
-            elif isinstance(bone_setting.display_tail, MVector3D):
-                # 相対パスが指定されている場合、それを適用
-                return bone_setting.display_tail
-
         # 合致するのがなければ通常の表示先から検出
         if bone.is_tail_bone and 0 <= bone.tail_index and bone.tail_index in self:
             # 表示先が指定されているの場合、保持
