@@ -1225,9 +1225,9 @@ class PmxModel(BaseHashModel):
         if "左足先EX" in bone_names and self.bones.exists(("左足首", "左足首D", "左足先EX")):
             self.separate_weights("左足首", "左足先EX", "左足先EX", 0.2, 0.1, ("左足首", "左足首D", "左足先EX"), to_tail_pos=MVector3D(0, 0, -1))
         if "右肩" in bone_names and self.bones.exists(("上半身", "上半身2", "右肩", "右腕")):
-            self.separate_weights("上半身2", "右肩", "右腕", 0.1, 0.6, ("上半身2", "右肩"), is_shoulder=True)
+            self.separate_weights("上半身2", "右肩", "右腕", 0.2, 0.7, ("上半身2", "右肩"), is_shoulder=True)
         if "左肩" in bone_names and self.bones.exists(("上半身", "上半身2", "左肩", "左腕")):
-            self.separate_weights("上半身2", "左肩", "左腕", 0.1, 0.6, ("上半身2", "左肩"), is_shoulder=True)
+            self.separate_weights("上半身2", "左肩", "左腕", 0.2, 0.7, ("上半身2", "左肩"), is_shoulder=True)
         if "右親指０" in bone_names and self.bones.exists(("右手首", "右親指０", "右親指１")):
             self.separate_weights("右手首", "右親指０", "右親指１", 0.1, 0.0, ("右手首", "右親指１"), is_thumb=True)
         if "左親指０" in bone_names and self.bones.exists(("左手首", "左親指０", "左親指１")):
@@ -1334,7 +1334,13 @@ class PmxModel(BaseHashModel):
         to_pos = separate_bone.position + to_tail_pos
         mat = MMatrix4x4()
         mat.translate(separate_bone.position)
-        mat = mat @ to_tail_pos.to_local_matrix4x4()
+        if is_shoulder:
+            if "右" in separate_bone.name:
+                mat = mat @ MVector3D(-1, 0, 0).to_local_matrix4x4()
+            else:
+                mat = mat @ MVector3D(1, 0, 0).to_local_matrix4x4()
+        else:
+            mat = mat @ to_tail_pos.to_local_matrix4x4()
 
         # ローカル位置
         local_from_pos = mat.inverse() * from_bone.position
@@ -1365,28 +1371,32 @@ class PmxModel(BaseHashModel):
                         # 親指０より手首よりの場合、ウェイト計算
                         ratio = 1 - abs(local_vpos.z / to_tail_pos.z)
             elif is_shoulder:
+                # 肩の場合、肩の周囲だけウェイトを塗る
+                if np.sign(v.position.x) != np.sign(to_pos.x):
+                    # 上半身より反対側の場合、スルー
+                    continue
+
                 if local_vpos.x <= local_to_pos.x * from_ratio * -1:
                     # 上半身寄りで、頂点のX位置が肩から腕の距離の一定割合より遠い場合、上半身に割り当ててスルー
                     v.deform.indexes = np.where(bone_matches, from_bone.index, v.deform.indexes)
                     continue
-                if local_vpos.x >= local_to_pos.x * to_ratio:
+                elif local_vpos.x >= local_to_pos.x * to_ratio:
                     # 腕寄りで、頂点のX位置が肩から腕の距離の一定割合より遠い場合、腕に割り当ててスルー
                     v.deform.indexes = np.where(bone_matches, to_bone.index, v.deform.indexes)
                     continue
 
-                # 肩の場合、肩の周囲だけウェイトを塗る
-                if v.position.y < separate_bone.position.y - (local_to_pos.x * from_ratio):
+                if v.position.y < separate_bone.position.y:
                     # Y方向的に肩より下の場合、上半身側に渡してスルー
                     v.deform.indexes = np.where(bone_matches, from_bone.index, v.deform.indexes)
                     continue
-                if np.sign(v.position.x) != np.sign(separate_bone.position.x):
-                    # 上半身より反対側の場合、スルー
-                    continue
 
-                ratio = 1 - (abs(local_vpos.x) / local_to_pos.x)
-                if 0 < local_vpos.x:
+                ratio = 1 - abs(local_vpos.x / local_to_pos.x)
+                if 0 < v.position.x:
                     # 腕側の場合のみ分割先に割り当てる
                     to_separate_ratio = 1 - ratio
+
+                ratio *= 0.6
+                to_separate_ratio *= 0.6
             elif is_twist:
                 if 0 > local_vpos.x:
                     ratio = 1 - (local_vpos.x / (local_from_pos.x * from_ratio)) if from_ratio else 1
