@@ -1426,6 +1426,8 @@ class PmxModel(BaseHashModel):
                         continue
                 else:
                     if 0.0 == to_ratio:
+                        # 全部TOに乗せるのであれば、そのまま分割ボーンに乗せ替え
+                        v.deform.indexes = np.where(bone_matches, separate_bone.index, v.deform.indexes)
                         continue
                     else:
                         ratio = local_vpos.x / (local_to_pos.x * to_ratio)
