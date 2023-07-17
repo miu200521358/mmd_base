@@ -123,7 +123,7 @@ class BoneSettings(Enum):
         tails=("首根元",),
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
     )
-    ARM_CENTER = BoneSetting(
+    NECK_ROOT = BoneSetting(
         name="首根元",
         parents=("上半身2", "上半身"),
         display_tail=("首",),
