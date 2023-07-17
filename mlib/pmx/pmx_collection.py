@@ -1433,6 +1433,8 @@ class PmxModel(BaseHashModel):
             if 0 >= ratio:
                 continue
 
+            # 分割先ボーンのウェイトは一旦元ボーンに載せ替える
+            v.deform.indexes = np.where(bone_matches, from_bone.index, v.deform.indexes)
             original_weight = np.sum(v.deform.weights[bone_matches])
             separate_weight = original_weight * ratio / (np.count_nonzero(bone_matches) or 1)
             to_weight = original_weight * to_separate_ratio / (np.count_nonzero(bone_matches) or 1)
