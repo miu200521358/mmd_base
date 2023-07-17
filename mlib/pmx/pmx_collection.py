@@ -604,37 +604,40 @@ class PmxModel(BaseHashModel):
 
         # システム用ボーン追加
         if "右腕" in self.bones and "左腕" in self.bones and "上半身" in self.bones:
-            shoulder_root_position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
+            neck_root_position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
 
-            if "左肩根元" in self.bones:
-                self.bones["左肩根元"].position = shoulder_root_position.copy()
-            if "右肩根元" in self.bones:
-                self.bones["右肩根元"].position = shoulder_root_position.copy()
-
-            if "左肩根元" not in self.bones and "右肩根元" not in self.bones:
+            if "首根元" in self.bones:
+                self.bones["首根元"].position = neck_root_position.copy()
+                self.bones["左肩根元"].position = neck_root_position.copy()
+                self.bones["右肩根元"].position = neck_root_position.copy()
+            else:
                 parent_bone_name = "上半身3" if "上半身3" in self.bones else "上半身2" if "上半身2" in self.bones else "上半身"
                 parent_bone = self.bones[parent_bone_name]
 
+                # 首根元を追加
+                neck_root_bone = Bone(name="首根元")
+                neck_root_bone.is_system = True
+                neck_root_bone.parent_index = parent_bone.index
+                neck_root_bone.index = parent_bone.index + 1
+                neck_root_bone.position = neck_root_position.copy()
+                self.insert_bone(neck_root_bone)
+
                 # 肩根元を追加
-                right_shoulder_root = Bone(name="右肩根元", index=parent_bone.index + 1)
-                right_shoulder_root.parent_index = parent_bone.index
+                right_shoulder_root = Bone(name="右肩根元", index=neck_root_bone.index + 1)
+                right_shoulder_root.parent_index = neck_root_bone.index
                 right_shoulder_root.is_system = True
-                right_shoulder_root.position = shoulder_root_position.copy()
+                right_shoulder_root.position = neck_root_position.copy()
                 self.insert_bone(right_shoulder_root)
 
-                left_shoulder_root = Bone(name="左肩根元", index=parent_bone.index + 1)
-                left_shoulder_root.parent_index = parent_bone.index
+                left_shoulder_root = Bone(name="左肩根元", index=neck_root_bone.index + 1)
+                left_shoulder_root.parent_index = neck_root_bone.index
                 left_shoulder_root.is_system = True
-                left_shoulder_root.position = shoulder_root_position.copy()
+                left_shoulder_root.position = neck_root_position.copy()
                 self.insert_bone(left_shoulder_root)
-
-                if "首" in self.bones:
-                    # 首は上半身に繋げなおす
-                    self.bones["首"].parent_index = self.bones[parent_bone_name].index
 
                 # 腕系で左右に分かれてるのは親を肩根元に置き換える
                 for bone in self.bones:
-                    if bone.parent_index == parent_bone.index and "肩根元" not in bone.name:
+                    if bone.parent_index == neck_root_bone.index and "肩根元" not in bone.name:
                         if "右" in bone.name:
                             bone.parent_index = self.bones["右肩根元"].index
                         elif "左" in bone.name:

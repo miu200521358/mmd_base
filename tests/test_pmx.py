@@ -122,7 +122,7 @@ def test_read_by_filepath_ok() -> None:
     )
     from mlib.pmx.pmx_reader import PmxReader
 
-    system_bone_cnt = 3
+    system_bone_cnt = 4
 
     reader = PmxReader()
     model: PmxModel = reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
@@ -393,6 +393,7 @@ def test_read_by_filepath_ok_tree() -> None:
         "腰",
         "上半身",
         "上半身2",
+        "首根元",
         "左肩根元",
         "左肩P",
         "左肩",
@@ -421,6 +422,7 @@ def test_read_by_filepath_ok_tree() -> None:
     assert [
         "上半身",
         "上半身2",
+        "首根元",
         "右肩根元",
         "右肩P",
         "右肩",
@@ -432,11 +434,11 @@ def test_read_by_filepath_ok_tree() -> None:
         "右手首",
     ] == range_bone_tree.names
 
-    slice1_bone_tree = range_bone_tree.range(3, 5)
+    slice1_bone_tree = range_bone_tree.range(4, 6)
     assert 2 == len(slice1_bone_tree)
     assert ["右肩P", "右肩"] == [b.name for b in slice1_bone_tree]
 
-    slice2_bone_tree = range_bone_tree.range(8)
+    slice2_bone_tree = range_bone_tree.range(9)
     assert 3 == len(slice2_bone_tree)
     assert ["右ひじ", "右手捩", "右手首"] == [b.name for b in slice2_bone_tree]
 
@@ -537,7 +539,7 @@ def test_insert_bone() -> None:
     insert_bone = Bone(name="追加ボーン", index=model.bones["上半身"].index + 1)
     insert_bone.parent_index = model.bones["上半身"].index
     model.insert_bone(insert_bone)
-    system_bone_cnt = 3
+    system_bone_cnt = 4
 
     v = model.vertices[15724]
     assert 10 + system_bone_cnt == v.deform.indexes[0]
@@ -702,8 +704,10 @@ def test_insert_standard_bone() -> None:
     # PmxWriter(model, output_path, include_system=True).save()
 
     for b in model.bones:
-        if b.name in ["首", "ﾈｸﾀｲ１", "左肩根元", "右肩根元"]:
+        if b.name in ["首根元"]:
             assert model.bones["上半身2"].index == b.parent_index
+        elif b.name in ["首", "ﾈｸﾀｲ１", "左肩根元", "右肩根元"]:
+            assert model.bones["首根元"].index == b.parent_index
         elif b.name in ["左肩"]:
             assert model.bones["左肩根元"].index == b.parent_index
         elif b.name in ["右肩"]:
