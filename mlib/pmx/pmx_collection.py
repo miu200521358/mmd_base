@@ -1393,10 +1393,10 @@ class PmxModel(BaseHashModel):
                     v.deform.indexes = np.where(bone_matches, from_bone.index, v.deform.indexes)
                     continue
 
-                ratio = 1 - abs(local_vpos.x / local_to_pos.x)
+                ratio = (1 - abs(local_vpos.x / local_to_pos.x)) * 0.5
                 if 0 < v.position.x:
                     # 腕側の場合のみ分割先に割り当てる
-                    to_separate_ratio = 1 - ratio
+                    to_separate_ratio = (1 - ratio) * 0.5
             elif is_twist:
                 if 0 > local_vpos.x:
                     ratio = 1 - (local_vpos.x / (local_from_pos.x * from_ratio)) if from_ratio else 1
