@@ -1454,6 +1454,8 @@ class MorphType(IntEnum):
     """7:追加UV4"""
     MATERIAL = 8
     """"8:材質"""
+    AFTER_VERTEX = 91
+    """91:ボーン変形後頂点"""
 
 
 class Morph(BaseIndexNameModel):

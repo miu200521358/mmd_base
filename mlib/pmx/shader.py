@@ -22,6 +22,7 @@ class VsLayout(IntEnum):
     MORPH_POS_ID = 7
     MORPH_UV_ID = 8
     MORPH_UV1_ID = 9
+    MORPH_AFTER_POS_ID = 10
 
 
 class ProgramType(IntEnum):
@@ -248,6 +249,7 @@ class MShader:
                 VsLayout.MORPH_POS_ID.value,
                 VsLayout.MORPH_UV_ID.value,
                 VsLayout.MORPH_UV1_ID.value,
+                VsLayout.MORPH_AFTER_POS_ID.value,
             )
 
         fragments_shader_src = Path(os.path.join(os.path.dirname(__file__), "glsl", fragments_shader_name)).read_text(encoding="utf-8")

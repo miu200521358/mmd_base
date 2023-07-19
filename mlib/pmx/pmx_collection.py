@@ -558,6 +558,7 @@ class PmxModel(BaseHashModel):
         self,
         bone_matrixes: np.ndarray,
         vertex_morph_poses: np.ndarray,
+        after_vertex_morph_poses: np.ndarray,
         uv_morph_poses: np.ndarray,
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
@@ -570,6 +571,7 @@ class PmxModel(BaseHashModel):
         self.meshes.draw(
             bone_matrixes,
             vertex_morph_poses,
+            after_vertex_morph_poses,
             uv_morph_poses,
             uv1_morph_poses,
             material_morphs,
@@ -1536,9 +1538,12 @@ class Meshes(BaseIndexDictModel[Mesh]):
                         0.0,
                         0.0,
                         0.0,
+                        0.0,
+                        0.0,
+                        0.0,
                     ],
                     dtype=np.float32,
-                    count=30,
+                    count=33,
                 )
                 for v in model.vertices
             ],
@@ -1601,10 +1606,12 @@ class Meshes(BaseIndexDictModel[Mesh]):
             VsLayout.MORPH_POS_ID.value: {"size": 3, "offset": 19},
             VsLayout.MORPH_UV_ID.value: {"size": 4, "offset": 22},
             VsLayout.MORPH_UV1_ID.value: {"size": 4, "offset": 26},
+            VsLayout.MORPH_AFTER_POS_ID.value: {"size": 3, "offset": 30},
         }
         self.morph_pos_comps = self.vbo_components[VsLayout.MORPH_POS_ID.value]
         self.morph_uv_comps = self.vbo_components[VsLayout.MORPH_UV_ID.value]
         self.morph_uv1_comps = self.vbo_components[VsLayout.MORPH_UV1_ID.value]
+        self.morph_after_pos_comps = self.vbo_components[VsLayout.MORPH_AFTER_POS_ID.value]
         self.vbo_vertices = VBO(
             self.vertices,
             self.vbo_components,
@@ -1716,6 +1723,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self,
         bone_matrixes: np.ndarray,
         vertex_morph_poses: np.ndarray,
+        after_vertex_morph_poses: np.ndarray,
         uv_morph_poses: np.ndarray,
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
@@ -1738,6 +1746,9 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.vbo_vertices.data[
             :, self.morph_uv1_comps["offset"] : (self.morph_uv1_comps["offset"] + self.morph_uv1_comps["size"])
         ] = uv1_morph_poses
+        self.vbo_vertices.data[
+            :, self.morph_after_pos_comps["offset"] : (self.morph_after_pos_comps["offset"] + self.morph_after_pos_comps["size"])
+        ] = after_vertex_morph_poses
 
         # 必ず50個渡すようにする（ただし該当しないボーンINDEXにしておく）
         limited_show_bone_indexes = (show_bone_indexes + [-2 for _ in range(50)])[:50]
@@ -1755,6 +1766,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
             self.vbo_vertices.set_slot(VsLayout.MORPH_POS_ID)
             self.vbo_vertices.set_slot(VsLayout.MORPH_UV_ID)
             self.vbo_vertices.set_slot(VsLayout.MORPH_UV1_ID)
+            self.vbo_vertices.set_slot(VsLayout.MORPH_AFTER_POS_ID)
             self.ibo_faces.bind()
 
             material_morph = material_morphs[mesh.material.index]

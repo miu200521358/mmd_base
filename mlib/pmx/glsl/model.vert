@@ -10,6 +10,7 @@ in layout(location = %d) vec4  boneWeights;
 in layout(location = %d) vec3  morphPos;
 in layout(location = %d) vec4  morphUv;
 in layout(location = %d) vec4  morphUv1;
+in layout(location = %d) vec3  morphAfterPos;
 
 // ボーン変形行列を格納するテクスチャ
 uniform sampler2D boneMatrixTexture;
@@ -79,6 +80,10 @@ void main() {
         }
     }
 
+    // ボーン変形後頂点モーフ変形量
+    mat4 afterVertexTransformMatrix = mat4(1.0);
+    afterVertexTransformMatrix[3] = vec4(morphAfterPos, 1.0); // 4列目に移動量を設定
+
     // ボーンがまったく表示対象外でも少し描画するため、下限を決めておく
     totalBoneWeight = clamp(totalBoneWeight, 0.2, 1.0);
 
@@ -86,7 +91,7 @@ void main() {
     mat3 normalTransformMatrix = mat3(boneTransformMatrix);
 
     // 頂点位置
-    gl_Position = modelViewProjectionMatrix * boneTransformMatrix * position4;
+    gl_Position = modelViewProjectionMatrix * afterVertexTransformMatrix * boneTransformMatrix * position4;
 
     // 頂点法線
     vetexNormal = normalize(normalTransformMatrix * normalize(normal)).xyz;

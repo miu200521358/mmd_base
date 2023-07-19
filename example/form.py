@@ -15,7 +15,7 @@ from mlib.base.logger import MLogger
 from mlib.base.math import MQuaternion, MVector3D
 from mlib.pmx.canvas import CanvasPanel
 from mlib.pmx.pmx_collection import PmxModel
-from mlib.pmx.pmx_part import Bone, BoneMorphOffset, Face, Morph, MorphType, SphereMode, Texture, ToonSharing
+from mlib.pmx.pmx_part import Bone, BoneMorphOffset, Face, Morph, MorphType, SphereMode, Texture, ToonSharing, VertexMorphOffset
 from mlib.pmx.pmx_writer import PmxWriter
 from mlib.service.base_worker import BaseWorker
 from mlib.service.form.base_frame import BaseFrame
@@ -574,11 +574,23 @@ class TestFrame(BaseFrame):
         # モーフ追加
         morph = Morph(name="左足")
         morph.morph_type = MorphType.BONE
-        offset = BoneMorphOffset(dress.bones["左足"].index, local_scale=MVector3D(0, 1, 0))
+        offset = BoneMorphOffset(dress.bones["左足"].index, local_scale=MVector3D(0, 1, 1))
         morph.offsets.append(offset)
         dress.morphs.append(morph)
 
         dress_motion.morphs["左足"].append(VmdMorphFrame(0, "左足", 1))
+
+        dress.update_vertices_by_bone()
+
+        # モーフ追加
+        morph2 = Morph(name="左足頂点")
+        morph2.morph_type = MorphType.AFTER_VERTEX
+        for vertex_index in dress.vertices_by_bones[dress.bones["左足"].index]:
+            offset2 = VertexMorphOffset(vertex_index, position=MVector3D(2, 0, 0))
+            morph2.offsets.append(offset2)
+        dress.morphs.append(morph2)
+
+        dress_motion.morphs["左足頂点"].append(VmdMorphFrame(0, "左足頂点", 1))
 
         # # モーフ追加
         # morph = Morph(name="上半身")
