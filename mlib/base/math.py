@@ -688,6 +688,28 @@ class MVectorDict:
         """
         return np.array(self.keys())[np.argmax(self.distances(v))]
 
+    def sorted_near_values(self, v: MVectorT, count: int) -> list[MVectorT]:
+        """
+        指定ベクトルから指定個数分近いベクトルを返す
+
+        Parameters
+        ----------
+        v : MVector
+            比較対象ベクトル
+        count: int
+            取得個数
+
+        Returns
+        -------
+        list[MVector]
+            近いベクトルリスト
+        """
+        near_values: list[MVectorT] = []
+        for nv in np.array(self.values())[np.argsort(self.distances(v))[:count]]:
+            near_values.append(v.__class__(*nv))
+
+        return near_values
+
     def mean_value(self) -> np.ndarray:
         """平均値"""
         return np.mean(self.values(), axis=0)
