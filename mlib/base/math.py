@@ -1787,7 +1787,7 @@ def transform_lattice(lattice: np.ndarray, transformation_matrix: np.ndarray) ->
 
     Parameters:
         lattice (numpy.ndarray): 変形する3次元ラティスの点群。shapeは (N, 3) で、Nは点の数を表します。
-        transformation_matrix (numpy.ndarray): 3x3の変換行列。
+        transformation_matrix (numpy.ndarray): 3x4の変換行列。
 
     Returns:
         numpy.ndarray: 変形後の3次元ラティスの点群。
