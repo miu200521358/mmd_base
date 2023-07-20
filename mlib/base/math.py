@@ -688,7 +688,7 @@ class MVectorDict:
         """
         return np.array(self.keys())[np.argmax(self.distances(v))]
 
-    def sorted_near_values(self, v: MVectorT, count: int) -> list[MVectorT]:
+    def sorted_near_values(self, v: MVectorT, count: int) -> "MVectorDict":
         """
         指定ベクトルから指定個数分近いベクトルを返す
 
@@ -701,12 +701,14 @@ class MVectorDict:
 
         Returns
         -------
-        list[MVector]
+        MVectorDict
             近いベクトルリスト
         """
-        near_values: list[MVectorT] = []
-        for nv in np.array(self.values())[np.argsort(self.distances(v))[:count]]:
-            near_values.append(v.__class__(*nv))
+        near_values = MVectorDict()
+        for nk, nv in zip(
+            np.array(self.keys())[np.argsort(self.distances(v))[:count]], np.array(self.values())[np.argsort(self.distances(v))[:count]]
+        ):
+            near_values.append(nk, v.__class__(*nv))
 
         return near_values
 
