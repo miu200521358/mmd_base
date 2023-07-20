@@ -1779,3 +1779,24 @@ def filter_values(values: np.ndarray, err: float = 1.5) -> np.ndarray:
     ]
 
     return filtered_values
+
+
+def transform_lattice(lattice: np.ndarray, transformation_matrix: np.ndarray) -> np.ndarray:
+    """
+    3次元ラティスを指定された変換行列で変形します。
+
+    Parameters:
+        lattice (numpy.ndarray): 変形する3次元ラティスの点群。shapeは (N, 3) で、Nは点の数を表します。
+        transformation_matrix (numpy.ndarray): 3x3の変換行列。
+
+    Returns:
+        numpy.ndarray: 変形後の3次元ラティスの点群。
+    """
+
+    # homogeneous coordinateを追加する（1を付け足す）
+    homogeneous_lattice = np.hstack((lattice, np.ones((lattice.shape[0], 1))))
+
+    # 変換を適用して、homogeneous coordinateから通常の3次元座標に戻す
+    transformed_lattice = np.dot(homogeneous_lattice, transformation_matrix.T)[:, :3]
+
+    return transformed_lattice
