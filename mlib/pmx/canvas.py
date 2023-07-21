@@ -1,6 +1,7 @@
 import logging
 import os
 from multiprocessing import Queue
+from typing import Callable, Optional
 
 import numpy as np
 import OpenGL.GL as gl
@@ -18,6 +19,7 @@ from mlib.pmx.shader import MShader
 from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
 from mlib.vmd.vmd_collection import VmdMotion
+from mlib.utils.file_utils import get_root_dir
 
 logger = MLogger(os.path.basename(__file__), level=logging.DEBUG)
 __ = logger.get_text
@@ -120,6 +122,8 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.now_pos = wx.Point(0, 0)
         self.fps = 30
         self.max_fno = 0
+        self.color = [0, 0, 0]
+        self.color_changed_event: Optional[Callable] = None
 
         self.set_context()
 
@@ -161,11 +165,12 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)
 
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
-        self.Bind(wx.EVT_MIDDLE_DOWN, self.on_mouse_down)
-        self.Bind(wx.EVT_RIGHT_DOWN, self.on_mouse_down)
+        self.Bind(wx.EVT_LEFT_DOWN, self.on_mouse_left_down)
+        self.Bind(wx.EVT_MIDDLE_DOWN, self.on_mouse_right_down)
+        self.Bind(wx.EVT_RIGHT_DOWN, self.on_mouse_right_down)
         self.Bind(wx.EVT_MOTION, self.on_mouse_motion)
-        self.Bind(wx.EVT_MIDDLE_UP, self.on_mouse_up)
-        self.Bind(wx.EVT_RIGHT_UP, self.on_mouse_up)
+        self.Bind(wx.EVT_MIDDLE_UP, self.on_mouse_right_up)
+        self.Bind(wx.EVT_RIGHT_UP, self.on_mouse_right_up)
         self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
 
     def on_erase_background(self, event: wx.Event):
@@ -483,19 +488,42 @@ class PmxCanvas(glcanvas.GLCanvas):
         pil_image.frombytes(bytes(bitmap.ConvertToImage().GetData()))
 
         # ImageをPNGファイルとして保存する
-        file_path = os.path.join(os.path.dirname(self.motion.path), "capture", f"{self.parent.fno:06d}.png")
+        file_path = os.path.join(get_root_dir(), "capture", f"{self.parent.fno:06d}.png")
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
         # 画像をファイルに保存
         pil_image.save(file_path)
 
-    def on_mouse_down(self, event: wx.Event):
+    def on_mouse_left_down(self, event: wx.Event):
+        self.on_capture_color(event)
+
+    def on_mouse_right_down(self, event: wx.Event):
         if not self.is_drag:
             self.now_pos = self.last_pos = event.GetPosition()
             self.is_drag = True
             self.CaptureMouse()
 
-    def on_mouse_up(self, event: wx.Event):
+    def on_capture_color(self, event: wx.Event):
+        x, y = event.GetPosition()
+
+        # キャプチャ用のビットマップを作成
+        dc = wx.ClientDC(self)
+        bitmap = wx.Bitmap(1, 1)
+
+        # キャプチャ
+        memory_dc = wx.MemoryDC()
+        memory_dc.SelectObject(bitmap)
+        memory_dc.Blit(0, 0, 1, 1, dc, x, y)
+        memory_dc.SelectObject(wx.NullBitmap)
+
+        # PIL.Imageに変換
+        pil_image = Image.new("RGB", (1, 1))
+        pil_image.frombytes(bytes(bitmap.ConvertToImage().GetData()))
+        self.color = np.array(pil_image).tolist()[0][0]
+        if self.color_changed_event:
+            self.color_changed_event()
+
+    def on_mouse_right_up(self, event: wx.Event):
         if self.is_drag:
             self.is_drag = False
             self.ReleaseMouse()
@@ -514,6 +542,9 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.shader.camera_degrees += MVector3D(y * 10, -x * 10, 0)
             self.last_pos = self.now_pos
             self.Refresh()
+
+        elif event.LeftIsDown() and event.Dragging():
+            self.on_capture_color(event)
 
     def on_mouse_wheel(self, event: wx.Event):
         unit_degree = 5.0 if event.ShiftDown() else 1.0 if event.ControlDown() else 2.5

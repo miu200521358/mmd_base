@@ -430,6 +430,25 @@ class ConfigPanel(CanvasPanel):
         )
         self.btn_sizer.Add(self.float_slider.sizer, 0, wx.ALL, 0)
 
+        # 選択色
+        self.color_ctrl = wx.TextCtrl(
+            self,
+            wx.ID_ANY,
+            f"{self.canvas.color[0]},{self.canvas.color[1]},{self.canvas.color[2]}",
+            wx.DefaultPosition,
+            wx.Size(-1, -1),
+            wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS,
+        )
+        self.btn_sizer.Add(self.color_ctrl, 0, wx.ALL, 0)
+
+        self.color_panel = wx.Panel(self, size=(50, 50))
+        self.color_panel.SetBackgroundColour(wx.Colour(*self.canvas.color))
+        self.btn_sizer.Add(self.color_panel, 0, wx.ALL, 0)
+
+        # 再生
+        self.capture_btn = wx.Button(self, wx.ID_ANY, "Capture", wx.DefaultPosition, wx.Size(100, 50))
+        self.btn_sizer.Add(self.capture_btn, 0, wx.ALL, 5)
+
         self.config_sizer.Add(self.btn_sizer, 0, wx.ALL, 0)
         self.root_sizer.Add(self.config_sizer, 0, wx.ALL, 0)
 
@@ -437,6 +456,13 @@ class ConfigPanel(CanvasPanel):
 
     def _initialize_event(self) -> None:
         self.play_btn.Bind(wx.EVT_BUTTON, self.on_play)
+        self.capture_btn.Bind(wx.EVT_BUTTON, self.canvas.on_capture)
+        self.canvas.color_changed_event = self.on_change_color
+
+    def on_change_color(self):
+        self.color_ctrl.ChangeValue(f"{self.canvas.color[0]},{self.canvas.color[1]},{self.canvas.color[2]}")
+        self.color_panel.SetBackgroundColour(wx.Colour(*self.canvas.color))
+        self.color_panel.Refresh()
 
     def on_play(self, event: wx.Event) -> None:
         self.canvas.on_play(event)
@@ -582,15 +608,15 @@ class TestFrame(BaseFrame):
 
         dress.update_vertices_by_bone()
 
-        # モーフ追加
-        morph2 = Morph(name="左足頂点")
-        morph2.morph_type = MorphType.AFTER_VERTEX
-        for vertex_index in dress.vertices_by_bones[dress.bones["左足"].index]:
-            offset2 = VertexMorphOffset(vertex_index, position=MVector3D(2, 0, 0))
-            morph2.offsets.append(offset2)
-        dress.morphs.append(morph2)
+        # # モーフ追加
+        # morph2 = Morph(name="左足頂点")
+        # morph2.morph_type = MorphType.AFTER_VERTEX
+        # for vertex_index in dress.vertices_by_bones[dress.bones["左足"].index]:
+        #     offset2 = VertexMorphOffset(vertex_index, position=MVector3D(2, 0, 0))
+        #     morph2.offsets.append(offset2)
+        # dress.morphs.append(morph2)
 
-        dress_motion.morphs["左足頂点"].append(VmdMorphFrame(0, "左足頂点", 1))
+        # dress_motion.morphs["左足頂点"].append(VmdMorphFrame(0, "左足頂点", 1))
 
         # # モーフ追加
         # morph = Morph(name="上半身")
