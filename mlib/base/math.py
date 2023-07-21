@@ -1120,14 +1120,15 @@ class MQuaternion(MVector):
         """
         return MQuaternion(*cache_slerp_evaluate(q1.vector, q2.vector, t).components)
 
-    def separate_by_axis(self, global_axis: MVector3D):
+    def separate_by_axis(self, global_axis: MVector3D) -> tuple["MQuaternion", "MQuaternion", "MQuaternion", "MQuaternion"]:
         # ローカルZ軸ベースで求める場合
         local_z_axis = MVector3D(0, 0, -1)
         # X軸ベクトル
         global_x_axis = global_axis.normalized()
         # Y軸ベクトル
         global_y_axis = local_z_axis.cross(global_x_axis)
-        if not global_y_axis:
+
+        if 0 == global_y_axis.length():
             # ローカルZ軸ベースで求めるのに失敗した場合、ローカルY軸ベースで求め直す
             local_y_axis = MVector3D(0, 1, 0)
             # Z軸ベクトル
@@ -1171,7 +1172,7 @@ class MQuaternion(MVector):
         # 元々の回転量 から XY回転 を除去して、除去されたZ成分を求める
         z_qq = self * xy_qq.inverse()
 
-        return x_qq, y_qq, z_qq
+        return x_qq, y_qq, z_qq, yz_qq
 
     def separate_euler_degrees(self) -> MVector3D:
         """
