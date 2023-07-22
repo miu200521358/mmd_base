@@ -16,8 +16,9 @@ class BasePanel(wx.Panel):
         self.root_sizer = wx.BoxSizer(wx.VERTICAL)
         self.is_fix_tab = False
 
-    def fit(self) -> None:
         self.SetSizer(self.root_sizer)
+
+    def fit(self) -> None:
         self.Layout()
 
     def Enable(self, enable: bool) -> None:

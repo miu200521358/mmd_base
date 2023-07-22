@@ -56,3 +56,6 @@ class BaseFrame(wx.Frame):
                 PlaySound("SystemAsterisk", SND_ALIAS)
             except Exception:
                 pass
+
+    def fit(self):
+        self.Layout()
