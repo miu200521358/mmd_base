@@ -10,7 +10,7 @@ class BasePanel(wx.Panel):
         super().__init__(self.frame.notebook, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL)
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
 
-        self.active_background_color = wx.Colour("SALMON")
+        self.active_background_color = wx.Colour("PINK")
         """ボタンが有効になっている時の背景色"""
 
         self.root_sizer = wx.BoxSizer(wx.VERTICAL)
