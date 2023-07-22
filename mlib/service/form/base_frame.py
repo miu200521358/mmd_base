@@ -59,3 +59,4 @@ class BaseFrame(wx.Frame):
     def fit(self) -> None:
         self.Centre(wx.BOTH)
         self.Layout()
+        self.Refresh()
