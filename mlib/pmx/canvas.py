@@ -195,8 +195,8 @@ class PmxCanvas(glcanvas.GLCanvas):
     def on_resize(self, event: wx.Event):
         self.size = self.parent.get_canvas_size()
         self.SetSize(self.size)
-        self.parent.on_resize()
         self.shader.fit(self.size.width, self.size.height)
+        self.parent.on_resize()
 
     def on_paint(self, event: wx.Event):
         try:
