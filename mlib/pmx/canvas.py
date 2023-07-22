@@ -47,9 +47,6 @@ class CanvasPanel(BasePanel):
     def start_play(self) -> None:
         pass
 
-    def on_resize(self) -> None:
-        pass
-
     def get_canvas_size(self) -> wx.Size:
         w, h = self.frame.GetClientSize()
         canvas_width = w * self.canvas_width_ratio
@@ -58,6 +55,9 @@ class CanvasPanel(BasePanel):
             canvas_width += 1
         canvas_height = h * self.canvas_height_ratio
         return wx.Size(int(canvas_width), int(canvas_height))
+
+    def on_resize(self, event: wx.Event):
+        pass
 
 
 def animate(queue: Queue, fno: int, max_fno: int, model_set: "ModelSet"):
@@ -196,7 +196,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.size = self.parent.get_canvas_size()
         self.SetSize(self.size)
         self.shader.fit(self.size.width, self.size.height)
-        self.parent.on_resize()
+        self.parent.on_resize(event)
 
     def on_paint(self, event: wx.Event):
         try:

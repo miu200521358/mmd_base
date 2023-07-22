@@ -17,9 +17,8 @@ class BasePanel(wx.Panel):
         self.is_fix_tab = False
 
         self.SetSizer(self.root_sizer)
-
-    def fit(self) -> None:
-        self.Layout()
+        self.root_sizer.Layout()
+        self.root_sizer.Fit(self)
 
     def Enable(self, enable: bool) -> None:
         pass

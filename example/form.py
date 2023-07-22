@@ -102,7 +102,6 @@ class FilePanel(BasePanel):
         self.console_ctrl.set_parent_sizer(self.root_sizer)
 
         self.root_sizer.Add(wx.StaticLine(self, wx.ID_ANY), wx.GROW)
-        self.fit()
 
     def exec(self, event: wx.Event) -> None:
         if not (self.model_ctrl.data and self.dress_ctrl.data):
@@ -402,25 +401,37 @@ class ConfigPanel(CanvasPanel):
 
         self.config_sizer.Add(self.canvas, 0, wx.EXPAND | wx.ALL, 0)
 
+        self.scrolled_window = wx.ScrolledWindow(
+            self,
+            wx.ID_ANY,
+            wx.DefaultPosition,
+            wx.DefaultSize,
+            wx.FULL_REPAINT_ON_RESIZE | wx.VSCROLL,
+        )
+        self.scrolled_window.SetScrollRate(5, 5)
+        self.scrolled_window.SetBackgroundColour(wx.BLUE)
+
         self.btn_sizer = wx.BoxSizer(wx.VERTICAL)
 
         # キーフレ
-        self.frame_ctrl = WheelSpinCtrl(self, change_event=self.on_change_frame, initial=0, min=-100, max=10000, size=wx.Size(80, -1))
+        self.frame_ctrl = WheelSpinCtrl(
+            self.scrolled_window, change_event=self.on_change_frame, initial=0, min=-100, max=10000, size=wx.Size(80, -1)
+        )
         self.btn_sizer.Add(self.frame_ctrl, 0, wx.ALL, 5)
 
         # キーフレ
         self.double_ctrl = WheelSpinCtrlDouble(
-            self, change_event=self.on_change_frame, initial=0, min=-100, max=10000, inc=0.01, size=wx.Size(80, -1)
+            self.scrolled_window, change_event=self.on_change_frame, initial=0, min=-100, max=10000, inc=0.01, size=wx.Size(80, -1)
         )
         self.btn_sizer.Add(self.double_ctrl, 0, wx.ALL, 5)
 
         # 再生
-        self.play_btn = wx.Button(self, wx.ID_ANY, "Play", wx.DefaultPosition, wx.Size(100, 50))
+        self.play_btn = wx.Button(self.scrolled_window, wx.ID_ANY, "Play", wx.DefaultPosition, wx.Size(100, 50))
         self.btn_sizer.Add(self.play_btn, 0, wx.ALL, 5)
 
         # スライダー
         self.float_slider = FloatSliderCtrl(
-            self,
+            self.scrolled_window,
             value=0.5,
             min_value=0,
             max_value=3,
@@ -435,7 +446,7 @@ class ConfigPanel(CanvasPanel):
 
         # 選択色
         self.color_ctrl = wx.TextCtrl(
-            self,
+            self.scrolled_window,
             wx.ID_ANY,
             f"{self.canvas.color[0]},{self.canvas.color[1]},{self.canvas.color[2]}",
             wx.DefaultPosition,
@@ -444,23 +455,32 @@ class ConfigPanel(CanvasPanel):
         )
         self.btn_sizer.Add(self.color_ctrl, 0, wx.ALL, 0)
 
-        self.color_panel = wx.Panel(self, size=(50, 50))
+        self.color_panel = wx.Panel(self.scrolled_window, size=(50, 50))
         self.color_panel.SetBackgroundColour(wx.Colour(*self.canvas.color))
         self.btn_sizer.Add(self.color_panel, 0, wx.ALL, 0)
 
         self.palette_btn_ctrl = ImageButton(
-            self, "C:/MMD/pmx_dressup/src/resources/icon/palette.png", wx.Size(10, 10), self.on_click_color_picker, "カラーツールチップ"
+            self.scrolled_window,
+            "C:/MMD/pmx_dressup/src/resources/icon/palette.png",
+            wx.Size(10, 10),
+            self.on_click_color_picker,
+            "カラーツールチップ",
         )
         self.btn_sizer.Add(self.palette_btn_ctrl, 0, wx.ALL, 0)
 
         # 再生
-        self.capture_btn = wx.Button(self, wx.ID_ANY, "Capture", wx.DefaultPosition, wx.Size(100, 50))
+        self.capture_btn = wx.Button(self.scrolled_window, wx.ID_ANY, "Capture", wx.DefaultPosition, wx.Size(100, 50))
         self.btn_sizer.Add(self.capture_btn, 0, wx.ALL, 5)
+        self.scrolled_window.SetSizer(self.btn_sizer)
 
-        self.config_sizer.Add(self.btn_sizer, 0, wx.ALL, 0)
+        self.config_sizer.Add(self.scrolled_window, 1, wx.ALL | wx.EXPAND | wx.FIXED_MINSIZE, 0)
+
         self.root_sizer.Add(self.config_sizer, 0, wx.ALL, 0)
+        self.scrolled_window.Layout()
+        self.scrolled_window.Fit()
+        self.Layout()
 
-        self.fit()
+        self.on_resize(wx.EVT_SIZE)
 
     def _initialize_event(self) -> None:
         self.play_btn.Bind(wx.EVT_BUTTON, self.on_play)
@@ -501,6 +521,13 @@ class ConfigPanel(CanvasPanel):
     def on_change_frame(self, event: wx.Event) -> None:
         self.fno = self.frame_ctrl.GetValue()
         self.canvas.change_motion(event)
+
+    def on_resize(self, event: wx.Event):
+        w, h = self.frame.GetClientSize()
+        size = self.get_canvas_size()
+
+        self.scrolled_window.SetPosition(wx.Point(size.width, 0))
+        self.scrolled_window.SetSize(wx.Size(w - size.width, h))
 
 
 class TestFrame(BaseFrame):
