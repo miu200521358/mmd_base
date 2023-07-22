@@ -463,6 +463,12 @@ class ConfigPanel(CanvasPanel):
         self.play_btn.Bind(wx.EVT_BUTTON, self.on_play)
         self.capture_btn.Bind(wx.EVT_BUTTON, self.canvas.on_capture)
         self.canvas.color_changed_event = self.on_change_color
+        self.color_picker_ctrl.Bind(wx.EVT_COLOURPICKER_CHANGED, self.on_change_color_picker)
+
+    def on_change_color_picker(self, event: wx.Event):
+        self.color_ctrl.ChangeValue(
+            f"{self.color_picker_ctrl.GetColour().GetRed()},{self.color_picker_ctrl.GetColour().GetGreen()},{self.color_picker_ctrl.GetColour().GetBlue()}"
+        )
 
     def on_change_color(self):
         self.color_ctrl.ChangeValue(f"{self.canvas.color[0]},{self.canvas.color[1]},{self.canvas.color[2]}")
