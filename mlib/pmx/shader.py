@@ -409,6 +409,9 @@ class MShader:
         self.height = height
         self.aspect_ratio = float(self.width) / float(self.height)
 
+        # MSAAも作り直し
+        self.msaa = Msaa(width, height)
+
         # ビューポートの設定
         gl.glViewport(0, 0, self.width, self.height)
 

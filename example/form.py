@@ -392,7 +392,7 @@ class SaveWorker(BaseWorker):
 
 class ConfigPanel(CanvasPanel):
     def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
-        super().__init__(frame, tab_idx, 500, 800, *args, **kw)
+        super().__init__(frame, tab_idx, 0.5, 1.0, *args, **kw)
 
         self._initialize_ui()
         self._initialize_event()
@@ -449,7 +449,7 @@ class ConfigPanel(CanvasPanel):
         self.btn_sizer.Add(self.color_panel, 0, wx.ALL, 0)
 
         self.palette_btn_ctrl = ImageButton(
-            self, "C:/MMD/mmd_base/mlib/resources/icon/palette.png", wx.Size(10, 10), self.on_click_color_picker, "カラーツールチップ"
+            self, "C:/MMD/pmx_dressup/src/resources/icon/palette.png", wx.Size(10, 10), self.on_click_color_picker, "カラーツールチップ"
         )
         self.btn_sizer.Add(self.palette_btn_ctrl, 0, wx.ALL, 0)
 

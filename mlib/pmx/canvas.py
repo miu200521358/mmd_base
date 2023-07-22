@@ -26,10 +26,12 @@ __ = logger.get_text
 
 
 class CanvasPanel(BasePanel):
-    def __init__(self, frame: BaseFrame, tab_idx: int, width: int, height: int, *args, **kw):
+    def __init__(self, frame: BaseFrame, tab_idx: int, canvas_width_ratio: float, canvas_height_ratio: float, *args, **kw):
         super().__init__(frame, tab_idx)
         self.index = 0
-        self.canvas = PmxCanvas(self, width, height)
+        self.canvas_width_ratio = canvas_width_ratio
+        self.canvas_height_ratio = canvas_height_ratio
+        self.canvas = PmxCanvas(self)
 
     @property
     def fno(self) -> int:
@@ -44,6 +46,15 @@ class CanvasPanel(BasePanel):
 
     def start_play(self) -> None:
         pass
+
+    def get_canvas_size(self) -> wx.Size:
+        w, h = self.frame.GetClientSize()
+        canvas_width = w * self.canvas_width_ratio
+        if canvas_width % 2 != 0:
+            # 2で割り切れる値にする
+            canvas_width += 1
+        canvas_height = h * self.canvas_height_ratio
+        return wx.Size(int(canvas_width), int(canvas_height))
 
 
 def animate(queue: Queue, fno: int, max_fno: int, model_set: "ModelSet"):
@@ -106,7 +117,7 @@ class MotionSet:
 
 
 class PmxCanvas(glcanvas.GLCanvas):
-    def __init__(self, parent: CanvasPanel, width: int, height: int, *args, **kw):
+    def __init__(self, parent: CanvasPanel, *args, **kw):
         attribList = (
             glcanvas.WX_GL_RGBA,
             glcanvas.WX_GL_DOUBLEBUFFER,
@@ -114,10 +125,11 @@ class PmxCanvas(glcanvas.GLCanvas):
             16,
             0,
         )
-        glcanvas.GLCanvas.__init__(self, parent, -1, size=(width, height), attribList=attribList)
         self.parent = parent
+        self.size = self.parent.get_canvas_size()
+
+        glcanvas.GLCanvas.__init__(self, parent, -1, size=self.size, attribList=attribList)
         self.context = glcanvas.GLContext(self)
-        self.size = wx.Size(width, height)
         self.last_pos = wx.Point(0, 0)
         self.now_pos = wx.Point(0, 0)
         self.fps = 30
@@ -130,7 +142,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self._initialize_ui()
         self._initialize_event()
 
-        self.shader = MShader(width, height)
+        self.shader = MShader(self.size.width, self.size.height)
         self.model_sets: list[ModelSet] = []
         self.animations: list[MotionSet] = []
 
@@ -178,7 +190,8 @@ class PmxCanvas(glcanvas.GLCanvas):
         pass
 
     def on_resize(self, event: wx.Event):
-        self.size = self.GetClientSize()
+        self.size = self.parent.get_canvas_size()
+        self.SetSize(self.size)
         self.shader.fit(self.size.width, self.size.height)
         event.Skip()
 
