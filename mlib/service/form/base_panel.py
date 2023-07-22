@@ -2,6 +2,9 @@ import wx
 
 from mlib.service.form.base_frame import BaseFrame
 
+ACTIVE_BACKGROUND_COLOR = wx.Colour("SALMON")
+"""ボタンが有効になっている時の背景色"""
+
 
 class BasePanel(wx.Panel):
     def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw) -> None:
