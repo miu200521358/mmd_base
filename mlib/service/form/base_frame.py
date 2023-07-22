@@ -26,8 +26,7 @@ class BaseFrame(wx.Frame):
         self._initialize_ui()
         self._initialize_event()
 
-        self.Centre(wx.BOTH)
-        self.Layout()
+        self.fit()
 
     def _initialize_ui(self) -> None:
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW))
@@ -57,5 +56,6 @@ class BaseFrame(wx.Frame):
             except Exception:
                 pass
 
-    def fit(self):
+    def fit(self) -> None:
+        self.Centre(wx.BOTH)
         self.Layout()
