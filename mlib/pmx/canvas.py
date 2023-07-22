@@ -56,6 +56,9 @@ class CanvasPanel(BasePanel):
         canvas_height = h * self.canvas_height_ratio
         return wx.Size(int(canvas_width), int(canvas_height))
 
+    def on_resize(self):
+        pass
+
 
 def animate(queue: Queue, fno: int, max_fno: int, model_set: "ModelSet"):
     while fno < max_fno:
@@ -193,6 +196,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.size = self.parent.get_canvas_size()
         self.SetSize(self.size)
         self.shader.fit(self.size.width, self.size.height)
+        self.parent.on_resize()
         event.Skip()
 
     def on_paint(self, event: wx.Event):
