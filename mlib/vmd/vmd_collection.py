@@ -213,7 +213,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 morph_bone_local_poses,
                 morph_bone_local_qqs,
                 morph_bone_local_scales,
-            ) = morph_bone_frames.get_bone_matrixes(fnos, model, target_bone_names, append_ik=False)
+            ) = morph_bone_frames.get_bone_matrixes(fnos, model, target_bone_names, append_ik=False, out_fno_log=out_fno_log)
         else:
             morph_row = len(fnos)
             morph_col = len(model.bones)
@@ -235,7 +235,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             motion_bone_local_poses,
             motion_bone_local_qqs,
             motion_bone_local_scales,
-        ) = self.get_bone_matrixes(fnos, model, target_bone_names, append_ik=append_ik)
+        ) = self.get_bone_matrixes(fnos, model, target_bone_names, append_ik=append_ik, out_fno_log=out_fno_log)
 
         # ボーン変形行列
         matrixes = MMatrix4x4List(motion_bone_poses.shape[0], motion_bone_poses.shape[1])
@@ -303,6 +303,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         model: PmxModel,
         target_bone_names: Iterable[str],
         append_ik: bool = True,
+        out_fno_log: bool = False,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """ボーン変形行列を求める"""
 
@@ -320,7 +321,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for fno in fnos:
                 self.calc_ik_rotations(fno, model, target_bone_names)
 
-        for i, fno in enumerate(fnos):
+        for fidx, fno in enumerate(fnos):
+            if out_fno_log:
+                logger.count("ボーン計算", index=fidx, total_index_count=len(fnos), display_block=1000)
+
             fno_local_poses: dict[int, MVector3D] = {}
             fno_local_qqs: dict[int, MQuaternion] = {}
             fno_local_scales: dict[int, MVector3D] = {}
@@ -364,7 +368,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     parent_local_qqs.append(fno_local_qqs[parent_bone.index])
                     parent_local_scales.append(fno_local_scales[parent_bone.index])
 
-                poses[i, bone.index] = self.get_position(bone, model, fno)
+                poses[fidx, bone.index] = self.get_position(bone, model, fno)
 
                 # モーションによるローカル移動量
                 if is_valid_local_pos:
@@ -375,11 +379,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         parent_local_poses,
                         parent_local_axises,
                     )
-                    local_poses[i, bone.index] = local_pos_mat
+                    local_poses[fidx, bone.index] = local_pos_mat
 
                 # FK(捩り) > IK(捩り) > 付与親(捩り)
                 qq = self.get_rotation(fno, bone, model, append_ik=append_ik)
-                qqs[i, bone.index] = qq.to_matrix4x4().vector
+                qqs[fidx, bone.index] = qq.to_matrix4x4().vector
 
                 # ローカル回転
                 if is_valid_local_rot:
@@ -390,11 +394,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         parent_local_qqs,
                         parent_local_axises,
                     )
-                    local_qqs[i, bone.index] = local_rot_mat
+                    local_qqs[fidx, bone.index] = local_rot_mat
 
                 # モーションによるスケール変化
                 scale_mat = self.get_scale(bone, model, fno)
-                scales[i, bone.index] = scale_mat
+                scales[fidx, bone.index] = scale_mat
 
                 # ローカルスケール
                 if is_valid_local_scale:
@@ -405,7 +409,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         parent_local_scales,
                         parent_local_axises,
                     )
-                    local_scales[i, bone.index] = local_scale_mat
+                    local_scales[fidx, bone.index] = local_scale_mat
 
         return poses, qqs, scales, local_poses, local_qqs, local_scales
 
