@@ -112,7 +112,7 @@ def get_threshold_infections(values: np.ndarray, threshold: float) -> np.ndarray
             start_idx = end_idx - 1
         else:
             end_idx += 1
-    return np.array(sorted(list(set(extract_idxs))), dtype=np.float64)
+    return np.array(sorted(list(set(extract_idxs))), dtype=np.int32)
 
 
 def create_interpolation(values: list[float]):
