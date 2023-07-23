@@ -28,6 +28,8 @@ if __name__ == "__main__":
         file_path = f"{args.base_dir}/{lang}/LC_MESSAGES/messages.po"
         is_ja = "ja" == lang
 
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
         try:
             trans_messages = []
             with open(file_path, mode="r", encoding="utf-8") as f:
@@ -77,8 +79,6 @@ if __name__ == "__main__":
                 message = re_break.sub("\\\\n", message)
                 message = re_end_break.sub("\\n", message)
                 messages[i] = message
-
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
             with open(file_path, "w", encoding="utf-8") as f:
                 f.writelines(messages)
