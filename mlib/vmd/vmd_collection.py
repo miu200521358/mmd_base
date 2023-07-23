@@ -284,7 +284,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone_matrixes = VmdBoneFrameTrees()
         for fidx, fno in enumerate(fnos):
             if out_fno_log:
-                logger.count("ボーン行列結果", index=fidx, total_index_count=len(fnos), display_block=1000)
+                logger.count("ボーン行列結果", index=fidx, total_index_count=len(fnos), display_block=100)
 
             for bone in model.bones:
                 local_matrix = MMatrix4x4(*result_matrixes[fidx, bone.index].flatten())
