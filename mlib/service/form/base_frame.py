@@ -19,6 +19,7 @@ class BaseFrame(wx.Frame):
             style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL | wx.FULL_REPAINT_ON_RESIZE,
         )
         self.app = app
+        self.size = size
 
         self.history_keys = history_keys
         self.histories = read_histories(self.history_keys)
