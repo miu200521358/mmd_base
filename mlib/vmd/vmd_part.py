@@ -419,6 +419,34 @@ class CameraInterpolations(BaseModel):
         self.distance = distance or Interpolation()
         self.viewing_angle = viewing_angle or Interpolation()
 
+    def merge(self) -> list[int]:
+        return [
+            int(self.translation_x.start.x),
+            int(self.translation_y.start.x),
+            int(self.translation_z.start.x),
+            int(self.rotation.start.x),
+            int(self.distance.start.x),
+            int(self.viewing_angle.start.x),
+            int(self.translation_x.start.y),
+            int(self.translation_y.start.y),
+            int(self.translation_z.start.y),
+            int(self.rotation.start.y),
+            int(self.distance.start.y),
+            int(self.viewing_angle.start.y),
+            int(self.translation_x.end.x),
+            int(self.translation_y.end.x),
+            int(self.translation_z.end.x),
+            int(self.rotation.end.x),
+            int(self.distance.end.x),
+            int(self.viewing_angle.end.x),
+            int(self.translation_x.end.y),
+            int(self.translation_y.end.y),
+            int(self.translation_z.end.y),
+            int(self.rotation.end.y),
+            int(self.distance.end.y),
+            int(self.viewing_angle.end.y),
+        ]
+
 
 class VmdCameraFrame(BaseVmdNameFrame):
     """
