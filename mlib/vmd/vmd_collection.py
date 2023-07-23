@@ -274,8 +274,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         result_matrixes = np.full(motion_bone_poses.shape, np.eye(4))
 
         for i, (fidx, bone_index) in enumerate(product(list(range(len(fnos))), bone_indexes)):
-            if out_fno_log and 0 < i and 0 == i % 1000:
-                logger.info("-- ボーン変形行列積 [{i}]", i=i, display_block=10000)
+            if out_fno_log and 0 < i and 0 == i % 10000:
+                logger.info("-- ボーン変形行列積 [{i}]", i=i)
 
             result_matrixes[fidx, bone_index] = model.bones[bone_index].offset_matrix.copy()
             for matrix in tree_relative_matrixes[fidx][bone_index]:
