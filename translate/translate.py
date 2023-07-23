@@ -1,4 +1,5 @@
 import argparse
+import os
 import re
 import traceback
 
@@ -76,6 +77,8 @@ if __name__ == "__main__":
                 message = re_break.sub("\\\\n", message)
                 message = re_end_break.sub("\\n", message)
                 messages[i] = message
+
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
             with open(file_path, "w", encoding="utf-8") as f:
                 f.writelines(messages)
