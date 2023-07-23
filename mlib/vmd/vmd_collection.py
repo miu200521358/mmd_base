@@ -494,9 +494,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         """
         該当キーフレにおけるボーンの縮尺
         """
+
         # 自身のスケール
         scale_mat = np.eye(4)
-        scale_mat[:3, :3] += np.diag(self[bone.name][fno].scale.vector)
+        scale_mat[:3, :3] += np.diag(np.where(self[bone.name][fno].scale.vector < -1, -1, self[bone.name][fno].scale.vector))
 
         # 付与親を加味して返す
         return self.get_effect_scale(scale_mat, bone, model, fno, loop=loop + 1)
@@ -864,8 +865,9 @@ def calc_local_scale(
     # ローカル軸に沿った回転行列
     rotation_matrix = local_axis.to_local_matrix4x4().vector
 
+    # マイナス縮尺にはしない
     local_scale_mat = np.eye(4)
-    local_scale_mat[:3, :3] += np.diag(local_scale.vector)
+    local_scale_mat[:3, :3] += np.diag(np.where(local_scale.vector < -1, -1, local_scale.vector))
 
     # ローカル軸に合わせた移動行列を作成する(親はキャンセルする)
     return inv(local_parent_matrix) @ inv(rotation_matrix) @ local_scale_mat @ rotation_matrix

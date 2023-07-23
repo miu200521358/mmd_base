@@ -409,7 +409,6 @@ class ConfigPanel(CanvasPanel):
             wx.FULL_REPAINT_ON_RESIZE | wx.VSCROLL,
         )
         self.scrolled_window.SetScrollRate(5, 5)
-        self.scrolled_window.SetBackgroundColour(wx.BLUE)
 
         self.btn_sizer = wx.BoxSizer(wx.VERTICAL)
 
