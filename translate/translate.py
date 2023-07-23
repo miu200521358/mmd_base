@@ -32,8 +32,12 @@ if __name__ == "__main__":
 
         try:
             trans_messages = []
-            with open(file_path, mode="r", encoding="utf-8") as f:
-                trans_messages = f.readlines()
+
+            if os.path.exists(file_path):
+                with open(file_path, mode="r", encoding="utf-8") as f:
+                    trans_messages = f.readlines()
+            else:
+                trans_messages.extend(messages[:18])
 
             # 翻訳のペアを辞書にする
             trans_messages_dict = dict(
