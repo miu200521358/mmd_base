@@ -275,17 +275,17 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         for i, (fidx, bone_index) in enumerate(product(list(range(len(fnos))), bone_indexes)):
             if out_fno_log and 0 < i and 0 == i % 1000:
-                logger.info("-- ボーン変形行列積 [{i}]", i=i, display_block=1000)
+                logger.info("-- ボーン変形行列積 [{i}]", i=i, display_block=10000)
 
             result_matrixes[fidx, bone_index] = model.bones[bone_index].offset_matrix.copy()
             for matrix in tree_relative_matrixes[fidx][bone_index]:
                 result_matrixes[fidx, bone_index] = matrix @ result_matrixes[fidx, bone_index]
 
-        if out_fno_log:
-            logger.info("ボーン行列結果")
-
         bone_matrixes = VmdBoneFrameTrees()
         for fidx, fno in enumerate(fnos):
+            if out_fno_log:
+                logger.count("ボーン行列結果", index=fidx, total_index_count=len(fnos), display_block=1000)
+
             for bone in model.bones:
                 local_matrix = MMatrix4x4(*result_matrixes[fidx, bone.index].flatten())
 
@@ -1327,9 +1327,9 @@ class VmdMotion(BaseHashModel):
         if clear_ik:
             self.cache_clear()
 
-        for fno in fnos:
+        for fidx, fno in enumerate(fnos):
             if out_fno_log:
-                logger.count("キーフレ確認", index=fno, total_index_count=max(fnos), display_block=1000)
+                logger.count("キーフレ確認", index=fidx, total_index_count=len(fnos), display_block=1000)
 
             logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 開始")
 
