@@ -1295,14 +1295,23 @@ class VmdMotion(BaseHashModel):
         )
 
     def animate_bone(
-        self, fnos: list[int], model: PmxModel, bone_names: Iterable[str] = [], append_ik: bool = True, clear_ik: bool = False
+        self,
+        fnos: list[int],
+        model: PmxModel,
+        bone_names: Iterable[str] = [],
+        append_ik: bool = True,
+        clear_ik: bool = False,
+        out_fno_log: bool = False,
     ) -> VmdBoneFrameTrees:
         all_morph_bone_frames = VmdBoneFrames()
 
         if clear_ik:
             self.cache_clear()
 
-        for fno in fnos:
+        for fidx, fno in enumerate(fnos):
+            if out_fno_log:
+                logger.count("ボーンアニメーション", index=fidx, total_index_count=len(fnos), display_block=10)
+
             logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 開始")
 
             # 材質モーフ
