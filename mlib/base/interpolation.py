@@ -105,14 +105,28 @@ def get_threshold_infections(values: np.ndarray, threshold: float) -> np.ndarray
     start_idx = 0
     end_idx = 1
     while end_idx <= len(values) - 1:
-        diff = np.abs(values[start_idx:end_idx]).ptp()
+        diff = np.ptp(values[start_idx:end_idx])
         if diff >= threshold:
-            extract_idxs.append(start_idx)
-            extract_idxs.append(end_idx - 1)
+            extract_idxs.extend([start_idx, end_idx - 1])
             start_idx = end_idx - 1
         else:
             end_idx += 1
-    return np.array(sorted(list(set(extract_idxs))), dtype=np.int32)
+    return np.array(sorted(set(extract_idxs)), dtype=np.int32)
+
+
+# def get_threshold_infections(values: np.ndarray, threshold: float) -> np.ndarray:
+#     extract_idxs = []
+#     start_idx = 0
+#     end_idx = 1
+#     while end_idx <= len(values) - 1:
+#         diff = np.abs(values[start_idx:end_idx]).ptp()
+#         if diff >= threshold:
+#             extract_idxs.append(start_idx)
+#             extract_idxs.append(end_idx - 1)
+#             start_idx = end_idx - 1
+#         else:
+#             end_idx += 1
+#     return np.array(sorted(list(set(extract_idxs))), dtype=np.int32)
 
 
 def create_interpolation(values: list[float]):
