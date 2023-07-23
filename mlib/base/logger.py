@@ -80,6 +80,7 @@ class MLogger:
     is_out_log = False
 
     console_handler: Optional["ConsoleHandler"] = None
+    console_handler2: Optional["ConsoleHandler"] = None
     re_break = re.compile(r"\n")
 
     def __init__(
@@ -105,12 +106,14 @@ class MLogger:
         self.logger.addHandler(self.stream_err_handler)
 
         if self.console_handler:
-            for h in self.logger.handlers:
-                if isinstance(h, ConsoleHandler):
-                    return
             if self.is_out_log:
                 self.console_handler.setFormatter(Formatter(self.STREAM_FORMAT))
             self.logger.addHandler(self.console_handler)
+
+        if self.console_handler2:
+            if self.is_out_log:
+                self.console_handler2.setFormatter(Formatter(self.STREAM_FORMAT))
+            self.logger.addHandler(self.console_handler2)
 
     def get_extra(self, msg: str, func: Optional[str] = "", lno: Optional[int] = 0):
         return {"original_msg": msg, "call_file": self.file_name, "call_func": func, "call_lno": str(lno)}
