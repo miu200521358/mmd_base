@@ -21,7 +21,7 @@ class FrameSliderCtrl:
         tooltip: Optional[str] = None,
     ) -> None:
         self._min = 0
-        self._max = 1000
+        self._max = 10000
         self.key_fnos = [f for f in range(self._max + 1)]
         self._change_event = change_event
         self._initial_value = 0
@@ -69,7 +69,7 @@ class FrameSliderCtrl:
             v = vs[0] if vs else self._max
         else:
             vs = [f for f in self.key_fnos if f < self._slider.GetValue()]
-            v = vs[-1] if vs else self._max
+            v = vs[-1] if vs else 0
         self._fno_ctrl.SetValue(v)
         self._slider.SetValue(v)
 
