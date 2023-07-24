@@ -15,10 +15,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from mlib.base.exception import MApplicationException
 from mlib.base.logger import MLogger
-from mlib.base.math import MQuaternion, MVector3D
+from mlib.base.math import MVector3D
 from mlib.pmx.canvas import CanvasPanel
 from mlib.pmx.pmx_collection import PmxModel
-from mlib.pmx.pmx_part import Bone, BoneMorphOffset, Face, Morph, MorphType, SphereMode, Texture, ToonSharing, VertexMorphOffset
+from mlib.pmx.pmx_part import Bone, BoneMorphOffset, Face, Morph, MorphType, SphereMode, Texture, ToonSharing
 from mlib.pmx.pmx_writer import PmxWriter
 from mlib.service.base_worker import BaseWorker
 from mlib.service.form.base_frame import BaseFrame
@@ -27,10 +27,11 @@ from mlib.service.form.widgets.console_ctrl import ConsoleCtrl
 from mlib.service.form.widgets.exec_btn_ctrl import ExecButton
 from mlib.service.form.widgets.file_ctrl import MPmxFilePickerCtrl, MVmdFilePickerCtrl
 from mlib.service.form.widgets.float_slider_ctrl import FloatSliderCtrl
+from mlib.service.form.widgets.frame_slider_ctrl import FrameSliderCtrl
 from mlib.service.form.widgets.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
 from mlib.utils.file_utils import save_histories, separate_path
 from mlib.vmd.vmd_collection import VmdMotion
-from mlib.vmd.vmd_part import VmdBoneFrame, VmdMorphFrame
+from mlib.vmd.vmd_part import VmdMorphFrame
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -443,6 +444,16 @@ class ConfigPanel(CanvasPanel):
         )
         self.btn_sizer.Add(self.float_slider.sizer, 0, wx.ALL, 0)
 
+        # スライダー
+        self.frame_slider = FrameSliderCtrl(
+            self.scrolled_window,
+            border=3,
+            position=wx.DefaultPosition,
+            size=wx.Size(200, -1),
+            tooltip="キーフレスライダー",
+        )
+        self.btn_sizer.Add(self.frame_slider.sizer, 0, wx.ALL, 0)
+
         # 選択色
         self.color_ctrl = wx.TextCtrl(
             self.scrolled_window,
@@ -673,6 +684,8 @@ class TestFrame(BaseFrame):
         # dress_motion.morphs["上半身"].append(VmdMorphFrame(0, "上半身", 1))
 
         try:
+            self.config_panel.frame_slider.SetMaxFrameNo(dress_motion.max_fno)
+            self.config_panel.frame_slider.SetKeyFrames([f for f in range(0, dress_motion.max_fno, 100)])
             self.config_panel.canvas.set_context()
             self.config_panel.canvas.append_model_set(self.file_panel.model_ctrl.data, self.file_panel.motion_ctrl.data.copy(), 0.5)
             self.config_panel.canvas.append_model_set(dress, dress_motion, 0.7)
