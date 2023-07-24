@@ -54,7 +54,7 @@ class VmdWriter(BaseModel):
                     fout.write(struct.pack("<f", float(v.w)))
                     fout.write(bytearray([int(min(255, max(0, x))) for x in bf.interpolations.merge()]))
 
-            fout.write(struct.pack("<L", len(self.motion.morphs)))  # 表情フレーム数
+            fout.write(struct.pack("<L", self.motion.morph_count))  # 表情フレーム数
             for morph_name in self.motion.morphs.names:
                 for fno in reversed(self.motion.morphs[morph_name].indexes):
                     mf = self.motion.morphs[morph_name][fno]
@@ -97,7 +97,7 @@ class VmdWriter(BaseModel):
                 fout.write(struct.pack("<f", float(sf.type)))
                 fout.write(struct.pack("<f", float(sf.distance)))
 
-            fout.write(struct.pack("<L", len(self.motion.show_iks)))  # モデル表示・IK on/offキーフレーム数
+            fout.write(struct.pack("<L", self.motion.ik_count))  # モデル表示・IK on/offキーフレーム数
             for sk in self.motion.show_iks:
                 fout.write(struct.pack("<L", sk.index))
                 fout.write(struct.pack("b", sk.show))

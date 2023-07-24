@@ -1256,6 +1256,14 @@ class VmdMotion(BaseHashModel):
         return int(np.sum([len(bfs) for bfs in self.bones]))
 
     @property
+    def morph_count(self) -> int:
+        return int(np.sum([len(mfs) for mfs in self.morphs]))
+
+    @property
+    def ik_count(self) -> int:
+        return int(np.sum([len(ifs.iks) for ifs in self.show_iks]))
+
+    @property
     def max_fno(self) -> int:
         return max(self.bones.max_fno, self.morphs.max_fno)
 
