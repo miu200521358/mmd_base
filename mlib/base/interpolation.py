@@ -53,6 +53,9 @@ class Interpolation(BaseModel):
         # pythonは偶数丸めなので、整数部で丸めた後、元に戻す
         return int(round(round(t2, -6) / 1000000))
 
+    def __str__(self) -> str:
+        return f"[start={self.start}, end={self.end}]"
+
 
 def separate_interpolation(interpolation: Interpolation, start: int, now: int, end: int) -> tuple[Interpolation, Interpolation]:
     if (now - start) == 0 or (end - start) == 0:
