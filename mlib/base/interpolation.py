@@ -140,7 +140,7 @@ def create_interpolation(values: list[float]):
     xs = np.arange(0, len(values))
 
     # YはXの移動分を許容範囲とする
-    ys = np.array(sorted(list(set(values))), dtype=np.float64)
+    ys = np.array(values, dtype=np.float64)
 
     # https://github.com/dhermes/bezier/issues/242
     s_vals = np.linspace(0, 1, len(values))
