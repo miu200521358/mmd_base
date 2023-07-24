@@ -4,6 +4,7 @@ from typing import Optional
 import wx
 
 from mlib.base.logger import MLogger
+from mlib.service.form.widgets.spin_ctrl import WheelSpinCtrl
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -25,8 +26,7 @@ class FrameSliderCtrl:
         self._change_event = change_event
         self._initial_value = 0
 
-        self._fno_ctrl = wx.TextCtrl(parent, wx.ID_ANY, str(f"{0:04d}"), wx.DefaultPosition, wx.Size(50, -1), style=wx.TE_PROCESS_ENTER)
-        self._fno_ctrl.Bind(wx.EVT_TEXT_ENTER, self._on_change_value)
+        self._fno_ctrl = WheelSpinCtrl(parent, initial=0, min=0, max=10000, size=wx.Size(70, -1), change_event=self._on_change_value)
         if tooltip:
             self._fno_ctrl.SetToolTip(tooltip + __("\nEnterキーを押下したタイミングで値が反映されます。"))
 
@@ -42,11 +42,11 @@ class FrameSliderCtrl:
         self.sizer.Add(self._slider, 0, wx.TOP | wx.RIGHT | wx.BOTTOM, border)
 
     def _on_scroll(self, event: wx.Event) -> None:
-        self._fno_ctrl.ChangeValue(str(self._slider.GetValue()))
+        self._fno_ctrl.SetValue(self._slider.GetValue())
 
     def _on_scroll_release(self, event: wx.Event) -> None:
         self.Enable(False)
-        self._fno_ctrl.ChangeValue(str(self._slider.GetValue()))
+        self._fno_ctrl.SetValue(self._slider.GetValue())
 
         if self._change_event:
             self._change_event(event)
@@ -55,7 +55,7 @@ class FrameSliderCtrl:
 
     def _on_change_value(self, event: wx.Event) -> None:
         self.Enable(False)
-        self._slider.SetValue(int(self._fno_ctrl.GetValue()))
+        self._slider.SetValue(self._fno_ctrl.GetValue())
 
         if self._change_event:
             self._change_event(event)
@@ -70,15 +70,15 @@ class FrameSliderCtrl:
         else:
             vs = [f for f in self.key_fnos if f < self._slider.GetValue()]
             v = vs[-1] if vs else self._max
-        self._fno_ctrl.ChangeValue(str(v))
+        self._fno_ctrl.SetValue(v)
         self._slider.SetValue(v)
 
     def SetValue(self, v: float) -> None:
         self._slider.SetValue(v)
-        self._fno_ctrl.SetValue(str(v))
+        self._fno_ctrl.SetValue(v)
 
     def ChangeValue(self, v: float) -> None:
-        self._fno_ctrl.ChangeValue(str(v))
+        self._fno_ctrl.SetValue(v)
         self._slider.SetValue(v)
 
     def GetValue(self) -> int:

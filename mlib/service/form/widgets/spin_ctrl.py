@@ -6,6 +6,12 @@ class WheelSpinCtrl(wx.SpinCtrl):
         change_event = kw.pop("change_event", None)
         style = wx.TE_PROCESS_ENTER | kw.pop("style", 0)
 
+        spin_event = kw.pop("spin_event", None)
+        self.spin_event = spin_event
+
+        enter_event = kw.pop("enter_event", None)
+        self.enter_event = enter_event
+
         super().__init__(*args, **kw, style=style)
         self.change_event = change_event
 
@@ -21,10 +27,16 @@ class WheelSpinCtrl(wx.SpinCtrl):
         if self.change_event:
             self.change_event(event)
 
+        if self.spin_event:
+            self.spin_event(event)
+
     def on_text_enter(self, event: wx.Event) -> None:
         self.SetFocus()
         if self.change_event:
             self.change_event(event)
+
+        if self.enter_event:
+            self.enter_event(event)
 
 
 class WheelSpinCtrlDouble(wx.SpinCtrlDouble):
@@ -34,6 +46,12 @@ class WheelSpinCtrlDouble(wx.SpinCtrlDouble):
 
         super().__init__(*args, **kw, style=style)
         self.change_event = change_event
+
+        spin_event = kw.pop("spin_event", None)
+        self.spin_event = spin_event
+
+        enter_event = kw.pop("enter_event", None)
+        self.enter_event = enter_event
 
         self.Bind(wx.EVT_SPINCTRLDOUBLE, self.on_spin)
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_wheel_spin)
@@ -56,7 +74,13 @@ class WheelSpinCtrlDouble(wx.SpinCtrlDouble):
         if self.change_event:
             self.change_event(event)
 
+        if self.spin_event:
+            self.spin_event(event)
+
     def on_text_enter(self, event: wx.Event) -> None:
         self.SetFocus()
         if self.change_event:
             self.change_event(event)
+
+        if self.enter_event:
+            self.enter_event(event)
