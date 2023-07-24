@@ -323,7 +323,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         for fidx, fno in enumerate(fnos):
             if out_fno_log:
-                logger.count("ボーン計算", index=fidx, total_index_count=len(fnos), display_block=500)
+                logger.count("ボーン計算", index=fidx, total_index_count=len(fnos), display_block=100)
 
             fno_local_poses: dict[int, MVector3D] = {}
             fno_local_qqs: dict[int, MQuaternion] = {}
@@ -1333,7 +1333,7 @@ class VmdMotion(BaseHashModel):
 
         for fidx, fno in enumerate(fnos):
             if out_fno_log:
-                logger.count("キーフレ確認", index=fidx, total_index_count=len(fnos), display_block=1000)
+                logger.count("キーフレ確認", index=fidx, total_index_count=len(fnos), display_block=100)
 
             logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 開始")
 
