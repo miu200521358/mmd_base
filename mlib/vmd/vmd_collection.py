@@ -421,183 +421,47 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 is_valid_local_rot = is_valid_local_rot or bool(parent_bf.local_rotation)
                 is_valid_local_scale = is_valid_local_scale or bool(parent_bf.local_scale)
 
-        local_pos_future = local_qq_future = local_scale_future = None
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            pos_future = executor.submit(self.get_position_matrixes_by_fno, fno, target_bone_names, model)
-            qq_future = executor.submit(self.get_rotation_matrixes_by_fno, fno, target_bone_names, model, append_ik)
-            scale_future = executor.submit(self.get_scale_matrixes_by_fno, fno, target_bone_names, model)
+        for bone_name in target_bone_names:
+            bone = model.bones[bone_name]
+
+            fno_pos_mats[bone.index] = self.get_position(fno, model, bone)
+            fno_qq_mats[bone.index] = self.get_rotation(fno, model, bone, append_ik).to_matrix4x4().vector
+            fno_scale_mats[bone.index] = self.get_scale(fno, model, bone)
 
             if is_valid_local_pos:
-                local_pos_future = executor.submit(
-                    self.get_local_position_matrixes_by_fno,
+                local_pos_mat = self.get_local_position(
                     fno,
-                    target_bone_names,
                     model,
+                    bone,
                     is_parent_bone_not_local_cancels,
                     parent_local_poses,
                     parent_local_axises,
                 )
+                fno_local_pos_mats[bone.index] = local_pos_mat
 
             if is_valid_local_rot:
-                local_qq_future = executor.submit(
-                    self.get_local_rotation_matrixes_by_fno,
+                local_qq_mat = self.get_local_rotation(
                     fno,
-                    target_bone_names,
                     model,
+                    bone,
                     is_parent_bone_not_local_cancels,
                     parent_local_qqs,
                     parent_local_axises,
                 )
+                fno_local_qq_mats[bone.index] = local_qq_mat
 
             if is_valid_local_scale:
-                local_scale_future = executor.submit(
-                    self.get_local_scale_matrixes_by_fno,
+                local_scale_mat = self.get_local_scale(
                     fno,
-                    target_bone_names,
                     model,
+                    bone,
                     is_parent_bone_not_local_cancels,
                     parent_local_scales,
                     parent_local_axises,
                 )
-
-        fno_pos_mats = pos_future.result()
-        fno_qq_mats = qq_future.result()
-        fno_scale_mats = scale_future.result()
-        if local_pos_future:
-            fno_local_pos_mats = local_pos_future.result()
-        if local_qq_future:
-            fno_local_qq_mats = local_qq_future.result()
-        if local_scale_future:
-            fno_local_scale_mats = local_scale_future.result()
+                fno_local_scale_mats[bone.index] = local_scale_mat
 
         return fidx, fno_pos_mats, fno_qq_mats, fno_scale_mats, fno_local_pos_mats, fno_local_qq_mats, fno_local_scale_mats
-
-    def get_position_matrixes_by_fno(
-        self,
-        fno: int,
-        target_bone_names: Iterable[str],
-        model: PmxModel,
-    ) -> np.ndarray:
-        col = len(model.bones)
-        fno_pos_mats = np.full((col, 4, 4), np.eye(4))
-
-        for bone_name in target_bone_names:
-            bone = model.bones[bone_name]
-            fno_pos_mats[bone.index] = self.get_position(fno, model, bone)
-
-        return fno_pos_mats
-
-    def get_rotation_matrixes_by_fno(
-        self,
-        fno: int,
-        target_bone_names: Iterable[str],
-        model: PmxModel,
-        append_ik: bool,
-    ) -> np.ndarray:
-        col = len(model.bones)
-        fno_qq_mats = np.full((col, 4, 4), np.eye(4))
-
-        for bone_name in target_bone_names:
-            bone = model.bones[bone_name]
-            fno_qq_mats[bone.index] = self.get_rotation(fno, model, bone, append_ik).to_matrix4x4().vector
-
-        return fno_qq_mats
-
-    def get_scale_matrixes_by_fno(
-        self,
-        fno: int,
-        target_bone_names: Iterable[str],
-        model: PmxModel,
-    ) -> np.ndarray:
-        col = len(model.bones)
-        fno_scale_mats = np.full((col, 4, 4), np.eye(4))
-
-        for bone_name in target_bone_names:
-            bone = model.bones[bone_name]
-            fno_scale_mats[bone.index] = self.get_scale(fno, model, bone)
-
-        return fno_scale_mats
-
-    def get_local_position_matrixes_by_fno(
-        self,
-        fno: int,
-        target_bone_names: Iterable[str],
-        model: PmxModel,
-        is_parent_bone_not_local_cancels: list[bool],
-        parent_local_poses: list[MVector3D],
-        parent_local_axises: list[MVector3D],
-    ) -> np.ndarray:
-        col = len(model.bones)
-        fno_local_pos_mats = np.full((col, 4, 4), np.eye(4))
-
-        for bone_name in target_bone_names:
-            bone = model.bones[bone_name]
-
-            local_pos_mat = self.get_local_position(
-                fno,
-                model,
-                bone,
-                is_parent_bone_not_local_cancels,
-                parent_local_poses,
-                parent_local_axises,
-            )
-            fno_local_pos_mats[bone.index] = local_pos_mat
-
-        return fno_local_pos_mats
-
-    def get_local_rotation_matrixes_by_fno(
-        self,
-        fno: int,
-        target_bone_names: Iterable[str],
-        model: PmxModel,
-        is_parent_bone_not_local_cancels: list[bool],
-        parent_local_qqs: list[MQuaternion],
-        parent_local_axises: list[MVector3D],
-    ) -> np.ndarray:
-        col = len(model.bones)
-        fno_local_qq_mats = np.full((col, 4, 4), np.eye(4))
-
-        for bone_name in target_bone_names:
-            bone = model.bones[bone_name]
-
-            local_qq_mat = self.get_local_rotation(
-                fno,
-                model,
-                bone,
-                is_parent_bone_not_local_cancels,
-                parent_local_qqs,
-                parent_local_axises,
-            )
-            fno_local_qq_mats[bone.index] = local_qq_mat
-
-        return fno_local_qq_mats
-
-    def get_local_scale_matrixes_by_fno(
-        self,
-        fno: int,
-        target_bone_names: Iterable[str],
-        model: PmxModel,
-        is_parent_bone_not_local_cancels: list[bool],
-        parent_local_scales: list[MVector3D],
-        parent_local_axises: list[MVector3D],
-    ) -> np.ndarray:
-        col = len(model.bones)
-        fno_local_scale_mats = np.full((col, 4, 4), np.eye(4))
-
-        for bone_name in target_bone_names:
-            bone = model.bones[bone_name]
-
-            local_scale_mat = self.get_local_scale(
-                fno,
-                model,
-                bone,
-                is_parent_bone_not_local_cancels,
-                parent_local_scales,
-                parent_local_axises,
-            )
-            fno_local_scale_mats[bone.index] = local_scale_mat
-
-        return fno_local_scale_mats
 
     def get_position(self, fno: int, model: PmxModel, bone: Bone, loop: int = 0) -> np.ndarray:
         """
