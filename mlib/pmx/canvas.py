@@ -18,8 +18,8 @@ from mlib.pmx.pmx_part import ShaderMaterial
 from mlib.pmx.shader import MShader
 from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
-from mlib.vmd.vmd_collection import VmdMotion
 from mlib.utils.file_utils import get_root_dir
+from mlib.vmd.vmd_collection import VmdMotion
 
 logger = MLogger(os.path.basename(__file__), level=logging.DEBUG)
 __ = logger.get_text
