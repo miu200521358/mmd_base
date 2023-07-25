@@ -653,16 +653,16 @@ class TestFrame(BaseFrame):
         # bf.local_scale = MVector3D(0, 1, 1)
         # dress_motion.bones["頭"].append(bf)
 
-        # モーフ追加
-        morph = Morph(name="左足")
-        morph.morph_type = MorphType.BONE
-        offset = BoneMorphOffset(dress.bones["左足"].index, local_scale=MVector3D(0, 1, 1))
-        morph.offsets.append(offset)
-        dress.morphs.append(morph)
+        # # モーフ追加
+        # morph = Morph(name="左足")
+        # morph.morph_type = MorphType.BONE
+        # offset = BoneMorphOffset(dress.bones["左足"].index, local_scale=MVector3D(0, 1, 1))
+        # morph.offsets.append(offset)
+        # dress.morphs.append(morph)
 
-        dress_motion.morphs["左足"].append(VmdMorphFrame(0, "左足", 1))
+        # dress_motion.morphs["左足"].append(VmdMorphFrame(0, "左足", 1))
 
-        dress.update_vertices_by_bone()
+        # dress.update_vertices_by_bone()
 
         # # モーフ追加
         # morph2 = Morph(name="左足頂点")
