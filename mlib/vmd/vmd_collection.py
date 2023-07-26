@@ -1026,96 +1026,88 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
     def max_fno(self) -> int:
         return max([max(self[fname].indexes + [0]) for fname in self.names] + [0])
 
-    def animate_vertex_morphs(self, fnos: list[int], model: PmxModel) -> np.ndarray:
+    def animate_vertex_morphs(self, fno: int, model: PmxModel) -> np.ndarray:
         """頂点モーフ変形量"""
-        col = len(fnos)
         row = len(model.vertices)
-        poses = np.full((col, row, 3), np.zeros(3))
+        poses = np.full((row, 3), np.zeros(3))
 
-        for fidx, fno in enumerate(fnos):
-            for morph in model.morphs.filter_by_type(MorphType.VERTEX):
-                if morph.name not in self.data:
-                    # モーフそのものの定義がなければスルー
-                    continue
-                mf = self[morph.name][fno]
-                if not mf.ratio:
-                    continue
+        for morph in model.morphs.filter_by_type(MorphType.VERTEX):
+            if morph.name not in self.data:
+                # モーフそのものの定義がなければスルー
+                continue
+            mf = self[morph.name][fno]
+            if not mf.ratio:
+                continue
 
-                # モーションによる頂点モーフ変動量
-                for offset in morph.offsets:
-                    if type(offset) is VertexMorphOffset and offset.vertex_index < row:
-                        ratio_pos: MVector3D = offset.position * mf.ratio
-                        poses[fidx, offset.vertex_index] += ratio_pos.gl.vector
+            # モーションによる頂点モーフ変動量
+            for offset in morph.offsets:
+                if type(offset) is VertexMorphOffset and offset.vertex_index < row:
+                    ratio_pos: MVector3D = offset.position * mf.ratio
+                    poses[offset.vertex_index] += ratio_pos.gl.vector
 
         return np.array(poses)
 
-    def animate_after_vertex_morphs(self, fnos: list[int], model: PmxModel) -> np.ndarray:
+    def animate_after_vertex_morphs(self, fno: int, model: PmxModel) -> np.ndarray:
         """ボーン変形後頂点モーフ変形量"""
-        col = len(fnos)
         row = len(model.vertices)
-        poses = np.full((col, row, 3), np.zeros(3))
+        poses = np.full((row, 3), np.zeros(3))
 
-        for fidx, fno in enumerate(fnos):
-            for morph in model.morphs.filter_by_type(MorphType.AFTER_VERTEX):
-                if morph.name not in self.data:
-                    # モーフそのものの定義がなければスルー
-                    continue
-                mf = self[morph.name][fno]
-                if not mf.ratio:
-                    continue
+        for morph in model.morphs.filter_by_type(MorphType.AFTER_VERTEX):
+            if morph.name not in self.data:
+                # モーフそのものの定義がなければスルー
+                continue
+            mf = self[morph.name][fno]
+            if not mf.ratio:
+                continue
 
-                # モーションによる頂点モーフ変動量
-                for offset in morph.offsets:
-                    if type(offset) is VertexMorphOffset and offset.vertex_index < row:
-                        ratio_pos: MVector3D = offset.position * mf.ratio
-                        poses[fidx, offset.vertex_index] += ratio_pos.gl.vector
+            # モーションによる頂点モーフ変動量
+            for offset in morph.offsets:
+                if type(offset) is VertexMorphOffset and offset.vertex_index < row:
+                    ratio_pos: MVector3D = offset.position * mf.ratio
+                    poses[offset.vertex_index] += ratio_pos.gl.vector
 
         return np.array(poses)
 
-    def animate_uv_morphs(self, fnos: list[int], model: PmxModel, uv_index: int) -> np.ndarray:
-        col = len(fnos)
+    def animate_uv_morphs(self, fno: int, model: PmxModel, uv_index: int) -> np.ndarray:
         row = len(model.vertices)
-        poses = np.full((col, row, 4), np.zeros(4))
+        poses = np.full((row, 4), np.zeros(4))
 
         target_uv_type = MorphType.UV if 0 == uv_index else MorphType.EXTENDED_UV1
-        for fidx, fno in enumerate(fnos):
-            for morph in model.morphs.filter_by_type(target_uv_type):
-                if morph.name not in self.data:
-                    # モーフそのものの定義がなければスルー
-                    continue
-                mf = self[morph.name][fno]
-                if not mf.ratio:
-                    continue
+        for morph in model.morphs.filter_by_type(target_uv_type):
+            if morph.name not in self.data:
+                # モーフそのものの定義がなければスルー
+                continue
+            mf = self[morph.name][fno]
+            if not mf.ratio:
+                continue
 
-                # モーションによるUVモーフ変動量
-                for offset in morph.offsets:
-                    if type(offset) is UvMorphOffset and offset.vertex_index < row:
-                        ratio_pos: MVector4D = offset.uv * mf.ratio
-                        poses[fidx, offset.vertex_index] += ratio_pos.vector
+            # モーションによるUVモーフ変動量
+            for offset in morph.offsets:
+                if type(offset) is UvMorphOffset and offset.vertex_index < row:
+                    ratio_pos: MVector4D = offset.uv * mf.ratio
+                    poses[offset.vertex_index] += ratio_pos.vector
 
         # UVのYは 1 - y で求め直しておく
-        poses[..., 1] = 1 - poses[..., 1]
+        poses[:, 1] = 1 - poses[:, 1]
 
         return np.array(poses)
 
-    def animate_bone_morphs(self, fnos: list[int], model: PmxModel) -> VmdBoneFrames:
+    def animate_bone_morphs(self, fno: int, model: PmxModel) -> VmdBoneFrames:
         bone_frames = VmdBoneFrames()
+        for morph in model.morphs.filter_by_type(MorphType.BONE):
+            if morph.name not in self.data:
+                # モーフそのものの定義がなければスルー
+                continue
+            mf = self[morph.name][fno]
+            if not mf.ratio:
+                continue
 
-        for fno in fnos:
-            for morph in model.morphs.filter_by_type(MorphType.BONE):
-                if morph.name not in self.data:
-                    # モーフそのものの定義がなければスルー
-                    continue
-                mf = self[morph.name][fno]
-                if not mf.ratio:
-                    continue
-
-                # モーションによるボーンモーフ変動量
-                for offset in morph.offsets:
-                    if type(offset) is BoneMorphOffset and offset.bone_index in model.bones:
-                        bf = bone_frames[model.bones[offset.bone_index].name][fno]
-                        bf = self.animate_bone_morph_frame(fno, model, bf, offset, mf.ratio)
-                        bone_frames[bf.name][fno] = bf
+            # モーションによるボーンモーフ変動量
+            for offset in morph.offsets:
+                if type(offset) is BoneMorphOffset and offset.bone_index in model.bones:
+                    bf = bone_frames[model.bones[offset.bone_index].name][fno]
+                    bf = self.animate_bone_morph_frame(fno, model, bf, offset, mf.ratio)
+                    bone_frames[bf.name][fno] = bf
 
         return bone_frames
 
@@ -1129,45 +1121,38 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         return bf
 
     def animate_group_morphs(
-        self, fnos: list[int], model: PmxModel, materials: list[list[ShaderMaterial]]
-    ) -> tuple[np.ndarray, VmdBoneFrames, list[list[ShaderMaterial]]]:
-        group_vertex_poses = np.full((len(fnos), len(model.vertices), 3), np.zeros(3))
+        self, fno: int, model: PmxModel, materials: list[ShaderMaterial]
+    ) -> tuple[np.ndarray, VmdBoneFrames, list[ShaderMaterial]]:
+        group_vertex_poses = np.full((len(model.vertices), 3), np.zeros(3))
         bone_frames = VmdBoneFrames()
 
         # デフォルトの材質情報を保持（シェーダーに合わせて一部入れ替え）
-        for fidx, fno in enumerate(fnos):
-            fno_materials = materials[fidx]
+        for morph in model.morphs.filter_by_type(MorphType.GROUP):
+            if morph.name not in self.data:
+                # モーフそのものの定義がなければスルー
+                continue
+            mf = self[morph.name][fno]
+            if not mf.ratio:
+                continue
 
-            for morph in model.morphs.filter_by_type(MorphType.GROUP):
-                if morph.name not in self.data:
-                    # モーフそのものの定義がなければスルー
-                    continue
-                mf = self[morph.name][fno]
-                if not mf.ratio:
-                    continue
+            # モーションによるボーンモーフ変動量
+            for group_offset in morph.offsets:
+                if type(group_offset) is GroupMorphOffset and group_offset.morph_index in model.morphs:
+                    part_morph = model.morphs[group_offset.morph_index]
+                    mf_factor = mf.ratio * group_offset.morph_factor
+                    if not mf_factor:
+                        continue
 
-                # モーションによるボーンモーフ変動量
-                for group_offset in morph.offsets:
-                    if type(group_offset) is GroupMorphOffset and group_offset.morph_index in model.morphs:
-                        part_morph = model.morphs[group_offset.morph_index]
-                        mf_factor = mf.ratio * group_offset.morph_factor
-                        if not mf_factor:
-                            continue
-
-                        for offset in part_morph.offsets:
-                            if type(offset) is VertexMorphOffset and offset.vertex_index < group_vertex_poses.shape[0]:
-                                ratio_pos: MVector3D = offset.position * mf_factor
-                                group_vertex_poses[fidx, offset.vertex_index] += ratio_pos.gl.vector
-                            elif type(offset) is BoneMorphOffset and offset.bone_index in model.bones:
-                                bf = bone_frames[model.bones[offset.bone_index].name][fno]
-                                bf = self.animate_bone_morph_frame(fno, model, bf, offset, mf_factor)
-                                bone_frames[bf.name][fno] = bf
-                            elif type(offset) is MaterialMorphOffset and offset.material_index in model.materials:
-                                fno_materials = self.animate_material_morph_frame(
-                                    model, offset, mf_factor, fno_materials, MShader.LIGHT_AMBIENT4
-                                )
-
-            materials[fidx] = fno_materials
+                    for offset in part_morph.offsets:
+                        if type(offset) is VertexMorphOffset and offset.vertex_index < group_vertex_poses.shape[0]:
+                            ratio_pos: MVector3D = offset.position * mf_factor
+                            group_vertex_poses[offset.vertex_index] += ratio_pos.gl.vector
+                        elif type(offset) is BoneMorphOffset and offset.bone_index in model.bones:
+                            bf = bone_frames[model.bones[offset.bone_index].name][fno]
+                            bf = self.animate_bone_morph_frame(fno, model, bf, offset, mf_factor)
+                            bone_frames[bf.name][fno] = bf
+                        elif type(offset) is MaterialMorphOffset and offset.material_index in model.materials:
+                            materials = self.animate_material_morph_frame(model, offset, mf_factor, materials, MShader.LIGHT_AMBIENT4)
 
         return group_vertex_poses, bone_frames, materials
 
@@ -1219,25 +1204,22 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
         return materials
 
-    def animate_material_morphs(self, fnos: list[int], model: PmxModel) -> list[list[ShaderMaterial]]:
+    def animate_material_morphs(self, fno: int, model: PmxModel) -> list[ShaderMaterial]:
         # デフォルトの材質情報を保持（シェーダーに合わせて一部入れ替え）
-        materials = [[ShaderMaterial(m, MShader.LIGHT_AMBIENT4) for m in model.materials] for fno in fnos]
+        materials = [ShaderMaterial(m, MShader.LIGHT_AMBIENT4) for m in model.materials]
 
-        for fidx, fno in enumerate(fnos):
-            for morph in model.morphs.filter_by_type(MorphType.MATERIAL):
-                if morph.name not in self.data:
-                    # モーフそのものの定義がなければスルー
-                    continue
-                mf = self[morph.name][fno]
-                if not mf.ratio:
-                    continue
+        for morph in model.morphs.filter_by_type(MorphType.MATERIAL):
+            if morph.name not in self.data:
+                # モーフそのものの定義がなければスルー
+                continue
+            mf = self[morph.name][fno]
+            if not mf.ratio:
+                continue
 
-                fno_materials = materials[fidx]
-                # モーションによる材質モーフ変動量
-                for offset in morph.offsets:
-                    if type(offset) is MaterialMorphOffset and (offset.material_index in model.materials or 0 > offset.material_index):
-                        fno_materials = self.animate_material_morph_frame(model, offset, mf.ratio, fno_materials, MShader.LIGHT_AMBIENT4)
-                materials[fidx] = fno_materials
+            # モーションによる材質モーフ変動量
+            for offset in morph.offsets:
+                if type(offset) is MaterialMorphOffset and (offset.material_index in model.materials or 0 > offset.material_index):
+                    materials = self.animate_material_morph_frame(model, offset, mf.ratio, materials, MShader.LIGHT_AMBIENT4)
 
         return materials
 
@@ -1357,37 +1339,37 @@ class VmdMotion(BaseHashModel):
         self.bones.cache_clear()
 
     def animate(
-        self, fnos: list[int], model: PmxModel, max_workers: int = 10
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[list[ShaderMaterial]]]:
-        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fnos}]: 開始")
+        self, fno: int, model: PmxModel, max_workers: int = 10
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
+        logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 開始")
 
         # 頂点モーフ
-        vertex_morph_poses = self.morphs.animate_vertex_morphs(fnos, model)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fnos}]: 頂点モーフ")
+        vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model)
+        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 頂点モーフ")
 
         # ボーン変形後頂点モーフ
-        after_vertex_morph_poses = self.morphs.animate_after_vertex_morphs(fnos, model)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fnos}]: ボーン変形後頂点モーフ")
+        after_vertex_morph_poses = self.morphs.animate_after_vertex_morphs(fno, model)
+        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン変形後頂点モーフ")
 
         # UVモーフ
-        uv_morph_poses = self.morphs.animate_uv_morphs(fnos, model, 0)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fnos}]: UVモーフ")
+        uv_morph_poses = self.morphs.animate_uv_morphs(fno, model, 0)
+        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: UVモーフ")
 
         # 追加UVモーフ1
-        uv1_morph_poses = self.morphs.animate_uv_morphs(fnos, model, 1)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fnos}]: 追加UVモーフ1")
+        uv1_morph_poses = self.morphs.animate_uv_morphs(fno, model, 1)
+        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 追加UVモーフ1")
 
         # 追加UVモーフ2-4は無視
 
         # 材質モーフ
-        material_morphs = self.morphs.animate_material_morphs(fnos, model)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fnos}]: 材質モーフ")
+        material_morphs = self.morphs.animate_material_morphs(fno, model)
+        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 材質モーフ")
 
         # グループモーフ
-        group_vertex_morph_poses, group_morph_bone_frames, group_materials = self.morphs.animate_group_morphs(fnos, model, material_morphs)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fnos}]: グループモーフ")
+        group_vertex_morph_poses, group_morph_bone_frames, group_materials = self.morphs.animate_group_morphs(fno, model, material_morphs)
+        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
-        bone_matrixes = self.animate_bone(fnos, model, max_workers=max_workers)
+        bone_matrixes = self.animate_bone([fno], model, max_workers=max_workers)
 
         # OpenGL座標系に変換
 
@@ -1398,7 +1380,7 @@ class VmdMotion(BaseHashModel):
         gl_matrixes[..., 1:3, 0] *= -1
         gl_matrixes[..., 3, 0] *= -1
 
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fnos}]: OpenGL座標系変換")
+        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: OpenGL座標系変換")
 
         return (
             gl_matrixes,
@@ -1424,14 +1406,23 @@ class VmdMotion(BaseHashModel):
         if clear_ik:
             self.cache_clear()
 
-        # 材質モーフ
-        material_morphs = self.morphs.animate_material_morphs(fnos, model)
+        for fidx, fno in enumerate(fnos):
+            if out_fno_log:
+                logger.count("キーフレ確認", index=fidx, total_index_count=len(fnos), display_block=100)
 
-        # ボーンモーフ
-        morph_bone_frames = self.morphs.animate_bone_morphs(fnos, model)
+            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 開始")
 
-        for bfs in morph_bone_frames:
-            for bf in bfs:
+            # 材質モーフ
+            material_morphs = self.morphs.animate_material_morphs(fno, model)
+            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 材質モーフ")
+
+            # ボーンモーフ
+            morph_bone_frames = self.morphs.animate_bone_morphs(fno, model)
+            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: ボーンモーフ")
+
+            for bfs in morph_bone_frames:
+                bf = bfs[fno]
+
                 if clear_ik:
                     # IK計算しない場合、IK計算結果を渡さない
                     bf.ik_rotation = None
@@ -1439,11 +1430,12 @@ class VmdMotion(BaseHashModel):
                 mbf = all_morph_bone_frames[bf.name][bf.index]
                 all_morph_bone_frames[bf.name][bf.index] = mbf + bf
 
-        # グループモーフ
-        _, group_morph_bone_frames, _ = self.morphs.animate_group_morphs(fnos, model, material_morphs)
+            # グループモーフ
+            _, group_morph_bone_frames, _ = self.morphs.animate_group_morphs(fno, model, material_morphs)
+            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
-        for bfs in group_morph_bone_frames:
-            for bf in bfs:
+            for bfs in group_morph_bone_frames:
+                bf = bfs[fno]
                 mbf = all_morph_bone_frames[bf.name][bf.index]
 
                 if clear_ik:
@@ -1453,9 +1445,12 @@ class VmdMotion(BaseHashModel):
 
                 all_morph_bone_frames[bf.name][bf.index] = mbf + bf
 
+            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: モーフキーフレ加算")
+
         # ボーン変形行列操作
         bone_matrixes = self.bones.animate_bone_matrixes(
             fnos, model, all_morph_bone_frames, bone_names, append_ik=append_ik, out_fno_log=out_fno_log, max_workers=max_workers
         )
+        logger.test(f"-- ボーンアニメーション[{model.name}]: ボーン変形行列操作")
 
         return bone_matrixes
