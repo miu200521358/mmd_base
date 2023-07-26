@@ -325,6 +325,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             if out_fno_log:
                 logger.count("ボーン計算", index=fidx, total_index_count=len(fnos), display_block=100)
 
+            fno_poses: dict[int, MVector3D] = {}
+            fno_qqs: dict[int, MQuaternion] = {}
+            fno_scales: dict[int, MVector3D] = {}
             fno_local_poses: dict[int, MVector3D] = {}
             fno_local_qqs: dict[int, MQuaternion] = {}
             fno_local_scales: dict[int, MVector3D] = {}
@@ -338,6 +341,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 if bone.index in fno_local_poses:
                     continue
                 bf = self[bone.name][fno]
+                fno_poses[bone.index] = bf.position
+                fno_qqs[bone.index] = bf.rotation
+                fno_scales[bone.index] = bf.scale
                 fno_local_poses[bone.index] = bf.local_position
                 fno_local_qqs[bone.index] = bf.local_rotation
                 fno_local_scales[bone.index] = bf.local_scale
