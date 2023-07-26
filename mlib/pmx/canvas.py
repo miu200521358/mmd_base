@@ -63,7 +63,7 @@ class CanvasPanel(BasePanel):
 def animate(queue: Queue, fno: int, max_fno: int, model_set: "ModelSet"):
     while fno < max_fno:
         fno += 1
-        queue.put(MotionSet(model_set.model, model_set.motion, fno))
+        queue.put(MotionSet(model_set.model, model_set.motion, [fno]))
     queue.put(None)
 
 
@@ -90,7 +90,7 @@ class ModelSet:
 
 
 class MotionSet:
-    def __init__(self, model: PmxModel, motion: VmdMotion, fno: int) -> None:
+    def __init__(self, model: PmxModel, motion: VmdMotion, fnos: list[int]) -> None:
         self.selected_bone_indexes: list[int] = []
         self.is_show_bone_weight: bool = False
 
@@ -102,21 +102,25 @@ class MotionSet:
                 self.uv_morph_poses,
                 self.uv1_morph_poses,
                 self.material_morphs,
-            ) = motion.animate(fno, model)
+            ) = motion.animate(fnos, model)
         else:
-            self.gl_matrixes = np.array([np.eye(4) for _ in range(len(model.bones))])
-            self.vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])
-            self.after_vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])
-            self.uv_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
-            self.uv1_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
-            self.material_morphs = [ShaderMaterial(m, MShader.LIGHT_AMBIENT4) for m in model.materials]
+            col = len(fnos)
+            bone_row = len(model.vertices)
+            vertex_row = len(model.vertices)
 
-    def update_morphs(self, model: PmxModel, motion: VmdMotion, fno: int):
-        self.vertex_morph_poses = motion.morphs.animate_vertex_morphs(fno, model)
-        self.after_vertex_morph_poses = motion.morphs.animate_after_vertex_morphs(fno, model)
-        self.uv_morph_poses = motion.morphs.animate_uv_morphs(fno, model, 0)
-        self.uv1_morph_poses = motion.morphs.animate_uv_morphs(fno, model, 1)
-        self.material_morphs = motion.morphs.animate_material_morphs(fno, model)
+            self.gl_matrixes = np.full((col, bone_row, 4, 4), np.eye(4))
+            self.vertex_morph_poses = np.full((col, vertex_row, 3), np.zeros(3))
+            self.after_vertex_morph_poses = np.full((col, vertex_row, 3), np.zeros(3))
+            self.uv_morph_poses = np.full((col, vertex_row, 4), np.zeros(4))
+            self.uv1_morph_poses = np.full((col, vertex_row, 4), np.zeros(4))
+            self.material_morphs = [[ShaderMaterial(m, MShader.LIGHT_AMBIENT4) for m in model.materials] for fno in fnos]
+
+    def update_morphs(self, model: PmxModel, motion: VmdMotion, fnos: list[int]):
+        self.vertex_morph_poses = motion.morphs.animate_vertex_morphs(fnos, model)
+        self.after_vertex_morph_poses = motion.morphs.animate_after_vertex_morphs(fnos, model)
+        self.uv_morph_poses = motion.morphs.animate_uv_morphs(fnos, model, 0)
+        self.uv1_morph_poses = motion.morphs.animate_uv_morphs(fnos, model, 1)
+        self.material_morphs = motion.morphs.animate_material_morphs(fnos, model)
 
 
 class PmxCanvas(glcanvas.GLCanvas):
@@ -225,7 +229,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         logger.debug("append_model_set: model_sets")
         self.model_sets.append(ModelSet(self.shader, model, motion, bone_alpha))
         logger.debug("append_model_set: animations")
-        self.animations.append(MotionSet(model, motion, 0))
+        self.animations.append(MotionSet(model, motion, [0]))
         logger.debug("append_model_set: max_fno")
         self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
 
@@ -254,11 +258,11 @@ class PmxCanvas(glcanvas.GLCanvas):
 
                 model_set.model.draw(
                     animation.gl_matrixes,
-                    animation.vertex_morph_poses,
-                    animation.after_vertex_morph_poses,
-                    animation.uv_morph_poses,
-                    animation.uv1_morph_poses,
-                    animation.material_morphs,
+                    animation.vertex_morph_poses[0],
+                    animation.after_vertex_morph_poses[0],
+                    animation.uv_morph_poses[0],
+                    animation.uv1_morph_poses[0],
+                    animation.material_morphs[0],
                     False,
                     animation.is_show_bone_weight,
                     animation.selected_bone_indexes,
@@ -270,11 +274,11 @@ class PmxCanvas(glcanvas.GLCanvas):
 
                 model_set.model.draw(
                     animation.gl_matrixes,
-                    animation.vertex_morph_poses,
-                    animation.after_vertex_morph_poses,
-                    animation.uv_morph_poses,
-                    animation.uv1_morph_poses,
-                    animation.material_morphs,
+                    animation.vertex_morph_poses[0],
+                    animation.after_vertex_morph_poses[0],
+                    animation.uv_morph_poses[0],
+                    animation.uv1_morph_poses[0],
+                    animation.material_morphs[0],
                     True,
                     animation.is_show_bone_weight,
                     animation.selected_bone_indexes,
@@ -330,16 +334,16 @@ class PmxCanvas(glcanvas.GLCanvas):
                 animations: list[MotionSet] = []
                 for model_set in self.model_sets:
                     logger.debug(f"change_motion: MotionSet: {model_set.model.name}")
-                    animations.append(MotionSet(model_set.model, model_set.motion, self.parent.fno))
+                    animations.append(MotionSet(model_set.model, model_set.motion, [self.parent.fno]))
                 self.animations = animations
             else:
                 self.animations[model_index] = MotionSet(
-                    self.model_sets[model_index].model, self.model_sets[model_index].motion, self.parent.fno
+                    self.model_sets[model_index].model, self.model_sets[model_index].motion, [self.parent.fno]
                 )
         else:
             for model_set, animation in zip(self.model_sets, self.animations):
                 logger.debug(f"change_motion: update_morphs: {model_set.model.name}")
-                animation.update_morphs(model_set.model, model_set.motion, self.parent.fno)
+                animation.update_morphs(model_set.model, model_set.motion, [self.parent.fno])
 
         if self.playing and self.max_fno <= self.parent.fno:
             # 最後まで行ったら止まる
