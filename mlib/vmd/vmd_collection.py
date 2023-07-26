@@ -326,7 +326,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 logger.count("ボーン計算", index=fidx, total_index_count=len(fnos), display_block=100)
 
             fno_poses: dict[int, MVector3D] = {}
-            fno_qqs: dict[int, MQuaternion] = {}
             fno_scales: dict[int, MVector3D] = {}
             fno_local_poses: dict[int, MVector3D] = {}
             fno_local_qqs: dict[int, MQuaternion] = {}
@@ -342,7 +341,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     continue
                 bf = self[bone.name][fno]
                 fno_poses[bone.index] = bf.position
-                fno_qqs[bone.index] = bf.rotation
                 fno_scales[bone.index] = bf.scale
                 fno_local_poses[bone.index] = bf.local_position
                 fno_local_qqs[bone.index] = bf.local_rotation
@@ -374,7 +372,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     parent_local_qqs.append(fno_local_qqs[parent_bone.index])
                     parent_local_scales.append(fno_local_scales[parent_bone.index])
 
-                poses[fidx, bone.index] = self.get_position(fno, model, bone)
+                poses[fidx, bone.index] = self.get_position(fno, model, bone, fno_poses[bone.index])
 
                 # モーションによるローカル移動量
                 if is_valid_local_pos:
@@ -403,7 +401,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     local_qqs[fidx, bone.index] = local_rot_mat
 
                 # モーションによるスケール変化
-                scale_mat = self.get_scale(fno, model, bone)
+                scale_mat = self.get_scale(fno, model, bone, fno_scales[bone.index])
                 scales[fidx, bone.index] = scale_mat
 
                 # ローカルスケール
@@ -419,13 +417,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return poses, qqs, scales, local_poses, local_qqs, local_scales
 
-    def get_position(self, fno: int, model: PmxModel, bone: Bone, loop: int = 0) -> np.ndarray:
+    def get_position(self, fno: int, model: PmxModel, bone: Bone, position: MVector3D, loop: int = 0) -> np.ndarray:
         """
         該当キーフレにおけるボーンの移動位置
         """
         # 自身の位置
         mat = np.eye(4)
-        mat[:3, 3] = self[bone.name][fno].position.vector
+        mat[:3, 3] = position.vector
 
         # 付与親を加味して返す
         return mat @ self.get_effect_position(fno, model, bone, loop=loop + 1)
@@ -443,7 +441,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 付与親の移動量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_pos_mat = self.get_position(fno, model, effect_bone, loop=loop + 1)
+        effect_bf = self[effect_bone.name][fno]
+        effect_pos_mat = self.get_position(fno, model, effect_bone, effect_bf.position, loop=loop + 1)
         # 付与率を加味する
         effect_pos_mat[:3, 3] *= bone.effect_factor
 
@@ -519,14 +518,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for relative_bone_name in ik_relative_bone_names:
                 self.get_rotation(fno, model, bone, append_ik=True)
 
-    def get_scale(self, fno: int, model: PmxModel, bone: Bone, loop: int = 0) -> np.ndarray:
+    def get_scale(self, fno: int, model: PmxModel, bone: Bone, scale: MVector3D, loop: int = 0) -> np.ndarray:
         """
         該当キーフレにおけるボーンの縮尺
         """
 
         # 自身のスケール
         scale_mat = np.eye(4)
-        scale_mat[:3, :3] += np.diag(np.where(self[bone.name][fno].scale.vector < -1, -1, self[bone.name][fno].scale.vector))
+        scale_mat[:3, :3] += np.diag(np.where(scale.vector < -1, -1, scale.vector))
 
         # 付与親を加味して返す
         return self.get_effect_scale(fno, model, bone, scale_mat, loop=loop + 1)
@@ -544,7 +543,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_scale_mat = self.get_scale(fno, model, effect_bone, loop=loop + 1)
+        effect_bf = self[effect_bone.name][fno]
+        effect_scale_mat = self.get_scale(fno, model, effect_bone, effect_bf.scale, loop=loop + 1)
 
         return scale_mat @ effect_scale_mat
 

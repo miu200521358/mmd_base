@@ -815,7 +815,7 @@ def test_MQuaternion_separate_local_axis_x_x():
 
     from mlib.base.math import MQuaternion, MVector3D
 
-    x_qq, y_qq, z_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(MVector3D(1, 0, 0))
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(MVector3D(1, 0, 0))
 
     assert np.isclose(
         np.array(
@@ -856,7 +856,7 @@ def test_MQuaternion_separate_local_axis_y_x():
 
     from mlib.base.math import MQuaternion, MVector3D
 
-    x_qq, y_qq, z_qq = MQuaternion.from_euler_degrees(0, 10, 0).separate_by_axis(MVector3D(1, 0, 0))
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(0, 10, 0).separate_by_axis(MVector3D(1, 0, 0))
 
     assert np.isclose(
         np.array(
@@ -897,7 +897,7 @@ def test_MQuaternion_separate_local_axis_z_x():
 
     from mlib.base.math import MQuaternion, MVector3D
 
-    x_qq, y_qq, z_qq = MQuaternion.from_euler_degrees(0, 0, 10).separate_by_axis(MVector3D(1, 0, 0))
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(0, 0, 10).separate_by_axis(MVector3D(1, 0, 0))
 
     assert np.isclose(
         np.array(
@@ -938,7 +938,7 @@ def test_MQuaternion_separate_local_axis_x_y():
 
     from mlib.base.math import MQuaternion, MVector3D
 
-    x_qq, y_qq, z_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(MVector3D(0, 1, 0))
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(MVector3D(0, 1, 0))
 
     assert np.isclose(
         np.array(
@@ -979,7 +979,7 @@ def test_MQuaternion_separate_local_axis_x_z():
 
     from mlib.base.math import MQuaternion, MVector3D
 
-    x_qq, y_qq, z_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(MVector3D(0, 0, 1))
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(MVector3D(0, 0, 1))
 
     assert np.isclose(
         np.array(
@@ -1020,7 +1020,7 @@ def test_MQuaternion_separate_local_axis_x_xy():
 
     from mlib.base.math import MQuaternion, MVector3D
 
-    x_qq, y_qq, z_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(MVector3D(1, 1, 0))
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(MVector3D(1, 1, 0))
 
     assert np.isclose(
         np.array([4.96246607, 4.98060393, 1.08639405]),
