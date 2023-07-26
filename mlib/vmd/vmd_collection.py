@@ -374,13 +374,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     parent_local_qqs.append(fno_local_qqs[parent_bone.index])
                     parent_local_scales.append(fno_local_scales[parent_bone.index])
 
-                poses[fidx, bone.index] = self.get_position(bone, model, fno)
+                poses[fidx, bone.index] = self.get_position(fno, model, bone)
 
                 # モーションによるローカル移動量
                 if is_valid_local_pos:
                     local_pos_mat = self.get_local_position(
-                        fno_local_poses,
                         bone,
+                        fno_local_poses,
                         is_parent_bone_not_local_cancels,
                         parent_local_poses,
                         parent_local_axises,
@@ -388,14 +388,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     local_poses[fidx, bone.index] = local_pos_mat
 
                 # FK(捩り) > IK(捩り) > 付与親(捩り)
-                qq = self.get_rotation(fno, bone, model, append_ik=append_ik)
+                qq = self.get_rotation(fno, model, bone, append_ik=append_ik)
                 qqs[fidx, bone.index] = qq.to_matrix4x4().vector
 
                 # ローカル回転
                 if is_valid_local_rot:
                     local_rot_mat = self.get_local_rotation(
-                        fno_local_qqs,
                         bone,
+                        fno_local_qqs,
                         is_parent_bone_not_local_cancels,
                         parent_local_qqs,
                         parent_local_axises,
@@ -403,14 +403,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     local_qqs[fidx, bone.index] = local_rot_mat
 
                 # モーションによるスケール変化
-                scale_mat = self.get_scale(bone, model, fno)
+                scale_mat = self.get_scale(fno, model, bone)
                 scales[fidx, bone.index] = scale_mat
 
                 # ローカルスケール
                 if is_valid_local_scale:
                     local_scale_mat = self.get_local_scale(
-                        fno_local_scales,
                         bone,
+                        fno_local_scales,
                         is_parent_bone_not_local_cancels,
                         parent_local_scales,
                         parent_local_axises,
@@ -419,7 +419,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return poses, qqs, scales, local_poses, local_qqs, local_scales
 
-    def get_position(self, bone: Bone, model: PmxModel, fno: int, loop: int = 0) -> np.ndarray:
+    def get_position(self, fno: int, model: PmxModel, bone: Bone, loop: int = 0) -> np.ndarray:
         """
         該当キーフレにおけるボーンの移動位置
         """
@@ -428,9 +428,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         mat[:3, 3] = self[bone.name][fno].position.vector
 
         # 付与親を加味して返す
-        return mat @ self.get_effect_position(bone, model, fno, loop=loop + 1)
+        return mat @ self.get_effect_position(fno, model, bone, loop=loop + 1)
 
-    def get_effect_position(self, bone: Bone, model: PmxModel, fno: int, loop: int = 0) -> np.ndarray:
+    def get_effect_position(self, fno: int, model: PmxModel, bone: Bone, loop: int = 0) -> np.ndarray:
         """
         付与親を加味した移動を求める
         """
@@ -443,7 +443,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 付与親の移動量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_pos_mat = self.get_position(effect_bone, model, fno, loop=loop + 1)
+        effect_pos_mat = self.get_position(fno, model, effect_bone, loop=loop + 1)
         # 付与率を加味する
         effect_pos_mat[:3, 3] *= bone.effect_factor
 
@@ -451,8 +451,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
     def get_local_position(
         self,
-        fno_local_poses: dict[int, MVector3D],
         bone: Bone,
+        fno_local_poses: dict[int, MVector3D],
         is_parent_bone_not_local_cancels: Iterable[bool],
         parent_local_poses: Iterable[MVector3D],
         parent_local_axises: Iterable[MVector3D],
@@ -464,8 +464,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_pos = fno_local_poses[bone.index]
 
         return calc_local_position(
-            bone.is_not_local_cancel,
             local_pos,
+            bone.is_not_local_cancel,
             bone.local_axis,
             tuple(is_parent_bone_not_local_cancels),
             tuple(parent_local_poses),
@@ -517,9 +517,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 fno_ik_qqs[bone.index] = bf.ik_rotation
 
             for relative_bone_name in ik_relative_bone_names:
-                self.get_rotation(fno, bone, model, append_ik=True)
+                self.get_rotation(fno, model, bone, append_ik=True)
 
-    def get_scale(self, bone: Bone, model: PmxModel, fno: int, loop: int = 0) -> np.ndarray:
+    def get_scale(self, fno: int, model: PmxModel, bone: Bone, loop: int = 0) -> np.ndarray:
         """
         該当キーフレにおけるボーンの縮尺
         """
@@ -529,9 +529,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         scale_mat[:3, :3] += np.diag(np.where(self[bone.name][fno].scale.vector < -1, -1, self[bone.name][fno].scale.vector))
 
         # 付与親を加味して返す
-        return self.get_effect_scale(scale_mat, bone, model, fno, loop=loop + 1)
+        return self.get_effect_scale(fno, model, bone, scale_mat, loop=loop + 1)
 
-    def get_effect_scale(self, scale_mat: np.ndarray, bone: Bone, model: PmxModel, fno: int, loop: int = 0) -> np.ndarray:
+    def get_effect_scale(self, fno: int, model: PmxModel, bone: Bone, scale_mat: np.ndarray, loop: int = 0) -> np.ndarray:
         """
         付与親を加味した縮尺を求める
         """
@@ -544,14 +544,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_scale_mat = self.get_scale(effect_bone, model, fno, loop=loop + 1)
+        effect_scale_mat = self.get_scale(fno, model, effect_bone, loop=loop + 1)
 
         return scale_mat @ effect_scale_mat
 
     def get_local_scale(
         self,
-        fno_local_scales: dict[int, MVector3D],
         bone: Bone,
+        fno_local_scales: dict[int, MVector3D],
         is_parent_bone_not_local_cancels: Iterable[bool],
         parent_local_scales: Iterable[MVector3D],
         parent_local_axises: Iterable[MVector3D],
@@ -563,22 +563,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_scale = fno_local_scales[bone.index]
 
         return calc_local_scale(
-            bone.is_not_local_cancel,
             local_scale,
+            bone.is_not_local_cancel,
             bone.local_axis,
             tuple(is_parent_bone_not_local_cancels),
             tuple(parent_local_scales),
             tuple(parent_local_axises),
         )
 
-    def get_rotation(
-        self,
-        fno: int,
-        bone: Bone,
-        model: PmxModel,
-        append_ik: bool = False,
-        loop: int = 0,
-    ) -> MQuaternion:
+    def get_rotation(self, fno: int, model: PmxModel, bone: Bone, append_ik: bool = False, loop: int = 0) -> MQuaternion:
         """
         該当キーフレにおけるボーンの相対位置
         append_ik : IKを計算するか(循環してしまう場合があるので、デフォルトFalse)
@@ -595,21 +588,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         fk_qq = self.get_fix_rotation(bone, qq)
 
         # IKを加味した回転
-        ik_qq = self.get_ik_rotation(bone, fno, fk_qq, model) if append_ik else fk_qq
+        ik_qq = self.get_ik_rotation(fno, model, bone, fk_qq) if append_ik else fk_qq
 
         # 付与親を加味した回転
-        effect_qq = self.get_effect_rotation(fno, bone, ik_qq, model, loop=loop + 1)
+        effect_qq = self.get_effect_rotation(fno, model, bone, ik_qq, loop=loop + 1)
 
         return effect_qq
 
-    def get_effect_rotation(
-        self,
-        fno: int,
-        bone: Bone,
-        qq: MQuaternion,
-        model: PmxModel,
-        loop: int = 0,
-    ) -> MQuaternion:
+    def get_effect_rotation(self, fno: int, model: PmxModel, bone: Bone, qq: MQuaternion, loop: int = 0) -> MQuaternion:
         """
         付与親を加味した回転を求める
         """
@@ -623,7 +609,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_qq = self.get_rotation(fno, effect_bone, model, loop=loop + 1)
+        effect_qq = self.get_rotation(fno, model, effect_bone, loop=loop + 1)
         if 0 < bone.effect_factor:
             # 正の付与親
             qq *= effect_qq.multiply_factor(bone.effect_factor)
@@ -635,13 +621,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return qq
 
-    def get_ik_rotation(
-        self,
-        bone: Bone,
-        fno: int,
-        qq: MQuaternion,
-        model: PmxModel,
-    ) -> MQuaternion:
+    def get_ik_rotation(self, fno: int, model: PmxModel, bone: Bone, qq: MQuaternion) -> MQuaternion:
         """
         IKを加味した回転を求める
         """
@@ -781,8 +761,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
     def get_local_rotation(
         self,
-        fno_local_qqs: dict[int, MQuaternion],
         bone: Bone,
+        fno_local_qqs: dict[int, MQuaternion],
         is_parent_bone_not_local_cancels: Iterable[bool],
         parent_local_qqs: Iterable[MQuaternion],
         parent_local_axises: Iterable[MVector3D],
@@ -794,8 +774,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_qq = fno_local_qqs[bone.index]
 
         return calc_local_rotation(
-            bone.is_not_local_cancel,
             local_qq,
+            bone.is_not_local_cancel,
             bone.local_axis,
             tuple(is_parent_bone_not_local_cancels),
             tuple(parent_local_qqs),
@@ -805,8 +785,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
 @lru_cache(maxsize=None)
 def calc_local_position(
-    is_bone_not_local_cancel: bool,
     local_pos: MVector3D,
+    is_bone_not_local_cancel: bool,
     local_axis: MVector3D,
     is_parent_bone_not_local_cancels: tuple[bool],
     parent_local_poses: tuple[MVector3D],
@@ -818,8 +798,8 @@ def calc_local_position(
     if not is_bone_not_local_cancel:
         for n in range(1, len(parent_local_axises) + 1):
             local_parent_matrix = local_parent_matrix @ calc_local_position(
-                is_parent_bone_not_local_cancels[-n],
                 parent_local_poses[-n],
+                is_parent_bone_not_local_cancels[-n],
                 parent_local_axises[-n],
                 tuple(is_parent_bone_not_local_cancels[:-n]),
                 tuple(parent_local_poses[:-n]),
@@ -838,8 +818,8 @@ def calc_local_position(
 
 @lru_cache(maxsize=None)
 def calc_local_rotation(
-    is_bone_not_local_cancel: bool,
     local_qq: MQuaternion,
+    is_bone_not_local_cancel: bool,
     local_axis: MVector3D,
     is_parent_bone_not_local_cancels: tuple[bool],
     parent_local_qqs: tuple[MQuaternion],
@@ -851,8 +831,8 @@ def calc_local_rotation(
     if not is_bone_not_local_cancel:
         for n in range(1, len(parent_local_axises) + 1):
             local_parent_matrix = local_parent_matrix @ calc_local_rotation(
-                is_parent_bone_not_local_cancels[-n],
                 parent_local_qqs[-n],
+                is_parent_bone_not_local_cancels[-n],
                 parent_local_axises[-n],
                 tuple(is_parent_bone_not_local_cancels[:-n]),
                 tuple(parent_local_qqs[:-n]),
@@ -870,8 +850,8 @@ def calc_local_rotation(
 
 @lru_cache(maxsize=None)
 def calc_local_scale(
-    is_bone_not_local_cancel: bool,
     local_scale: MVector3D,
+    is_bone_not_local_cancel: bool,
     local_axis: MVector3D,
     is_parent_bone_not_local_cancels: tuple[bool],
     parent_local_scales: tuple[MVector3D],
@@ -883,8 +863,8 @@ def calc_local_scale(
     if not is_bone_not_local_cancel:
         for n in range(1, len(parent_local_axises) + 1):
             local_parent_matrix = local_parent_matrix @ calc_local_scale(
-                is_parent_bone_not_local_cancels[-n],
                 parent_local_scales[-n],
+                is_parent_bone_not_local_cancels[-n],
                 parent_local_axises[-n],
                 tuple(is_parent_bone_not_local_cancels[:-n]),
                 tuple(parent_local_scales[:-n]),
