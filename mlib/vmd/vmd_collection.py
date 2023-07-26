@@ -290,7 +290,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 local_matrix = MMatrix4x4(*result_matrixes[fidx, bone.index].flatten())
 
                 # グローバル行列は最後にボーン位置に移動させる
-                global_matrix = MMatrix4x4(*result_matrixes[fidx, bone.index].flatten())
+                global_matrix = local_matrix.copy()
                 global_matrix.translate(bone.position)
 
                 bone_matrixes.append(fno, bone.index, bone.name, global_matrix, local_matrix, global_matrix.to_position())

@@ -180,7 +180,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         del self.data[self.last_index]
 
         if is_sort:
-            self.sort_indexes()
+            self.sort_indexes(is_sort_name=True)
 
         if replaced_map:
             replaced_map[-1] = -1
@@ -282,9 +282,10 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         return self.data[self._names[name]]
 
     @verify_thread
-    def sort_indexes(self) -> None:
+    def sort_indexes(self, is_sort_name: bool = False) -> None:
         self.indexes = sorted(self.data.keys()) if self.data else []
-        self._names = dict([(self.data[index].name, index) for index in self.indexes])
+        if is_sort_name:
+            self._names = dict([(self.data[index].name, index) for index in self.indexes])
 
     def __len__(self) -> int:
         return len(self.data)
