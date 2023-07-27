@@ -10,8 +10,8 @@ class VmdBoneFrameTree:
         "fno",
         "bone_index",
         "bone_name",
-        "global_matrix",
-        "local_matrix",
+        "global_matrix_ary",
+        "local_matrix_ary",
         "position",
     )
 
@@ -20,16 +20,23 @@ class VmdBoneFrameTree:
         fno: int,
         bone_index: int,
         bone_name: str,
-        global_matrix: MMatrix4x4,
-        local_matrix: MMatrix4x4,
-        position: MVector3D,
+        global_matrix_ary: np.ndarray,
+        local_matrix_ary: np.ndarray,
     ) -> None:
         self.fno = fno
         self.bone_index = bone_index
         self.bone_name = bone_name
-        self.global_matrix = global_matrix
-        self.local_matrix = local_matrix
-        self.position = position
+        self.global_matrix_ary = global_matrix_ary
+        self.local_matrix_ary = local_matrix_ary
+        self.position = MVector3D(*global_matrix_ary[:3, 3])
+
+    @property
+    def global_matrix(self) -> MMatrix4x4:
+        return MMatrix4x4(self.global_matrix_ary)
+
+    @property
+    def local_matrix(self) -> MMatrix4x4:
+        return MMatrix4x4(self.local_matrix_ary)
 
 
 class VmdBoneFrameTrees:
@@ -62,13 +69,8 @@ class VmdBoneFrameTrees:
         local_matrix : 自身のボーン位置を加味しない行列
         position : ボーン変形後のグローバル位置
         """
-        global_mat = MMatrix4x4()
-        global_mat.vector = global_matrix
 
-        local_mat = MMatrix4x4()
-        local_mat.vector = local_matrix
-
-        self.data[(fno, bone_name)] = VmdBoneFrameTree(fno, bone_index, bone_name, global_mat, local_mat, global_mat.to_position())
+        self.data[(fno, bone_name)] = VmdBoneFrameTree(fno, bone_index, bone_name, global_matrix, local_matrix)
         self._indexes[(fno, bone_index)] = (fno, bone_name)
 
     def __getitem__(self, key) -> VmdBoneFrameTree:
