@@ -217,7 +217,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 morph_bone_local_poses,
                 morph_bone_local_qqs,
                 morph_bone_local_scales,
-            ) = morph_bone_frames.get_bone_matrixes(fnos, model, target_bone_names, append_ik=False, out_fno_log=out_fno_log)
+            ) = morph_bone_frames.get_bone_matrixes(fnos, model, target_bone_names, append_ik=False, out_fno_log=False)
         else:
             morph_row = len(fnos)
             morph_col = len(model.bones)
@@ -343,7 +343,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         "ボーン計算",
                         index=fidx * len(target_bone_names) + bidx,
                         total_index_count=total_count,
-                        display_block=100,
+                        display_block=200,
                     )
 
                 bone = model.bones[bone_name]
