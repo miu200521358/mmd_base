@@ -10,7 +10,7 @@ from numpy.linalg import inv
 
 from mlib.base.collection import BaseHashModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
 from mlib.base.logger import MLogger
-from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D, MVector4D, calc_list_by_ratio
+from mlib.base.math import MMatrix4x4List, MQuaternion, MVector3D, MVector4D, calc_list_by_ratio
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import (
     Bone,
@@ -199,7 +199,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 )
             ]
 
-        bone_indexes = [model.bones[bone_name].index for bone_name in target_bone_names]
+        bone_index_mats: list[tuple[int, np.ndarray]] = []
+        for bone_name in target_bone_names:
+            pos_mat = np.eye(4)
+            pos_mat[:3, 3] = model.bones[bone_name].position.vector
+            bone_index_mats.append((model.bones[bone_name].index, pos_mat))
 
         if out_fno_log:
             logger.info("ボーンモーフ計算")
@@ -272,14 +276,17 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 行列積ボーン変形行列結果
         result_matrixes = np.full(motion_bone_poses.shape, np.eye(4))
+        result_global_matrixes = np.full(motion_bone_poses.shape, np.eye(4))
 
-        for i, (fidx, bone_index) in enumerate(product(list(range(len(fnos))), bone_indexes)):
+        for i, (fidx, (bone_index, pos_mat)) in enumerate(product(list(range(len(fnos))), bone_index_mats)):
             if out_fno_log and 0 < i and 0 == i % 10000:
                 logger.info("-- ボーン変形行列積 [{i}]", i=i)
 
             result_matrixes[fidx, bone_index] = model.bones[bone_index].offset_matrix.copy()
             for matrix in tree_relative_matrixes[fidx][bone_index]:
                 result_matrixes[fidx, bone_index] = matrix @ result_matrixes[fidx, bone_index]
+            # グローバル行列は最後にボーン位置に移動させる
+            result_global_matrixes[fidx, bone_index] = result_matrixes[fidx, bone_index] @ pos_mat
 
         bone_matrixes = VmdBoneFrameTrees()
         for fidx, fno in enumerate(fnos):
@@ -287,13 +294,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 logger.count("ボーン行列結果", index=fidx, total_index_count=len(fnos), display_block=100)
 
             for bone in model.bones:
-                local_matrix = MMatrix4x4(*result_matrixes[fidx, bone.index].flatten())
-
-                # グローバル行列は最後にボーン位置に移動させる
-                global_matrix = local_matrix.copy()
-                global_matrix.translate(bone.position)
-
-                bone_matrixes.append(fno, bone.index, bone.name, global_matrix, local_matrix, global_matrix.to_position())
+                bone_matrixes.append(
+                    fno, bone.index, bone.name, result_global_matrixes[fidx, bone.index], result_matrixes[fidx, bone.index]
+                )
 
         return bone_matrixes
 

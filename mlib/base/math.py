@@ -1,7 +1,7 @@
 import operator
 from functools import lru_cache
 from math import acos, atan2, cos, degrees, pi, radians, sin, sqrt
-from typing import Type, TypeVar, Union
+from typing import Optional, Type, TypeVar, Union
 
 import numpy as np
 from numpy.linalg import inv, norm
@@ -933,9 +933,9 @@ class MQuaternion(MVector):
         if not self:
             return MMatrix4x4()
 
-        mat3x3 = as_rotation_matrix(self.vector)
-        m00, m01, m02, m10, m11, m12, m20, m21, m22 = mat3x3.flatten()
-        return MMatrix4x4(m00, m01, m02, 0.0, m10, m11, m12, 0.0, m20, m21, m22, 0.0, 0.0, 0.0, 0.0, 1.0)
+        mat4x4 = np.eye(4)
+        mat4x4[:3, :3] = as_rotation_matrix(self.vector)
+        return MMatrix4x4(mat4x4)
 
     def to_matrix4x4_axis(self, local_x_axis: MVector3D, local_z_axis: MVector3D) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         if not self:
@@ -971,7 +971,7 @@ class MQuaternion(MVector):
             # quaternion と vec3 のかけ算は vec3 を返す
             return self.to_matrix4x4() * other
         elif isinstance(other, MQuaternion):
-            mat = MMatrix4x4(*self.to_matrix4x4().vector.flatten())
+            mat = MMatrix4x4(self.to_matrix4x4().vector)
             mat.rotate(other)
 
             return mat.to_quaternion()
@@ -1196,36 +1196,18 @@ class MMatrix4x4(MVector):
     4x4行列クラス
     """
 
-    def __init__(
-        self,
-        m11: float = 1.0,
-        m12: float = 0.0,
-        m13: float = 0.0,
-        m14: float = 0.0,
-        m21: float = 0.0,
-        m22: float = 1.0,
-        m23: float = 0.0,
-        m24: float = 0.0,
-        m31: float = 0.0,
-        m32: float = 0.0,
-        m33: float = 1.0,
-        m34: float = 0.0,
-        m41: float = 0.0,
-        m42: float = 0.0,
-        m43: float = 0.0,
-        m44: float = 1.0,
-    ):
-        self.vector = np.array(
-            [[m11, m12, m13, m14], [m21, m22, m23, m24], [m31, m32, m33, m34], [m41, m42, m43, m44]],
-            dtype=np.float64,
-        )
+    def __init__(self, mat: Optional[np.ndarray] = None):
+        if mat is None:
+            self.vector = np.eye(4, dtype=np.float64)
+        else:
+            self.vector = np.copy(mat)
 
     def inverse(self) -> "MMatrix4x4":
         """
         逆行列
         """
         if self:
-            return MMatrix4x4(*inv(self.vector).flatten())
+            return MMatrix4x4(inv(self.vector))
 
         return MMatrix4x4()
 
@@ -1454,7 +1436,7 @@ class MMatrix4x4(MVector):
 
     def __matmul__(self, other: "MMatrix4x4") -> "MMatrix4x4":
         # 行列同士のかけ算
-        return MMatrix4x4(*np.matmul(self.vector, other.vector).flatten())
+        return MMatrix4x4(np.matmul(self.vector, other.vector))
 
     def __imatmul__(self, other: "MMatrix4x4") -> "MMatrix4x4":
         # 行列同士のかけ算代入
@@ -1473,7 +1455,7 @@ class MMatrix4x4(MVector):
         return bool(not (self.vector == np.eye(4)).all())
 
     def copy(self) -> "MMatrix4x4":
-        return self.__class__(*self.vector.flatten())
+        return self.__class__(*self.vector)
 
 
 class MMatrix4x4List:

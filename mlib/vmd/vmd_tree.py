@@ -1,5 +1,7 @@
 from typing import Iterator
 
+import numpy as np
+
 from mlib.base.math import MMatrix4x4, MVector3D
 
 
@@ -45,9 +47,8 @@ class VmdBoneFrameTrees:
         fno: int,
         bone_index: int,
         bone_name: str,
-        global_matrix: MMatrix4x4,
-        local_matrix: MMatrix4x4,
-        position: MVector3D,
+        global_matrix: np.ndarray,
+        local_matrix: np.ndarray,
     ):
         """
         ボーン変形結果追加
@@ -61,7 +62,13 @@ class VmdBoneFrameTrees:
         local_matrix : 自身のボーン位置を加味しない行列
         position : ボーン変形後のグローバル位置
         """
-        self.data[(fno, bone_name)] = VmdBoneFrameTree(fno, bone_index, bone_name, global_matrix, local_matrix, position)
+        global_mat = MMatrix4x4()
+        global_mat.vector = global_matrix
+
+        local_mat = MMatrix4x4()
+        local_mat.vector = local_matrix
+
+        self.data[(fno, bone_name)] = VmdBoneFrameTree(fno, bone_index, bone_name, global_mat, local_mat, global_mat.to_position())
         self._indexes[(fno, bone_index)] = (fno, bone_name)
 
     def __getitem__(self, key) -> VmdBoneFrameTree:
