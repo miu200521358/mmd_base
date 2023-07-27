@@ -304,7 +304,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         self,
         fnos: list[int],
         model: PmxModel,
-        target_bone_names: Iterable[str],
+        target_bone_names: list[str],
         append_ik: bool = True,
         out_fno_log: bool = False,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -324,10 +324,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for fno in fnos:
                 self.calc_ik_rotations(fno, model, target_bone_names)
 
-        for fidx, fno in enumerate(fnos):
-            if out_fno_log:
-                logger.count("ボーン計算", index=fidx, total_index_count=len(fnos), display_block=100)
+        total_count = len(fnos) * len(target_bone_names)
 
+        for fidx, fno in enumerate(fnos):
             fno_poses: dict[int, MVector3D] = {}
             fno_scales: dict[int, MVector3D] = {}
             fno_local_poses: dict[int, MVector3D] = {}
@@ -338,7 +337,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             is_valid_local_rot = False
             is_valid_local_scale = False
 
-            for bone_name in target_bone_names:
+            for bidx, bone_name in enumerate(target_bone_names):
+                if out_fno_log:
+                    logger.count(
+                        "ボーン計算",
+                        index=fidx * len(target_bone_names) + bidx,
+                        total_index_count=total_count,
+                        display_block=100,
+                    )
+
                 bone = model.bones[bone_name]
                 if bone.index in fno_local_poses:
                     continue
