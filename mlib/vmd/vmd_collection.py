@@ -1296,7 +1296,7 @@ class VmdMotion(BaseHashModel):
 
         # OpenGL座標系に変換
 
-        gl_matrixes = np.array([bft.local_matrix.vector.T for bft in bone_matrixes])
+        gl_matrixes = np.array([bft.local_matrix_ary.T for bft in bone_matrixes])
         # gl_matrixes = np.array(bone_matrixes)
 
         gl_matrixes[..., 0, 1:3] *= -1
