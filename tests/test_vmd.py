@@ -1143,8 +1143,8 @@ def test_vmd_save_01():
 #         if bone_name not in model.bones:
 #             continue
 #         new_bf = VmdBoneFrame(index=fno, name=bone_name)
-#         new_bf.position = MMatrix4x4(*poses[0, bidx].flatten()).to_position()
-#         new_bf.rotation = MMatrix4x4(*qqs[0, bidx].flatten()).to_quaternion()
+#         new_bf.position = MMatrix4x4(poses[0, bidx]).to_position()
+#         new_bf.rotation = MMatrix4x4(qqs[0, bidx]).to_quaternion()
 #         new_motion.bones[bone_name].append(new_bf)
 #         print(f"{bone_name}: {fno}")
 

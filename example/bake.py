@@ -100,7 +100,7 @@ for n in range(1, 5):
         for bone_name in bone_names:
             new_bf = new_motion.bones[bone_name][fno]
             new_bf.position = motion.bones[bone_name][fno].position
-            new_bf.rotation = MMatrix4x4(*qqs[fidx, model.bones[bone_name].index].flatten()).to_quaternion()
+            new_bf.rotation = MMatrix4x4(qqs[fidx, model.bones[bone_name].index]).to_quaternion()
 
             prev_fno, now_fno, next_fno = motion.bones[bone_name].range_indexes(fno)
             if now_fno < next_fno:
