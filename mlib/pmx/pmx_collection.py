@@ -25,6 +25,7 @@ from mlib.pmx.pmx_part import (
     Joint,
     Material,
     Morph,
+    MorphPanel,
     MorphType,
     RigidBody,
     ShaderMaterial,
@@ -303,7 +304,12 @@ class Morphs(BaseIndexNameDictModel[Morph]):
         super().__init__()
 
     def filter_by_type(self, *keys: MorphType) -> list[Morph]:
+        """モーフ種別にあったモーフリスト"""
         return [v for v in self.data.values() if v.morph_type in keys]
+
+    def filter_by_panel(self, *keys: MorphPanel) -> list[Morph]:
+        """表示枠にあったモーフリスト"""
+        return [v for v in self.data.values() if v.panel in keys]
 
     def writable(self) -> list[Morph]:
         """出力対象となるモーフ一覧を取得する"""
