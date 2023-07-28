@@ -715,7 +715,7 @@ class Bone(BaseIndexNameModel):
         "local_z_vector",
         "external_key",
         "ik",
-        "display",
+        "display_slot",
         "is_system",
         "corrected_local_y_vector",
         "corrected_local_z_vector",
@@ -756,7 +756,7 @@ class Bone(BaseIndexNameModel):
         self.local_z_vector = MVector3D(0, 0, -1)
         self.external_key = -1
         self.ik: Ik = Ik()
-        self.display: bool = False
+        self.display_slot: int = -1
         self.is_system: bool = False
         self.ik_link_indexes: list[int] = []
         self.ik_target_indexes: list[int] = []
@@ -1481,6 +1481,7 @@ class Morph(BaseIndexNameModel):
         "morph_type",
         "offsets",
         "is_system",
+        "display_slot",
     )
 
     def __init__(
@@ -1494,6 +1495,7 @@ class Morph(BaseIndexNameModel):
         self.morph_type = MorphType.GROUP
         self.offsets: list[VertexMorphOffset | UvMorphOffset | BoneMorphOffset | GroupMorphOffset | MaterialMorphOffset] = []
         self.is_system = False
+        self.display_slot = -1
 
 
 @unique

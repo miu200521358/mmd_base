@@ -492,8 +492,10 @@ class PmxReader(BaseReader[PmxModel]):
                 reference.display_type = DisplayType(self.read_byte())
                 if reference.display_type == DisplayType.BONE:
                     reference.display_index = self.read_bone_index()
+                    model.bones[reference.display_index].display_slot = display_slot.index
                 else:
                     reference.display_index = self.read_morph_index()
+                    model.morphs[reference.display_index].display_slot = display_slot.index
                 display_slot.references.append(reference)
 
             model.display_slots.append(display_slot)
