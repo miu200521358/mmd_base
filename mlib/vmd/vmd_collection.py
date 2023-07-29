@@ -343,7 +343,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         "ボーン計算",
                         index=fidx * len(target_bone_names) + bidx,
                         total_index_count=total_count,
-                        display_block=100,
+                        display_block=200,
                     )
 
                 bone = model.bones[bone_name]
