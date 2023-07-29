@@ -1,5 +1,5 @@
 mypy
-black
+black==22.12.0
 isort
 flake8
 pytest
