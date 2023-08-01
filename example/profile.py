@@ -5,7 +5,7 @@ from multiprocessing import freeze_support
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from mlib.base.math import MQuaternion, MVector3D
+from mlib.core.math import MQuaternion, MVector3D
 from mlib.pmx.pmx_part import BoneMorphOffset, Morph, MorphType
 from mlib.pmx.pmx_reader import PmxReader
 from mlib.vmd.vmd_part import VmdMorphFrame

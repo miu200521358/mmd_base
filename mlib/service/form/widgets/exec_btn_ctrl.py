@@ -3,7 +3,7 @@ from typing import Callable, Optional
 
 import wx
 
-from mlib.base.logger import MLogger
+from mlib.core.logger import MLogger
 from mlib.service.base_worker import BaseWorker
 from mlib.service.form.base_panel import BasePanel
 

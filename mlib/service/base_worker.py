@@ -6,8 +6,8 @@ from typing import Any, Callable, Optional
 
 import wx
 
-from mlib.base.exception import MKilledException, MLibException
-from mlib.base.logger import MLogger
+from mlib.core.exception import MKilledException, MLibException
+from mlib.core.logger import MLogger
 from mlib.service.form.base_frame import BaseFrame
 
 logger = MLogger(os.path.basename(__file__))

@@ -7,10 +7,10 @@ import numpy as np
 import OpenGL.GL as gl
 from PIL import Image, ImageOps
 
-from mlib.base.base import BaseModel
-from mlib.base.exception import MViewerException
-from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
-from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
+from mlib.core.base import BaseModel
+from mlib.core.exception import MViewerException
+from mlib.core.math import MQuaternion, MVector2D, MVector3D, MVector4D
+from mlib.core.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
 from mlib.pmx.bone_setting import STANDARD_BONE_NAMES, BoneFlg
 
 

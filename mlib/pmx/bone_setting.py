@@ -1,7 +1,7 @@
 from enum import Enum, Flag, unique
 from typing import Iterable, Union
 
-from mlib.base.math import MVector3D
+from mlib.core.math import MVector3D
 
 
 @unique

@@ -2,7 +2,7 @@ import os
 
 import wx
 
-from mlib.base.logger import LoggingLevel, MLogger
+from mlib.core.logger import LoggingLevel, MLogger
 
 logger = MLogger(os.path.basename(__file__))
 

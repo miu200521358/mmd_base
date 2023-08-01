@@ -2,7 +2,7 @@ from enum import Enum, IntEnum, unique
 from pickle import dumps, loads
 from typing import TypeVar
 
-from mlib.base.logger import parse2str
+from mlib.core.logger import parse2str
 
 
 @unique

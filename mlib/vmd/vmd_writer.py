@@ -1,8 +1,8 @@
 import os
 import struct
 
-from mlib.base.base import BaseModel
-from mlib.base.logger import MLogger
+from mlib.core.base import BaseModel
+from mlib.core.logger import MLogger
 from mlib.vmd.vmd_collection import VmdMotion
 
 logger = MLogger(os.path.basename(__file__))

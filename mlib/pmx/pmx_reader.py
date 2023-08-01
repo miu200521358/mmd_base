@@ -1,12 +1,12 @@
 import os
 from struct import Struct
 
-from mlib.base.base import Encoding, FileType
-from mlib.base.exception import MParseException
-from mlib.base.logger import MLogger
-from mlib.base.math import MVector3D
-from mlib.base.part import Switch
-from mlib.base.reader import BaseReader, StructUnpackType
+from mlib.core.base import Encoding, FileType
+from mlib.core.exception import MParseException
+from mlib.core.logger import MLogger
+from mlib.core.math import MVector3D
+from mlib.core.part import Switch
+from mlib.core.reader import BaseReader, StructUnpackType
 from mlib.pmx.bone_setting import BoneFlg
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import (

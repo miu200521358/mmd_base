@@ -13,9 +13,9 @@ from mlib.service.form.widgets.image_btn_ctrl import ImageButton
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
-from mlib.base.exception import MApplicationException
-from mlib.base.logger import MLogger
-from mlib.base.math import MVector3D
+from mlib.core.exception import MApplicationException
+from mlib.core.logger import MLogger
+from mlib.core.math import MVector3D
 from mlib.pmx.canvas import CanvasPanel
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import Bone, BoneMorphOffset, Face, Morph, MorphType, SphereMode, Texture, ToonSharing

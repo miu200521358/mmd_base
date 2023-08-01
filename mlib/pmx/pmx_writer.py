@@ -5,8 +5,8 @@ from io import BufferedWriter
 from math import isinf, isnan
 from typing import Tuple
 
-from mlib.base.base import BaseModel
-from mlib.base.logger import MLogger
+from mlib.core.base import BaseModel
+from mlib.core.logger import MLogger
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import (
     Bdef1,

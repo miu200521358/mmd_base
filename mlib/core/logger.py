@@ -12,7 +12,7 @@ from typing import Optional
 import numpy as np
 import wx
 
-from mlib.base.exception import MLibException
+from mlib.core.exception import MLibException
 
 
 class LoggingMode(IntEnum):

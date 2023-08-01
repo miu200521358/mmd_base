@@ -1,9 +1,9 @@
 from typing import Optional
 
-from mlib.base.base import BaseModel
-from mlib.base.interpolation import Interpolation, evaluate
-from mlib.base.math import MQuaternion, MVector3D
-from mlib.base.part import BaseIndexNameModel, BaseRotationModel
+from mlib.core.base import BaseModel
+from mlib.core.interpolation import Interpolation, evaluate
+from mlib.core.math import MQuaternion, MVector3D
+from mlib.core.part import BaseIndexNameModel, BaseRotationModel
 
 
 class BaseVmdNameFrame(BaseIndexNameModel):

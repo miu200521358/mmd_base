@@ -2,10 +2,10 @@ import os
 import re
 from struct import Struct
 
-from mlib.base.base import Encoding, FileType
-from mlib.base.logger import MLogger
-from mlib.base.math import MVector3D
-from mlib.base.reader import BaseReader, StructUnpackType
+from mlib.core.base import Encoding, FileType
+from mlib.core.logger import MLogger
+from mlib.core.math import MVector3D
+from mlib.core.reader import BaseReader, StructUnpackType
 from mlib.vmd.vmd_collection import VmdMotion
 from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdIkOnOff, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
 

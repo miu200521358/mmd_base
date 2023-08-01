@@ -3,7 +3,7 @@ from typing import Optional
 
 import wx
 
-from mlib.base.logger import MLogger
+from mlib.core.logger import MLogger
 from mlib.service.form.widgets.spin_ctrl import WheelSpinCtrl
 
 logger = MLogger(os.path.basename(__file__))

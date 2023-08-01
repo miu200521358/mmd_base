@@ -9,10 +9,10 @@ import wx
 from PIL import Image
 from wx import glcanvas
 
-from mlib.base.exception import MViewerException
-from mlib.base.logger import MLogger
-from mlib.base.math import MQuaternion, MVector3D
-from mlib.base.process import MProcess
+from mlib.core.exception import MViewerException
+from mlib.core.logger import MLogger
+from mlib.core.math import MQuaternion, MVector3D
+from mlib.core.process import MProcess
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import ShaderMaterial
 from mlib.pmx.shader import MShader

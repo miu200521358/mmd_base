@@ -3,9 +3,9 @@ from typing import Generic, Optional, TypeVar
 
 import wx
 
-from mlib.base.collection import BaseHashModel
-from mlib.base.logger import MLogger
-from mlib.base.reader import BaseReader
+from mlib.core.collection import BaseHashModel
+from mlib.core.logger import MLogger
+from mlib.core.reader import BaseReader
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_reader import PmxReader
 from mlib.service.form.base_frame import BaseFrame

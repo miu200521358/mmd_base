@@ -94,7 +94,7 @@ def test_DisplaySlots_init() -> None:
 def test_read_by_filepath_error():
     import os
 
-    from mlib.base.exception import MParseException
+    from mlib.core.exception import MParseException
     from mlib.pmx.pmx_reader import PmxReader
 
     reader = PmxReader()

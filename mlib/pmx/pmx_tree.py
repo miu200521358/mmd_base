@@ -1,7 +1,7 @@
 from typing import Optional
 
-from mlib.base.collection import BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
-from mlib.base.math import MVector3D
+from mlib.core.collection import BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
+from mlib.core.math import MVector3D
 from mlib.pmx.bone_setting import STANDARD_BONE_NAMES
 from mlib.pmx.pmx_part import Bone
 

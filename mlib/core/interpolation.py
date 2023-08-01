@@ -3,8 +3,8 @@ from functools import lru_cache
 import bezier
 import numpy as np
 
-from mlib.base.base import BaseModel
-from mlib.base.math import MVector2D
+from mlib.core.base import BaseModel
+from mlib.core.math import MVector2D
 
 # MMDでの補間曲線の最大値
 IP_MAX = 127

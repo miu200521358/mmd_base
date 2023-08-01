@@ -7,9 +7,9 @@ import numpy as np
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from mlib.base.math import MVectorDict
+from mlib.core.math import MVectorDict
 from mlib.pmx.pmx_reader import PmxReader
-from mlib.base.logger import MLogger
+from mlib.core.logger import MLogger
 
 
 model_path = "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/刀剣乱舞/073_燭台切光忠/燭台切光忠 sam式 Ver1.5/sam式燭台切光忠（Tシャツ）Ver1.5/ギャルソン服(袖捲り)0.10/黄sam式燭台切光忠（Tシャツ）_20230708_114549.pmx"

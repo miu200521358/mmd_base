@@ -5,11 +5,11 @@ from typing import Iterable, Optional
 import numpy as np
 import OpenGL.GL as gl
 
-from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictModel
-from mlib.base.exception import MViewerException
-from mlib.base.logger import MLogger
-from mlib.base.math import MMatrix4x4, MMatrix4x4List, MVector3D, MVectorDict
-from mlib.base.part import Switch
+from mlib.core.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictModel
+from mlib.core.exception import MViewerException
+from mlib.core.logger import MLogger
+from mlib.core.math import MMatrix4x4, MMatrix4x4List, MVector3D, MVectorDict
+from mlib.core.part import Switch
 from mlib.pmx.bone_setting import STANDARD_BONE_NAMES, BoneFlg, BoneSettings
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (

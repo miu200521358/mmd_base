@@ -2,8 +2,8 @@ import hashlib
 from bisect import bisect_left
 from typing import Generic, Iterator, Optional, TypeVar
 
-from mlib.base.base import BaseModel, Encoding
-from mlib.base.part import BaseIndexModel, BaseIndexNameModel
+from mlib.core.base import BaseModel, Encoding
+from mlib.core.part import BaseIndexModel, BaseIndexNameModel
 from mlib.service.base_worker import verify_thread
 
 TBaseIndexModel = TypeVar("TBaseIndexModel", bound=BaseIndexModel)

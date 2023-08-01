@@ -7,8 +7,8 @@ import numpy as np
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
 
-from mlib.base.exception import MViewerException
-from mlib.base.math import MMatrix4x4, MQuaternion, MVector3D, MVector4D
+from mlib.core.exception import MViewerException
+from mlib.core.math import MMatrix4x4, MQuaternion, MVector3D, MVector4D
 
 
 class VsLayout(IntEnum):

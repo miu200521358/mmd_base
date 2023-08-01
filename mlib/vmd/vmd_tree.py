@@ -2,7 +2,7 @@ from typing import Iterator
 
 import numpy as np
 
-from mlib.base.math import MMatrix4x4, MVector3D
+from mlib.core.math import MMatrix4x4, MVector3D
 
 
 class VmdBoneFrameTree:

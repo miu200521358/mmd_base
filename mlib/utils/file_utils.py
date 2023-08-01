@@ -5,8 +5,8 @@ import sys
 from glob import glob
 from pathlib import Path
 
-from mlib.base.base import FileType
-from mlib.base.logger import MLogger
+from mlib.core.base import FileType
+from mlib.core.logger import MLogger
 
 logger = MLogger(os.path.basename(__file__))
 

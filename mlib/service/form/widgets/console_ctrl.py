@@ -2,7 +2,7 @@ import os
 
 import wx
 
-from mlib.base.logger import ConsoleHandler, MLogger
+from mlib.core.logger import ConsoleHandler, MLogger
 from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
 

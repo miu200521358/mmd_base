@@ -2,13 +2,13 @@ from multiprocessing import freeze_support
 
 import pytest
 
-from mlib.base.math import MQuaternion, MVector3D
+from mlib.core.math import MQuaternion, MVector3D
 
 
 def test_read_by_filepath_error():
     import os
 
-    from mlib.base.exception import MParseException
+    from mlib.core.exception import MParseException
     from mlib.vmd.vmd_reader import VmdReader
 
     reader = VmdReader()

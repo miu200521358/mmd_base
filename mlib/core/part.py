@@ -3,8 +3,8 @@ from typing import Optional, TypeVar
 
 import numpy as np
 
-from mlib.base.base import BaseModel
-from mlib.base.math import MQuaternion, MVector3D
+from mlib.core.base import BaseModel
+from mlib.core.math import MQuaternion, MVector3D
 
 
 @unique

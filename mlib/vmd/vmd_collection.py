@@ -8,9 +8,9 @@ from typing import Iterable, Optional
 import numpy as np
 from numpy.linalg import inv
 
-from mlib.base.collection import BaseHashModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
-from mlib.base.logger import MLogger
-from mlib.base.math import MMatrix4x4List, MQuaternion, MVector3D, MVector4D, calc_list_by_ratio
+from mlib.core.collection import BaseHashModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
+from mlib.core.logger import MLogger
+from mlib.core.math import MMatrix4x4List, MQuaternion, MVector3D, MVector4D, calc_list_by_ratio
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import (
     Bone,
