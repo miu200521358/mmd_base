@@ -224,7 +224,7 @@ class MShader:
             except Exception as e:
                 raise MViewerException(f"MShader glDeleteProgram Failure\n{self.bone_program}", e)
 
-    def load_shader(self, src: str, shader_type: int) -> int:
+    def load_shader(self, src: str, shader_type) -> int:
         shader = gl.glCreateShader(shader_type)
         gl.glShaderSource(shader, src)
         gl.glCompileShader(shader)
