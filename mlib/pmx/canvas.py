@@ -390,7 +390,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.queues = []
 
     def on_play_timer(self, event: wx.Event):
-        logger.debug("on_play_timer")
+        logger.debug(f"on_play_timer: {self.parent.fno}")
         if self.queues:
             # 全てのキューが終わったら受け取る
             animations: list[MotionSet] = []
@@ -411,6 +411,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.on_capture(event)
 
             self.parent.fno += 1
+            logger.debug(f"on_play_timer: {self.parent.fno}")
         self.Refresh()
 
     def on_reset(self, event: wx.Event):
