@@ -1,6 +1,6 @@
 import logging
 import os
-from multiprocessing import Queue
+from multiprocessing import Process, Queue
 from typing import Callable, Optional
 
 import numpy as np
@@ -12,7 +12,6 @@ from wx import glcanvas
 from mlib.core.exception import MViewerException
 from mlib.core.logger import MLogger
 from mlib.core.math import MQuaternion, MVector3D
-from mlib.core.process import MProcess
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import ShaderMaterial
 from mlib.pmx.shader import MShader
@@ -150,7 +149,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.animations: list[MotionSet] = []
 
         self.queues: list[Queue] = []
-        self.processes: list[MProcess] = []
+        self.processes: list[Process] = []
 
         # マウスドラッグフラグ
         self.is_drag = False
@@ -360,7 +359,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.queues.append(Queue())
                 logger.debug(f"on_play process[{n}] append")
                 self.processes.append(
-                    MProcess(
+                    Process(
                         target=animate,
                         args=(self.queues[-1], self.parent.fno, self.max_fno, model_set),
                         name="CalcProcess",
