@@ -730,7 +730,7 @@ class PmxWriter(BaseModel):
             # 2  : ushort	| 非衝突グループフラグ
             fout.write(struct.pack(PmxBinaryType.UNSIGNED_SHORT, rigidbody.no_collision_group.value))
             # 1  : byte	| 形状 - 0:球 1:箱 2:カプセル
-            self.write_byte(fout, rigidbody.shape_type.value)
+            self.write_byte(fout, rigidbody.shape_type)
             # 12 : float3	| サイズ(x,y,z)
             self.write_number(
                 fout,
