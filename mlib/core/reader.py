@@ -229,7 +229,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         return read_text
 
     @lru_cache(maxsize=None)
-    def decode_text(self, main_encoding: Encoding, fbytes: bytearray) -> str:
+    def decode_text(self, main_encoding: Encoding, fbytes: bytes) -> str:
         """
         テキストデコード
 
@@ -237,7 +237,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         ----------
         main_encoding : Encoding
             基本のエンコーディング
-        fbytes : bytearray
+        fbytes : bytes
             バイト文字列
 
         Returns
