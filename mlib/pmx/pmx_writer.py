@@ -615,7 +615,7 @@ class PmxWriter(BaseModel):
                 elif type(offset) is MaterialMorphOffset:
                     # 材質モーフ
                     self.write_number(fout, material_idx_type, offset.material_index)
-                    self.write_byte(fout, offset.calc_mode)
+                    self.write_byte(fout, offset.calc_mode.value)
                     self.write_number(fout, PmxBinaryType.FLOAT, float(offset.diffuse.x))
                     self.write_number(fout, PmxBinaryType.FLOAT, float(offset.diffuse.y))
                     self.write_number(fout, PmxBinaryType.FLOAT, float(offset.diffuse.z))
@@ -691,7 +691,7 @@ class PmxWriter(BaseModel):
             # ボーンの場合
             for reference in display_slot.references:
                 # 要素対象 0:ボーン 1:モーフ
-                self.write_byte(fout, reference.display_type)
+                self.write_byte(fout, reference.display_type.value)
                 if 0 == reference.display_type:
                     # ボーンIndex
                     self.write_number(fout, bone_idx_type, reference.display_index)
@@ -730,7 +730,7 @@ class PmxWriter(BaseModel):
             # 2  : ushort	| 非衝突グループフラグ
             fout.write(struct.pack(PmxBinaryType.UNSIGNED_SHORT, rigidbody.no_collision_group.value))
             # 1  : byte	| 形状 - 0:球 1:箱 2:カプセル
-            self.write_byte(fout, rigidbody.shape_type)
+            self.write_byte(fout, rigidbody.shape_type.value)
             # 12 : float3	| サイズ(x,y,z)
             self.write_number(
                 fout,
@@ -794,7 +794,7 @@ class PmxWriter(BaseModel):
                 is_positive_only=True,
             )
             # 1  : byte	| 剛体の物理演算 - 0:ボーン追従(static) 1:物理演算(dynamic) 2:物理演算 + Bone位置合わせ
-            self.write_byte(fout, rigidbody.mode)
+            self.write_byte(fout, rigidbody.mode.value)
 
         logger.debug("-- 剛体データ出力終了({c})", c=len(self.model.rigidbodies))
 
