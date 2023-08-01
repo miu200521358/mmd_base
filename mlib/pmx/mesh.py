@@ -125,13 +125,12 @@ class IBO:
         if error_code != gl.GL_NO_ERROR:
             raise MViewerException(f"IBO glGenBuffers Failure\n{error_code}")
 
-        match data.dtype:
-            case np.uint8:
-                self.dtype = gl.GL_UNSIGNED_BYTE
-            case np.uint16:
-                self.dtype = gl.GL_UNSIGNED_SHORT
-            case np.uint32:
-                self.dtype = gl.GL_UNSIGNED_INT
+        if data.dtype == np.uint8:
+            self.dtype = gl.GL_UNSIGNED_BYTE
+        elif data.dtype == np.uint16:
+            self.dtype = gl.GL_UNSIGNED_SHORT
+        elif data.dtype == np.uint32:
+            self.dtype = gl.GL_UNSIGNED_INT
         self.dsize = np.dtype(data.dtype).itemsize
 
         self.bind()

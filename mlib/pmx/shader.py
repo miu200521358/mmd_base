@@ -418,15 +418,14 @@ class MShader:
         self.update_camera()
 
     def use(self, program_type: ProgramType) -> None:
-        match program_type:
-            case ProgramType.MODEL:
-                gl.glUseProgram(self.model_program)
-            case ProgramType.EDGE:
-                gl.glUseProgram(self.edge_program)
-            case ProgramType.BONE:
-                gl.glUseProgram(self.bone_program)
-            case ProgramType.AXIS:
-                gl.glUseProgram(self.axis_program)
+        if program_type == ProgramType.MODEL:
+            gl.glUseProgram(self.model_program)
+        elif program_type == ProgramType.EDGE:
+            gl.glUseProgram(self.edge_program)
+        elif program_type == ProgramType.BONE:
+            gl.glUseProgram(self.bone_program)
+        elif program_type == ProgramType.AXIS:
+            gl.glUseProgram(self.axis_program)
 
     def unuse(self) -> None:
         gl.glUseProgram(0)
