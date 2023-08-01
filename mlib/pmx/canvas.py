@@ -378,20 +378,20 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.parent.stop_play()
 
     def clear_process(self) -> None:
-        if self.processes:
+        if 0 < len(self.processes):
             for p in self.processes:
                 if p.is_alive():
                     p.terminate()
                 del p
             self.processes = []
-        if self.queues:
+        if 0 < len(self.queues):
             for q in self.queues:
                 del q
             self.queues = []
 
     def on_play_timer(self, event: wx.Event):
         logger.debug(f"on_play_timer before: {self.parent.fno}")
-        if self.queues:
+        if 0 < len(self.queues):
             # 全てのキューが終わったら受け取る
             animations: list[MotionSet] = []
             for q in self.queues:
@@ -404,7 +404,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.on_play(event)
                 return
 
-            if animations:
+            if 0 < len(animations):
                 self.animations = animations
 
             if self.recording:
