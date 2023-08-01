@@ -512,7 +512,7 @@ class PmxWriter(BaseModel):
                     # n  : ボーンIndexサイズ  | リンクボーンのボーンIndex
                     self.write_number(fout, bone_idx_type, link.bone_index)
                     # 1  : byte	| 角度制限 0:OFF 1:ON
-                    self.write_byte(fout, link.angle_limit)
+                    self.write_byte(fout, int(link.angle_limit))
 
                     if link.angle_limit:
                         self.write_number(
