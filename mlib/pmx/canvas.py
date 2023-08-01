@@ -397,7 +397,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 animation = q.get()
                 animations.append(animation)
 
-            if None in animations and self.processes:
+            if None in animations and self.processes and self.parent.fno >= self.max_fno:
                 # アニメーションが終わったら再生をひっくり返す
                 logger.debug("reverse on_play")
                 self.on_play(event)
