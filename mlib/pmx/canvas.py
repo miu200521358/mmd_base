@@ -237,6 +237,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.animations = []
 
     def draw(self) -> None:
+        logger.debug("draw: %s", self.parent.fno)
         self.set_context()
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
@@ -408,7 +409,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.on_capture(event)
 
             self.parent.fno += 1
-            self.Refresh()
+        self.Refresh()
 
     def on_reset(self, event: wx.Event):
         self.parent.fno = 0
