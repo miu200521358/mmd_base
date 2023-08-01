@@ -582,7 +582,7 @@ class PmxWriter(BaseModel):
             self.write_text(fout, morph.name, f"Morph {midx}")
             self.write_text(fout, morph.english_name, f"Morph {midx}")
             # 操作パネル (PMD:カテゴリ) 1:眉(左下) 2:目(左上) 3:口(右上) 4:その他(右下)  | 0:システム予約
-            self.write_byte(fout, morph.panel)
+            self.write_byte(fout, morph.panel.value)
             # モーフ種類 - 0:グループ, 1:頂点, 2:ボーン, 3:UV, 4:追加UV1, 5:追加UV2, 6:追加UV3, 7:追加UV4, 8:材質
             self.write_byte(fout, morph.morph_type)
             # モーフのオフセット数 : 後続の要素数
