@@ -1470,12 +1470,12 @@ class PmxModel(BaseHashModel):
                 v.deform = Bdef1(from_bone.index)
             elif np.count_nonzero(v.deform.weights) == 1:
                 # Bdef1で再定義
-                v.deform = Bdef1(v.deform.indexes[np.argmax(v.deform.weights)])
+                v.deform = Bdef1(int(v.deform.indexes[np.argmax(v.deform.weights)]))
             elif np.count_nonzero(v.deform.weights) == 2:
                 # Bdef2で再定義
                 v.deform = Bdef2(
-                    v.deform.indexes[np.argsort(v.deform.weights)[-1]],
-                    v.deform.indexes[np.argsort(v.deform.weights)[-2]],
+                    int(v.deform.indexes[np.argsort(v.deform.weights)[-1]]),
+                    int(v.deform.indexes[np.argsort(v.deform.weights)[-2]]),
                     float(np.max(v.deform.weights)),
                 )
             v.deform.normalize(align=True)
