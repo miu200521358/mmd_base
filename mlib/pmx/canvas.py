@@ -355,6 +355,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.parent.start_play()
             self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
             self.recording = record
+            logger.debug(f"on_play model_sets[{len(self.model_sets)}]")
             for n, model_set in enumerate(self.model_sets):
                 logger.debug(f"on_play queue[{n}] append")
                 self.queues.append(Queue())
@@ -392,11 +393,13 @@ class PmxCanvas(glcanvas.GLCanvas):
     def on_play_timer(self, event: wx.Event):
         logger.debug(f"on_play_timer before: {self.parent.fno}")
         if 0 < len(self.queues):
+            logger.debug("on_play_timer wait")
             # 全てのキューが終わったら受け取る
             animations: list[MotionSet] = []
             for q in self.queues:
                 animation = q.get()
                 animations.append(animation)
+            logger.debug(f"on_play_timer append ({len(animations)})")
 
             if None in animations and self.processes:
                 # アニメーションが終わったら再生をひっくり返す
@@ -405,6 +408,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 return
 
             if 0 < len(animations):
+                logger.debug(f"on_play_timer set animations ({len(animations)})")
                 self.animations = animations
 
             if self.recording:
