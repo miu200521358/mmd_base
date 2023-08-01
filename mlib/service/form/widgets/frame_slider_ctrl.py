@@ -74,8 +74,8 @@ class FrameSliderCtrl:
         self._slider.SetValue(v)
 
     def SetValue(self, v: float) -> None:
-        self._slider.SetValue(v)
         self._fno_ctrl.SetValue(v)
+        self._on_change_value(wx.EVT_MOUSEWHEEL)
 
     def ChangeValue(self, v: float) -> None:
         self._fno_ctrl.SetValue(v)
