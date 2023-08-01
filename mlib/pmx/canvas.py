@@ -237,7 +237,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.animations = []
 
     def draw(self) -> None:
-        logger.debug("draw: %s", self.parent.fno)
+        logger.debug(f"draw: {self.parent.fno}")
         self.set_context()
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
@@ -390,6 +390,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.queues = []
 
     def on_play_timer(self, event: wx.Event):
+        logger.debug("on_play_timer")
         if self.queues:
             # 全てのキューが終わったら受け取る
             animations: list[MotionSet] = []
@@ -399,6 +400,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
             if None in animations and self.processes:
                 # アニメーションが終わったら再生をひっくり返す
+                logger.debug("reverse on_play")
                 self.on_play(event)
                 return
 
