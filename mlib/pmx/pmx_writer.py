@@ -794,7 +794,7 @@ class PmxWriter(BaseModel):
                 is_positive_only=True,
             )
             # 1  : byte	| 剛体の物理演算 - 0:ボーン追従(static) 1:物理演算(dynamic) 2:物理演算 + Bone位置合わせ
-            self.write_byte(fout, rigidbody.mode.value)
+            self.write_byte(fout, rigidbody.mode)
 
         logger.debug("-- 剛体データ出力終了({c})", c=len(self.model.rigidbodies))
 
