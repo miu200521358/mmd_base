@@ -1,4 +1,3 @@
-import logging
 import os
 from multiprocessing import Queue
 from typing import Callable, Optional
@@ -21,7 +20,7 @@ from mlib.service.form.base_panel import BasePanel
 from mlib.utils.file_utils import get_root_dir
 from mlib.vmd.vmd_collection import VmdMotion
 
-logger = MLogger(os.path.basename(__file__), level=logging.DEBUG)
+logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
 

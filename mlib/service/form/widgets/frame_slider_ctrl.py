@@ -6,7 +6,7 @@ import wx
 from mlib.core.logger import MLogger
 from mlib.service.form.widgets.spin_ctrl import WheelSpinCtrl
 
-logger = MLogger(os.path.basename(__file__), level=1)
+logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
 
@@ -74,7 +74,6 @@ class FrameSliderCtrl:
         self._slider.SetValue(v)
 
     def SetValue(self, v: int) -> None:
-        logger.debug(f"frame_slider SetValue {v}")
         self._fno_ctrl.SetValue(v)
         self._on_change_value(wx.EVT_MOUSEWHEEL)
 
