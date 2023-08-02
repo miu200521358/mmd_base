@@ -58,6 +58,7 @@ Windows用MMDツールライブラリ
  1. pyinstaller のインストール
     1. `git clone https://github.com/pyinstaller/pyinstaller`
     1. (mtool) PS C:\MMD\pyinstaller\bootloader> `python ./waf all`
+    1. (mtool) PS C:\MMD\pyinstaller> `pip install .`
  1. `pip install -r requirements.txt`
  1. `pip install -r requirements_test.txt`
 
