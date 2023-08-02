@@ -48,19 +48,19 @@ Windows用MMDツールライブラリ
 
 ### Python3.11 pyinstaller ローカルビルド (2023.08)
 
- 1. `conda create -n mtool pip python=3.11`
-    1. `conda activate mtool`
-    1. `pip install -U setuptools`
- 1. vcbuildtoolsをインストール (管理者権限つきPowerShell)
-    1. `C:\MMD\mmd_base\profile.ps1`
-    1. `conda activate mtool`
-    1. `choco install -y --force python visualstudio2019-workload-vctools`
- 1. pyinstaller のインストール
-    1. `git clone https://github.com/pyinstaller/pyinstaller`
-    1. (mtool) PS C:\MMD\pyinstaller\bootloader> `python ./waf all`
-    1. (mtool) PS C:\MMD\pyinstaller> `pip install .`
- 1. `pip install -r requirements.txt`
- 1. `pip install -r requirements_test.txt`
+1. `conda create -n mtool pip python=3.11`
+   1. `conda activate mtool`
+   1. `pip install -U setuptools`
+1. vcbuildtoolsをインストール (管理者権限つきPowerShell)
+   1. `C:\MMD\mmd_base\profile.ps1`
+   1. `conda activate mtool`
+   1. `choco install -y --force python visualstudio2019-workload-vctools`
+   1. pyinstaller のインストール
+      1. `git clone https://github.com/pyinstaller/pyinstaller`
+      1. (mtool) PS C:\MMD\pyinstaller\bootloader> `python ./waf all`
+      1. (mtool) PS C:\MMD\pyinstaller> `pip install .`
+1. (mtool) PS C:\MMD\mmd_base> `pip install -r requirements.txt`
+1. (mtool) PS C:\MMD\mmd_base> `pip install -r requirements_test.txt`
 
 
 
