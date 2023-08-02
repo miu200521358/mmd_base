@@ -414,7 +414,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             if self.recording:
                 self.on_capture(event)
 
-            self.parent.fno += 1
+            self.parent.fno = self.parent.fno + 1
             logger.debug(f"on_play_timer after: {self.parent.fno}")
         self.Refresh()
 
