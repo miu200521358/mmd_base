@@ -1,8 +1,9 @@
 Babel==2.12.1
-numpy==1.25.0
+numpy==1.25.2
 numpy-quaternion==2022.4.3
-Cython==0.29.35
+bezier==2023.7.28
+Cython==3.0.0
 PyOpenGL==3.1.7
-Pillow==9.5.0
+Pillow==10.0.0
 wxpython==4.2.1
 
