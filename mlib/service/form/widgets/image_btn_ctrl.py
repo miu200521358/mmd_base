@@ -24,7 +24,7 @@ class ImageButton(wx.BitmapButton):
         self.image_name = image_path
         self.exec_evt = click_evt
 
-        super().__init__(panel, bitmap=self.create_bitmap(image_path, size))
+        super().__init__(panel, bitmap=create_bitmap(image_path, size))
         self.Bind(wx.EVT_BUTTON, self._click)
         self.SetToolTip(tooltip)
 
@@ -32,14 +32,15 @@ class ImageButton(wx.BitmapButton):
         if self.exec_evt is not None:
             self.exec_evt(event)
 
-    def create_bitmap(self, path: str, size: wx.Size):
-        # 画像を読み込む
-        image = wx.Image(get_path(path), wx.BITMAP_TYPE_ANY)
 
-        # 画像をサイズに合わせてリサイズ
-        image = image.Scale(size.x, size.y)
+def create_bitmap(path: str, size: wx.Size) -> wx.Bitmap:
+    # 画像を読み込む
+    image = wx.Image(get_path(path), wx.BITMAP_TYPE_ANY)
 
-        # リサイズした画像をビットマップに変換
-        bitmap = image.ConvertToBitmap()
+    # 画像をサイズに合わせてリサイズ
+    image = image.Scale(size.x, size.y)
 
-        return bitmap
+    # リサイズした画像をビットマップに変換
+    bitmap = image.ConvertToBitmap()
+
+    return bitmap
