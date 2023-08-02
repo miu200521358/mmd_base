@@ -5,7 +5,6 @@ import wx
 
 from mlib.core.logger import MLogger
 from mlib.service.form.base_panel import BasePanel
-from mlib.utils.file_utils import get_path
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
