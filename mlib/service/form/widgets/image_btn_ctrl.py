@@ -5,6 +5,7 @@ import wx
 
 from mlib.core.logger import MLogger
 from mlib.service.form.base_panel import BasePanel
+from mlib.utils.file_utils import get_path
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -37,7 +38,7 @@ class ImageButton(wx.BitmapButton):
 
     def create_bitmap(self, path: str, size: wx.Size):
         # 画像を読み込む
-        image = wx.Image(path, wx.BITMAP_TYPE_ANY)
+        image = wx.Image(get_path(path), wx.BITMAP_TYPE_ANY)
 
         # 画像をサイズに合わせてリサイズ
         image = image.Scale(size.x, size.y)
