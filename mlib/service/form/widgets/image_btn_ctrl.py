@@ -38,7 +38,7 @@ class ImageButton(wx.BitmapButton):
 
     def create_bitmap(self, path: str, size: wx.Size):
         # 画像を読み込む
-        image = wx.Image(get_path(path), wx.BITMAP_TYPE_ANY)
+        image = wx.Image(path, wx.BITMAP_TYPE_ANY)
 
         # 画像をサイズに合わせてリサイズ
         image = image.Scale(size.x, size.y)
