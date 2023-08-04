@@ -1270,6 +1270,14 @@ class VmdMotion(BaseHashModel):
     def cache_clear(self) -> None:
         self.bones.cache_clear()
 
+    def append_bone_frame(self, bf: VmdBoneFrame) -> None:
+        """ボーンキーフレ追加"""
+        self.bones[bf.name].append(bf)
+
+    def append_morph_frame(self, mf: VmdMorphFrame) -> None:
+        """モーフキーフレ追加"""
+        self.morphs[mf.name].append(mf)
+
     def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 開始")
 
