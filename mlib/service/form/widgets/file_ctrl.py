@@ -10,7 +10,7 @@ from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_reader import PmxReader
 from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
-from mlib.utils.file_utils import get_dir_path, insert_history, unwrapped_path, validate_file, validate_save_file
+from mlib.utils.file_utils import get_dir_path, insert_history, separate_path, unwrapped_path, validate_file, validate_save_file
 from mlib.vmd.vmd_collection import VmdMotion
 from mlib.vmd.vmd_reader import VmdReader
 
@@ -156,6 +156,13 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
     def path(self, v: str) -> None:
         if self.valid(v):
             self.file_ctrl.SetPath(v)
+
+    @property
+    def separated_path(self) -> tuple[str, str, str]:
+        """パスを「ディレクトリパス」「ファイル名」「ファイル拡張子」に分割して返す"""
+        if not self.path:
+            return "", "", ""
+        return separate_path(self.file_ctrl.GetPath())
 
     def valid(self, v: Optional[str] = None) -> bool:
         path = v if v else self.file_ctrl.GetPath()
