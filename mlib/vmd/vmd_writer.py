@@ -37,8 +37,13 @@ class VmdWriter(BaseModel):
 
             # bone frames
             fout.write(struct.pack("<L", self.motion.bone_count))  # ボーンフレーム数
+            fidx = 0
+            bone_count = self.motion.bone_count
             for bone_name in self.motion.bones.names:
                 for fno in reversed(self.motion.bones[bone_name].indexes):
+                    logger.count("ボーンモーション出力", index=fidx, total_index_count=bone_count, display_block=10000)
+                    fidx += 1
+
                     bf = self.motion.bones[bone_name][fno]
                     # INDEXを逆順に出力する
                     bname = bf.name.encode("cp932").decode("shift_jis").encode("shift_jis")[:15].ljust(15, b"\x00")  # 15文字制限
@@ -55,8 +60,13 @@ class VmdWriter(BaseModel):
                     fout.write(bytearray([int(min(255, max(0, x))) for x in bf.interpolations.merge()]))
 
             fout.write(struct.pack("<L", self.motion.morph_count))  # 表情フレーム数
+            fidx = 0
+            morph_count = self.motion.morph_count
             for morph_name in self.motion.morphs.names:
                 for fno in reversed(self.motion.morphs[morph_name].indexes):
+                    logger.count("モーフモーション出力", index=fidx, total_index_count=morph_count, display_block=10000)
+                    fidx += 1
+
                     mf = self.motion.morphs[morph_name][fno]
                     # INDEXを逆順に出力する
                     bname = mf.name.encode("cp932").decode("shift_jis").encode("shift_jis")[:15].ljust(15, b"\x00")  # 15文字制限

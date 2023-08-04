@@ -137,6 +137,8 @@ class PmxWriter(BaseModel):
 
         # 頂点データ
         for vertex in self.model.vertices:
+            logger.count("頂点データ出力", index=vertex.index, total_index_count=len(self.model.vertices), display_block=10000)
+
             # position
             self.write_number(fout, PmxBinaryType.FLOAT, float(vertex.position.x))
             self.write_number(fout, PmxBinaryType.FLOAT, float(vertex.position.y))
@@ -258,6 +260,8 @@ class PmxWriter(BaseModel):
 
         # 面データ
         for face in self.model.faces:
+            logger.count("面データ出力", index=face.index, total_index_count=len(self.model.faces), display_block=10000)
+
             for vidx in face.vertices:
                 self.write_number(fout, vertex_idx_type, vidx, is_positive_only=True)
 
@@ -450,6 +454,8 @@ class PmxWriter(BaseModel):
         self.write_number(fout, PmxBinaryType.INT, len(target_bones), is_positive_only=True)
 
         for bidx, bone in enumerate(target_bones):
+            logger.count("ボーンデータ出力", index=bone.index, total_index_count=len(target_bones), display_block=100)
+
             # ボーン名
             self.write_text(fout, bone.name, f"Bone {bidx}")
             self.write_text(fout, bone.english_name, f"Bone {bidx}")
