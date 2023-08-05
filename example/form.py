@@ -15,10 +15,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from mlib.core.exception import MApplicationException
 from mlib.core.logger import MLogger
-from mlib.core.math import MVector3D
-from mlib.pmx.canvas import CanvasPanel
+from mlib.pmx.canvas import CanvasPanel, SubCanvasWindow
 from mlib.pmx.pmx_collection import PmxModel
-from mlib.pmx.pmx_part import Bone, BoneMorphOffset, Face, Morph, MorphType, SphereMode, Texture, ToonSharing
+from mlib.pmx.pmx_part import Bone, Face, SphereMode, Texture, ToonSharing
 from mlib.pmx.pmx_writer import PmxWriter
 from mlib.service.base_worker import BaseWorker
 from mlib.service.form.base_frame import BaseFrame
@@ -31,7 +30,6 @@ from mlib.service.form.widgets.frame_slider_ctrl import FrameSliderCtrl
 from mlib.service.form.widgets.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
 from mlib.utils.file_utils import save_histories, separate_path
 from mlib.vmd.vmd_collection import VmdMotion
-from mlib.vmd.vmd_part import VmdMorphFrame
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -393,7 +391,6 @@ class SaveWorker(BaseWorker):
 class ConfigPanel(CanvasPanel):
     def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
         super().__init__(frame, tab_idx, 0.5, 1.0, *args, **kw)
-
         self._initialize_ui()
         self._initialize_event()
 
@@ -484,8 +481,8 @@ class ConfigPanel(CanvasPanel):
         self.scrolled_window.SetSizer(self.btn_sizer)
 
         # 顔アップ
-        self.face_up_btn = wx.Button(self.scrolled_window, wx.ID_ANY, "顔アップ", wx.DefaultPosition, wx.Size(100, 50))
-        self.btn_sizer.Add(self.face_up_btn, 0, wx.ALL, 5)
+        self.sub_window_btn = wx.Button(self.scrolled_window, wx.ID_ANY, "サブウィンドウ", wx.DefaultPosition, wx.Size(100, 50))
+        self.btn_sizer.Add(self.sub_window_btn, 0, wx.ALL, 5)
 
         self.config_sizer.Add(self.scrolled_window, 1, wx.ALL | wx.EXPAND | wx.FIXED_MINSIZE, 0)
 
@@ -501,7 +498,7 @@ class ConfigPanel(CanvasPanel):
         self.capture_btn.Bind(wx.EVT_BUTTON, self.canvas.on_capture)
         self.canvas.color_changed_event = self.on_change_color
         self.color_panel.Bind(wx.EVT_LEFT_DOWN, self.on_click_color_picker)
-        self.face_up_btn.Bind(wx.EVT_BUTTON, self.on_toggle_up_window)
+        self.sub_window_btn.Bind(wx.EVT_BUTTON, self.frame.on_show_sub_window)
 
     def on_click_color_picker(self, event: wx.Event):
         data = wx.ColourData()
@@ -560,6 +557,9 @@ class TestFrame(BaseFrame):
         # 設定タブ
         self.config_panel = ConfigPanel(self, 1)
         self.notebook.AddPage(self.config_panel, __("設定"), False)
+
+        self.sub_window_size = wx.Size(300, 300)
+        self.sub_window: Optional[SubCanvasWindow] = None
 
         self.worker = PmxLoadWorker(self.file_panel, self.on_result)
 
@@ -704,6 +704,22 @@ class TestFrame(BaseFrame):
             self.notebook.ChangeSelection(self.config_panel.tab_idx)
         except:
             logger.critical("モデル描画初期化処理失敗")
+
+    def on_show_sub_window(self, event: wx.Event) -> None:
+        self.create_sub_window()
+
+        if self.sub_window:
+            if not self.sub_window.IsShown():
+                self.sub_window.Show()
+            elif self.sub_window.IsShown():
+                self.sub_window.Hide()
+        event.Skip()
+
+    def create_sub_window(self) -> None:
+        if not self.sub_window:
+            self.sub_window = SubCanvasWindow(self, "サブウィンドウ", self.sub_window_size)
+            frame_x, frame_y = self.GetPosition()
+            self.sub_window.SetPosition(wx.Point(max(0, frame_x - self.sub_window_size.x - 10), max(0, frame_y)))
 
 
 class MuApp(wx.App):

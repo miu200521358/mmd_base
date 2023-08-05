@@ -24,29 +24,6 @@ logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
 
-class MagnifierPopup(wx.PopupWindow):
-    def __init__(self, parent: BaseFrame, size: wx.Size) -> None:
-        super(MagnifierPopup, self).__init__(parent, wx.SIMPLE_BORDER)
-        self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
-        self.SetSize(size)
-        frame_x, frame_y = parent.GetPosition()
-        self.SetPosition(wx.Point(max(0, frame_x - size.x - 10), max(0, frame_y)))
-
-        self.size = size
-        self.Bind(wx.EVT_PAINT, self.on_paint)
-
-        self.dragging = False
-
-    def set_magnified_region(self, region_bitmap) -> None:
-        self.region_bitmap = region_bitmap
-        self.Refresh()
-
-    def on_paint(self, event):
-        dc = wx.PaintDC(self)
-        if hasattr(self, "region_bitmap"):
-            dc.DrawBitmap(self.region_bitmap, 0, 0)
-
-
 class CanvasPanel(BasePanel):
     def __init__(self, frame: BaseFrame, tab_idx: int, canvas_width_ratio: float, canvas_height_ratio: float, *args, **kw):
         super().__init__(frame, tab_idx)
@@ -54,8 +31,6 @@ class CanvasPanel(BasePanel):
         self.canvas_width_ratio = canvas_width_ratio
         self.canvas_height_ratio = canvas_height_ratio
         self.canvas = PmxCanvas(self)
-        self.magnifier: Optional[MagnifierPopup] = None
-        self.scale = 2
 
     @property
     def fno(self) -> int:
@@ -82,63 +57,6 @@ class CanvasPanel(BasePanel):
 
     def on_resize(self, event: wx.Event):
         pass
-
-    def create_up_window(self) -> None:
-        self.magnifier = MagnifierPopup(self.frame, wx.Size(300, 200))
-
-    def on_toggle_up_window(self, event: wx.Event):
-        if self.magnifier and self.magnifier.IsShown():
-            self.magnifier.Close()
-            self.magnifier.Destroy()
-        else:
-            if not self.magnifier:
-                self.create_up_window()
-            if self.magnifier:
-                self.magnifier.Show()
-                self.on_capture(wx.MouseEvent())
-
-    def on_capture(self, event) -> None:
-        if self.magnifier and self.magnifier.IsShown():
-            if self.magnifier.dragging:
-                self.magnifier.on_mouse_motion(event)
-            else:
-                x, y = event.GetPosition()
-                scale_x = int(self.magnifier.size.x * self.scale)
-                scale_y = int(self.magnifier.size.y * self.scale)
-
-                # キャプチャ用のビットマップを作成
-                dc = wx.ClientDC(self.canvas)
-                bitmap = wx.Bitmap(scale_x, scale_y)
-
-                # キャプチャ
-                memory_dc = wx.MemoryDC()
-                memory_dc.SelectObject(bitmap)
-                memory_dc.Blit(
-                    0,
-                    0,
-                    self.magnifier.size.x,
-                    self.magnifier.size.y,
-                    dc,
-                    int(x - self.magnifier.size.x / self.scale / 2),
-                    int(y - self.magnifier.size.y / self.scale / 2),
-                )
-                memory_dc.SelectObject(wx.NullBitmap)
-
-                # screen = wx.ScreenDC()
-                # bitmap = wx.Bitmap(self.magnifier.size.x, self.magnifier.size.y)
-                # memory_dc = wx.MemoryDC(bitmap)
-                # memory_dc.Blit(
-                #     0,
-                #     0,
-                #     int(self.magnifier.size.x * 2),
-                #     int(self.magnifier.size.y * 2),
-                #     screen,
-                #     int(x - self.magnifier.size.x),
-                #     int(y - self.magnifier.size.y),
-                # )
-                self.magnifier.set_magnified_region(
-                    bitmap.ConvertToImage().Rescale(scale_x * self.scale, scale_y * self.scale).ConvertToBitmap()
-                )
 
 
 def animate(queue: Queue, fno: int, max_fno: int, model_set: "ModelSet"):
@@ -226,7 +144,27 @@ class PmxCanvas(glcanvas.GLCanvas):
         self._initialize_ui()
         self._initialize_event()
 
-        self.shader = MShader(self.size.width, self.size.height)
+        # カメラの位置
+        self.camera_position = MShader.INITIAL_CAMERA_POSITION.copy()
+        # カメラの補正位置
+        self.camera_offset_position = MShader.INITIAL_CAMERA_OFFSET_POSITION.copy()
+        # カメラの回転(eulerで扱う)
+        self.camera_degrees = MVector3D()
+        # 視野角
+        self.vertical_degrees = MShader.INITIAL_VERTICAL_DEGREES
+        # カメラの中央
+        self.look_at_center = MShader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
+
+        self.shader = MShader(
+            self.size.width,
+            self.size.height,
+            self.camera_position,
+            self.camera_offset_position,
+            self.camera_degrees,
+            self.look_at_center,
+            self.vertical_degrees,
+            self.aspect_ratio,
+        )
         self.model_sets: list[ModelSet] = []
         self.animations: list[MotionSet] = []
 
@@ -240,6 +178,10 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.playing = False
         # 録画中かどうかを示すフラグ
         self.recording = False
+
+    @property
+    def aspect_ratio(self) -> float:
+        return float(self.size.width) / float(self.size.height)
 
     def _initialize_ui(self) -> None:
         gl.glClearColor(0.7, 0.7, 0.7, 1)
@@ -276,7 +218,16 @@ class PmxCanvas(glcanvas.GLCanvas):
     def on_resize(self, event: wx.Event):
         self.size = self.parent.get_canvas_size()
         self.SetSize(self.size)
-        self.shader.fit(self.size.width, self.size.height)
+        self.shader.fit(
+            self.size.width,
+            self.size.height,
+            self.camera_position,
+            self.camera_offset_position,
+            self.camera_degrees,
+            self.look_at_center,
+            self.vertical_degrees,
+            self.aspect_ratio,
+        )
         self.parent.on_resize(event)
 
     def on_paint(self, event: wx.Event):
@@ -322,7 +273,14 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.set_context()
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
-        self.shader.update_camera()
+        self.shader.update_camera(
+            self.camera_position,
+            self.camera_offset_position,
+            self.camera_degrees,
+            self.look_at_center,
+            self.vertical_degrees,
+            self.aspect_ratio,
+        )
 
         self.shader.msaa.bind()
 
@@ -493,52 +451,52 @@ class PmxCanvas(glcanvas.GLCanvas):
 
     def on_reset(self, event: wx.Event):
         self.parent.fno = 0
-        self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
-        self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-        self.shader.camera_degrees = MVector3D()
-        self.shader.camera_position = self.shader.INITIAL_CAMERA_POSITION.copy()
-        self.shader.camera_offset_position = self.shader.INITIAL_CAMERA_OFFSET_POSITION.copy()
+        self.vertical_degrees = MShader.INITIAL_VERTICAL_DEGREES
+        self.look_at_center = MShader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
+        self.camera_degrees = MVector3D()
+        self.camera_position = MShader.INITIAL_CAMERA_POSITION.copy()
+        self.camera_offset_position = MShader.INITIAL_CAMERA_OFFSET_POSITION.copy()
         self.Refresh()
 
     def on_key_down(self, event: wx.Event):
         keycode = event.GetKeyCode()
         if keycode == wx.WXK_NUMPAD1:
             # 真下から
-            self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
-            self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-            self.shader.camera_degrees = MVector3D(-90, 0, 0)
-            self.shader.camera_offset_position = MVector3D(0, self.shader.INITIAL_CAMERA_POSITION_Y, 0)
+            self.vertical_degrees = MShader.INITIAL_VERTICAL_DEGREES
+            self.look_at_center = MShader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
+            self.camera_degrees = MVector3D(-90, 0, 0)
+            self.camera_offset_position = MVector3D(0, MShader.INITIAL_CAMERA_POSITION_Y, 0)
         elif keycode in [wx.WXK_NUMPAD2, wx.WXK_ESCAPE]:
             # 真正面から(=リセット)
-            self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
-            self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-            self.shader.camera_degrees = MVector3D()
-            self.shader.camera_position = self.shader.INITIAL_CAMERA_POSITION.copy()
-            self.shader.camera_offset_position = self.shader.INITIAL_CAMERA_OFFSET_POSITION.copy()
+            self.vertical_degrees = MShader.INITIAL_VERTICAL_DEGREES
+            self.look_at_center = MShader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
+            self.camera_degrees = MVector3D()
+            self.camera_position = MShader.INITIAL_CAMERA_POSITION.copy()
+            self.camera_offset_position = MShader.INITIAL_CAMERA_OFFSET_POSITION.copy()
         elif keycode == wx.WXK_NUMPAD6:
             # 左から
-            self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
-            self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-            self.shader.camera_degrees = MVector3D(0, 90, 0)
-            self.shader.camera_offset_position = MVector3D()
+            self.vertical_degrees = MShader.INITIAL_VERTICAL_DEGREES
+            self.look_at_center = MShader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
+            self.camera_degrees = MVector3D(0, 90, 0)
+            self.camera_offset_position = MVector3D()
         elif keycode == wx.WXK_NUMPAD4:
             # 右から
-            self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
-            self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-            self.shader.camera_degrees = MVector3D(0, -90, 0)
-            self.shader.camera_offset_position = MVector3D()
+            self.vertical_degrees = MShader.INITIAL_VERTICAL_DEGREES
+            self.look_at_center = MShader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
+            self.camera_degrees = MVector3D(0, -90, 0)
+            self.camera_offset_position = MVector3D()
         elif keycode == wx.WXK_NUMPAD8:
             # 真後ろから
-            self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
-            self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-            self.shader.camera_degrees = MVector3D(0, 180, 0)
-            self.shader.camera_offset_position = MVector3D()
+            self.vertical_degrees = MShader.INITIAL_VERTICAL_DEGREES
+            self.look_at_center = MShader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
+            self.camera_degrees = MVector3D(0, 180, 0)
+            self.camera_offset_position = MVector3D()
         elif keycode == wx.WXK_NUMPAD5:
             # 真上から
-            self.shader.vertical_degrees = self.shader.INITIAL_VERTICAL_DEGREES
-            self.shader.look_at_center = self.shader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-            self.shader.camera_degrees = MVector3D(90, 0, 0)
-            self.shader.camera_offset_position = MVector3D(0, self.shader.INITIAL_CAMERA_POSITION_Y, -self.shader.INITIAL_CAMERA_POSITION_Y)
+            self.vertical_degrees = MShader.INITIAL_VERTICAL_DEGREES
+            self.look_at_center = MShader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
+            self.camera_degrees = MVector3D(90, 0, 0)
+            self.camera_offset_position = MVector3D(0, MShader.INITIAL_CAMERA_POSITION_Y, -MShader.INITIAL_CAMERA_POSITION_Y)
         elif keycode in [
             wx.WXK_NUMPAD9,
             wx.WXK_RIGHT,
@@ -631,24 +589,40 @@ class PmxCanvas(glcanvas.GLCanvas):
             x = (self.now_pos.x - self.last_pos.x) * 0.02
             y = (self.now_pos.y - self.last_pos.y) * 0.02
             if event.MiddleIsDown():
-                self.shader.look_at_center += MQuaternion.from_euler_degrees(self.shader.camera_degrees) * MVector3D(x, y, 0)
+                self.look_at_center += MQuaternion.from_euler_degrees(self.camera_degrees) * MVector3D(x, y, 0)
 
-                self.shader.camera_offset_position.x += x
-                self.shader.camera_offset_position.y += y
+                self.camera_offset_position.x += x
+                self.camera_offset_position.y += y
             elif event.RightIsDown():
-                self.shader.camera_degrees += MVector3D(y * 10, -x * 10, 0)
+                self.camera_degrees += MVector3D(y * 10, -x * 10, 0)
             self.last_pos = self.now_pos
             self.Refresh()
 
         elif event.LeftIsDown() and event.Dragging():
             self.on_capture_color(event)
-        # 親のマウスモーションも実行する
-        self.parent.on_capture(event)
 
     def on_mouse_wheel(self, event: wx.Event):
         unit_degree = 5.0 if event.ShiftDown() else 1.0 if event.ControlDown() else 2.5
         if 0 > event.GetWheelRotation():
-            self.shader.vertical_degrees += unit_degree
+            self.vertical_degrees += unit_degree
         else:
-            self.shader.vertical_degrees = max(1.0, self.shader.vertical_degrees - unit_degree)
+            self.vertical_degrees = max(1.0, self.vertical_degrees - unit_degree)
         self.Refresh()
+
+
+class SubCanvasWindow(BaseFrame):
+    def __init__(self, app: wx.App, title: str, size: wx.Size, *args, **kw):
+        super().__init__(app, title, [], size, *args, **kw)
+        self.panel = SubCanvasPanel(self)
+
+        self.Bind(wx.EVT_CLOSE, self.on_close)
+
+    def on_close(self, event: wx.Event):
+        # ウィンドウを破棄せずに非表示にする
+        self.Hide()
+        event.Skip()
+
+
+class SubCanvasPanel(CanvasPanel):
+    def __init__(self, frame: BaseFrame, *args, **kw):
+        super().__init__(frame, -1, 1.0, 0.9, *args, **kw)
