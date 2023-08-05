@@ -36,8 +36,6 @@ class MagnifierPopup(wx.PopupWindow):
         self.Bind(wx.EVT_PAINT, self.on_paint)
 
         self.dragging = False
-        self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
-        self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
 
     def set_magnified_region(self, region_bitmap) -> None:
         self.region_bitmap = region_bitmap
@@ -47,17 +45,6 @@ class MagnifierPopup(wx.PopupWindow):
         dc = wx.PaintDC(self)
         if hasattr(self, "region_bitmap"):
             dc.DrawBitmap(self.region_bitmap, 0, 0)
-
-    def on_left_down(self, event) -> None:
-        self.CaptureMouse()
-        self.dragging = True
-        event.Skip()
-
-    def on_left_up(self, event) -> None:
-        if self.dragging and self.HasCapture():
-            self.ReleaseMouse()
-            self.dragging = False
-        event.Skip()
 
     def on_mouse_motion(self, event) -> None:
         if event.Dragging() and event.LeftIsDown() and self.dragging:
