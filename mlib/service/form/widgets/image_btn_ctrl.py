@@ -4,7 +4,7 @@ from typing import Callable, Optional
 import wx
 
 from mlib.core.logger import MLogger
-from mlib.service.form.base_panel import BasePanel
+from mlib.service.form.notebook_panel import NotebookPanel
 from mlib.utils.file_utils import get_path
 
 logger = MLogger(os.path.basename(__file__))
@@ -14,7 +14,7 @@ __ = logger.get_text
 class ImageButton(wx.BitmapButton):
     def __init__(
         self,
-        panel: BasePanel,
+        panel: NotebookPanel,
         image_path: str,
         size: wx.Size,
         click_evt: Callable,

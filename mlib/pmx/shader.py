@@ -1,7 +1,7 @@
 import os
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import OpenGL.GL as gl

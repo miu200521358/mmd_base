@@ -8,7 +8,7 @@ import wx
 
 from mlib.core.exception import MKilledException, MLibException
 from mlib.core.logger import MLogger
-from mlib.service.form.base_frame import BaseFrame
+from mlib.service.form.notebook_frame import NotebookFrame
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -95,7 +95,7 @@ def show_worked_time(elapsed_time: float):
 
 
 class BaseWorker:
-    def __init__(self, frame: BaseFrame, result_func: Callable) -> None:
+    def __init__(self, frame: NotebookFrame, result_func: Callable) -> None:
         self.start_time = 0.0
         self.frame = frame
         self.started = False

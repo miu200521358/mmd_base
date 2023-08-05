@@ -5,7 +5,7 @@ import wx
 
 from mlib.core.logger import MLogger
 from mlib.service.base_worker import BaseWorker
-from mlib.service.form.base_panel import BasePanel
+from mlib.service.form.notebook_panel import NotebookPanel
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -14,7 +14,7 @@ __ = logger.get_text
 class ExecButton(wx.Button):
     def __init__(
         self,
-        panel: BasePanel,
+        panel: NotebookPanel,
         label: str,
         disable_label: str,
         exec_evt: Callable,

@@ -3,15 +3,15 @@ import os
 import wx
 
 from mlib.core.logger import ConsoleHandler, MLogger
-from mlib.service.form.base_frame import BaseFrame
-from mlib.service.form.base_panel import BasePanel
+from mlib.service.form.notebook_frame import NotebookFrame
+from mlib.service.form.notebook_panel import NotebookPanel
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
 
 class ConsoleCtrl:
-    def __init__(self, frame: BaseFrame, parent: BasePanel, rows: int, *args, **kw):
+    def __init__(self, frame: NotebookFrame, parent: NotebookPanel, rows: int, *args, **kw):
         super().__init__(*args, **kw)
 
         self.frame = frame

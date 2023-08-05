@@ -25,8 +25,8 @@ __ = logger.get_text
 
 
 class CanvasPanel(BasePanel):
-    def __init__(self, frame: BaseFrame, tab_idx: int, canvas_width_ratio: float, canvas_height_ratio: float, *args, **kw):
-        super().__init__(frame, tab_idx)
+    def __init__(self, frame: BaseFrame, canvas_width_ratio: float, canvas_height_ratio: float, *args, **kw):
+        super().__init__(frame)
         self.index = 0
         self.canvas_width_ratio = canvas_width_ratio
         self.canvas_height_ratio = canvas_height_ratio
@@ -130,7 +130,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.parent = parent
         self.size = self.parent.get_canvas_size()
 
-        glcanvas.GLCanvas.__init__(self, parent, -1, size=self.size, attribList=attribList)
+        glcanvas.GLCanvas.__init__(self, parent, wx.ID_ANY, size=self.size, attribList=attribList)
         self.context = glcanvas.GLContext(self)
         self.last_pos = wx.Point(0, 0)
         self.now_pos = wx.Point(0, 0)
@@ -611,9 +611,9 @@ class PmxCanvas(glcanvas.GLCanvas):
 
 
 class SubCanvasWindow(BaseFrame):
-    def __init__(self, app: wx.App, title: str, size: wx.Size, *args, **kw):
-        super().__init__(app, title, [], size, *args, **kw)
-        self.panel = SubCanvasPanel(self)
+    def __init__(self, parent: BaseFrame, title: str, size: wx.Size, look_at_bone_names: list[str], *args, **kw):
+        super().__init__(parent.app, title, size, *args, parent=parent, **kw)
+        self.panel = SubCanvasPanel(self, look_at_bone_names)
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
@@ -624,5 +624,17 @@ class SubCanvasWindow(BaseFrame):
 
 
 class SubCanvasPanel(CanvasPanel):
-    def __init__(self, frame: BaseFrame, *args, **kw):
-        super().__init__(frame, -1, 1.0, 0.9, *args, **kw)
+    def __init__(self, frame: BaseFrame, look_at_bone_names: list[str], *args, **kw):
+        super().__init__(frame, 1.0, 0.9)
+
+        self.btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.look_at_choice = wx.Choice(
+            self,
+            wx.ID_ANY,
+            wx.DefaultPosition,
+            wx.Size(230, -1),
+            choices=look_at_bone_names,
+        )
+        self.btn_sizer.Add(self.look_at_choice, 0, wx.ALL, 0)
+
+        self.root_sizer.Add(self.btn_sizer, 0, wx.ALL, 0)

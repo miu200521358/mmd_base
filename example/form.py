@@ -15,13 +15,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from mlib.core.exception import MApplicationException
 from mlib.core.logger import MLogger
-from mlib.pmx.canvas import CanvasPanel, SubCanvasWindow
+from mlib.pmx.canvas import PmxCanvas, SubCanvasWindow
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import Bone, Face, SphereMode, Texture, ToonSharing
 from mlib.pmx.pmx_writer import PmxWriter
 from mlib.service.base_worker import BaseWorker
-from mlib.service.form.base_frame import BaseFrame
-from mlib.service.form.base_panel import BasePanel
+from mlib.service.form.notebook_frame import NotebookFrame
+from mlib.service.form.notebook_panel import NotebookPanel
 from mlib.service.form.widgets.console_ctrl import ConsoleCtrl
 from mlib.service.form.widgets.exec_btn_ctrl import ExecButton
 from mlib.service.form.widgets.file_ctrl import MPmxFilePickerCtrl, MVmdFilePickerCtrl
@@ -35,8 +35,8 @@ logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
 
-class FilePanel(BasePanel):
-    def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
+class FilePanel(NotebookPanel):
+    def __init__(self, frame: NotebookFrame, tab_idx: int, *args, **kw):
         super().__init__(frame, tab_idx, *args, **kw)
 
         self._initialize_ui()
@@ -138,7 +138,7 @@ class FilePanel(BasePanel):
 
 
 class PmxLoadWorker(BaseWorker):
-    def __init__(self, panel: BasePanel, result_event: wx.Event) -> None:
+    def __init__(self, panel: NotebookPanel, result_event: wx.Event) -> None:
         super().__init__(panel, result_event)
 
     def thread_execute(self) -> None:
@@ -187,7 +187,7 @@ class PmxLoadWorker(BaseWorker):
 
 
 class SaveWorker(BaseWorker):
-    def __init__(self, panel: BasePanel, result_event: wx.Event) -> None:
+    def __init__(self, panel: NotebookPanel, result_event: wx.Event) -> None:
         super().__init__(panel, result_event)
 
     def output_log(self):
@@ -388,11 +388,24 @@ class SaveWorker(BaseWorker):
         return copy_texture
 
 
-class ConfigPanel(CanvasPanel):
-    def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
-        super().__init__(frame, tab_idx, 0.5, 1.0, *args, **kw)
+class ConfigPanel(NotebookPanel):
+    def __init__(self, frame: NotebookFrame, tab_idx: int, *args, **kw):
+        super().__init__(frame, tab_idx, *args, **kw)
+        self.canvas_width_ratio = 0.5
+        self.canvas_height_ratio = 1.0
+        self.canvas = PmxCanvas(self)
+
         self._initialize_ui()
         self._initialize_event()
+
+    def get_canvas_size(self) -> wx.Size:
+        w, h = self.frame.GetClientSize()
+        canvas_width = w * self.canvas_width_ratio
+        if canvas_width % 2 != 0:
+            # 2で割り切れる値にする
+            canvas_width += 1
+        canvas_height = h * self.canvas_height_ratio
+        return wx.Size(int(canvas_width), int(canvas_height))
 
     def _initialize_ui(self) -> None:
         self.config_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -542,7 +555,7 @@ class ConfigPanel(CanvasPanel):
         self.scrolled_window.SetSize(wx.Size(w - size.width, h))
 
 
-class TestFrame(BaseFrame):
+class TestFrame(NotebookFrame):
     def __init__(self, app) -> None:
         super().__init__(
             app,
@@ -711,13 +724,15 @@ class TestFrame(BaseFrame):
         if self.sub_window:
             if not self.sub_window.IsShown():
                 self.sub_window.Show()
+                # self.sub_window.panel.canvas.Refresh()
             elif self.sub_window.IsShown():
                 self.sub_window.Hide()
         event.Skip()
 
     def create_sub_window(self) -> None:
-        if not self.sub_window:
-            self.sub_window = SubCanvasWindow(self, "サブウィンドウ", self.sub_window_size)
+        model: Optional[PmxModel] = self.file_panel.model_ctrl.data
+        if not self.sub_window and model:
+            self.sub_window = SubCanvasWindow(self, "サブウィンドウ", self.sub_window_size, model.bones.names)
             frame_x, frame_y = self.GetPosition()
             self.sub_window.SetPosition(wx.Point(max(0, frame_x - self.sub_window_size.x - 10), max(0, frame_y)))
 
