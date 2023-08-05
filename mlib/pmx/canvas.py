@@ -636,8 +636,10 @@ class SubCanvasPanel(BasePanel):
         self.canvas = PmxCanvas(self, True)
         self.parent_canvas = parent_canvas
 
+        self.root_sizer.Add(self.canvas, 0, wx.ALL, 0)
+
         self.canvas.clear_model_set()
-        for model_set, animation in zip(parent_canvas.model_sets, parent_canvas.animations):
+        for model_set, animation in zip(self.parent_canvas.model_sets, self.parent_canvas.animations):
             self.canvas.append_model_set(model_set.model, model_set.motion, 0.0, True)
             self.canvas.animations[-1] = animation
 
@@ -670,3 +672,6 @@ class SubCanvasPanel(BasePanel):
             canvas_width += 1
         canvas_height = h * self.canvas_height_ratio
         return wx.Size(int(canvas_width), int(canvas_height))
+
+    def on_resize(self, event: wx.Event):
+        pass
