@@ -393,7 +393,7 @@ class ConfigPanel(NotebookPanel):
         super().__init__(frame, tab_idx, *args, **kw)
         self.canvas_width_ratio = 0.5
         self.canvas_height_ratio = 1.0
-        self.canvas = PmxCanvas(self)
+        self.canvas = PmxCanvas(self, False)
 
         self._initialize_ui()
         self._initialize_event()
@@ -539,6 +539,9 @@ class ConfigPanel(NotebookPanel):
     @fno.setter
     def fno(self, v: int) -> None:
         self.frame_ctrl.SetValue(v)
+
+    def start_play(self) -> None:
+        pass
 
     def stop_play(self) -> None:
         self.play_btn.SetLabel("Play")
@@ -732,7 +735,7 @@ class TestFrame(NotebookFrame):
     def create_sub_window(self) -> None:
         model: Optional[PmxModel] = self.file_panel.model_ctrl.data
         if not self.sub_window and model:
-            self.sub_window = SubCanvasWindow(self, "サブウィンドウ", self.sub_window_size, model.bones.names)
+            self.sub_window = SubCanvasWindow(self, self.config_panel.canvas, "サブウィンドウ", self.sub_window_size, model.bones.names)
             frame_x, frame_y = self.GetPosition()
             self.sub_window.SetPosition(wx.Point(max(0, frame_x - self.sub_window_size.x - 10), max(0, frame_y)))
 

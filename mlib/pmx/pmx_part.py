@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from enum import Flag, IntEnum, unique
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 import OpenGL.GL as gl
@@ -326,6 +326,7 @@ class Texture(BaseIndexNameModel):
         "index",
         "name",
         "for_draw",
+        "for_sub_draw",
         "image",
         "texture_type",
         "texture_id",
@@ -337,29 +338,43 @@ class Texture(BaseIndexNameModel):
     def __init__(self, index: int = -1, name: str = ""):
         super().__init__(index=index, name=name)
         self.for_draw = False
+        self.for_sub_draw = False
         self.image = None
-        self.texture_id: Optional[Image.Image] = None
+        self.texture_id: Optional[Any] = None
+        self.sub_texture_id: Optional[Any] = None
         self.texture_type: Optional[TextureType] = None
         self.texture_idx = None
         self.valid = True
         self.path = ""
 
     def delete_draw(self) -> None:
-        if not self.for_draw or not self.texture_id:
-            # 描画フラグが立ってなければスルー
-            return
+        if self.texture_id is not None:
+            try:
+                gl.glDeleteTextures(1, [self.texture_id])
+            except Exception as e:
+                raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.texture_id}", e)
 
-        try:
-            gl.glDeleteTextures(1, [self.texture_id])
-        except Exception as e:
-            raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.texture_id}", e)
+            error_code = gl.glGetError()
+            if error_code != gl.GL_NO_ERROR:
+                raise MViewerException(f"glDeleteTextures Failure\n{self.name}: {error_code}")
 
-        error_code = gl.glGetError()
-        if error_code != gl.GL_NO_ERROR:
-            raise MViewerException(f"glDeleteTextures Failure\n{self.name}: {error_code}")
+        if self.sub_texture_id is not None:
+            try:
+                gl.glDeleteTextures(1, [self.sub_texture_id])
+            except Exception as e:
+                raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.sub_texture_id}", e)
 
-    def init_draw(self, model_path: str, texture_type: TextureType, is_individual: bool = True) -> None:
-        if self.for_draw:
+            error_code = gl.glGetError()
+            if error_code != gl.GL_NO_ERROR:
+                raise MViewerException(f"glDeleteTextures Failure\n{self.name}: {error_code}")
+
+        self.texture_id = None
+        self.for_draw = False
+        self.sub_texture_id = None
+        self.for_sub_draw = False
+
+    def init_draw(self, model_path: str, texture_type: TextureType, is_individual: bool = True, is_sub: bool = False) -> None:
+        if (not is_sub and self.for_draw) or (is_sub and self.for_sub_draw):
             # 既にフラグが立ってたら描画初期化済み
             return
 
@@ -382,17 +397,27 @@ class Texture(BaseIndexNameModel):
             if self.valid:
                 self.texture_type = texture_type
 
-                # テクスチャオブジェクト生成
-                try:
-                    self.texture_id = gl.glGenTextures(1)
-                except Exception as e:
-                    raise MViewerException(f"glGenTextures Failure\n{self.name}", e)
+                if is_sub:
+                    # テクスチャオブジェクト生成
+                    try:
+                        self.sub_texture_id = gl.glGenTextures(1)
+                    except Exception as e:
+                        raise MViewerException(f"glGenTextures Failure\n{self.name}", e)
 
-                error_code = gl.glGetError()
-                if error_code != gl.GL_NO_ERROR:
-                    raise MViewerException(f"glGenTextures Failure\n{self.name}: {error_code}")
+                    error_code = gl.glGetError()
+                    if error_code != gl.GL_NO_ERROR:
+                        raise MViewerException(f"glGenTextures Failure\n{self.name}: {error_code}")
+                else:
+                    # テクスチャオブジェクト生成
+                    try:
+                        self.texture_id = gl.glGenTextures(1)
+                    except Exception as e:
+                        raise MViewerException(f"glGenTextures Failure\n{self.name}", e)
 
-                self.texture_type = texture_type
+                    error_code = gl.glGetError()
+                    if error_code != gl.GL_NO_ERROR:
+                        raise MViewerException(f"glGenTextures Failure\n{self.name}: {error_code}")
+
                 self.texture_idx = (
                     gl.GL_TEXTURE0
                     if texture_type == TextureType.TEXTURE
@@ -400,14 +425,14 @@ class Texture(BaseIndexNameModel):
                     if texture_type == TextureType.TOON
                     else gl.GL_TEXTURE2
                 )
-                self.set_texture()
+                self.set_texture(is_sub)
 
         # 描画初期化
         self.for_draw = True
 
-    def set_texture(self) -> None:
+    def set_texture(self, is_sub: bool) -> None:
         if self.image:
-            self.bind()
+            self.bind(is_sub)
 
             try:
                 gl.glTexImage2D(
@@ -430,9 +455,12 @@ class Texture(BaseIndexNameModel):
 
             self.unbind()
 
-    def bind(self) -> None:
+    def bind(self, is_sub: bool) -> None:
         gl.glActiveTexture(self.texture_idx)
-        gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture_id)
+        if is_sub:
+            gl.glBindTexture(gl.GL_TEXTURE_2D, self.sub_texture_id)
+        else:
+            gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture_id)
 
         if self.texture_type == TextureType.TOON:
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)

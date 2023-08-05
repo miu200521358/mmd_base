@@ -429,6 +429,8 @@ class PmxModel(BaseHashModel):
         "vertices_by_materials",
         "vertices_by_bones",
         "faces_by_materials",
+        "for_sub_draw",
+        "sub_meshes",
     )
 
     def __init__(
@@ -462,6 +464,8 @@ class PmxModel(BaseHashModel):
         self.joints: Joints = Joints()
         self.for_draw = False
         self.meshes: Optional[Meshes] = None
+        self.for_sub_draw = False
+        self.sub_meshes: Optional[Meshes] = None
         self.vertices_by_bones: dict[int, list[int]] = {}
         self.vertices_by_materials: dict[int, list[int]] = {}
         self.faces_by_materials: dict[int, list[int]] = {}
@@ -529,8 +533,8 @@ class PmxModel(BaseHashModel):
             self.vertices_by_materials[material.index] = list(set(vertices))
             prev_face_count += face_count
 
-    def init_draw(self) -> None:
-        if self.for_draw:
+    def init_draw(self, is_sub: bool) -> None:
+        if (not is_sub and self.for_draw) or (is_sub and self.for_sub_draw):
             # 既にフラグが立ってたら描画初期化済み
             return
 
@@ -548,9 +552,14 @@ class PmxModel(BaseHashModel):
         ):
             self.toon_textures.append(Texture(tidx, os.path.abspath(tpath)))
 
-        self.meshes = Meshes(self)
-        # 描画初期化
-        self.for_draw = True
+        if is_sub:
+            self.sub_meshes = Meshes(self, is_sub)
+            # 描画初期化
+            self.for_sub_draw = True
+        else:
+            self.meshes = Meshes(self, is_sub)
+            # 描画初期化
+            self.for_draw = True
 
     def delete_draw(self) -> None:
         if not self.for_draw or not self.meshes:
@@ -572,21 +581,40 @@ class PmxModel(BaseHashModel):
         is_alpha: bool,
         is_show_bone_weight: bool,
         show_bone_indexes: list[int],
+        is_sub: bool,
     ) -> None:
-        if not self.for_draw or not self.meshes:
-            return
-        self.meshes.draw(
-            shader,
-            bone_matrixes,
-            vertex_morph_poses,
-            after_vertex_morph_poses,
-            uv_morph_poses,
-            uv1_morph_poses,
-            material_morphs,
-            is_alpha,
-            is_show_bone_weight,
-            show_bone_indexes,
-        )
+        if is_sub:
+            if not self.for_sub_draw or not self.sub_meshes:
+                return
+            self.sub_meshes.draw(
+                shader,
+                bone_matrixes,
+                vertex_morph_poses,
+                after_vertex_morph_poses,
+                uv_morph_poses,
+                uv1_morph_poses,
+                material_morphs,
+                is_alpha,
+                is_show_bone_weight,
+                show_bone_indexes,
+                is_sub,
+            )
+        else:
+            if not self.for_draw or not self.meshes:
+                return
+            self.meshes.draw(
+                shader,
+                bone_matrixes,
+                vertex_morph_poses,
+                after_vertex_morph_poses,
+                uv_morph_poses,
+                uv1_morph_poses,
+                material_morphs,
+                is_alpha,
+                is_show_bone_weight,
+                show_bone_indexes,
+                is_sub,
+            )
 
     def draw_bone(
         self,
@@ -595,10 +623,16 @@ class PmxModel(BaseHashModel):
         select_bone_color: np.ndarray,
         unselect_bone_color: np.ndarray,
         selected_bone_indexes: np.ndarray,
+        is_sub: bool,
     ) -> None:
-        if not self.for_draw or not self.meshes:
-            return
-        self.meshes.draw_bone(shader, bone_matrixes, select_bone_color, unselect_bone_color, selected_bone_indexes)
+        if is_sub:
+            if not self.for_sub_draw or not self.sub_meshes:
+                return
+            self.sub_meshes.draw_bone(shader, bone_matrixes, select_bone_color, unselect_bone_color, selected_bone_indexes, is_sub)
+        else:
+            if not self.for_draw or not self.meshes:
+                return
+            self.meshes.draw_bone(shader, bone_matrixes, select_bone_color, unselect_bone_color, selected_bone_indexes, is_sub)
 
     # def draw_axis(
     #     self,
@@ -1516,7 +1550,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         "axis_ibo_faces",
     )
 
-    def __init__(self, model: PmxModel) -> None:
+    def __init__(self, model: PmxModel, is_sub: bool) -> None:
         super().__init__()
 
         self.model = model
@@ -1568,22 +1602,22 @@ class Meshes(BaseIndexDictModel[Mesh]):
             texture: Optional[Texture] = None
             if 0 <= material.texture_index:
                 texture = model.textures[material.texture_index]
-                texture.init_draw(model.path, TextureType.TEXTURE)
+                texture.init_draw(model.path, TextureType.TEXTURE, is_sub=is_sub)
 
             toon_texture: Optional[Texture] = None
             if ToonSharing.SHARING == material.toon_sharing_flg:
                 # 共有Toon
                 toon_texture = model.toon_textures[material.toon_texture_index]
-                toon_texture.init_draw(model.path, TextureType.TOON, is_individual=False)
+                toon_texture.init_draw(model.path, TextureType.TOON, is_individual=False, is_sub=is_sub)
             elif ToonSharing.INDIVIDUAL == material.toon_sharing_flg and 0 <= material.toon_texture_index:
                 # 個別Toon
                 toon_texture = model.textures[material.toon_texture_index]
-                toon_texture.init_draw(model.path, TextureType.TOON)
+                toon_texture.init_draw(model.path, TextureType.TOON, is_sub=is_sub)
 
             sphere_texture: Optional[Texture] = None
             if 0 <= material.sphere_texture_index:
                 sphere_texture = model.textures[material.sphere_texture_index]
-                sphere_texture.init_draw(model.path, TextureType.SPHERE)
+                sphere_texture.init_draw(model.path, TextureType.SPHERE, is_sub=is_sub)
 
             self.append(
                 Mesh(
@@ -1601,7 +1635,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         # ---------------------
 
         # 頂点VAO
-        self.vao = VAO()
+        self.vao = VAO(is_sub)
         self.vbo_components = {
             VsLayout.POSITION_ID.value: {"size": 3, "offset": 0},
             VsLayout.NORMAL_ID.value: {"size": 3, "offset": 3},
@@ -1622,8 +1656,9 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.vbo_vertices = VBO(
             self.vertices,
             self.vbo_components,
+            is_sub,
         )
-        self.ibo_faces = IBO(self.faces)
+        self.ibo_faces = IBO(self.faces, is_sub)
 
         # ----------
 
@@ -1660,7 +1695,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         )
 
         # ボーンVAO
-        self.bone_vao = VAO()
+        self.bone_vao = VAO(is_sub)
         self.bone_vbo_components = {
             0: {"size": 3, "offset": 0},
             1: {"size": 1, "offset": 3},
@@ -1669,8 +1704,9 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.bone_vbo_vertices = VBO(
             self.bones,
             self.bone_vbo_components,
+            is_sub,
         )
-        self.bone_ibo_faces = IBO(self.bone_hierarchies)
+        self.bone_ibo_faces = IBO(self.bone_hierarchies, is_sub)
 
         # # ----------
 
@@ -1738,6 +1774,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         is_alpha: bool,
         is_show_bone_weight: bool,
         show_bone_indexes: list[int],
+        is_sub: bool,
     ):
         # 隠面消去
         # https://learnopengl.com/Advanced-OpenGL/Depth-testing
@@ -1762,8 +1799,8 @@ class Meshes(BaseIndexDictModel[Mesh]):
         limited_show_bone_indexes = (show_bone_indexes + [-2 for _ in range(50)])[:50]
 
         for mesh in self:
-            self.vao.bind()
-            self.vbo_vertices.bind()
+            self.vao.bind(is_sub)
+            self.vbo_vertices.bind(is_sub)
             self.vbo_vertices.set_slot(VsLayout.POSITION_ID)
             self.vbo_vertices.set_slot(VsLayout.NORMAL_ID)
             self.vbo_vertices.set_slot(VsLayout.UV_ID)
@@ -1775,7 +1812,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
             self.vbo_vertices.set_slot(VsLayout.MORPH_UV_ID)
             self.vbo_vertices.set_slot(VsLayout.MORPH_UV1_ID)
             self.vbo_vertices.set_slot(VsLayout.MORPH_AFTER_POS_ID)
-            self.ibo_faces.bind()
+            self.ibo_faces.bind(is_sub)
 
             material_morph = material_morphs[mesh.material.index]
 
@@ -1799,7 +1836,15 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
             # モデル描画
             shader.use(ProgramType.MODEL)
-            mesh.draw_model(bone_matrixes, material_morph, shader, self.ibo_faces, is_show_bone_weight, limited_show_bone_indexes)
+            mesh.draw_model(
+                bone_matrixes,
+                material_morph,
+                shader,
+                self.ibo_faces,
+                is_show_bone_weight,
+                limited_show_bone_indexes,
+                is_sub,
+            )
             shader.unuse()
 
             if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and 0 < material_morph.material.diffuse.w:
@@ -1826,6 +1871,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         select_bone_color: np.ndarray,
         unselect_bone_color: np.ndarray,
         selected_bone_indexes: np.ndarray,
+        is_sub: bool,
     ):
         # ボーンをモデルメッシュの前面に描画するために深度テストを無効化
         gl.glEnable(gl.GL_DEPTH_TEST)
@@ -1841,12 +1887,12 @@ class Meshes(BaseIndexDictModel[Mesh]):
         # 選択ボーンを切り替える
         self.bone_vbo_vertices.data[:, -1] = selected_bone_indexes
 
-        self.bone_vao.bind()
-        self.bone_vbo_vertices.bind()
+        self.bone_vao.bind(is_sub)
+        self.bone_vbo_vertices.bind(is_sub)
         self.bone_vbo_vertices.set_slot_by_value(0)
         self.bone_vbo_vertices.set_slot_by_value(1)
         self.bone_vbo_vertices.set_slot_by_value(2)
-        self.bone_ibo_faces.bind()
+        self.bone_ibo_faces.bind(is_sub)
 
         shader.use(ProgramType.BONE)
 

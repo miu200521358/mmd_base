@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 import OpenGL.GL as gl
@@ -14,34 +14,54 @@ class VAO:
     VAO（Vertex Array Object） ･･･ 頂点情報と状態を保持するオブジェクト
     """
 
-    def __init__(self) -> None:
-        try:
-            self.vao_id = gl.glGenVertexArrays(1)
-        except Exception as e:
-            raise MViewerException(f"VBO glGenVertexArrays Failure\n{self.vao_id}", e)
+    def __init__(self, is_sub: bool) -> None:
+        self.vao_id: Optional[Any] = None
+        self.sub_vao_id: Optional[Any] = None
+
+        if is_sub:
+            try:
+                self.sub_vao_id = gl.glGenVertexArrays(1)
+            except Exception as e:
+                raise MViewerException(f"VBO glGenVertexArrays Failure\n{self.sub_vao_id}", e)
+        else:
+            try:
+                self.vao_id = gl.glGenVertexArrays(1)
+            except Exception as e:
+                raise MViewerException(f"VBO glGenVertexArrays Failure\n{self.vao_id}", e)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
             raise MViewerException(f"VAO glGenVertexArrays Failure\n{error_code}")
 
-    def bind(self) -> None:
-        gl.glBindVertexArray(self.vao_id)
+    def bind(self, is_sub: bool) -> None:
+        gl.glBindVertexArray(self.sub_vao_id if is_sub else self.vao_id)
 
     def unbind(self) -> None:
         gl.glBindVertexArray(0)
 
     def __del__(self):
-        if not self.vao_id:
+        if not self.vao_id and not self.sub_vao_id:
             return
 
-        try:
-            gl.glDeleteVertexArrays(1, [self.vao_id])
-        except Exception as e:
-            raise MViewerException(f"VBO glDeleteVertexArrays Failure\n{self.vao_id}", e)
+        if self.vao_id:
+            try:
+                gl.glDeleteVertexArrays(1, [self.vao_id])
+            except Exception as e:
+                raise MViewerException(f"VBO glDeleteVertexArrays Failure\n{self.vao_id}", e)
 
-        error_code = gl.glGetError()
-        if error_code != gl.GL_NO_ERROR:
-            raise MViewerException(f"VAO glDeleteVertexArrays Failure\n{self.vao_id}: {error_code}")
+            error_code = gl.glGetError()
+            if error_code != gl.GL_NO_ERROR:
+                raise MViewerException(f"VAO glDeleteVertexArrays Failure\n{self.vao_id}: {error_code}")
+
+        if self.sub_vao_id:
+            try:
+                gl.glDeleteVertexArrays(1, [self.sub_vao_id])
+            except Exception as e:
+                raise MViewerException(f"VBO glDeleteVertexArrays Failure\n{self.sub_vao_id}", e)
+
+            error_code = gl.glGetError()
+            if error_code != gl.GL_NO_ERROR:
+                raise MViewerException(f"VAO glDeleteVertexArrays Failure\n{self.sub_vao_id}: {error_code}")
 
 
 class VBO:
@@ -49,15 +69,28 @@ class VBO:
     VBO（Vertex Buffer Object）･･･ 頂点バッファオブジェクト
     """
 
-    def __init__(self, data: np.ndarray, components: dict[int, dict[str, int]]) -> None:
-        try:
-            self.vbo_id = gl.glGenBuffers(1)
-        except Exception as e:
-            raise MViewerException("VBO glGenBuffers Failure", e)
+    def __init__(self, data: np.ndarray, components: dict[int, dict[str, int]], is_sub: bool) -> None:
+        self.vbo_id: Optional[Any] = None
+        self.sub_vbo_id: Optional[Any] = None
 
-        error_code = gl.glGetError()
-        if error_code != gl.GL_NO_ERROR:
-            raise MViewerException(f"VBO glGenBuffers Failure\n{error_code}")
+        if is_sub:
+            try:
+                self.sub_vbo_id = gl.glGenBuffers(1)
+            except Exception as e:
+                raise MViewerException("VBO glGenBuffers Failure", e)
+
+            error_code = gl.glGetError()
+            if error_code != gl.GL_NO_ERROR:
+                raise MViewerException(f"VBO glGenBuffers Failure\n{error_code}")
+        else:
+            try:
+                self.vbo_id = gl.glGenBuffers(1)
+            except Exception as e:
+                raise MViewerException("VBO glGenBuffers Failure", e)
+
+            error_code = gl.glGetError()
+            if error_code != gl.GL_NO_ERROR:
+                raise MViewerException(f"VBO glGenBuffers Failure\n{error_code}")
 
         self.dsize = np.dtype(data.dtype).itemsize
         self.components = components
@@ -68,20 +101,34 @@ class VBO:
             v["pointer"] = v["offset"] * self.dsize
 
     def __del__(self) -> None:
-        if not self.vbo_id:
+        if not self.vbo_id and not self.sub_vbo_id:
             return
 
-        try:
-            gl.glDeleteBuffers(1, [self.vbo_id])
-        except Exception as e:
-            raise MViewerException(f"VBO glDeleteBuffers Failure\n{self.vbo_id}", e)
+        if self.vbo_id:
+            try:
+                gl.glDeleteBuffers(1, [self.vbo_id])
+            except Exception as e:
+                raise MViewerException(f"VBO glDeleteBuffers Failure\n{self.vbo_id}", e)
 
-        error_code = gl.glGetError()
-        if error_code != gl.GL_NO_ERROR:
-            raise MViewerException(f"VBO glDeleteBuffers Failure\n{self.vbo_id}: {error_code}")
+            error_code = gl.glGetError()
+            if error_code != gl.GL_NO_ERROR:
+                raise MViewerException(f"VBO glDeleteBuffers Failure\n{self.vbo_id}: {error_code}")
 
-    def bind(self) -> None:
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo_id)
+        if self.sub_vbo_id:
+            try:
+                gl.glDeleteBuffers(1, [self.sub_vbo_id])
+            except Exception as e:
+                raise MViewerException(f"VBO glDeleteBuffers Failure\n{self.sub_vbo_id}", e)
+
+            error_code = gl.glGetError()
+            if error_code != gl.GL_NO_ERROR:
+                raise MViewerException(f"VBO glDeleteBuffers Failure\n{self.sub_vbo_id}: {error_code}")
+
+    def bind(self, is_sub: bool) -> None:
+        if is_sub:
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.sub_vbo_id)
+        else:
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo_id)
         gl.glBufferData(gl.GL_ARRAY_BUFFER, self.data.nbytes, self.data, gl.GL_STATIC_DRAW)
 
     def unbind(self) -> None:
@@ -115,11 +162,20 @@ class IBO:
     IBO（Index Buffer Object） ･･･ インデックスバッファオブジェクト
     """
 
-    def __init__(self, data: np.ndarray) -> None:
-        try:
-            self.ibo_id = gl.glGenBuffers(1)
-        except Exception as e:
-            raise MViewerException("IBO glGenBuffers Failure", e)
+    def __init__(self, data: np.ndarray, is_sub: bool) -> None:
+        self.ibo_id = None
+        self.sub_ibo_id = None
+
+        if is_sub:
+            try:
+                self.sub_ibo_id = gl.glGenBuffers(1)
+            except Exception as e:
+                raise MViewerException("IBO glGenBuffers Failure", e)
+        else:
+            try:
+                self.ibo_id = gl.glGenBuffers(1)
+            except Exception as e:
+                raise MViewerException("IBO glGenBuffers Failure", e)
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
@@ -133,25 +189,39 @@ class IBO:
             self.dtype = gl.GL_UNSIGNED_INT
         self.dsize = np.dtype(data.dtype).itemsize
 
-        self.bind()
+        self.bind(is_sub)
         self.set_indices(data)
         self.unbind()
 
     def __del__(self) -> None:
-        if not self.ibo_id:
+        if not self.ibo_id and not self.sub_ibo_id:
             return
 
-        try:
-            gl.glDeleteBuffers(1, [self.ibo_id])
-        except Exception as e:
-            raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.ibo_id}", e)
+        if self.ibo_id:
+            try:
+                gl.glDeleteBuffers(1, [self.ibo_id])
+            except Exception as e:
+                raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.ibo_id}", e)
 
-        error_code = gl.glGetError()
-        if error_code != gl.GL_NO_ERROR:
-            raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.ibo_id}: {error_code}")
+            error_code = gl.glGetError()
+            if error_code != gl.GL_NO_ERROR:
+                raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.ibo_id}: {error_code}")
 
-    def bind(self) -> None:
-        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.ibo_id)
+        if self.sub_ibo_id:
+            try:
+                gl.glDeleteBuffers(1, [self.sub_ibo_id])
+            except Exception as e:
+                raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.sub_ibo_id}", e)
+
+            error_code = gl.glGetError()
+            if error_code != gl.GL_NO_ERROR:
+                raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.sub_ibo_id}: {error_code}")
+
+    def bind(self, is_sub: bool) -> None:
+        if is_sub:
+            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.sub_ibo_id)
+        else:
+            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.ibo_id)
 
     def unbind(self) -> None:
         gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
@@ -195,6 +265,7 @@ class Mesh(BaseIndexModel):
         ibo: IBO,
         is_show_bone_weight: bool,
         show_bone_indexes: list[int],
+        is_sub: bool,
     ):
         if DrawFlg.DOUBLE_SIDED_DRAWING in self.material.draw_flg:
             # 両面描画
@@ -219,7 +290,7 @@ class Mesh(BaseIndexModel):
         # テクスチャ使用有無
         gl.glUniform1i(shader.use_texture_uniform[ProgramType.MODEL.value], self.texture is not None and self.texture.valid)
         if self.texture and self.texture.valid:
-            self.texture.bind()
+            self.texture.bind(is_sub)
             if self.texture.texture_type:
                 gl.glUniform1i(shader.texture_uniform[ProgramType.MODEL.value], self.texture.texture_type.value)
             gl.glUniform4f(shader.texture_factor_uniform[ProgramType.MODEL.value], *material_morphs.texture_factor)
@@ -227,7 +298,7 @@ class Mesh(BaseIndexModel):
         # Toon使用有無
         gl.glUniform1i(shader.use_toon_uniform[ProgramType.MODEL.value], self.toon_texture is not None and self.toon_texture.valid)
         if self.toon_texture and self.toon_texture.valid:
-            self.toon_texture.bind()
+            self.toon_texture.bind(is_sub)
             if self.toon_texture.texture_type:
                 gl.glUniform1i(shader.toon_uniform[ProgramType.MODEL.value], self.toon_texture.texture_type.value)
             gl.glUniform4f(shader.toon_factor_uniform[ProgramType.MODEL.value], *material_morphs.toon_texture_factor)
@@ -238,7 +309,7 @@ class Mesh(BaseIndexModel):
             self.sphere_texture is not None and self.sphere_texture.valid and self.material.sphere_mode != SphereMode.INVALID,
         )
         if self.sphere_texture and self.sphere_texture.valid:
-            self.sphere_texture.bind()
+            self.sphere_texture.bind(is_sub)
             gl.glUniform1i(shader.sphere_mode_uniform[ProgramType.MODEL.value], self.material.sphere_mode)
             if self.sphere_texture.texture_type:
                 gl.glUniform1i(shader.sphere_uniform[ProgramType.MODEL.value], self.sphere_texture.texture_type.value)

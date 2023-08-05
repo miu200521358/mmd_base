@@ -20,7 +20,7 @@ from mlib.service.form.base_panel import BasePanel
 from mlib.utils.file_utils import get_root_dir
 from mlib.vmd.vmd_collection import VmdMotion
 
-logger = MLogger(os.path.basename(__file__))
+logger = MLogger(os.path.basename(__file__), level=10)
 __ = logger.get_text
 
 
@@ -30,7 +30,7 @@ class CanvasPanel(BasePanel):
         self.index = 0
         self.canvas_width_ratio = canvas_width_ratio
         self.canvas_height_ratio = canvas_height_ratio
-        self.canvas = PmxCanvas(self)
+        self.canvas = PmxCanvas(self, False)
 
     @property
     def fno(self) -> int:
@@ -81,11 +81,11 @@ MODEL_BONE_UNSELECT_COLORS = [
 
 
 class ModelSet:
-    def __init__(self, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0):
+    def __init__(self, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0, is_sub: bool = False):
         self.model = model
         self.motion = motion
         self.bone_alpha = bone_alpha
-        model.init_draw()
+        model.init_draw(is_sub)
 
 
 class MotionSet:
@@ -119,7 +119,7 @@ class MotionSet:
 
 
 class PmxCanvas(glcanvas.GLCanvas):
-    def __init__(self, parent: CanvasPanel, *args, **kw):
+    def __init__(self, parent: CanvasPanel, is_sub: bool, *args, **kw):
         attribList = (
             glcanvas.WX_GL_RGBA,
             glcanvas.WX_GL_DOUBLEBUFFER,
@@ -128,6 +128,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             0,
         )
         self.parent = parent
+        self.is_sub = is_sub
         self.size = self.parent.get_canvas_size()
 
         glcanvas.GLCanvas.__init__(self, parent, wx.ID_ANY, size=self.size, attribList=attribList)
@@ -252,13 +253,14 @@ class PmxCanvas(glcanvas.GLCanvas):
 
     def set_context(self) -> None:
         self.SetCurrent(self.context)
+        logger.debug(f"parent: {self.parent}, canvas: {self}, context: {self.context}")
 
-    def append_model_set(self, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0):
-        logger.debug("append_model_set: model_sets")
-        self.model_sets.append(ModelSet(model, motion, bone_alpha))
-        logger.debug("append_model_set: animations")
+    def append_model_set(self, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0, is_sub: bool = False):
+        logger.test("append_model_set: model_sets")
+        self.model_sets.append(ModelSet(model, motion, bone_alpha, is_sub))
+        logger.test("append_model_set: animations")
         self.animations.append(MotionSet(model, motion, 0))
-        logger.debug("append_model_set: max_fno")
+        logger.test("append_model_set: max_fno")
         self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
 
     def clear_model_set(self) -> None:
@@ -269,7 +271,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.animations = []
 
     def draw(self) -> None:
-        logger.debug(f"draw: {self.parent.fno}")
+        logger.debug(f"draw: parent: {self.parent}, canvas: {self} ------")
         self.set_context()
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
@@ -303,6 +305,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                     False,
                     animation.is_show_bone_weight,
                     animation.selected_bone_indexes,
+                    self.is_sub,
                 )
         # その後透過度設定ありのメッシュを描画する
         for model_set, animation in zip(self.model_sets, self.animations):
@@ -320,6 +323,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                     True,
                     animation.is_show_bone_weight,
                     animation.selected_bone_indexes,
+                    self.is_sub,
                 )
         self.shader.msaa.unbind()
 
@@ -336,6 +340,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                     select_color * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
                     unselect_color * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
                     np.array([(1 if bone_index in animation.selected_bone_indexes else 0) for bone_index in model_set.model.bones.indexes]),
+                    self.is_sub,
                 )
 
     def draw_ground(self) -> None:
@@ -361,7 +366,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             if 0 > model_index:
                 animations: list[MotionSet] = []
                 for model_set in self.model_sets:
-                    logger.debug(f"change_motion: MotionSet: {model_set.model.name}")
+                    logger.test(f"change_motion: MotionSet: {model_set.model.name}")
                     animations.append(MotionSet(model_set.model, model_set.motion, self.parent.fno))
                 self.animations = animations
             else:
@@ -370,7 +375,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 )
         else:
             for model_set, animation in zip(self.model_sets, self.animations):
-                logger.debug(f"change_motion: update_morphs: {model_set.model.name}")
+                logger.test(f"change_motion: update_morphs: {model_set.model.name}")
                 animation.update_morphs(model_set.model, model_set.motion, self.parent.fno)
 
         if self.playing and self.max_fno <= self.parent.fno:
@@ -382,15 +387,15 @@ class PmxCanvas(glcanvas.GLCanvas):
     def on_play(self, event: wx.Event, record: bool = False):
         self.playing = not self.playing
         if self.playing:
-            logger.debug("on_play ----------------------------------------")
+            logger.test("on_play ----------------------------------------")
             self.parent.start_play()
             self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
             self.recording = record
-            logger.debug(f"on_play model_sets[{len(self.model_sets)}]")
+            logger.test(f"on_play model_sets[{len(self.model_sets)}]")
             for n, model_set in enumerate(self.model_sets):
-                logger.debug(f"on_play queue[{n}] append")
+                logger.test(f"on_play queue[{n}] append")
                 self.queues.append(Queue())
-                logger.debug(f"on_play process[{n}] append")
+                logger.test(f"on_play process[{n}] append")
                 self.processes.append(
                     MProcess(
                         target=animate,
@@ -398,10 +403,10 @@ class PmxCanvas(glcanvas.GLCanvas):
                         name="CalcProcess",
                     )
                 )
-            logger.debug("on_play process start")
+            logger.test("on_play process start")
             for p in self.processes:
                 p.start()
-            logger.debug("on_play timer start")
+            logger.test("on_play timer start")
             self.play_timer.Start(1000 // self.fps)
         else:
             self.play_timer.Stop()
@@ -422,31 +427,31 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.queues = []
 
     def on_play_timer(self, event: wx.Event):
-        logger.debug(f"on_play_timer before: {self.parent.fno}")
+        logger.test(f"on_play_timer before: {self.parent.fno}")
         if 0 < len(self.queues):
-            logger.debug("on_play_timer wait")
+            logger.test("on_play_timer wait")
             # 全てのキューが終わったら受け取る
             animations: list[MotionSet] = []
             for q in self.queues:
                 animation = q.get()
                 animations.append(animation)
-            logger.debug(f"on_play_timer append ({len(animations)})")
+            logger.test(f"on_play_timer append ({len(animations)})")
 
             if None in animations and self.processes:
                 # アニメーションが終わったら再生をひっくり返す
-                logger.debug("reverse on_play")
+                logger.test("reverse on_play")
                 self.on_play(event)
                 return
 
             if 0 < len(animations):
-                logger.debug(f"on_play_timer set animations ({len(animations)})")
+                logger.test(f"on_play_timer set animations ({len(animations)})")
                 self.animations = animations
 
             if self.recording:
                 self.on_capture(event)
 
             self.parent.fno = self.parent.fno + 1
-            logger.debug(f"on_play_timer after: {self.parent.fno}")
+            logger.test(f"on_play_timer after: {self.parent.fno}")
         self.Refresh()
 
     def on_reset(self, event: wx.Event):
@@ -549,16 +554,16 @@ class PmxCanvas(glcanvas.GLCanvas):
         # 画像をファイルに保存
         pil_image.save(file_path)
 
-    def on_mouse_left_down(self, event: wx.Event):
+    def on_mouse_left_down(self, event: wx.MouseEvent):
         self.on_capture_color(event)
 
-    def on_mouse_right_down(self, event: wx.Event):
+    def on_mouse_right_down(self, event: wx.MouseEvent):
         if not self.is_drag:
             self.now_pos = self.last_pos = event.GetPosition()
             self.is_drag = True
             self.CaptureMouse()
 
-    def on_capture_color(self, event: wx.Event):
+    def on_capture_color(self, event: wx.MouseEvent):
         x, y = event.GetPosition()
 
         # キャプチャ用のビットマップを作成
@@ -578,12 +583,12 @@ class PmxCanvas(glcanvas.GLCanvas):
         if self.color_changed_event:
             self.color_changed_event()
 
-    def on_mouse_right_up(self, event: wx.Event):
+    def on_mouse_right_up(self, event: wx.MouseEvent):
         if self.is_drag:
             self.is_drag = False
             self.ReleaseMouse()
 
-    def on_mouse_motion(self, event: wx.Event) -> None:
+    def on_mouse_motion(self, event: wx.MouseEvent) -> None:
         if self.is_drag and event.Dragging():
             self.now_pos = event.GetPosition()
             x = (self.now_pos.x - self.last_pos.x) * 0.02
@@ -601,7 +606,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         elif event.LeftIsDown() and event.Dragging():
             self.on_capture_color(event)
 
-    def on_mouse_wheel(self, event: wx.Event):
+    def on_mouse_wheel(self, event: wx.MouseEvent):
         unit_degree = 5.0 if event.ShiftDown() else 1.0 if event.ControlDown() else 2.5
         if 0 > event.GetWheelRotation():
             self.vertical_degrees += unit_degree
@@ -611,9 +616,9 @@ class PmxCanvas(glcanvas.GLCanvas):
 
 
 class SubCanvasWindow(BaseFrame):
-    def __init__(self, parent: BaseFrame, title: str, size: wx.Size, look_at_bone_names: list[str], *args, **kw):
+    def __init__(self, parent: BaseFrame, parent_canvas: PmxCanvas, title: str, size: wx.Size, look_at_bone_names: list[str], *args, **kw):
         super().__init__(parent.app, title, size, *args, parent=parent, **kw)
-        self.panel = SubCanvasPanel(self, look_at_bone_names)
+        self.panel = SubCanvasPanel(self, parent_canvas, look_at_bone_names)
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
@@ -623,9 +628,15 @@ class SubCanvasWindow(BaseFrame):
         event.Skip()
 
 
-class SubCanvasPanel(CanvasPanel):
-    def __init__(self, frame: BaseFrame, look_at_bone_names: list[str], *args, **kw):
-        super().__init__(frame, 1.0, 0.9)
+class SubCanvasPanel(BasePanel):
+    def __init__(self, frame: BaseFrame, parent_canvas: PmxCanvas, look_at_bone_names: list[str], *args, **kw):
+        super().__init__(frame)
+        self.canvas_width_ratio = 1.0
+        self.canvas_height_ratio = 0.9
+        self.canvas = PmxCanvas(self, True)
+        self.parent_canvas = parent_canvas
+        for model_set in parent_canvas.model_sets:
+            self.canvas.append_model_set(model_set.model, model_set.motion, 0.0, True)
 
         self.btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.look_at_choice = wx.Choice(
@@ -638,3 +649,76 @@ class SubCanvasPanel(CanvasPanel):
         self.btn_sizer.Add(self.look_at_choice, 0, wx.ALL, 0)
 
         self.root_sizer.Add(self.btn_sizer, 0, wx.ALL, 0)
+
+    #     self.timer = wx.Timer(self)
+    #     self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
+    #     self.timer.Start(30)
+
+    # def on_timer(self, event):
+    #     try:
+    #         self.draw()
+    #         self.canvas.SwapBuffers()
+    #     except MViewerException:
+    #         self.canvas.SwapBuffers()
+
+    # def draw(self) -> None:
+    #     self.canvas.set_context()
+    #     gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+
+    #     self.canvas.shader.update_camera(
+    #         self.canvas.camera_position,
+    #         self.canvas.camera_offset_position,
+    #         self.canvas.camera_degrees,
+    #         self.canvas.look_at_center,
+    #         self.canvas.vertical_degrees,
+    #         self.canvas.aspect_ratio,
+    #     )
+
+    #     self.canvas.shader.msaa.bind()
+
+    #     # 透過度設定なしのメッシュを先に描画する
+    #     for model_set, animation in zip(self.canvas.model_sets, self.parent_canvas.animations):
+    #         if model_set.model:
+    #             logger.test(f"-- アニメーション描画(非透過): {model_set.model.name}")
+
+    #             model_set.model.draw(
+    #                 self.canvas.shader,
+    #                 animation.gl_matrixes,
+    #                 animation.vertex_morph_poses,
+    #                 animation.after_vertex_morph_poses,
+    #                 animation.uv_morph_poses,
+    #                 animation.uv1_morph_poses,
+    #                 animation.material_morphs,
+    #                 False,
+    #                 animation.is_show_bone_weight,
+    #                 animation.selected_bone_indexes,
+    #                 True,
+    #             )
+    #     # その後透過度設定ありのメッシュを描画する
+    #     for model_set, animation in zip(self.canvas.model_sets, self.parent_canvas.animations):
+    #         if model_set.model:
+    #             logger.test(f"-- アニメーション描画(透過): {model_set.model.name}")
+
+    #             model_set.model.draw(
+    #                 self.canvas.shader,
+    #                 animation.gl_matrixes,
+    #                 animation.vertex_morph_poses,
+    #                 animation.after_vertex_morph_poses,
+    #                 animation.uv_morph_poses,
+    #                 animation.uv1_morph_poses,
+    #                 animation.material_morphs,
+    #                 True,
+    #                 animation.is_show_bone_weight,
+    #                 animation.selected_bone_indexes,
+    #                 True,
+    #             )
+    #     self.canvas.shader.msaa.unbind()
+
+    def get_canvas_size(self) -> wx.Size:
+        w, h = self.frame.GetClientSize()
+        canvas_width = w * self.canvas_width_ratio
+        if canvas_width % 2 != 0:
+            # 2で割り切れる値にする
+            canvas_width += 1
+        canvas_height = h * self.canvas_height_ratio
+        return wx.Size(int(canvas_width), int(canvas_height))
