@@ -24,6 +24,50 @@ logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
 
+class MagnifierPopup(wx.PopupWindow):
+    def __init__(self, parent: BaseFrame, size: wx.Size) -> None:
+        super(MagnifierPopup, self).__init__(parent, wx.SIMPLE_BORDER)
+        self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
+        self.SetSize(size)
+        frame_x, frame_y = parent.GetPosition()
+        self.SetPosition(wx.Point(max(0, frame_x - size.x - 10), max(0, frame_y)))
+
+        self.size = size
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+
+        self.dragging = False
+        self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
+        self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
+
+    def set_magnified_region(self, region_bitmap) -> None:
+        self.region_bitmap = region_bitmap
+        self.Refresh()
+
+    def on_paint(self, event):
+        dc = wx.PaintDC(self)
+        if hasattr(self, "region_bitmap"):
+            dc.DrawBitmap(self.region_bitmap, 0, 0)
+
+    def on_left_down(self, event) -> None:
+        self.CaptureMouse()
+        self.dragging = True
+        event.Skip()
+
+    def on_left_up(self, event) -> None:
+        if self.dragging and self.HasCapture():
+            self.ReleaseMouse()
+            self.dragging = False
+        event.Skip()
+
+    def on_mouse_motion(self, event) -> None:
+        if event.Dragging() and event.LeftIsDown() and self.dragging:
+            x, y = self.ClientToScreen(event.GetPosition())
+            origin_x, origin_y = self.GetScreenPosition()
+            dx, dy = x - origin_x, y - origin_y
+            self.Move((origin_x + dx, origin_y + dy))
+        event.Skip()
+
+
 class CanvasPanel(BasePanel):
     def __init__(self, frame: BaseFrame, tab_idx: int, canvas_width_ratio: float, canvas_height_ratio: float, *args, **kw):
         super().__init__(frame, tab_idx)
@@ -31,6 +75,8 @@ class CanvasPanel(BasePanel):
         self.canvas_width_ratio = canvas_width_ratio
         self.canvas_height_ratio = canvas_height_ratio
         self.canvas = PmxCanvas(self)
+        self.magnifier: Optional[MagnifierPopup] = None
+        self.scale = 2
 
     @property
     def fno(self) -> int:
@@ -57,6 +103,63 @@ class CanvasPanel(BasePanel):
 
     def on_resize(self, event: wx.Event):
         pass
+
+    def create_up_window(self) -> None:
+        self.magnifier = MagnifierPopup(self.frame, wx.Size(300, 200))
+
+    def on_toggle_up_window(self, event: wx.Event):
+        if self.magnifier and self.magnifier.IsShown():
+            self.magnifier.Close()
+            self.magnifier.Destroy()
+        else:
+            if not self.magnifier:
+                self.create_up_window()
+            if self.magnifier:
+                self.magnifier.Show()
+                self.on_capture(wx.MouseEvent())
+
+    def on_capture(self, event) -> None:
+        if self.magnifier and self.magnifier.IsShown():
+            if self.magnifier.dragging:
+                self.magnifier.on_mouse_motion(event)
+            else:
+                x, y = event.GetPosition()
+                scale_x = int(self.magnifier.size.x * self.scale)
+                scale_y = int(self.magnifier.size.y * self.scale)
+
+                # キャプチャ用のビットマップを作成
+                dc = wx.ClientDC(self.canvas)
+                bitmap = wx.Bitmap(scale_x, scale_y)
+
+                # キャプチャ
+                memory_dc = wx.MemoryDC()
+                memory_dc.SelectObject(bitmap)
+                memory_dc.Blit(
+                    0,
+                    0,
+                    self.magnifier.size.x,
+                    self.magnifier.size.y,
+                    dc,
+                    int(x - self.magnifier.size.x / self.scale / 2),
+                    int(y - self.magnifier.size.y / self.scale / 2),
+                )
+                memory_dc.SelectObject(wx.NullBitmap)
+
+                # screen = wx.ScreenDC()
+                # bitmap = wx.Bitmap(self.magnifier.size.x, self.magnifier.size.y)
+                # memory_dc = wx.MemoryDC(bitmap)
+                # memory_dc.Blit(
+                #     0,
+                #     0,
+                #     int(self.magnifier.size.x * 2),
+                #     int(self.magnifier.size.y * 2),
+                #     screen,
+                #     int(x - self.magnifier.size.x),
+                #     int(y - self.magnifier.size.y),
+                # )
+                self.magnifier.set_magnified_region(
+                    bitmap.ConvertToImage().Rescale(scale_x * self.scale, scale_y * self.scale).ConvertToBitmap()
+                )
 
 
 def animate(queue: Queue, fno: int, max_fno: int, model_set: "ModelSet"):
@@ -118,104 +221,6 @@ class MotionSet:
         self.material_morphs = motion.morphs.animate_material_morphs(fno, model)
 
 
-class FaceCanvas(glcanvas.GLCanvas):
-    def __init__(self, parent: "PmxCanvas", *args, **kw):
-        attribList = (
-            glcanvas.WX_GL_RGBA,
-            glcanvas.WX_GL_DOUBLEBUFFER,
-            glcanvas.WX_GL_DEPTH_SIZE,
-            16,
-            0,
-        )
-        self.parent = parent
-        self.size = wx.Size(int(min(self.parent.size.x, 200)), int(min(self.parent.size.y, 150)))
-
-        glcanvas.GLCanvas.__init__(self, parent, -1, size=self.size, attribList=attribList)
-        self.context = glcanvas.GLContext(self)
-        self.shader = self.parent.shader
-
-        self.set_context()
-
-    def _initialize_ui(self) -> None:
-        gl.glClearColor(0.8, 0.8, 0.8, 1)
-
-    def _initialize_event(self) -> None:
-        # ペイントイベントをバインド
-        self.Bind(wx.EVT_PAINT, self.on_paint)
-
-        # 背景を消すイベントをバインド
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.on_erase_background)
-
-    def on_erase_background(self, event: wx.Event):
-        # Do nothing, to avoid flashing on MSW (これがないとチラつくらしい）
-        pass
-
-    def on_paint(self, event: wx.Event):
-        try:
-            self.draw()
-            self.SwapBuffers()
-        except MViewerException:
-            error_msg = "ビューワーの描画に失敗しました。\n一度ツールを立ち上げ直して再度実行していただき、それでも解決しなかった場合、作者にご連絡下さい。"
-            logger.critical(error_msg)
-
-            dialog = wx.MessageDialog(
-                self.parent,
-                __(error_msg),
-                style=wx.OK,
-            )
-            dialog.ShowModal()
-            dialog.Destroy()
-
-            self.SwapBuffers()
-
-    def set_context(self) -> None:
-        self.SetCurrent(self.context)
-
-    def draw(self) -> None:
-        self.set_context()
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
-
-        self.shader.update_camera()
-
-        self.shader.msaa.bind()
-
-        # 透過度設定なしのメッシュを先に描画する
-        for model_set, animation in zip(self.parent.model_sets, self.parent.animations):
-            if model_set.model:
-                logger.test(f"-- アニメーション描画(非透過): {model_set.model.name}")
-
-                model_set.model.draw(
-                    self.shader,
-                    animation.gl_matrixes,
-                    animation.vertex_morph_poses,
-                    animation.after_vertex_morph_poses,
-                    animation.uv_morph_poses,
-                    animation.uv1_morph_poses,
-                    animation.material_morphs,
-                    False,
-                    animation.is_show_bone_weight,
-                    animation.selected_bone_indexes,
-                )
-        # その後透過度設定ありのメッシュを描画する
-        for model_set, animation in zip(self.parent.model_sets, self.parent.animations):
-            if model_set.model:
-                logger.test(f"-- アニメーション描画(透過): {model_set.model.name}")
-
-                model_set.model.draw(
-                    self.shader,
-                    animation.gl_matrixes,
-                    animation.vertex_morph_poses,
-                    animation.after_vertex_morph_poses,
-                    animation.uv_morph_poses,
-                    animation.uv1_morph_poses,
-                    animation.material_morphs,
-                    True,
-                    animation.is_show_bone_weight,
-                    animation.selected_bone_indexes,
-                )
-        self.shader.msaa.unbind()
-
-
 class PmxCanvas(glcanvas.GLCanvas):
     def __init__(self, parent: CanvasPanel, *args, **kw):
         attribList = (
@@ -256,9 +261,6 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.playing = False
         # 録画中かどうかを示すフラグ
         self.recording = False
-        # 顔アップを表示するか否かのフラグ
-        self.is_face_up = False
-        self.face_canvas: Optional[FaceCanvas] = None
 
     def _initialize_ui(self) -> None:
         gl.glClearColor(0.7, 0.7, 0.7, 1)
@@ -398,16 +400,6 @@ class PmxCanvas(glcanvas.GLCanvas):
                     unselect_color * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
                     np.array([(1 if bone_index in animation.selected_bone_indexes else 0) for bone_index in model_set.model.bones.indexes]),
                 )
-
-        self.draw_face_up()
-
-    def draw_face_up(self) -> None:
-        if not self.is_face_up:
-            return
-        if not self.face_canvas:
-            self.face_canvas = FaceCanvas(self)
-
-        self.face_canvas.draw()
 
     def draw_ground(self) -> None:
         """平面を描画する"""
@@ -654,7 +646,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.is_drag = False
             self.ReleaseMouse()
 
-    def on_mouse_motion(self, event: wx.Event):
+    def on_mouse_motion(self, event: wx.Event) -> None:
         if self.is_drag and event.Dragging():
             self.now_pos = event.GetPosition()
             x = (self.now_pos.x - self.last_pos.x) * 0.02
@@ -671,6 +663,8 @@ class PmxCanvas(glcanvas.GLCanvas):
 
         elif event.LeftIsDown() and event.Dragging():
             self.on_capture_color(event)
+        # 親のマウスモーションも実行する
+        self.parent.on_capture(event)
 
     def on_mouse_wheel(self, event: wx.Event):
         unit_degree = 5.0 if event.ShiftDown() else 1.0 if event.ControlDown() else 2.5

@@ -501,11 +501,7 @@ class ConfigPanel(CanvasPanel):
         self.capture_btn.Bind(wx.EVT_BUTTON, self.canvas.on_capture)
         self.canvas.color_changed_event = self.on_change_color
         self.color_panel.Bind(wx.EVT_LEFT_DOWN, self.on_click_color_picker)
-        self.face_up_btn.Bind(wx.EVT_BUTTON, self.on_toggle_face_up)
-
-    def on_toggle_face_up(self, event: wx.Event):
-        self.canvas.is_face_up = not self.canvas.is_face_up
-        self.canvas.Refresh()
+        self.face_up_btn.Bind(wx.EVT_BUTTON, self.on_toggle_up_window)
 
     def on_click_color_picker(self, event: wx.Event):
         data = wx.ColourData()
