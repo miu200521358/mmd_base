@@ -253,7 +253,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
     def set_context(self) -> None:
         self.SetCurrent(self.context)
-        logger.debug(f"parent: {self.parent}, canvas: {self}, context: {self.context}")
+        logger.test(f"parent: {self.parent}, canvas: {self}, context: {self.context}")
 
     def append_model_set(self, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0, is_sub: bool = False):
         logger.test("append_model_set: model_sets")
@@ -271,7 +271,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.animations = []
 
     def draw(self) -> None:
-        logger.debug(f"draw: parent: {self.parent}, canvas: {self} ------")
+        logger.test(f"draw: parent: {self.parent}, canvas: {self} ------")
         self.set_context()
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
@@ -635,8 +635,11 @@ class SubCanvasPanel(BasePanel):
         self.canvas_height_ratio = 0.9
         self.canvas = PmxCanvas(self, True)
         self.parent_canvas = parent_canvas
-        for model_set in parent_canvas.model_sets:
+
+        self.canvas.clear_model_set()
+        for model_set, animation in zip(parent_canvas.model_sets, parent_canvas.animations):
             self.canvas.append_model_set(model_set.model, model_set.motion, 0.0, True)
+            self.canvas.animations[-1] = animation
 
         self.btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.look_at_choice = wx.Choice(
@@ -650,69 +653,14 @@ class SubCanvasPanel(BasePanel):
 
         self.root_sizer.Add(self.btn_sizer, 0, wx.ALL, 0)
 
-    #     self.timer = wx.Timer(self)
-    #     self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
-    #     self.timer.Start(30)
+        self.timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
+        self.timer.Start(30)
 
-    # def on_timer(self, event):
-    #     try:
-    #         self.draw()
-    #         self.canvas.SwapBuffers()
-    #     except MViewerException:
-    #         self.canvas.SwapBuffers()
-
-    # def draw(self) -> None:
-    #     self.canvas.set_context()
-    #     gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
-
-    #     self.canvas.shader.update_camera(
-    #         self.canvas.camera_position,
-    #         self.canvas.camera_offset_position,
-    #         self.canvas.camera_degrees,
-    #         self.canvas.look_at_center,
-    #         self.canvas.vertical_degrees,
-    #         self.canvas.aspect_ratio,
-    #     )
-
-    #     self.canvas.shader.msaa.bind()
-
-    #     # 透過度設定なしのメッシュを先に描画する
-    #     for model_set, animation in zip(self.canvas.model_sets, self.parent_canvas.animations):
-    #         if model_set.model:
-    #             logger.test(f"-- アニメーション描画(非透過): {model_set.model.name}")
-
-    #             model_set.model.draw(
-    #                 self.canvas.shader,
-    #                 animation.gl_matrixes,
-    #                 animation.vertex_morph_poses,
-    #                 animation.after_vertex_morph_poses,
-    #                 animation.uv_morph_poses,
-    #                 animation.uv1_morph_poses,
-    #                 animation.material_morphs,
-    #                 False,
-    #                 animation.is_show_bone_weight,
-    #                 animation.selected_bone_indexes,
-    #                 True,
-    #             )
-    #     # その後透過度設定ありのメッシュを描画する
-    #     for model_set, animation in zip(self.canvas.model_sets, self.parent_canvas.animations):
-    #         if model_set.model:
-    #             logger.test(f"-- アニメーション描画(透過): {model_set.model.name}")
-
-    #             model_set.model.draw(
-    #                 self.canvas.shader,
-    #                 animation.gl_matrixes,
-    #                 animation.vertex_morph_poses,
-    #                 animation.after_vertex_morph_poses,
-    #                 animation.uv_morph_poses,
-    #                 animation.uv1_morph_poses,
-    #                 animation.material_morphs,
-    #                 True,
-    #                 animation.is_show_bone_weight,
-    #                 animation.selected_bone_indexes,
-    #                 True,
-    #             )
-    #     self.canvas.shader.msaa.unbind()
+    def on_timer(self, event):
+        for midx in range(len(self.canvas.model_sets)):
+            self.canvas.animations[midx] = self.parent_canvas.animations[midx]
+        self.canvas.Refresh()
 
     def get_canvas_size(self) -> wx.Size:
         w, h = self.frame.GetClientSize()
