@@ -46,14 +46,6 @@ class MagnifierPopup(wx.PopupWindow):
         if hasattr(self, "region_bitmap"):
             dc.DrawBitmap(self.region_bitmap, 0, 0)
 
-    def on_mouse_motion(self, event) -> None:
-        if event.Dragging() and event.LeftIsDown() and self.dragging:
-            x, y = self.ClientToScreen(event.GetPosition())
-            origin_x, origin_y = self.GetScreenPosition()
-            dx, dy = x - origin_x, y - origin_y
-            self.Move((origin_x + dx, origin_y + dy))
-        event.Skip()
-
 
 class CanvasPanel(BasePanel):
     def __init__(self, frame: BaseFrame, tab_idx: int, canvas_width_ratio: float, canvas_height_ratio: float, *args, **kw):
