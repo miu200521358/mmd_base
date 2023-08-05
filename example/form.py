@@ -483,6 +483,10 @@ class ConfigPanel(CanvasPanel):
         self.btn_sizer.Add(self.capture_btn, 0, wx.ALL, 5)
         self.scrolled_window.SetSizer(self.btn_sizer)
 
+        # 顔アップ
+        self.face_up_btn = wx.Button(self.scrolled_window, wx.ID_ANY, "顔アップ", wx.DefaultPosition, wx.Size(100, 50))
+        self.btn_sizer.Add(self.face_up_btn, 0, wx.ALL, 5)
+
         self.config_sizer.Add(self.scrolled_window, 1, wx.ALL | wx.EXPAND | wx.FIXED_MINSIZE, 0)
 
         self.root_sizer.Add(self.config_sizer, 0, wx.ALL, 0)
@@ -497,6 +501,11 @@ class ConfigPanel(CanvasPanel):
         self.capture_btn.Bind(wx.EVT_BUTTON, self.canvas.on_capture)
         self.canvas.color_changed_event = self.on_change_color
         self.color_panel.Bind(wx.EVT_LEFT_DOWN, self.on_click_color_picker)
+        self.face_up_btn.Bind(wx.EVT_BUTTON, self.on_toggle_face_up)
+
+    def on_toggle_face_up(self, event: wx.Event):
+        self.canvas.is_face_up = not self.canvas.is_face_up
+        self.canvas.Refresh()
 
     def on_click_color_picker(self, event: wx.Event):
         data = wx.ColourData()

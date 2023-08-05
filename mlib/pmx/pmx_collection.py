@@ -529,7 +529,7 @@ class PmxModel(BaseHashModel):
             self.vertices_by_materials[material.index] = list(set(vertices))
             prev_face_count += face_count
 
-    def init_draw(self, shader: MShader):
+    def init_draw(self) -> None:
         if self.for_draw:
             # 既にフラグが立ってたら描画初期化済み
             return
@@ -548,7 +548,7 @@ class PmxModel(BaseHashModel):
         ):
             self.toon_textures.append(Texture(tidx, os.path.abspath(tpath)))
 
-        self.meshes = Meshes(shader, self)
+        self.meshes = Meshes(self)
         # 描画初期化
         self.for_draw = True
 
@@ -562,6 +562,7 @@ class PmxModel(BaseHashModel):
 
     def draw(
         self,
+        shader: MShader,
         bone_matrixes: np.ndarray,
         vertex_morph_poses: np.ndarray,
         after_vertex_morph_poses: np.ndarray,
@@ -575,6 +576,7 @@ class PmxModel(BaseHashModel):
         if not self.for_draw or not self.meshes:
             return
         self.meshes.draw(
+            shader,
             bone_matrixes,
             vertex_morph_poses,
             after_vertex_morph_poses,
@@ -588,6 +590,7 @@ class PmxModel(BaseHashModel):
 
     def draw_bone(
         self,
+        shader: MShader,
         bone_matrixes: np.ndarray,
         select_bone_color: np.ndarray,
         unselect_bone_color: np.ndarray,
@@ -595,7 +598,7 @@ class PmxModel(BaseHashModel):
     ) -> None:
         if not self.for_draw or not self.meshes:
             return
-        self.meshes.draw_bone(bone_matrixes, select_bone_color, unselect_bone_color, selected_bone_indexes)
+        self.meshes.draw_bone(shader, bone_matrixes, select_bone_color, unselect_bone_color, selected_bone_indexes)
 
     # def draw_axis(
     #     self,
@@ -1489,7 +1492,6 @@ class Meshes(BaseIndexDictModel[Mesh]):
     __slots__ = (
         "data",
         "indexes",
-        "shader",
         "model",
         "vertices",
         "faces",
@@ -1514,10 +1516,9 @@ class Meshes(BaseIndexDictModel[Mesh]):
         "axis_ibo_faces",
     )
 
-    def __init__(self, shader: MShader, model: PmxModel) -> None:
+    def __init__(self, model: PmxModel) -> None:
         super().__init__()
 
-        self.shader = shader
         self.model = model
 
         # 頂点情報
@@ -1727,6 +1728,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
     def draw(
         self,
+        shader: MShader,
         bone_matrixes: np.ndarray,
         vertex_morph_poses: np.ndarray,
         after_vertex_morph_poses: np.ndarray,
@@ -1796,15 +1798,15 @@ class Meshes(BaseIndexDictModel[Mesh]):
             gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
             # モデル描画
-            self.shader.use(ProgramType.MODEL)
-            mesh.draw_model(bone_matrixes, material_morph, self.shader, self.ibo_faces, is_show_bone_weight, limited_show_bone_indexes)
-            self.shader.unuse()
+            shader.use(ProgramType.MODEL)
+            mesh.draw_model(bone_matrixes, material_morph, shader, self.ibo_faces, is_show_bone_weight, limited_show_bone_indexes)
+            shader.unuse()
 
             if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and 0 < material_morph.material.diffuse.w:
                 # エッジ描画
-                self.shader.use(ProgramType.EDGE)
-                mesh.draw_edge(bone_matrixes, material_morph, self.shader, self.ibo_faces)
-                self.shader.unuse()
+                shader.use(ProgramType.EDGE)
+                mesh.draw_edge(bone_matrixes, material_morph, shader, self.ibo_faces)
+                shader.unuse()
 
             # ---------------
 
@@ -1819,6 +1821,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
     def draw_bone(
         self,
+        shader: MShader,
         bone_matrixes: np.ndarray,
         select_bone_color: np.ndarray,
         unselect_bone_color: np.ndarray,
@@ -1845,14 +1848,14 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.bone_vbo_vertices.set_slot_by_value(2)
         self.bone_ibo_faces.bind()
 
-        self.shader.use(ProgramType.BONE)
+        shader.use(ProgramType.BONE)
 
-        gl.glUniform4f(self.shader.select_bone_color_uniform[ProgramType.BONE.value], *select_bone_color)
-        gl.glUniform4f(self.shader.unselect_bone_color_uniform[ProgramType.BONE.value], *unselect_bone_color)
-        gl.glUniform1i(self.shader.bone_count_uniform[ProgramType.BONE.value], len(self.model.bones))
+        gl.glUniform4f(shader.select_bone_color_uniform[ProgramType.BONE.value], *select_bone_color)
+        gl.glUniform4f(shader.unselect_bone_color_uniform[ProgramType.BONE.value], *unselect_bone_color)
+        gl.glUniform1i(shader.bone_count_uniform[ProgramType.BONE.value], len(self.model.bones))
 
         if self.model.meshes:
-            self.model.meshes[0].bind_bone_matrixes(bone_matrixes, self.shader, ProgramType.BONE)
+            self.model.meshes[0].bind_bone_matrixes(bone_matrixes, shader, ProgramType.BONE)
 
         try:
             gl.glDrawElements(
@@ -1874,63 +1877,11 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.bone_ibo_faces.unbind()
         self.bone_vbo_vertices.unbind()
         self.bone_vao.unbind()
-        self.shader.unuse()
+        shader.unuse()
 
         gl.glDisable(gl.GL_BLEND)
         gl.glDisable(gl.GL_ALPHA_TEST)
         gl.glDisable(gl.GL_DEPTH_TEST)
-
-    # def draw_axis(self, axis_matrixes: np.ndarray, axis_color: np.ndarray):
-    #     # ボーンをモデルメッシュの前面に描画するために深度テストを無効化
-    #     gl.glEnable(gl.GL_DEPTH_TEST)
-    #     gl.glDepthFunc(gl.GL_ALWAYS)
-
-    #     # アルファテストを有効にする
-    #     gl.glEnable(gl.GL_ALPHA_TEST)
-
-    #     # ブレンディングを有効にする
-    #     gl.glEnable(gl.GL_BLEND)
-    #     gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
-
-    #     self.axis_vao.bind()
-    #     self.axis_vbo_vertices.bind()
-    #     self.axis_vbo_vertices.set_slot_by_value(0)
-    #     self.axis_vbo_vertices.set_slot_by_value(1)
-    #     self.axis_ibo_faces.bind()
-
-    #     self.shader.use(ProgramType.AXIS)
-
-    #     gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *axis_color)
-    #     gl.glUniform1i(self.shader.bone_count_uniform[ProgramType.BONE.value], len(self.model.bones) * 2)
-
-    #     if self.model.meshes:
-    #         self.model.meshes[0].bind_bone_matrixes(np.concatenate([axis_matrixes, axis_matrixes]), self.shader, ProgramType.AXIS)
-
-    #     try:
-    #         gl.glDrawElements(
-    #             gl.GL_LINES,
-    #             self.axis_hierarchies.size,
-    #             self.axis_ibo_faces.dtype,
-    #             gl.ctypes.c_void_p(0),
-    #         )
-    #     except Exception as e:
-    #         raise MViewerException("Meshes draw_axis Failure", e)
-
-    #     error_code = gl.glGetError()
-    #     if error_code != gl.GL_NO_ERROR:
-    #         raise MViewerException(f"Meshes draw_axis Failure\n{error_code}")
-
-    #     if self.model.meshes:
-    #         self.model.meshes[0].unbind_bone_matrixes()
-
-    #     self.axis_ibo_faces.unbind()
-    #     self.axis_vbo_vertices.unbind()
-    #     self.axis_vao.unbind()
-    #     self.shader.unuse()
-
-    #     gl.glDisable(gl.GL_BLEND)
-    #     gl.glDisable(gl.GL_ALPHA_TEST)
-    #     gl.glDisable(gl.GL_DEPTH_TEST)
 
     def delete_draw(self) -> None:
         for material in self.model.materials:

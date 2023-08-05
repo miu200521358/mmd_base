@@ -81,11 +81,11 @@ MODEL_BONE_UNSELECT_COLORS = [
 
 
 class ModelSet:
-    def __init__(self, shader: MShader, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0):
+    def __init__(self, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0):
         self.model = model
         self.motion = motion
         self.bone_alpha = bone_alpha
-        model.init_draw(shader)
+        model.init_draw()
 
 
 class MotionSet:
@@ -116,6 +116,104 @@ class MotionSet:
         self.uv_morph_poses = motion.morphs.animate_uv_morphs(fno, model, 0)
         self.uv1_morph_poses = motion.morphs.animate_uv_morphs(fno, model, 1)
         self.material_morphs = motion.morphs.animate_material_morphs(fno, model)
+
+
+class FaceCanvas(glcanvas.GLCanvas):
+    def __init__(self, parent: "PmxCanvas", *args, **kw):
+        attribList = (
+            glcanvas.WX_GL_RGBA,
+            glcanvas.WX_GL_DOUBLEBUFFER,
+            glcanvas.WX_GL_DEPTH_SIZE,
+            16,
+            0,
+        )
+        self.parent = parent
+        self.size = wx.Size(int(min(self.parent.size.x, 200)), int(min(self.parent.size.y, 150)))
+
+        glcanvas.GLCanvas.__init__(self, parent, -1, size=self.size, attribList=attribList)
+        self.context = glcanvas.GLContext(self)
+        self.shader = self.parent.shader
+
+        self.set_context()
+
+    def _initialize_ui(self) -> None:
+        gl.glClearColor(0.8, 0.8, 0.8, 1)
+
+    def _initialize_event(self) -> None:
+        # ペイントイベントをバインド
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+
+        # 背景を消すイベントをバインド
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.on_erase_background)
+
+    def on_erase_background(self, event: wx.Event):
+        # Do nothing, to avoid flashing on MSW (これがないとチラつくらしい）
+        pass
+
+    def on_paint(self, event: wx.Event):
+        try:
+            self.draw()
+            self.SwapBuffers()
+        except MViewerException:
+            error_msg = "ビューワーの描画に失敗しました。\n一度ツールを立ち上げ直して再度実行していただき、それでも解決しなかった場合、作者にご連絡下さい。"
+            logger.critical(error_msg)
+
+            dialog = wx.MessageDialog(
+                self.parent,
+                __(error_msg),
+                style=wx.OK,
+            )
+            dialog.ShowModal()
+            dialog.Destroy()
+
+            self.SwapBuffers()
+
+    def set_context(self) -> None:
+        self.SetCurrent(self.context)
+
+    def draw(self) -> None:
+        self.set_context()
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+
+        self.shader.update_camera()
+
+        self.shader.msaa.bind()
+
+        # 透過度設定なしのメッシュを先に描画する
+        for model_set, animation in zip(self.parent.model_sets, self.parent.animations):
+            if model_set.model:
+                logger.test(f"-- アニメーション描画(非透過): {model_set.model.name}")
+
+                model_set.model.draw(
+                    self.shader,
+                    animation.gl_matrixes,
+                    animation.vertex_morph_poses,
+                    animation.after_vertex_morph_poses,
+                    animation.uv_morph_poses,
+                    animation.uv1_morph_poses,
+                    animation.material_morphs,
+                    False,
+                    animation.is_show_bone_weight,
+                    animation.selected_bone_indexes,
+                )
+        # その後透過度設定ありのメッシュを描画する
+        for model_set, animation in zip(self.parent.model_sets, self.parent.animations):
+            if model_set.model:
+                logger.test(f"-- アニメーション描画(透過): {model_set.model.name}")
+
+                model_set.model.draw(
+                    self.shader,
+                    animation.gl_matrixes,
+                    animation.vertex_morph_poses,
+                    animation.after_vertex_morph_poses,
+                    animation.uv_morph_poses,
+                    animation.uv1_morph_poses,
+                    animation.material_morphs,
+                    True,
+                    animation.is_show_bone_weight,
+                    animation.selected_bone_indexes,
+                )
+        self.shader.msaa.unbind()
 
 
 class PmxCanvas(glcanvas.GLCanvas):
@@ -158,6 +256,9 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.playing = False
         # 録画中かどうかを示すフラグ
         self.recording = False
+        # 顔アップを表示するか否かのフラグ
+        self.is_face_up = False
+        self.face_canvas: Optional[FaceCanvas] = None
 
     def _initialize_ui(self) -> None:
         gl.glClearColor(0.7, 0.7, 0.7, 1)
@@ -222,7 +323,7 @@ class PmxCanvas(glcanvas.GLCanvas):
 
     def append_model_set(self, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0):
         logger.debug("append_model_set: model_sets")
-        self.model_sets.append(ModelSet(self.shader, model, motion, bone_alpha))
+        self.model_sets.append(ModelSet(model, motion, bone_alpha))
         logger.debug("append_model_set: animations")
         self.animations.append(MotionSet(model, motion, 0))
         logger.debug("append_model_set: max_fno")
@@ -253,6 +354,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 logger.test(f"-- アニメーション描画(非透過): {model_set.model.name}")
 
                 model_set.model.draw(
+                    self.shader,
                     animation.gl_matrixes,
                     animation.vertex_morph_poses,
                     animation.after_vertex_morph_poses,
@@ -269,6 +371,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                 logger.test(f"-- アニメーション描画(透過): {model_set.model.name}")
 
                 model_set.model.draw(
+                    self.shader,
                     animation.gl_matrixes,
                     animation.vertex_morph_poses,
                     animation.after_vertex_morph_poses,
@@ -289,22 +392,22 @@ class PmxCanvas(glcanvas.GLCanvas):
                 logger.test(f"-- ボーン描画: {model_set.model.name}")
 
                 model_set.model.draw_bone(
+                    self.shader,
                     animation.gl_matrixes,
                     select_color * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
                     unselect_color * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
                     np.array([(1 if bone_index in animation.selected_bone_indexes else 0) for bone_index in model_set.model.bones.indexes]),
                 )
 
-        # if logging.DEBUG >= logger.total_level:
-        #     for model_set, animation, color in zip(self.model_sets, self.animations, MODEL_AXIS_COLORS):
-        #         # ローカル軸を表示
-        #         if model_set.model:
-        #             logger.test(f"-- ローカル軸描画(透過): {model_set.model.name}")
+        self.draw_face_up()
 
-        #             model_set.model.draw_axis(
-        #                 animation.gl_matrixes,
-        #                 color * np.fromiter([1, 1, 1, model_set.bone_alpha], count=4, dtype=np.float32),
-        #             )
+    def draw_face_up(self) -> None:
+        if not self.is_face_up:
+            return
+        if not self.face_canvas:
+            self.face_canvas = FaceCanvas(self)
+
+        self.face_canvas.draw()
 
     def draw_ground(self) -> None:
         """平面を描画する"""
