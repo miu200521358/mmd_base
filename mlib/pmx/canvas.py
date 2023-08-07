@@ -19,6 +19,7 @@ from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
 from mlib.utils.file_utils import get_root_dir
 from mlib.vmd.vmd_collection import VmdMotion
+from mlib.vmd.vmd_tree import VmdBoneFrameTrees
 
 logger = MLogger(os.path.basename(__file__), level=10)
 __ = logger.get_text
@@ -95,7 +96,9 @@ class MotionSet:
 
         if motion is not None:
             (
+                self.fno,
                 self.gl_matrixes,
+                self.bone_matrixes,
                 self.vertex_morph_poses,
                 self.after_vertex_morph_poses,
                 self.uv_morph_poses,
@@ -103,7 +106,9 @@ class MotionSet:
                 self.material_morphs,
             ) = motion.animate(fno, model)
         else:
+            self.fno = 0
             self.gl_matrixes = np.array([np.eye(4) for _ in range(len(model.bones))])
+            self.bone_matrixes = VmdBoneFrameTrees()
             self.vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])
             self.after_vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])
             self.uv_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
@@ -155,6 +160,8 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.vertical_degrees = MShader.INITIAL_VERTICAL_DEGREES
         # カメラの中央
         self.look_at_center = MShader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
+        # 計算済みのカメラ位置
+        self.result_camera_position: Optional[MVector3D] = None
 
         self.shader = MShader(
             self.size.width,
@@ -282,6 +289,7 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.look_at_center,
             self.vertical_degrees,
             self.aspect_ratio,
+            self.result_camera_position,
         )
 
         self.shader.msaa.bind()
@@ -616,9 +624,19 @@ class PmxCanvas(glcanvas.GLCanvas):
 
 
 class SubCanvasWindow(BaseFrame):
-    def __init__(self, parent: BaseFrame, parent_canvas: PmxCanvas, title: str, size: wx.Size, look_at_bone_names: list[str], *args, **kw):
+    def __init__(
+        self,
+        parent: BaseFrame,
+        parent_canvas: PmxCanvas,
+        title: str,
+        size: wx.Size,
+        look_at_model_names: list[str],
+        look_at_bone_names: list[list[str]],
+        *args,
+        **kw,
+    ):
         super().__init__(parent.app, title, size, *args, parent=parent, **kw)
-        self.panel = SubCanvasPanel(self, parent_canvas, look_at_bone_names)
+        self.panel = SubCanvasPanel(self, parent_canvas, look_at_model_names, look_at_bone_names)
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
@@ -629,12 +647,19 @@ class SubCanvasWindow(BaseFrame):
 
 
 class SubCanvasPanel(BasePanel):
-    def __init__(self, frame: BaseFrame, parent_canvas: PmxCanvas, look_at_bone_names: list[str], *args, **kw):
+    def __init__(
+        self, frame: BaseFrame, parent_canvas: PmxCanvas, look_at_model_names: list[str], look_at_bone_names: list[list[str]], *args, **kw
+    ):
         super().__init__(frame)
         self.canvas_width_ratio = 1.0
         self.canvas_height_ratio = 0.9
         self.canvas = PmxCanvas(self, True)
         self.parent_canvas = parent_canvas
+        self.look_at_model_names = look_at_model_names
+        self.look_at_bone_names = look_at_bone_names
+        self.fno = -1
+
+        self.canvas.vertical_degrees = 5
 
         self.root_sizer.Add(self.canvas, 0, wx.ALL, 0)
 
@@ -644,25 +669,61 @@ class SubCanvasPanel(BasePanel):
             self.canvas.animations[-1] = animation
 
         self.btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.look_at_choice = wx.Choice(
+
+        self.look_at_model_choice = wx.Choice(
             self,
             wx.ID_ANY,
             wx.DefaultPosition,
-            wx.Size(230, -1),
-            choices=look_at_bone_names,
+            wx.Size(150, -1),
+            choices=look_at_model_names,
         )
-        self.btn_sizer.Add(self.look_at_choice, 0, wx.ALL, 0)
+        self.look_at_model_choice.Bind(wx.EVT_CHOICE, self.on_choice_model)
+        self.look_at_model_choice.SetSelection(0)
+        self.btn_sizer.Add(self.look_at_model_choice, 0, wx.ALL, 0)
 
+        self.look_at_bone_choice = wx.Choice(
+            self,
+            wx.ID_ANY,
+            wx.DefaultPosition,
+            wx.Size(150, -1),
+            choices=look_at_bone_names[0],
+        )
+        self.look_at_bone_choice.Bind(wx.EVT_CHOICE, self.on_choice_bone)
+        self.btn_sizer.Add(self.look_at_bone_choice, 0, wx.ALL, 0)
+
+        self.on_choice_model(wx.EVT_CHOICE)
         self.root_sizer.Add(self.btn_sizer, 0, wx.ALL, 0)
 
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
-        self.timer.Start(30)
+        self.timer.Start(100)
 
-    def on_timer(self, event):
+    def on_choice_model(self, event: wx.Event) -> None:
+        model_idx = self.look_at_model_choice.GetSelection()
+
+        self.look_at_bone_choice.Clear()
+        self.look_at_bone_choice.AppendItems(self.look_at_bone_names[model_idx])
+
+        initial_idxs = [i for i, n in enumerate(self.look_at_bone_names[model_idx]) if n == "頭"]
+        self.look_at_bone_choice.SetSelection(initial_idxs[0] if initial_idxs else 0)
+        self.on_choice_bone(event)
+
+    def on_choice_bone(self, event: wx.Event) -> None:
+        self.on_timer(event)
+
+    def on_timer(self, event) -> None:
         for midx in range(len(self.canvas.model_sets)):
             self.canvas.animations[midx] = self.parent_canvas.animations[midx]
-        self.canvas.Refresh()
+            if midx == self.look_at_model_choice.GetSelection():
+                animation: MotionSet = self.canvas.animations[midx]
+                if animation.fno != self.fno:
+                    bone_name = self.look_at_bone_choice.GetStringSelection()
+                    self.canvas.look_at_center = animation.bone_matrixes[animation.fno, bone_name].position
+                    self.canvas.result_camera_position = animation.bone_matrixes[animation.fno, bone_name].global_matrix * MVector3D(
+                        0, 0, 30
+                    )
+                    self.fno = animation.fno
+                    self.canvas.Refresh()
 
     def get_canvas_size(self) -> wx.Size:
         w, h = self.frame.GetClientSize()

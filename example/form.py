@@ -735,7 +735,9 @@ class TestFrame(NotebookFrame):
     def create_sub_window(self) -> None:
         model: Optional[PmxModel] = self.file_panel.model_ctrl.data
         if not self.sub_window and model:
-            self.sub_window = SubCanvasWindow(self, self.config_panel.canvas, "サブウィンドウ", self.sub_window_size, model.bones.names)
+            self.sub_window = SubCanvasWindow(
+                self, self.config_panel.canvas, "サブウィンドウ", self.sub_window_size, [model.name], [model.bones.names]
+            )
             frame_x, frame_y = self.GetPosition()
             self.sub_window.SetPosition(wx.Point(max(0, frame_x - self.sub_window_size.x - 10), max(0, frame_y)))
 

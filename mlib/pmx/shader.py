@@ -1,7 +1,7 @@
 import os
 from enum import IntEnum
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 import OpenGL.GL as gl
@@ -355,6 +355,7 @@ class MShader:
         look_at_center: MVector3D,
         vertical_degrees: float,
         aspect_ratio: float,
+        result_camera_position: Optional[MVector3D] = None,
     ) -> None:
         # 視野領域の決定
         gl.glMatrixMode(gl.GL_PROJECTION)
@@ -370,15 +371,19 @@ class MShader:
         camera_rotation = MQuaternion.from_euler_degrees(camera_degrees)
 
         # カメラ位置
-        camera_mat = MMatrix4x4()
-        camera_mat.translate(camera_offset_position)
-        camera_mat.rotate(camera_rotation)
-        camera_mat.translate(camera_position)
-        camera_pos = camera_mat * MVector3D()
+        if result_camera_position is None:
+            camera_mat = MMatrix4x4()
+            camera_mat.translate(camera_offset_position)
+            camera_mat.rotate(camera_rotation)
+            camera_mat.translate(camera_position)
+            result_camera_position = camera_mat * MVector3D()
 
-        # カメラの上方向
-        look_at_right = (camera_rotation * MVector3D(1, 0, 0)).normalized()
-        look_at_up = look_at_right.cross(camera_pos - look_at_center).normalized()
+            # カメラの上方向
+            look_at_right = (camera_rotation * MVector3D(1, 0, 0)).normalized()
+            look_at_up = look_at_right.cross(result_camera_position - look_at_center).normalized()
+        else:
+            look_at_right = MVector3D(1, 0, 0)
+            look_at_up = MVector3D(0, 1, 0)
         # print(
         #     f"camera_pos: {camera_pos}, camera_degrees: {self.camera_degrees}, camera_rotation: {camera_rotation.to_euler_degrees()}"
         #     + f", look_at_right: {look_at_right}, look_at_up: {look_at_up}, look_at_center: {self.look_at_center}"
@@ -387,7 +392,7 @@ class MShader:
         # 視点位置の決定
         gl.glMatrixMode(gl.GL_MODELVIEW)
         gl.glLoadIdentity()
-        glu.gluLookAt(*camera_pos.vector, *look_at_center.vector, *look_at_up.vector)
+        glu.gluLookAt(*result_camera_position.vector, *look_at_center.vector, *look_at_up.vector)
 
         model_view_matrix = np.array(gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX), dtype=np.float32)
         model_view_projection_matrix = np.matmul(model_view_matrix, self.projection_matrix)
@@ -395,8 +400,8 @@ class MShader:
         for program_type in ProgramType:
             self.use(program_type)
 
-            if camera_pos is not None and program_type == ProgramType.MODEL:
-                gl.glUniform3f(self.camera_vec_uniform[program_type.value], *camera_pos.vector)
+            if result_camera_position is not None and program_type == ProgramType.MODEL:
+                gl.glUniform3f(self.camera_vec_uniform[program_type.value], *result_camera_position.vector)
 
             gl.glUniformMatrix4fv(
                 self.model_view_matrix_uniform[program_type.value],

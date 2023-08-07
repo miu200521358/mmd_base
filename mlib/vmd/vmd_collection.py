@@ -1278,7 +1278,9 @@ class VmdMotion(BaseHashModel):
         """モーフキーフレ追加"""
         self.morphs[mf.name].append(mf)
 
-    def animate(self, fno: int, model: PmxModel) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
+    def animate(
+        self, fno: int, model: PmxModel
+    ) -> tuple[int, np.ndarray, VmdBoneFrameTrees, np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 開始")
 
         # 頂点モーフ
@@ -1321,7 +1323,9 @@ class VmdMotion(BaseHashModel):
         logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: OpenGL座標系変換")
 
         return (
+            fno,
             gl_matrixes,
+            bone_matrixes,
             vertex_morph_poses + group_vertex_morph_poses,
             after_vertex_morph_poses,
             uv_morph_poses,
