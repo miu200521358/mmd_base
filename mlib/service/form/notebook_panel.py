@@ -1,6 +1,6 @@
 import wx
-from mlib.service.form.base_panel import BasePanel
 
+from mlib.service.form.base_panel import BasePanel
 from mlib.service.form.notebook_frame import NotebookFrame
 
 

@@ -1078,6 +1078,7 @@ def test_MQuaternion_mul():
 
 def test_MMatrix4x4_bool():
     import numpy as np
+
     from mlib.core.math import MMatrix4x4
 
     if MMatrix4x4():

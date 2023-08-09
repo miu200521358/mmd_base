@@ -3,8 +3,8 @@ import sys
 from threading import Thread
 
 import wx
-from mlib.service.form.base_frame import BaseFrame
 
+from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_notebook import BaseNotebook
 from mlib.utils.file_utils import read_histories
 
