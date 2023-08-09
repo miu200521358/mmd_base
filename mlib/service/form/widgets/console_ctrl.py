@@ -25,17 +25,17 @@ class ConsoleCtrl:
             wx.ID_ANY,
             "",
             wx.DefaultPosition,
-            wx.Size(wx.DefaultSize.width, rows),
+            wx.Size(-1, rows),
             wx.TE_READONLY | wx.TE_MULTILINE | wx.WANTS_CHARS,
         )
         self.text_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
         self.text_ctrl.SetMargins(3, 3)
 
-        self.root_sizer.Add(self.text_ctrl, 1, wx.GROW | wx.ALL, 3)
+        self.root_sizer.Add(self.text_ctrl, 1, wx.GROW | wx.HORIZONTAL, 3)
         MLogger.console_handler = ConsoleHandler(self.text_ctrl)
 
     def set_parent_sizer(self, parent_sizer: wx.Sizer):
-        parent_sizer.Add(self.root_sizer, 1, wx.GROW, 0)
+        parent_sizer.Add(self.root_sizer, 0, wx.GROW | wx.HORIZONTAL, 0)
 
     def write(self, text: str):
         self.text_ctrl.AppendText(text + "\n")
