@@ -759,7 +759,7 @@ class PreviewCanvasWindow(BaseFrame):
         **kw,
     ):
         super().__init__(parent.app, title, size, *args, parent=parent, **kw)
-        self.panel = SubCanvasPanel(self, parent_canvas, look_at_model_names, look_at_bone_names)
+        self.panel = PreviewCanvasPanel(self, parent_canvas, look_at_model_names, look_at_bone_names)
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
