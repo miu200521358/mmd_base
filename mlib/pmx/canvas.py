@@ -709,19 +709,25 @@ class SubCanvasPanel(BasePanel):
         self.on_choice_bone(event)
 
     def on_choice_bone(self, event: wx.Event) -> None:
-        self.on_timer(event)
+        self.refresh_animation(True)
 
     def on_timer(self, event) -> None:
+        self.refresh_animation(False)
+
+    def refresh_animation(self, force: bool):
         for midx in range(len(self.canvas.model_sets)):
             self.canvas.animations[midx] = self.parent_canvas.animations[midx]
             if midx == self.look_at_model_choice.GetSelection():
                 animation: MotionSet = self.canvas.animations[midx]
-                if animation.fno != self.fno:
+                if animation.fno != self.fno or force:
                     bone_name = self.look_at_bone_choice.GetStringSelection()
-                    self.canvas.look_at_center = animation.bone_matrixes[animation.fno, bone_name].position
-                    self.canvas.result_camera_position = animation.bone_matrixes[animation.fno, bone_name].global_matrix * MVector3D(
-                        0, 0, 30
+                    self.canvas.camera_degrees = (
+                        animation.bone_matrixes[animation.fno, bone_name].global_matrix.inverse().to_quaternion().to_euler_degrees()
                     )
+                    self.canvas.look_at_center = (animation.bone_matrixes[animation.fno, bone_name].position).gl
+                    self.canvas.result_camera_position = (
+                        animation.bone_matrixes[animation.fno, bone_name].global_matrix * MVector3D(0, 0, -30)
+                    ).gl
                     self.fno = animation.fno
                     self.canvas.Refresh()
 

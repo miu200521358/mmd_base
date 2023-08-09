@@ -1202,6 +1202,14 @@ class MMatrix4x4(MVector):
         else:
             self.vector = np.copy(mat)
 
+    @property
+    def gl(self) -> "MMatrix4x4":
+        vec = np.copy(self.vector.T)
+        vec[0, 1:3] *= -1
+        vec[1:3, 0] *= -1
+        vec[3, 0] *= -1
+        return MMatrix4x4(vec)
+
     def inverse(self) -> "MMatrix4x4":
         """
         逆行列
