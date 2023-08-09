@@ -744,3 +744,111 @@ class SubCanvasPanel(BasePanel):
 
     def on_resize(self, event: wx.Event):
         pass
+
+
+class PreviewCanvasWindow(BaseFrame):
+    def __init__(
+        self,
+        parent: BaseFrame,
+        parent_canvas: PmxCanvas,
+        title: str,
+        size: wx.Size,
+        look_at_model_names: list[str],
+        look_at_bone_names: list[list[str]],
+        *args,
+        **kw,
+    ):
+        super().__init__(parent.app, title, size, *args, parent=parent, **kw)
+        self.panel = SubCanvasPanel(self, parent_canvas, look_at_model_names, look_at_bone_names)
+
+        self.Bind(wx.EVT_CLOSE, self.on_close)
+
+    def on_close(self, event: wx.Event):
+        # ウィンドウを破棄せずに非表示にする
+        self.Hide()
+        event.Skip()
+
+
+class PreviewCanvasPanel(BasePanel):
+    def __init__(
+        self, frame: BaseFrame, parent_canvas: PmxCanvas, look_at_model_names: list[str], look_at_bone_names: list[list[str]], *args, **kw
+    ):
+        super().__init__(frame)
+        self.canvas_width_ratio = 1.0
+        self.canvas_height_ratio = 0.9
+        self.canvas = PmxCanvas(self, True)
+        self.parent_canvas = parent_canvas
+        self.look_at_model_names = look_at_model_names
+        self.look_at_bone_names = look_at_bone_names
+        self.fno = -1
+
+        self.canvas.vertical_degrees = 5
+
+        self.root_sizer.Add(self.canvas, 0, wx.ALL, 0)
+
+        self.canvas.clear_model_set()
+        for model_set in self.parent_canvas.model_sets:
+            self.canvas.append_model_set(model_set.model, VmdMotion(), 0.0, True)
+
+        self.btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.look_at_model_choice = wx.Choice(
+            self,
+            wx.ID_ANY,
+            wx.DefaultPosition,
+            wx.Size(150, -1),
+            choices=look_at_model_names,
+        )
+        self.look_at_model_choice.Bind(wx.EVT_CHOICE, self.on_choice_model)
+        self.look_at_model_choice.SetSelection(0)
+        self.btn_sizer.Add(self.look_at_model_choice, 0, wx.ALL, 0)
+
+        self.look_at_bone_choice = wx.Choice(
+            self,
+            wx.ID_ANY,
+            wx.DefaultPosition,
+            wx.Size(150, -1),
+            choices=look_at_bone_names[0],
+        )
+        self.look_at_bone_choice.Bind(wx.EVT_CHOICE, self.on_choice_bone)
+        self.btn_sizer.Add(self.look_at_bone_choice, 0, wx.ALL, 0)
+
+        self.on_choice_model(wx.EVT_CHOICE)
+        self.root_sizer.Add(self.btn_sizer, 0, wx.ALL, 0)
+
+    def on_choice_model(self, event: wx.Event) -> None:
+        model_idx = self.look_at_model_choice.GetSelection()
+
+        self.look_at_bone_choice.Clear()
+        self.look_at_bone_choice.AppendItems(self.look_at_bone_names[model_idx])
+
+        initial_idxs = [i for i, n in enumerate(self.look_at_bone_names[model_idx]) if n == "頭"]
+        self.look_at_bone_choice.SetSelection(initial_idxs[0] if initial_idxs else 0)
+        self.on_choice_bone(event)
+
+    def on_choice_bone(self, event: wx.Event) -> None:
+        for midx in range(len(self.canvas.model_sets)):
+            if midx == self.look_at_model_choice.GetSelection():
+                animation: MotionSet = self.canvas.animations[midx]
+                bone_name = self.look_at_bone_choice.GetStringSelection()
+                self.canvas.camera_degrees = (
+                    animation.bone_matrixes[animation.fno, bone_name].global_matrix.inverse().to_quaternion().to_euler_degrees()
+                )
+                self.canvas.look_at_center = (animation.bone_matrixes[animation.fno, bone_name].position).gl
+                self.canvas.result_camera_position = (
+                    animation.bone_matrixes[animation.fno, bone_name].global_matrix * MVector3D(0, 0, -30)
+                ).gl
+                self.fno = animation.fno
+                self.canvas.Refresh()
+
+    def get_canvas_size(self) -> wx.Size:
+        w, h = self.frame.GetClientSize()
+        canvas_width = w * self.canvas_width_ratio
+        if canvas_width % 2 != 0:
+            # 2で割り切れる値にする
+            canvas_width += 1
+        canvas_height = h * self.canvas_height_ratio
+        return wx.Size(int(canvas_width), int(canvas_height))
+
+    def on_resize(self, event: wx.Event):
+        pass
