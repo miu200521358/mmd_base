@@ -17,6 +17,8 @@ from mlib.pmx.pmx_part import ShaderMaterial
 from mlib.pmx.shader import MShader
 from mlib.service.form.base_frame import BaseFrame
 from mlib.service.form.base_panel import BasePanel
+from mlib.service.form.notebook_frame import NotebookFrame
+from mlib.service.form.notebook_panel import NotebookPanel
 from mlib.utils.file_utils import get_root_dir
 from mlib.vmd.vmd_collection import VmdMotion
 from mlib.vmd.vmd_tree import VmdBoneFrameTrees
@@ -25,9 +27,9 @@ logger = MLogger(os.path.basename(__file__), level=10)
 __ = logger.get_text
 
 
-class CanvasPanel(BasePanel):
-    def __init__(self, frame: BaseFrame, canvas_width_ratio: float, canvas_height_ratio: float, *args, **kw):
-        super().__init__(frame)
+class CanvasPanel(NotebookPanel):
+    def __init__(self, frame: NotebookFrame, tab_idx: int, canvas_width_ratio: float, canvas_height_ratio: float, *args, **kw):
+        super().__init__(frame, tab_idx)
         self.index = 0
         self.canvas_width_ratio = canvas_width_ratio
         self.canvas_height_ratio = canvas_height_ratio
