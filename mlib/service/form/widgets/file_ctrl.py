@@ -1,5 +1,5 @@
 import os
-from typing import Generic, Optional, TypeVar
+from typing import Any, Generic, Optional, TypeVar
 
 import wx
 
@@ -24,8 +24,9 @@ TBaseReader = TypeVar("TBaseReader", bound=BaseReader)
 class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
     def __init__(
         self,
+        parent: Any,
         frame: NotebookFrame,
-        parent: NotebookPanel,
+        panel: NotebookPanel,
         reader: TBaseReader,
         title: str,
         key: Optional[str] = None,
@@ -35,8 +36,9 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         tooltip: str = "",
         file_change_event=None,
     ) -> None:
-        self.frame = frame
         self.parent = parent
+        self.frame = frame
+        self.panel = panel
         self.reader: TBaseReader = reader
         self.original_data: Optional[TBaseHashModel] = None
         self.data: Optional[TBaseHashModel] = None
@@ -281,8 +283,9 @@ class MFileDropTarget(wx.FileDropTarget):
 class MPmxFilePickerCtrl(MFilePickerCtrl[PmxModel, PmxReader]):
     def __init__(
         self,
+        parent: Any,
         frame: NotebookFrame,
-        parent: NotebookPanel,
+        panel: NotebookPanel,
         title: str,
         key: Optional[str] = None,
         is_show_name: bool = True,
@@ -291,14 +294,15 @@ class MPmxFilePickerCtrl(MFilePickerCtrl[PmxModel, PmxReader]):
         tooltip: str = "",
         file_change_event=None,
     ) -> None:
-        super().__init__(frame, parent, PmxReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)
+        super().__init__(parent, frame, panel, PmxReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)
 
 
 class MVmdFilePickerCtrl(MFilePickerCtrl[VmdMotion, VmdReader]):
     def __init__(
         self,
+        parent: Any,
         frame: NotebookFrame,
-        parent: NotebookPanel,
+        panel: NotebookPanel,
         title: str,
         key: Optional[str] = None,
         is_show_name: bool = True,
@@ -307,4 +311,4 @@ class MVmdFilePickerCtrl(MFilePickerCtrl[VmdMotion, VmdReader]):
         tooltip: str = "",
         file_change_event=None,
     ) -> None:
-        super().__init__(frame, parent, VmdReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)
+        super().__init__(parent, frame, panel, VmdReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)

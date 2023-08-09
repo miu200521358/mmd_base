@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 import wx
 
@@ -11,11 +12,12 @@ __ = logger.get_text
 
 
 class ConsoleCtrl:
-    def __init__(self, frame: NotebookFrame, parent: NotebookPanel, rows: int, *args, **kw):
+    def __init__(self, parent: Any, frame: NotebookFrame, panel: NotebookPanel, rows: int, *args, **kw):
         super().__init__(*args, **kw)
 
-        self.frame = frame
         self.parent = parent
+        self.frame = frame
+        self.panel = panel
 
         self.root_sizer = wx.BoxSizer(wx.VERTICAL)
         self.text_ctrl = wx.TextCtrl(
