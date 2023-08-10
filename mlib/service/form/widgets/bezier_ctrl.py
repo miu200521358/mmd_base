@@ -11,7 +11,7 @@ __ = logger.get_text
 
 
 class BezierCtrl:
-    def __init__(self, frame: wx.Frame, parent: wx.Panel, change_event: Optional[Callable] = None):
+    def __init__(self, frame: wx.Frame, parent: wx.Panel, size: wx.Size, change_event: Optional[Callable] = None):
         super().__init__()
 
         self.frame = frame
@@ -20,7 +20,7 @@ class BezierCtrl:
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # 補間曲線パネル
-        self.panel = BezierViewPanel(self.parent, size=(130, 130))
+        self.panel = BezierViewPanel(self.parent, size=size)
         self.sizer.Add(self.panel, 0, wx.ALL, 0)
 
         # 補間曲線値
