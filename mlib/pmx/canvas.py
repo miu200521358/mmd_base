@@ -750,7 +750,6 @@ class PreviewCanvasWindow(BaseFrame):
     def __init__(
         self,
         parent: BaseFrame,
-        parent_canvas: PmxCanvas,
         title: str,
         size: wx.Size,
         look_at_model_names: list[str],
@@ -759,7 +758,7 @@ class PreviewCanvasWindow(BaseFrame):
         **kw,
     ):
         super().__init__(parent.app, title, size, *args, parent=parent, **kw)
-        self.panel = PreviewCanvasPanel(self, parent_canvas, look_at_model_names, look_at_bone_names)
+        self.panel = PreviewCanvasPanel(self, look_at_model_names, look_at_bone_names)
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
@@ -770,14 +769,11 @@ class PreviewCanvasWindow(BaseFrame):
 
 
 class PreviewCanvasPanel(BasePanel):
-    def __init__(
-        self, frame: BaseFrame, parent_canvas: PmxCanvas, look_at_model_names: list[str], look_at_bone_names: list[list[str]], *args, **kw
-    ):
+    def __init__(self, frame: BaseFrame, look_at_model_names: list[str], look_at_bone_names: list[list[str]], *args, **kw):
         super().__init__(frame)
         self.canvas_width_ratio = 1.0
         self.canvas_height_ratio = 0.9
         self.canvas = PmxCanvas(self, True)
-        self.parent_canvas = parent_canvas
         self.look_at_model_names = look_at_model_names
         self.look_at_bone_names = look_at_bone_names
         self.fno = -1
@@ -785,10 +781,6 @@ class PreviewCanvasPanel(BasePanel):
         self.canvas.vertical_degrees = 5
 
         self.root_sizer.Add(self.canvas, 0, wx.ALL, 0)
-
-        self.canvas.clear_model_set()
-        for model_set in self.parent_canvas.model_sets:
-            self.canvas.append_model_set(model_set.model, VmdMotion(), 0.0, True)
 
         self.btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
