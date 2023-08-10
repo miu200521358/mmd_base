@@ -62,8 +62,9 @@ def read_histories(history_keys: list[str]) -> dict[str, list[str]]:
 
 def insert_history(value: Any, histories: list[Any]):
     """ファイル履歴に追加する"""
-    if value in histories:
-        histories.remove(value)
+    existed_history = [i for i, history in enumerate(histories) if value == history]
+    if existed_history:
+        del histories[existed_history[0]]
     histories.insert(0, value)
 
 
