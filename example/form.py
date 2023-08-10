@@ -7,6 +7,7 @@ from typing import Any, Optional
 import numpy as np
 import wx
 import wx.lib.agw.cubecolourdialog as CCD
+from mlib.service.form.widgets.bezier_ctrl import BezierCtrl
 
 from mlib.service.form.widgets.image_btn_ctrl import ImageButton
 
@@ -500,6 +501,10 @@ class ConfigPanel(NotebookPanel):
         # 顔アップ
         self.sub_window_btn = wx.Button(self.scrolled_window, wx.ID_ANY, "サブウィンドウ", wx.DefaultPosition, wx.Size(100, 50))
         self.btn_sizer.Add(self.sub_window_btn, 0, wx.ALL, 5)
+
+        # ベジェ
+        self.bezier_ctrl = BezierCtrl(self.frame, self.scrolled_window)
+        self.btn_sizer.Add(self.bezier_ctrl.sizer, 0, wx.ALL, 5)
 
         self.config_sizer.Add(self.scrolled_window, 1, wx.ALL | wx.EXPAND | wx.FIXED_MINSIZE, 0)
 
