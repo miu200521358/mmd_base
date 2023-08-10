@@ -107,7 +107,7 @@ class MLogger:
         if self.console_handler:
             for h in self.logger.handlers:
                 if isinstance(h, ConsoleHandler):
-                    self.logger.handlers.remove(h)
+                    self.logger.removeHandler(h)
             if self.is_out_log:
                 self.console_handler.setFormatter(Formatter(self.STREAM_FORMAT))
             self.logger.addHandler(self.console_handler)
