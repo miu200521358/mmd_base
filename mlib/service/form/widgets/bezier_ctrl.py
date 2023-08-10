@@ -16,6 +16,7 @@ class BezierCtrl:
 
         self.frame = frame
         self.parent = parent
+        self.change_event = change_event
 
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -108,7 +109,7 @@ class BezierCtrl:
 
         # draw control points
         self.set_color(dc, "red")
-        pnt = BezierPoint(*mapper.fit(target_x_ctrl.GetValue(), target_y_ctrl.GetValue()), target_x_ctrl, target_y_ctrl)
+        pnt = BezierPoint(*mapper.fit(target_x_ctrl.GetValue(), target_y_ctrl.GetValue()), target_x_ctrl, target_y_ctrl, self.change_event)
         self.panel.append_point(pnt)
         pnt.draw(dc, True)
 
@@ -241,13 +242,21 @@ class Mapper:
 class BezierPoint:
     """マウスドラッグで移動できるオブジェクト用のクラス"""
 
-    def __init__(self, x: float, y: float, target_x_ctrl: wx.SpinCtrl, target_y_ctrl: wx.SpinCtrl) -> None:
+    def __init__(
+        self,
+        x: float,
+        y: float,
+        target_x_ctrl: wx.SpinCtrl,
+        target_y_ctrl: wx.SpinCtrl,
+        change_event: Optional[Callable] = None,
+    ) -> None:
         """コンストラクタ"""
         self.size = 2
         self.point = MVector2D(x, y)  # 表示位置を記録
         self.diff_point = MVector2D(0, 0)
         self.target_x_ctrl = target_x_ctrl
         self.target_y_ctrl = target_y_ctrl
+        self.change_event = change_event
 
     def hit_test(self, point: wx.Point) -> bool:
         """与えられた座標とアタリ判定して結果を返す"""
@@ -278,6 +287,9 @@ class BezierPoint:
     def update_position(self) -> None:
         self.target_x_ctrl.SetValue(int(self.point.x))
         self.target_y_ctrl.SetValue(int(127 - self.point.y))
+
+        if self.change_event:
+            self.change_event()
 
 
 class BezierViewPanel(wx.Panel):
