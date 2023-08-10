@@ -503,7 +503,7 @@ class ConfigPanel(NotebookPanel):
         self.btn_sizer.Add(self.sub_window_btn, 0, wx.ALL, 5)
 
         # ベジェ
-        self.bezier_ctrl = BezierCtrl(self.frame, self.scrolled_window)
+        self.bezier_ctrl = BezierCtrl(self.frame, self.scrolled_window, wx.Size(150, 150))
         self.btn_sizer.Add(self.bezier_ctrl.sizer, 0, wx.ALL, 5)
 
         self.config_sizer.Add(self.scrolled_window, 1, wx.ALL | wx.EXPAND | wx.FIXED_MINSIZE, 0)
