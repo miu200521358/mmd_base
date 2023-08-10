@@ -31,29 +31,25 @@ class BezierCtrl:
         self.start_x_title = wx.StaticText(self.parent, wx.ID_ANY, __("開始X: "), wx.DefaultPosition, wx.DefaultSize, 0)
         self.value_sizer.Add(self.start_x_title, 0, wx.ALL, 5)
         self.start_x_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="20", min=0, max=127, initial=20)
-        if change_event:
-            self.start_x_ctrl.Bind(wx.EVT_SPINCTRL, change_event)
+        self.start_x_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
         self.value_sizer.Add(self.start_x_ctrl, 0, wx.ALL, 0)
         # 開始Y
         self.start_y_title = wx.StaticText(self.parent, wx.ID_ANY, __("開始Y: "), wx.DefaultPosition, wx.DefaultSize, 0)
         self.value_sizer.Add(self.start_y_title, 0, wx.ALL, 5)
         self.start_y_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="20", min=0, max=127, initial=20)
-        if change_event:
-            self.start_y_ctrl.Bind(wx.EVT_SPINCTRL, change_event)
+        self.start_y_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
         self.value_sizer.Add(self.start_y_ctrl, 0, wx.ALL, 0)
         # 終了X
         self.end_x_title = wx.StaticText(self.parent, wx.ID_ANY, __("終了X: "), wx.DefaultPosition, wx.DefaultSize, 0)
         self.value_sizer.Add(self.end_x_title, 0, wx.ALL, 5)
         self.end_x_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="107", min=0, max=127, initial=107)
-        if change_event:
-            self.end_x_ctrl.Bind(wx.EVT_SPINCTRL, change_event)
+        self.end_x_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
         self.value_sizer.Add(self.end_x_ctrl, 0, wx.ALL, 0)
         # 終了Y
         self.end_y_title = wx.StaticText(self.parent, wx.ID_ANY, __("終了Y: "), wx.DefaultPosition, wx.DefaultSize, 0)
         self.value_sizer.Add(self.end_y_title, 0, wx.ALL, 5)
         self.end_y_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="107", min=0, max=127, initial=107)
-        if change_event:
-            self.end_y_ctrl.Bind(wx.EVT_SPINCTRL, change_event)
+        self.end_y_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
         self.value_sizer.Add(self.end_y_ctrl, 0, wx.ALL, 0)
 
         self.sizer.Add(self.value_sizer, 0, wx.ALL, 0)
@@ -63,6 +59,12 @@ class BezierCtrl:
         self.panel.Bind(wx.EVT_LEFT_DOWN, self.on_paint_bezier_mouse_left_down)
         self.panel.Bind(wx.EVT_LEFT_UP, self.on_paint_bezier_mouse_left_up)
         self.panel.Bind(wx.EVT_MOTION, self.on_paint_bezier_mouse_motion)
+
+    def on_change(self, event: wx.Event):
+        self.frame.Refresh(False)  # 描画更新
+
+        if self.change_event:
+            self.change_event(event)
 
     # ベジェ曲線の描画 -------------------------
     def on_paint(self, event: wx.Event):
