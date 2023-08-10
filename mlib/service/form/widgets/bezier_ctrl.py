@@ -2,9 +2,11 @@ import os
 from typing import Callable, Optional
 
 import wx
+from wx import adv as wx_adv
 
 from mlib.core.math import MVector2D
 from mlib.core.logger import MLogger
+from mlib.utils.file_utils import get_path
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -25,32 +27,38 @@ class BezierCtrl:
         self.sizer.Add(self.panel, 0, wx.ALL, 0)
 
         # 補間曲線値
-        self.value_sizer = wx.FlexGridSizer(0, 2, 5, 0)
+        self.value_sizer = wx.GridBagSizer()
 
         # 開始X
         self.start_x_title = wx.StaticText(self.parent, wx.ID_ANY, __("開始X: "), wx.DefaultPosition, wx.DefaultSize, 0)
-        self.value_sizer.Add(self.start_x_title, 0, wx.ALL, 5)
+        self.value_sizer.Add(self.start_x_title, (0, 0), (1, 1), wx.ALL, 5)
         self.start_x_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="20", min=0, max=127, initial=20)
         self.start_x_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
-        self.value_sizer.Add(self.start_x_ctrl, 0, wx.ALL, 0)
+        self.value_sizer.Add(self.start_x_ctrl, (0, 1), (1, 1), wx.ALL, 0)
         # 開始Y
         self.start_y_title = wx.StaticText(self.parent, wx.ID_ANY, __("開始Y: "), wx.DefaultPosition, wx.DefaultSize, 0)
-        self.value_sizer.Add(self.start_y_title, 0, wx.ALL, 5)
+        self.value_sizer.Add(self.start_y_title, (1, 0), (1, 1), wx.ALL, 5)
         self.start_y_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="20", min=0, max=127, initial=20)
         self.start_y_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
-        self.value_sizer.Add(self.start_y_ctrl, 0, wx.ALL, 0)
+        self.value_sizer.Add(self.start_y_ctrl, (1, 1), (1, 1), wx.ALL, 0)
         # 終了X
         self.end_x_title = wx.StaticText(self.parent, wx.ID_ANY, __("終了X: "), wx.DefaultPosition, wx.DefaultSize, 0)
-        self.value_sizer.Add(self.end_x_title, 0, wx.ALL, 5)
+        self.value_sizer.Add(self.end_x_title, (2, 0), (1, 1), wx.ALL, 5)
         self.end_x_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="107", min=0, max=127, initial=107)
         self.end_x_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
-        self.value_sizer.Add(self.end_x_ctrl, 0, wx.ALL, 0)
+        self.value_sizer.Add(self.end_x_ctrl, (2, 1), (1, 1), wx.ALL, 0)
         # 終了Y
         self.end_y_title = wx.StaticText(self.parent, wx.ID_ANY, __("終了Y: "), wx.DefaultPosition, wx.DefaultSize, 0)
-        self.value_sizer.Add(self.end_y_title, 0, wx.ALL, 5)
+        self.value_sizer.Add(self.end_y_title, (3, 0), (1, 1), wx.ALL, 5)
         self.end_y_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="107", min=0, max=127, initial=107)
         self.end_y_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
-        self.value_sizer.Add(self.end_y_ctrl, 0, wx.ALL, 0)
+        self.value_sizer.Add(self.end_y_ctrl, (3, 1), (1, 1), wx.ALL, 0)
+
+        self.template_ctrl = wx_adv.BitmapComboBox(self.parent, style=wx.CB_READONLY)
+        for i in range(1, 8):
+            self.template_ctrl.Append(f"{i:02d}", self.create_bitmap(f"mlib/resources/bezier/{i:02d}.png"))
+        self.template_ctrl.Bind(wx.EVT_COMBOBOX, self.on_select)
+        self.value_sizer.Add(self.template_ctrl, (4, 0), (1, 2), wx.ALL, 0)
 
         self.sizer.Add(self.value_sizer, 0, wx.ALL, 0)
 
@@ -59,6 +67,54 @@ class BezierCtrl:
         self.panel.Bind(wx.EVT_LEFT_DOWN, self.on_paint_bezier_mouse_left_down)
         self.panel.Bind(wx.EVT_LEFT_UP, self.on_paint_bezier_mouse_left_up)
         self.panel.Bind(wx.EVT_MOTION, self.on_paint_bezier_mouse_motion)
+
+    def create_bitmap(self, path: str) -> wx.Bitmap:
+        # 画像を読み込む
+        image = wx.Image(os.path.abspath(get_path(path)), wx.BITMAP_TYPE_ANY)
+
+        # リサイズした画像をビットマップに変換
+        bitmap = image.ConvertToBitmap()
+
+        return bitmap
+
+    def on_select(self, event: wx.Event):
+        template_idx = self.template_ctrl.GetSelection()
+        if template_idx == 0:
+            self.start_x_ctrl.SetValue(20)
+            self.start_y_ctrl.SetValue(20)
+            self.end_x_ctrl.SetValue(107)
+            self.end_y_ctrl.SetValue(107)
+        elif template_idx == 1:
+            self.start_x_ctrl.SetValue(50)
+            self.start_y_ctrl.SetValue(0)
+            self.end_x_ctrl.SetValue(77)
+            self.end_y_ctrl.SetValue(127)
+        elif template_idx == 2:
+            self.start_x_ctrl.SetValue(80)
+            self.start_y_ctrl.SetValue(0)
+            self.end_x_ctrl.SetValue(47)
+            self.end_y_ctrl.SetValue(127)
+        elif template_idx == 3:
+            self.start_x_ctrl.SetValue(40)
+            self.start_y_ctrl.SetValue(40)
+            self.end_x_ctrl.SetValue(67)
+            self.end_y_ctrl.SetValue(127)
+        elif template_idx == 4:
+            self.start_x_ctrl.SetValue(50)
+            self.start_y_ctrl.SetValue(0)
+            self.end_x_ctrl.SetValue(77)
+            self.end_y_ctrl.SetValue(77)
+        elif template_idx == 5:
+            self.start_x_ctrl.SetValue(0)
+            self.start_y_ctrl.SetValue(60)
+            self.end_x_ctrl.SetValue(67)
+            self.end_y_ctrl.SetValue(127)
+        elif template_idx == 6:
+            self.start_x_ctrl.SetValue(60)
+            self.start_y_ctrl.SetValue(0)
+            self.end_x_ctrl.SetValue(127)
+            self.end_y_ctrl.SetValue(67)
+        self.on_change(event)
 
     def on_change(self, event: wx.Event):
         self.frame.Refresh(False)  # 描画更新
