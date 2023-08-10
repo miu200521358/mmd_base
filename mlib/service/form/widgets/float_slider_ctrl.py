@@ -92,6 +92,20 @@ class FloatSliderCtrl:
         self._slider.SetValue(sv)
         self._value_ctrl.SetValue(tv)
 
+    def SetMax(self, v: float) -> None:
+        self._max = v
+        self.change_limit()
+
+    def SetMin(self, v: float) -> None:
+        self._min = v
+        self.change_limit()
+
+    def change_limit(self) -> None:
+        i_min, i_max = [round(v / self._increment) for v in (self._min, self._max)]
+
+        self._slider.SetMin(i_min)
+        self._slider.SetMax(i_max)
+
     def ChangeValue(self, v: float):
         tv, sv = self.get_value_by_text(str(v))
         self._value_ctrl.ChangeValue(tv)
