@@ -4,6 +4,7 @@ import os
 import sys
 from glob import glob
 from pathlib import Path
+from typing import Any
 
 from mlib.core.base import FileType
 from mlib.core.logger import MLogger
@@ -59,18 +60,18 @@ def read_histories(history_keys: list[str]) -> dict[str, list[str]]:
     return file_histories
 
 
-def insert_history(value: str, histories: list[str]):
+def insert_history(value: Any, histories: list[Any]):
     """ファイル履歴に追加する"""
     if value in histories:
         histories.remove(value)
     histories.insert(0, value)
 
 
-def save_histories(histories: dict[str, list[str]]):
+def save_histories(histories: dict[str, list[Any]]):
     """ファイル履歴を保存する"""
     root_dir = get_root_dir()
 
-    limited_histories: dict[str, list[str]] = {}
+    limited_histories: dict[str, list[Any]] = {}
     for key, values in histories.items():
         limited_histories[key] = values[:HISTORY_MAX]
 
