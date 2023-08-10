@@ -29,31 +29,31 @@ class BezierCtrl:
         # 開始X
         self.start_x_title = wx.StaticText(self.parent, wx.ID_ANY, __("開始X: "), wx.DefaultPosition, wx.DefaultSize, 0)
         self.value_sizer.Add(self.start_x_title, 0, wx.ALL, 5)
-        self.start_x = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="20", min=0, max=127, initial=20)
+        self.start_x_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="20", min=0, max=127, initial=20)
         if change_event:
-            self.start_x.Bind(wx.EVT_SPINCTRL, change_event)
-        self.value_sizer.Add(self.start_x, 0, wx.ALL, 0)
+            self.start_x_ctrl.Bind(wx.EVT_SPINCTRL, change_event)
+        self.value_sizer.Add(self.start_x_ctrl, 0, wx.ALL, 0)
         # 開始Y
         self.start_y_title = wx.StaticText(self.parent, wx.ID_ANY, __("開始Y: "), wx.DefaultPosition, wx.DefaultSize, 0)
         self.value_sizer.Add(self.start_y_title, 0, wx.ALL, 5)
-        self.start_y = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="20", min=0, max=127, initial=20)
+        self.start_y_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="20", min=0, max=127, initial=20)
         if change_event:
-            self.start_y.Bind(wx.EVT_SPINCTRL, change_event)
-        self.value_sizer.Add(self.start_y, 0, wx.ALL, 0)
+            self.start_y_ctrl.Bind(wx.EVT_SPINCTRL, change_event)
+        self.value_sizer.Add(self.start_y_ctrl, 0, wx.ALL, 0)
         # 終了X
         self.end_x_title = wx.StaticText(self.parent, wx.ID_ANY, __("終了X: "), wx.DefaultPosition, wx.DefaultSize, 0)
         self.value_sizer.Add(self.end_x_title, 0, wx.ALL, 5)
-        self.end_x = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="107", min=0, max=127, initial=107)
+        self.end_x_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="107", min=0, max=127, initial=107)
         if change_event:
-            self.end_x.Bind(wx.EVT_SPINCTRL, change_event)
-        self.value_sizer.Add(self.end_x, 0, wx.ALL, 0)
+            self.end_x_ctrl.Bind(wx.EVT_SPINCTRL, change_event)
+        self.value_sizer.Add(self.end_x_ctrl, 0, wx.ALL, 0)
         # 終了Y
         self.end_y_title = wx.StaticText(self.parent, wx.ID_ANY, __("終了Y: "), wx.DefaultPosition, wx.DefaultSize, 0)
         self.value_sizer.Add(self.end_y_title, 0, wx.ALL, 5)
-        self.end_y = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="107", min=0, max=127, initial=107)
+        self.end_y_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="107", min=0, max=127, initial=107)
         if change_event:
-            self.end_y.Bind(wx.EVT_SPINCTRL, change_event)
-        self.value_sizer.Add(self.end_y, 0, wx.ALL, 0)
+            self.end_y_ctrl.Bind(wx.EVT_SPINCTRL, change_event)
+        self.value_sizer.Add(self.end_y_ctrl, 0, wx.ALL, 0)
 
         self.sizer.Add(self.value_sizer, 0, wx.ALL, 0)
 
@@ -70,15 +70,15 @@ class BezierCtrl:
         mapper = Mapper(self.panel.GetSize(), MVector2D(0, 0), MVector2D(127, 127))
         target_point = [
             MVector2D(0, 0),
-            MVector2D(self.start_x.GetValue(), self.start_y.GetValue()),
-            MVector2D(self.end_x.GetValue(), self.end_y.GetValue()),
+            MVector2D(self.start_x_ctrl.GetValue(), self.start_y_ctrl.GetValue()),
+            MVector2D(self.end_x_ctrl.GetValue(), self.end_y_ctrl.GetValue()),
             MVector2D(127, 127),
         ]
 
         self.clear_bezier(dc)
         # self.draw_grid(m, dc)
-        self.draw_guide(target_point[0], target_point[1], self.start_x, self.start_y, mapper, dc)
-        self.draw_guide(target_point[2], target_point[3], self.end_x, self.end_y, mapper, dc)
+        self.draw_guide(target_point[0], target_point[1], self.start_x_ctrl, self.start_y_ctrl, mapper, dc)
+        self.draw_guide(target_point[2], target_point[3], self.end_x_ctrl, self.end_y_ctrl, mapper, dc)
         self.draw_bezier(target_point, mapper, dc)
         self.draw_bezier_error(mapper, dc)
 
