@@ -625,7 +625,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.Refresh()
 
 
-class SubCanvasWindow(BaseFrame):
+class SyncSubCanvasWindow(BaseFrame):
     def __init__(
         self,
         parent: BaseFrame,
@@ -638,17 +638,18 @@ class SubCanvasWindow(BaseFrame):
         **kw,
     ):
         super().__init__(parent.app, title, size, *args, parent=parent, **kw)
-        self.panel = SubCanvasPanel(self, parent_canvas, look_at_model_names, look_at_bone_names)
+        self.panel = SyncSubCanvasPanel(self, parent_canvas, look_at_model_names, look_at_bone_names)
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
     def on_close(self, event: wx.Event):
         # ウィンドウを破棄せずに非表示にする
+        self.panel.timer.Stop()
         self.Hide()
         event.Skip()
 
 
-class SubCanvasPanel(BasePanel):
+class SyncSubCanvasPanel(BasePanel):
     def __init__(
         self, frame: BaseFrame, parent_canvas: PmxCanvas, look_at_model_names: list[str], look_at_bone_names: list[list[str]], *args, **kw
     ):
@@ -714,7 +715,8 @@ class SubCanvasPanel(BasePanel):
         self.refresh_animation(True)
 
     def on_timer(self, event) -> None:
-        self.refresh_animation(False)
+        if self.frame.IsShown():
+            self.refresh_animation(False)
 
     def refresh_animation(self, force: bool):
         for midx in range(len(self.canvas.model_sets)):
@@ -746,7 +748,7 @@ class SubCanvasPanel(BasePanel):
         pass
 
 
-class PreviewCanvasWindow(BaseFrame):
+class AsyncSubCanvasWindow(BaseFrame):
     def __init__(
         self,
         parent: BaseFrame,
@@ -758,7 +760,7 @@ class PreviewCanvasWindow(BaseFrame):
         **kw,
     ):
         super().__init__(parent.app, title, size, *args, parent=parent, **kw)
-        self.panel = PreviewCanvasPanel(self, look_at_model_names, look_at_bone_names)
+        self.panel = AsyncSubCanvasPanel(self, look_at_model_names, look_at_bone_names)
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
@@ -768,7 +770,7 @@ class PreviewCanvasWindow(BaseFrame):
         event.Skip()
 
 
-class PreviewCanvasPanel(BasePanel):
+class AsyncSubCanvasPanel(BasePanel):
     def __init__(self, frame: BaseFrame, look_at_model_names: list[str], look_at_bone_names: list[list[str]], *args, **kw):
         super().__init__(frame)
         self.canvas_width_ratio = 1.0

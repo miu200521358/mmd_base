@@ -16,7 +16,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from mlib.core.exception import MApplicationException
 from mlib.core.logger import MLogger
-from mlib.pmx.canvas import PmxCanvas, SubCanvasWindow
+from mlib.pmx.canvas import PmxCanvas, SyncSubCanvasWindow
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import Bone, Face, SphereMode, Texture, ToonSharing
 from mlib.pmx.pmx_writer import PmxWriter
@@ -584,7 +584,7 @@ class TestFrame(NotebookFrame):
         self.notebook.AddPage(self.config_panel, __("設定"), False)
 
         self.sub_window_size = wx.Size(300, 300)
-        self.sub_window: Optional[SubCanvasWindow] = None
+        self.sub_window: Optional[SyncSubCanvasWindow] = None
 
         self.worker = PmxLoadWorker(self.file_panel, self.on_result)
 
@@ -744,7 +744,7 @@ class TestFrame(NotebookFrame):
     def create_sub_window(self) -> None:
         model: Optional[PmxModel] = self.file_panel.model_ctrl.data
         if not self.sub_window and model:
-            self.sub_window = SubCanvasWindow(
+            self.sub_window = SyncSubCanvasWindow(
                 self, self.config_panel.canvas, "サブウィンドウ", self.sub_window_size, [model.name], [model.bones.names]
             )
             frame_x, frame_y = self.GetPosition()
