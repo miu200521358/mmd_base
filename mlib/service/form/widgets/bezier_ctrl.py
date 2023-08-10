@@ -289,7 +289,7 @@ class BezierPoint:
         self.target_y_ctrl.SetValue(int(127 - self.point.y))
 
         if self.change_event:
-            self.change_event()
+            self.change_event(wx.EVT_MOUSE_EVENTS)
 
 
 class BezierViewPanel(wx.Panel):
