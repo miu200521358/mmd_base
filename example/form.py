@@ -7,8 +7,8 @@ from typing import Any, Optional
 import numpy as np
 import wx
 import wx.lib.agw.cubecolourdialog as CCD
-from mlib.service.form.widgets.bezier_ctrl import BezierCtrl
 
+from mlib.service.form.widgets.bezier_ctrl import BezierCtrl
 from mlib.service.form.widgets.image_btn_ctrl import ImageButton
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))

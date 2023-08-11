@@ -4,8 +4,8 @@ from typing import Callable, Optional
 import wx
 from wx import adv as wx_adv
 
-from mlib.core.math import MVector2D
 from mlib.core.logger import MLogger
+from mlib.core.math import MVector2D
 from mlib.utils.file_utils import get_path
 
 logger = MLogger(os.path.basename(__file__))
