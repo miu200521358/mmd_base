@@ -57,7 +57,7 @@ class Interpolation(BaseModel):
         return f"[start={self.start}, end={self.end}]"
 
 
-def separate_interpolation(interpolation: Interpolation, start: int, now: int, end: int) -> tuple[Interpolation, Interpolation]:
+def split_interpolation(interpolation: Interpolation, start: int, now: int, end: int) -> tuple[Interpolation, Interpolation]:
     if (now - start) == 0 or (end - start) == 0:
         return Interpolation(), Interpolation()
 
@@ -85,6 +85,14 @@ def separate_interpolation(interpolation: Interpolation, start: int, now: int, e
     after_bz.start = iI
     after_bz.end = iG
     after_bz.normalize(iJ, iD)
+
+    if before_bz.start.x == before_bz.start.y and before_bz.end.x == before_bz.end.y:
+        # 線形の場合初期化
+        before_bz = Interpolation()
+
+    if after_bz.start.x == after_bz.start.y and after_bz.end.x == after_bz.end.y:
+        # 線形の場合初期化
+        after_bz = Interpolation()
 
     return before_bz, after_bz
 

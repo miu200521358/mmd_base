@@ -9,6 +9,7 @@ import numpy as np
 from numpy.linalg import inv
 
 from mlib.core.collection import BaseHashModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
+from mlib.core.interpolation import split_interpolation
 from mlib.core.logger import MLogger
 from mlib.core.math import MMatrix4x4List, MQuaternion, MVector3D, MVector4D, calc_list_by_ratio
 from mlib.pmx.pmx_collection import PmxModel
@@ -75,11 +76,32 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             self.data[index].corrected_position = None
             self.data[index].corrected_rotation = None
 
-    def append(self, value: VmdBoneFrame, is_sort: bool = True):
+    def append(self, value: VmdBoneFrame, is_sort: bool = True, is_positive_index: bool = True) -> None:
         if value.ik_rotation is not None and value.index not in self._ik_indexes:
             self._ik_indexes.append(value.index)
             self._ik_indexes.sort()
-        super().append(value, is_sort)
+        super().append(value, is_sort, is_positive_index)
+
+    def insert(self, value: VmdBoneFrame, is_sort: bool = True, is_positive_index: bool = True) -> dict[int, int]:
+        if value.ik_rotation is not None and value.index not in self._ik_indexes:
+            self._ik_indexes.append(value.index)
+            self._ik_indexes.sort()
+
+        prev_index, middle_index, next_index = self.range_indexes(value.index)
+
+        replaced_map: dict[int, int] = {}
+        super().append(value, is_sort, is_positive_index)
+
+        if next_index > value.index:
+            # 次のキーフレが自身より後の場合、自身のキーフレがないので補間曲線を分割する
+            for i, next_interpolation in enumerate(self.data[next_index].interpolations):
+                split_target_interpolation, split_next_interpolation = split_interpolation(
+                    next_interpolation, prev_index, middle_index, next_index
+                )
+                self.data[middle_index].interpolations[i] = split_target_interpolation
+                self.data[next_index].interpolations[i] = split_next_interpolation
+
+        return replaced_map
 
     def calc(self, prev_index: int, index: int, next_index: int) -> VmdBoneFrame:
         if index in self.data:
@@ -1277,6 +1299,14 @@ class VmdMotion(BaseHashModel):
     def append_morph_frame(self, mf: VmdMorphFrame) -> None:
         """モーフキーフレ追加"""
         self.morphs[mf.name].append(mf)
+
+    def insert_bone_frame(self, bf: VmdBoneFrame) -> None:
+        """ボーンキーフレ挿入"""
+        self.bones[bf.name].insert(bf)
+
+    def insert_morph_frame(self, mf: VmdMorphFrame) -> None:
+        """モーフキーフレ挿入"""
+        self.morphs[mf.name].insert(mf)
 
     def animate(
         self, fno: int, model: PmxModel

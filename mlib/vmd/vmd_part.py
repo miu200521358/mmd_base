@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Iterator, Optional
 
 from mlib.core.base import BaseModel
 from mlib.core.interpolation import Interpolation, evaluate
@@ -207,6 +207,30 @@ class BoneInterpolations(BaseModel):
             self.vals[62],
             self.vals[63],
         ]
+
+    def __iter__(self) -> Iterator[Interpolation]:
+        return iter([self.translation_x, self.translation_y, self.translation_z, self.rotation])
+
+    def __getitem__(self, index: int) -> Interpolation:
+        if index == 0:
+            return self.translation_x
+        elif index == 1:
+            return self.translation_y
+        elif index == 2:
+            return self.translation_z
+        elif index == 3:
+            return self.rotation
+        raise IndexError(f"Interpolation index [{index}]")
+
+    def __setitem__(self, index: int, value: Interpolation) -> None:
+        if index == 0:
+            self.translation_x = value
+        elif index == 1:
+            self.translation_y = value
+        elif index == 2:
+            self.translation_z = value
+        elif index == 3:
+            self.rotation = value
 
 
 class VmdBoneFrame(BaseVmdNameFrame):

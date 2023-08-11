@@ -4,7 +4,7 @@ import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from mlib.core.interpolation import Interpolation, separate_interpolation
+from mlib.core.interpolation import Interpolation, split_interpolation
 from mlib.core.math import MMatrix4x4
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import STANDARD_BONE_NAMES
