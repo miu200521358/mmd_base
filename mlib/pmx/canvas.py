@@ -783,12 +783,14 @@ class AsyncSubCanvasPanel(BasePanel):
         frame: BaseFrame,
         look_at_model_names: list[str],
         look_at_bone_names: list[list[str]],
+        canvas_width_ratio: float = 1.0,
+        canvas_height_ratio: float = 0.9,
         *args,
         **kw,
     ):
         super().__init__(frame)
-        self.canvas_width_ratio = 1.0
-        self.canvas_height_ratio = 0.9
+        self.canvas_width_ratio = canvas_width_ratio
+        self.canvas_height_ratio = canvas_height_ratio
         self.canvas = PmxCanvas(self, True)
         self.look_at_model_names = look_at_model_names
         self.look_at_bone_names = look_at_bone_names
