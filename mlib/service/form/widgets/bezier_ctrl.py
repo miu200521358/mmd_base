@@ -31,25 +31,25 @@ class BezierCtrl:
 
         # 開始X
         self.start_x_title = wx.StaticText(self.parent, wx.ID_ANY, __("開始X: "), wx.DefaultPosition, wx.DefaultSize, 0)
-        self.value_sizer.Add(self.start_x_title, (0, 0), (1, 1), wx.ALL, 5)
+        self.value_sizer.Add(self.start_x_title, (0, 0), (1, 1), wx.ALL, 3)
         self.start_x_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="20", min=0, max=127, initial=20)
         self.start_x_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
         self.value_sizer.Add(self.start_x_ctrl, (0, 1), (1, 1), wx.ALL, 0)
         # 開始Y
         self.start_y_title = wx.StaticText(self.parent, wx.ID_ANY, __("開始Y: "), wx.DefaultPosition, wx.DefaultSize, 0)
-        self.value_sizer.Add(self.start_y_title, (1, 0), (1, 1), wx.ALL, 5)
+        self.value_sizer.Add(self.start_y_title, (1, 0), (1, 1), wx.ALL, 3)
         self.start_y_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="20", min=0, max=127, initial=20)
         self.start_y_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
         self.value_sizer.Add(self.start_y_ctrl, (1, 1), (1, 1), wx.ALL, 0)
         # 終了X
         self.end_x_title = wx.StaticText(self.parent, wx.ID_ANY, __("終了X: "), wx.DefaultPosition, wx.DefaultSize, 0)
-        self.value_sizer.Add(self.end_x_title, (2, 0), (1, 1), wx.ALL, 5)
+        self.value_sizer.Add(self.end_x_title, (2, 0), (1, 1), wx.ALL, 3)
         self.end_x_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="107", min=0, max=127, initial=107)
         self.end_x_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
         self.value_sizer.Add(self.end_x_ctrl, (2, 1), (1, 1), wx.ALL, 0)
         # 終了Y
         self.end_y_title = wx.StaticText(self.parent, wx.ID_ANY, __("終了Y: "), wx.DefaultPosition, wx.DefaultSize, 0)
-        self.value_sizer.Add(self.end_y_title, (3, 0), (1, 1), wx.ALL, 5)
+        self.value_sizer.Add(self.end_y_title, (3, 0), (1, 1), wx.ALL, 3)
         self.end_y_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="107", min=0, max=127, initial=107)
         self.end_y_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
         self.value_sizer.Add(self.end_y_ctrl, (3, 1), (1, 1), wx.ALL, 0)
