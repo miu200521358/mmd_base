@@ -86,12 +86,14 @@ def split_interpolation(interpolation: Interpolation, start: int, now: int, end:
     after_bz.end = iG
     after_bz.normalize(iJ, iD)
 
-    if before_bz.start.x == before_bz.start.y and before_bz.end.x == before_bz.end.y:
+    if (
+        before_bz.start.x == before_bz.start.y
+        and before_bz.end.x == before_bz.end.y
+        and after_bz.start.x == after_bz.start.y
+        and after_bz.end.x == after_bz.end.y
+    ):
         # 線形の場合初期化
         before_bz = Interpolation()
-
-    if after_bz.start.x == after_bz.start.y and after_bz.end.x == after_bz.end.y:
-        # 線形の場合初期化
         after_bz = Interpolation()
 
     return before_bz, after_bz
