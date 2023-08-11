@@ -630,7 +630,7 @@ class SyncSubCanvasWindow(BaseFrame):
         self,
         parent: BaseFrame,
         parent_canvas: PmxCanvas,
-        canvas: Optional[PmxCanvas],
+        canvas: PmxCanvas,
         title: str,
         size: wx.Size,
         look_at_model_names: list[str],
@@ -655,7 +655,7 @@ class SyncSubCanvasPanel(BasePanel):
         self,
         frame: BaseFrame,
         parent_canvas: PmxCanvas,
-        canvas: Optional[PmxCanvas],
+        canvas: PmxCanvas,
         look_at_model_names: list[str],
         look_at_bone_names: list[list[str]],
         *args,
@@ -664,9 +664,6 @@ class SyncSubCanvasPanel(BasePanel):
         super().__init__(frame)
         self.canvas_width_ratio = 1.0
         self.canvas_height_ratio = 0.9
-
-        if not canvas:
-            canvas = PmxCanvas(self, True)
 
         self.canvas = canvas
         self.canvas.parent = self
@@ -765,7 +762,7 @@ class AsyncSubCanvasWindow(BaseFrame):
     def __init__(
         self,
         parent: BaseFrame,
-        canvas: Optional[PmxCanvas],
+        canvas: PmxCanvas,
         title: str,
         size: wx.Size,
         look_at_model_names: list[str],
@@ -788,7 +785,7 @@ class AsyncSubCanvasPanel(BasePanel):
     def __init__(
         self,
         frame: BaseFrame,
-        canvas: Optional[PmxCanvas],
+        canvas: PmxCanvas,
         look_at_model_names: list[str],
         look_at_bone_names: list[list[str]],
         *args,
@@ -797,10 +794,6 @@ class AsyncSubCanvasPanel(BasePanel):
         super().__init__(frame)
         self.canvas_width_ratio = 1.0
         self.canvas_height_ratio = 0.9
-
-        if not canvas:
-            canvas = PmxCanvas(self, True)
-
         self.canvas = canvas
         self.canvas.parent = self
         self.look_at_model_names = look_at_model_names
