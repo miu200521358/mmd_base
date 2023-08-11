@@ -131,6 +131,12 @@ class BoneInterpolations(BaseModel):
             0,
         ]
 
+    def __str__(self) -> str:
+        return (
+            f"translation_x[{self.translation_x}], translation_y[{self.translation_y}], "
+            + f"translation_z[{self.translation_z}], rotation[{self.rotation}]"
+        )
+
     def evaluate(self, prev_index: int, index: int, next_index: int) -> tuple[float, float, float, float]:
         # 補間結果Yは、FKキーフレ内で計算する
         _, ry, _ = evaluate(self.rotation, prev_index, index, next_index)
