@@ -980,7 +980,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
     def max_fno(self) -> int:
         return max([max(self[fname].indexes + [0]) for fname in self.names] + [0])
 
-    def animate_vertex_morphs(self, fno: int, model: PmxModel) -> np.ndarray:
+    def animate_vertex_morphs(self, fno: int, model: PmxModel, is_gl: bool = True) -> np.ndarray:
         """頂点モーフ変形量"""
         row = len(model.vertices)
         poses = np.full((row, 3), np.zeros(3))
@@ -997,11 +997,14 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             for offset in morph.offsets:
                 if type(offset) is VertexMorphOffset and offset.vertex_index < row:
                     ratio_pos: MVector3D = offset.position * mf.ratio
-                    poses[offset.vertex_index] += ratio_pos.gl.vector
+                    if is_gl:
+                        poses[offset.vertex_index] += ratio_pos.gl.vector
+                    else:
+                        poses[offset.vertex_index] += ratio_pos.vector
 
         return np.array(poses)
 
-    def animate_after_vertex_morphs(self, fno: int, model: PmxModel) -> np.ndarray:
+    def animate_after_vertex_morphs(self, fno: int, model: PmxModel, is_gl: bool = True) -> np.ndarray:
         """ボーン変形後頂点モーフ変形量"""
         row = len(model.vertices)
         poses = np.full((row, 3), np.zeros(3))
@@ -1018,11 +1021,14 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             for offset in morph.offsets:
                 if type(offset) is VertexMorphOffset and offset.vertex_index < row:
                     ratio_pos: MVector3D = offset.position * mf.ratio
-                    poses[offset.vertex_index] += ratio_pos.gl.vector
+                    if is_gl:
+                        poses[offset.vertex_index] += ratio_pos.gl.vector
+                    else:
+                        poses[offset.vertex_index] += ratio_pos.vector
 
         return np.array(poses)
 
-    def animate_uv_morphs(self, fno: int, model: PmxModel, uv_index: int) -> np.ndarray:
+    def animate_uv_morphs(self, fno: int, model: PmxModel, uv_index: int, is_gl: bool = True) -> np.ndarray:
         row = len(model.vertices)
         poses = np.full((row, 4), np.zeros(4))
 
@@ -1041,8 +1047,9 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
                     ratio_pos: MVector4D = offset.uv * mf.ratio
                     poses[offset.vertex_index] += ratio_pos.vector
 
-        # UVのYは 1 - y で求め直しておく
-        poses[:, 1] = 1 - poses[:, 1]
+        if is_gl:
+            # UVのYは 1 - y で求め直しておく
+            poses[:, 1] = 1 - poses[:, 1]
 
         return np.array(poses)
 
@@ -1075,7 +1082,7 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
         return bf
 
     def animate_group_morphs(
-        self, fno: int, model: PmxModel, materials: list[ShaderMaterial]
+        self, fno: int, model: PmxModel, materials: list[ShaderMaterial], is_gl: bool = True
     ) -> tuple[np.ndarray, VmdBoneFrames, list[ShaderMaterial]]:
         group_vertex_poses = np.full((len(model.vertices), 3), np.zeros(3))
         bone_frames = VmdBoneFrames()
@@ -1100,7 +1107,10 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
                     for offset in part_morph.offsets:
                         if type(offset) is VertexMorphOffset and offset.vertex_index < group_vertex_poses.shape[0]:
                             ratio_pos: MVector3D = offset.position * mf_factor
-                            group_vertex_poses[offset.vertex_index] += ratio_pos.gl.vector
+                            if is_gl:
+                                group_vertex_poses[offset.vertex_index] += ratio_pos.gl.vector
+                            else:
+                                group_vertex_poses[offset.vertex_index] += ratio_pos.vector
                         elif type(offset) is BoneMorphOffset and offset.bone_index in model.bones:
                             bf = bone_frames[model.bones[offset.bone_index].name][fno]
                             bf = self.animate_bone_morph_frame(fno, model, bf, offset, mf_factor)
@@ -1309,24 +1319,24 @@ class VmdMotion(BaseHashModel):
         self.morphs[mf.name].insert(mf)
 
     def animate(
-        self, fno: int, model: PmxModel
+        self, fno: int, model: PmxModel, is_gl: bool = True
     ) -> tuple[int, np.ndarray, VmdBoneFrameTrees, np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 開始")
 
         # 頂点モーフ
-        vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model)
+        vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model, is_gl)
         logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 頂点モーフ")
 
         # ボーン変形後頂点モーフ
-        after_vertex_morph_poses = self.morphs.animate_after_vertex_morphs(fno, model)
+        after_vertex_morph_poses = self.morphs.animate_after_vertex_morphs(fno, model, is_gl)
         logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン変形後頂点モーフ")
 
         # UVモーフ
-        uv_morph_poses = self.morphs.animate_uv_morphs(fno, model, 0)
+        uv_morph_poses = self.morphs.animate_uv_morphs(fno, model, 0, is_gl)
         logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: UVモーフ")
 
         # 追加UVモーフ1
-        uv1_morph_poses = self.morphs.animate_uv_morphs(fno, model, 1)
+        uv1_morph_poses = self.morphs.animate_uv_morphs(fno, model, 1, is_gl)
         logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 追加UVモーフ1")
 
         # 追加UVモーフ2-4は無視
@@ -1336,7 +1346,9 @@ class VmdMotion(BaseHashModel):
         logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 材質モーフ")
 
         # グループモーフ
-        group_vertex_morph_poses, group_morph_bone_frames, group_materials = self.morphs.animate_group_morphs(fno, model, material_morphs)
+        group_vertex_morph_poses, group_morph_bone_frames, group_materials = self.morphs.animate_group_morphs(
+            fno, model, material_morphs, is_gl
+        )
         logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
         bone_matrixes = self.animate_bone([fno], model)
