@@ -124,6 +124,12 @@ class MotionSet:
         self.uv1_morph_poses = motion.morphs.animate_uv_morphs(fno, model, 1)
         self.material_morphs = motion.morphs.animate_material_morphs(fno, model)
 
+        group_vertex_morph_poses, group_morph_bone_frames, group_materials = motion.morphs.animate_group_morphs(
+            fno, model, self.material_morphs
+        )
+        self.vertex_morph_poses += group_vertex_morph_poses
+        self.material_morphs = group_materials
+
 
 class PmxCanvas(glcanvas.GLCanvas):
     def __init__(self, parent: CanvasPanel, is_sub: bool, *args, **kw):
