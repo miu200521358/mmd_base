@@ -12,7 +12,7 @@ from mlib.vmd.vmd_part import VmdMorphFrame
 from mlib.vmd.vmd_reader import VmdReader
 
 # 全体プロファイル
-# python -m cProfile -s tottime example\profile.py
+# python -m cProfile -s cumtime example\profile.py
 # 行プロファイル
 # kernprof -l example\profile.py
 # python -m line_profiler profile.py.lprof

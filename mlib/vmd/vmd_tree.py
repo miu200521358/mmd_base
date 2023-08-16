@@ -1,4 +1,4 @@
-from typing import Iterator
+from typing import Iterator, Optional
 
 import numpy as np
 
@@ -12,7 +12,9 @@ class VmdBoneFrameTree:
         "bone_name",
         "global_matrix_ary",
         "local_matrix_ary",
-        "position",
+        "cache_global_matrix",
+        "cache_local_matrix",
+        "cache_position",
     )
 
     def __init__(
@@ -28,15 +30,30 @@ class VmdBoneFrameTree:
         self.bone_name = bone_name
         self.global_matrix_ary = global_matrix_ary
         self.local_matrix_ary = local_matrix_ary
-        self.position = MVector3D(*global_matrix_ary[:3, 3])
+        self.cache_global_matrix: Optional[MMatrix4x4] = None
+        self.cache_local_matrix: Optional[MMatrix4x4] = None
+        self.cache_position: Optional[MVector3D] = None
 
     @property
     def global_matrix(self) -> MMatrix4x4:
-        return MMatrix4x4(self.global_matrix_ary)
+        if self.cache_global_matrix is not None:
+            return self.cache_global_matrix
+        self.cache_global_matrix = MMatrix4x4(self.global_matrix_ary)
+        return self.cache_global_matrix
 
     @property
     def local_matrix(self) -> MMatrix4x4:
-        return MMatrix4x4(self.local_matrix_ary)
+        if self.cache_local_matrix is not None:
+            return self.cache_local_matrix
+        self.cache_local_matrix = MMatrix4x4(self.local_matrix_ary)
+        return self.cache_local_matrix
+
+    @property
+    def position(self) -> MVector3D:
+        if self.cache_position is not None:
+            return self.cache_position
+        self.cache_position = MVector3D(*self.global_matrix_ary[:3, 3])
+        return self.cache_position
 
 
 class VmdBoneFrameTrees:

@@ -11,7 +11,7 @@ from numpy.linalg import inv
 from mlib.core.collection import BaseHashModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
 from mlib.core.interpolation import split_interpolation
 from mlib.core.logger import MLogger
-from mlib.core.math import MMatrix4x4List, MQuaternion, MVector3D, MVector4D, calc_list_by_ratio
+from mlib.core.math import MQuaternion, MVector3D, MVector4D, calc_list_by_ratio
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import (
     Bone,
@@ -221,11 +221,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 )
             ]
 
-        bone_index_mats: list[tuple[int, np.ndarray]] = []
+        bone_offset_mats: list[tuple[int, np.ndarray]] = []
+        bone_pos_mats = np.full((1, len(model.bones.indexes), 4, 4), np.eye(4))
         for bone_name in target_bone_names:
-            pos_mat = np.eye(4)
-            pos_mat[:3, 3] = model.bones[bone_name].position.vector
-            bone_index_mats.append((model.bones[bone_name].index, pos_mat))
+            bone = model.bones[bone_name]
+            bone_pos_mats[0, bone.index, :3, 3] = bone.position.vector
+            bone_offset_mats.append((bone.index, bone.offset_matrix))
 
         if out_fno_log:
             logger.info("ボーンモーフ計算")
@@ -264,41 +265,42 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         ) = self.get_bone_matrixes(fnos, model, target_bone_names, append_ik=append_ik, out_fno_log=out_fno_log)
 
         # ボーン変形行列
-        matrixes = MMatrix4x4List(motion_bone_poses.shape[0], motion_bone_poses.shape[1])
+        matrixes = np.full(motion_bone_poses.shape, np.eye(4))
+        eye_mat = np.eye(4)
 
         # モーフの適用
-        if 0 < np.count_nonzero(morph_bone_poses):
-            matrixes.matmul(morph_bone_poses)
-        if 0 < np.count_nonzero(morph_bone_local_poses):
-            matrixes.matmul(morph_bone_local_poses)
-        if 0 < np.count_nonzero(morph_bone_qqs):
-            matrixes.matmul(morph_bone_qqs)
-        if 0 < np.count_nonzero(morph_bone_local_qqs):
-            matrixes.matmul(morph_bone_local_qqs)
-        if 0 < np.count_nonzero(morph_bone_scales):
-            matrixes.matmul(morph_bone_scales)
-        if 0 < np.count_nonzero(morph_bone_local_scales):
-            matrixes.matmul(morph_bone_local_scales)
+        if 0 < np.count_nonzero(morph_bone_poses - eye_mat):
+            matrixes = matrixes @ morph_bone_poses
+        if 0 < np.count_nonzero(morph_bone_local_poses - eye_mat):
+            matrixes = matrixes @ morph_bone_local_poses
+        if 0 < np.count_nonzero(morph_bone_qqs - eye_mat):
+            matrixes = matrixes @ morph_bone_qqs
+        if 0 < np.count_nonzero(morph_bone_local_qqs - eye_mat):
+            matrixes = matrixes @ morph_bone_local_qqs
+        if 0 < np.count_nonzero(morph_bone_scales - eye_mat):
+            matrixes = matrixes @ morph_bone_scales
+        if 0 < np.count_nonzero(morph_bone_local_scales - eye_mat):
+            matrixes = matrixes @ morph_bone_local_scales
 
         # モーションの適用
-        if 0 < np.count_nonzero(motion_bone_poses):
-            matrixes.matmul(motion_bone_poses)
-        if 0 < np.count_nonzero(motion_bone_local_poses):
-            matrixes.matmul(motion_bone_local_poses)
-        if 0 < np.count_nonzero(motion_bone_qqs):
-            matrixes.matmul(motion_bone_qqs)
-        if 0 < np.count_nonzero(motion_bone_local_qqs):
-            matrixes.matmul(motion_bone_local_qqs)
-        if 0 < np.count_nonzero(motion_bone_scales):
-            matrixes.matmul(motion_bone_scales)
-        if 0 < np.count_nonzero(motion_bone_local_scales):
-            matrixes.matmul(motion_bone_local_scales)
+        if 0 < np.count_nonzero(motion_bone_poses - eye_mat):
+            matrixes = matrixes @ motion_bone_poses
+        if 0 < np.count_nonzero(motion_bone_local_poses - eye_mat):
+            matrixes = matrixes @ motion_bone_local_poses
+        if 0 < np.count_nonzero(motion_bone_qqs - eye_mat):
+            matrixes = matrixes @ motion_bone_qqs
+        if 0 < np.count_nonzero(motion_bone_local_qqs - eye_mat):
+            matrixes = matrixes @ motion_bone_local_qqs
+        if 0 < np.count_nonzero(motion_bone_scales - eye_mat):
+            matrixes = matrixes @ motion_bone_scales
+        if 0 < np.count_nonzero(motion_bone_local_scales - eye_mat):
+            matrixes = matrixes @ motion_bone_local_scales
 
         if out_fno_log:
             logger.info("ボーン行列計算")
 
         # 各ボーンごとのボーン変形行列結果と逆BOf行列(初期姿勢行列)の行列積
-        relative_matrixes = model.bones.parent_revert_matrixes @ matrixes.vector
+        relative_matrixes = model.bones.parent_revert_matrixes @ matrixes
 
         if out_fno_log:
             logger.info("ボーン変形行列リストアップ")
@@ -312,15 +314,16 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         result_matrixes = np.full(motion_bone_poses.shape, np.eye(4))
         result_global_matrixes = np.full(motion_bone_poses.shape, np.eye(4))
 
-        for i, (fidx, (bone_index, pos_mat)) in enumerate(product(list(range(len(fnos))), bone_index_mats)):
+        for i, (fidx, (bone_index, offset_matrix)) in enumerate(product(list(range(len(fnos))), bone_offset_mats)):
             if out_fno_log and 0 < i and 0 == i % 10000:
                 logger.info("-- ボーン変形行列積 [{i}]", i=i)
 
-            result_matrixes[fidx, bone_index] = model.bones[bone_index].offset_matrix.copy()
+            result_matrixes[fidx, bone_index] = offset_matrix.copy()
             for matrix in tree_relative_matrixes[fidx][bone_index]:
                 result_matrixes[fidx, bone_index] = matrix @ result_matrixes[fidx, bone_index]
-            # グローバル行列は最後にボーン位置に移動させる
-            result_global_matrixes[fidx, bone_index] = result_matrixes[fidx, bone_index] @ pos_mat
+
+        # グローバル行列は最後にボーン位置に移動させる
+        result_global_matrixes = result_matrixes @ bone_pos_mats
 
         bone_matrixes = VmdBoneFrameTrees()
         for fidx, fno in enumerate(fnos):

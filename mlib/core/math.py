@@ -114,9 +114,7 @@ class MVector(BaseModel):
 
     def effective(self: MVectorT, rtol: float = 1e-05, atol: float = 1e-08) -> MVectorT:
         vector = np.copy(self.vector)
-        vector[np.isinf(vector)] = 0
-        vector[np.isnan(vector)] = 0
-        vector[np.isclose(vector, 0, rtol=rtol, atol=atol)] = 0
+        vector[np.where(np.isinf(vector) | np.isnan(vector) | np.isclose(vector, 0, rtol=rtol, atol=atol))] = 0
         return self.__class__(*vector)
 
     def round(self: MVectorT, decimals: int) -> MVectorT:
@@ -800,8 +798,7 @@ class MQuaternion(MVector):
 
     def effective(self, rtol: float = 1e-05, atol: float = 1e-08) -> "MQuaternion":
         vector = np.copy(self.vector.components)
-        vector[np.isnan(vector)] = 0
-        vector[np.isinf(vector)] = 0
+        vector[np.where(np.isinf(vector) | np.isnan(vector))] = 0
         return MQuaternion(*vector)
 
     def length(self) -> float:
@@ -1628,7 +1625,7 @@ def operate_vector(v: MVectorT, other: Union[MVectorT, float, int], op) -> MVect
         v2 = v.__class__(*v1.components)
     else:
         v2 = v.__class__(*v1)
-    return v2.effective()
+    return v2
 
 
 def intersect_line_plane(line_point: MVector3D, line_direction: MVector3D, plane_point: MVector3D, plane_normal: MVector3D) -> MVector3D:
