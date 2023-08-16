@@ -6,7 +6,7 @@ from multiprocessing.popen_spawn_win32 import Popen
 
 class _Popen(Popen):
     def __init__(self, *args, **kw):
-        if hasattr(sys, "frozen"):
+        if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
             # We have to set original _MEIPASS2 value from sys._MEIPASS
             # to get --onefile mode working.
             os.putenv("_MEIPASS2", sys._MEIPASS)

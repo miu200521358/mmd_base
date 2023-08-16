@@ -63,6 +63,14 @@ Windows用MMDツールライブラリ
 1. (mtool) PS C:\MMD\mmd_base> `pip install -r requirements_test.txt`
 
 
+### Python3.11 nuitka 版 (2023.08) 没
+
+1. `conda create -n mtool2 pip python=3.11`
+1. `conda activate mtool2`
+1. `pip install bezier==2023.7.28 --no-binary=bezier`
+1. `pip install -r requirements.txt`
+1. `pip install -r requirements_test.txt`
+
 
 ## profile
 
