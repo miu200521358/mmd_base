@@ -1,5 +1,5 @@
 from enum import Enum, IntEnum, unique
-from pickle import dumps, loads
+from pickle import dumps, loads, HIGHEST_PROTOCOL
 from typing import TypeVar
 
 from mlib.core.logger import parse2str
@@ -46,4 +46,4 @@ class BaseModel:
         return parse2str(self)
 
     def copy(self: TBaseModel) -> TBaseModel:
-        return loads(dumps(self))
+        return loads(dumps(self, protocol=HIGHEST_PROTOCOL))
