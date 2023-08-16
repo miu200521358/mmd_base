@@ -267,20 +267,32 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         matrixes = MMatrix4x4List(motion_bone_poses.shape[0], motion_bone_poses.shape[1])
 
         # モーフの適用
-        matrixes.matmul(morph_bone_poses)
-        matrixes.matmul(morph_bone_local_poses)
-        matrixes.matmul(morph_bone_qqs)
-        matrixes.matmul(morph_bone_local_qqs)
-        matrixes.matmul(morph_bone_scales)
-        matrixes.matmul(morph_bone_local_scales)
+        if 0 < np.count_nonzero(morph_bone_poses):
+            matrixes.matmul(morph_bone_poses)
+        if 0 < np.count_nonzero(morph_bone_local_poses):
+            matrixes.matmul(morph_bone_local_poses)
+        if 0 < np.count_nonzero(morph_bone_qqs):
+            matrixes.matmul(morph_bone_qqs)
+        if 0 < np.count_nonzero(morph_bone_local_qqs):
+            matrixes.matmul(morph_bone_local_qqs)
+        if 0 < np.count_nonzero(morph_bone_scales):
+            matrixes.matmul(morph_bone_scales)
+        if 0 < np.count_nonzero(morph_bone_local_scales):
+            matrixes.matmul(morph_bone_local_scales)
 
         # モーションの適用
-        matrixes.matmul(motion_bone_poses)
-        matrixes.matmul(motion_bone_local_poses)
-        matrixes.matmul(motion_bone_qqs)
-        matrixes.matmul(motion_bone_local_qqs)
-        matrixes.matmul(motion_bone_scales)
-        matrixes.matmul(motion_bone_local_scales)
+        if 0 < np.count_nonzero(motion_bone_poses):
+            matrixes.matmul(motion_bone_poses)
+        if 0 < np.count_nonzero(motion_bone_local_poses):
+            matrixes.matmul(motion_bone_local_poses)
+        if 0 < np.count_nonzero(motion_bone_qqs):
+            matrixes.matmul(motion_bone_qqs)
+        if 0 < np.count_nonzero(motion_bone_local_qqs):
+            matrixes.matmul(motion_bone_local_qqs)
+        if 0 < np.count_nonzero(motion_bone_scales):
+            matrixes.matmul(motion_bone_scales)
+        if 0 < np.count_nonzero(motion_bone_local_scales):
+            matrixes.matmul(motion_bone_local_scales)
 
         if out_fno_log:
             logger.info("ボーン行列計算")
