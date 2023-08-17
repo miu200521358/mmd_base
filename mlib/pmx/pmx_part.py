@@ -1070,7 +1070,6 @@ class Bone(BaseIndexNameModel):
             in (
                 "上半身",
                 "上半身2",
-                "上半身3",
                 "首根元",
             )
             or self.is_head
