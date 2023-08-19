@@ -2,13 +2,14 @@ from multiprocessing import freeze_support
 
 import pytest
 
-from mlib.base.math import MMatrix4x4, MQuaternion, MVector3D
+from mlib.core.math import MQuaternion, MVector2D, MVector3D
+from mlib.vmd.vmd_part import VmdBoneFrame
 
 
 def test_read_by_filepath_error():
     import os
 
-    from mlib.base.exception import MParseException
+    from mlib.core.exception import MParseException
     from mlib.vmd.vmd_reader import VmdReader
 
     reader = VmdReader()
@@ -402,7 +403,7 @@ def test_read_by_filepath_ok_matrix_animate() -> None:
     model = PmxReader().read_by_filepath("D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/ISAO式ミク/I_ミクv4/Miku_V4_準標準.pmx")
 
     # キーフレ
-    gl_matrixes, _, _, _, _ = motion.animate(999, model)
+    _, gl_matrixes, _, _, _, _, _, _ = motion.animate(999, model)
 
     assert gl_matrixes is not None
 
@@ -1114,44 +1115,108 @@ def test_vmd_save_01():
     assert output_motion
 
 
-def test_vmd_save_02():
-    from mlib.pmx.pmx_part import STANDARD_BONE_NAMES
-    from mlib.pmx.pmx_collection import PmxModel
-    from mlib.pmx.pmx_reader import PmxReader
-    from mlib.vmd.vmd_part import VmdBoneFrame
+def test_insert_vmd01() -> None:
     from mlib.vmd.vmd_collection import VmdMotion
-    from mlib.vmd.vmd_reader import VmdReader
-    from mlib.vmd.vmd_writer import VmdWriter
 
-    vmd_reader = VmdReader()
-    motion: VmdMotion = vmd_reader.read_by_filepath(
-        "D:/MMD/MikuMikuDance_v926x64/UserFile/Motion/ダンス_1人/カミサマネジマキ 粉ふきスティック/sora_guiter1_2016.vmd"
-    )
+    motion = VmdMotion()
 
-    pmx_reader = PmxReader()
-    model: PmxModel = pmx_reader.read_by_filepath(
-        "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/弱音ハク/Tda式改変弱音ハクccvセット1.05 coa/Tda式改変弱音ハクccv_nc 1.05/ギター用/Tda式改変弱音ハクccv_nc ver1.05_ギター.pmx"
-    )
+    bf1 = VmdBoneFrame(9, "センター")
+    bf1.position = MVector3D(1.5, 25, 0)
+    motion.append_bone_frame(bf1)
 
-    fno = 3100
-    new_motion = VmdMotion()
-    poses, qqs, scales, local_poses, local_qqs, local_scales = motion.bones.get_bone_matrixes(
-        [fno], model, list(set(STANDARD_BONE_NAMES.keys()) & set(model.bones.names))
-    )
-    for bidx, bone_name in enumerate(STANDARD_BONE_NAMES.keys()):
-        if bone_name not in model.bones:
-            continue
-        new_bf = VmdBoneFrame(index=fno, name=bone_name)
-        new_bf.position = MMatrix4x4(*poses[0, bidx].flatten()).to_position()
-        new_bf.rotation = MMatrix4x4(*qqs[0, bidx].flatten()).to_quaternion()
-        new_motion.bones[bone_name].append(new_bf)
-        print(f"{bone_name}: {fno}")
+    bf2 = VmdBoneFrame(17, "センター")
+    bf2.position = MVector3D(0, 35, 0)
+    motion.append_bone_frame(bf2)
 
-    VmdWriter(
-        new_motion, "D:/MMD/MikuMikuDance_v926x64/UserFile/Motion/ダンス_1人/カミサマネジマキ 粉ふきスティック/sora_guiter1_2016_焼き込み.vmd", "ハク腕焼き込み"
-    ).save()
+    test_bf1 = VmdBoneFrame(12, "センター")
+    test_bf1.position = MVector3D(0.5, 30, 0)
+    motion.insert_bone_frame(test_bf1)
 
-    assert True
+    interpolations = motion.bones["センター"].data[12].interpolations
+
+    assert interpolations.translation_x.start.x == 20
+    assert interpolations.translation_x.start.y == 20
+    assert interpolations.translation_x.end.x == 107
+    assert interpolations.translation_x.end.y == 107
+
+    assert interpolations.translation_y.start.x == 20
+    assert interpolations.translation_y.start.y == 20
+    assert interpolations.translation_y.end.x == 107
+    assert interpolations.translation_y.end.y == 107
+
+    assert interpolations.translation_z.start.x == 20
+    assert interpolations.translation_z.start.y == 20
+    assert interpolations.translation_z.end.x == 107
+    assert interpolations.translation_z.end.y == 107
+
+    assert interpolations.rotation.start.x == 20
+    assert interpolations.rotation.start.y == 20
+    assert interpolations.rotation.end.x == 107
+    assert interpolations.rotation.end.y == 107
+
+
+def test_insert_vmd02() -> None:
+    from mlib.vmd.vmd_collection import VmdMotion
+
+    motion = VmdMotion()
+
+    bf1 = VmdBoneFrame(9, "センター")
+    bf1.position = MVector3D(1.5, 25, 0)
+    motion.append_bone_frame(bf1)
+
+    bf2 = VmdBoneFrame(17, "センター")
+    bf2.position = MVector3D(0, 35, 0)
+    bf2.interpolations.translation_x.start = MVector2D(75, 14)
+    bf2.interpolations.translation_x.end = MVector2D(52, 114)
+    motion.append_bone_frame(bf2)
+
+    test_bf1 = VmdBoneFrame(12, "センター")
+    test_bf1.position = MVector3D(0.5, 30, 0)
+    motion.insert_bone_frame(test_bf1)
+
+    split_interpolations = motion.bones["センター"].data[12].interpolations
+
+    assert split_interpolations.translation_x.start.x == 63
+    assert split_interpolations.translation_x.start.y == 17
+    assert split_interpolations.translation_x.end.x == 100
+    assert split_interpolations.translation_x.end.y == 66
+
+    assert split_interpolations.translation_y.start.x == 20
+    assert split_interpolations.translation_y.start.y == 20
+    assert split_interpolations.translation_y.end.x == 107
+    assert split_interpolations.translation_y.end.y == 107
+
+    assert split_interpolations.translation_z.start.x == 20
+    assert split_interpolations.translation_z.start.y == 20
+    assert split_interpolations.translation_z.end.x == 107
+    assert split_interpolations.translation_z.end.y == 107
+
+    assert split_interpolations.rotation.start.x == 20
+    assert split_interpolations.rotation.start.y == 20
+    assert split_interpolations.rotation.end.x == 107
+    assert split_interpolations.rotation.end.y == 107
+
+    next_interpolations = motion.bones["センター"].data[17].interpolations
+
+    assert next_interpolations.translation_x.start.x == 36
+    assert next_interpolations.translation_x.start.y == 47
+    assert next_interpolations.translation_x.end.x == 45
+    assert next_interpolations.translation_x.end.y == 115
+
+    assert next_interpolations.translation_y.start.x == 20
+    assert next_interpolations.translation_y.start.y == 20
+    assert next_interpolations.translation_y.end.x == 107
+    assert next_interpolations.translation_y.end.y == 107
+
+    assert next_interpolations.translation_z.start.x == 20
+    assert next_interpolations.translation_z.start.y == 20
+    assert next_interpolations.translation_z.end.x == 107
+    assert next_interpolations.translation_z.end.y == 107
+
+    assert next_interpolations.rotation.start.x == 20
+    assert next_interpolations.rotation.start.y == 20
+    assert next_interpolations.rotation.end.x == 107
+    assert next_interpolations.rotation.end.y == 107
 
 
 if __name__ == "__main__":

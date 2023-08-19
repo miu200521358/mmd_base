@@ -1,19 +1,19 @@
 import os
 from struct import Struct
 
-from mlib.base.base import Encoding, FileType
-from mlib.base.exception import MParseException
-from mlib.base.logger import MLogger
-from mlib.base.math import MVector3D
-from mlib.base.part import Switch
-from mlib.base.reader import BaseReader, StructUnpackType
+from mlib.core.base import Encoding, FileType
+from mlib.core.exception import MParseException
+from mlib.core.logger import MLogger
+from mlib.core.math import MVector3D
+from mlib.core.part import Switch
+from mlib.core.reader import BaseReader, StructUnpackType
+from mlib.pmx.bone_setting import BoneFlg
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import (
     Bdef1,
     Bdef2,
     Bdef4,
     Bone,
-    BoneFlg,
     BoneMorphOffset,
     DeformType,
     DisplaySlot,
@@ -492,8 +492,10 @@ class PmxReader(BaseReader[PmxModel]):
                 reference.display_type = DisplayType(self.read_byte())
                 if reference.display_type == DisplayType.BONE:
                     reference.display_index = self.read_bone_index()
+                    model.bones[reference.display_index].display_slot = display_slot.index
                 else:
                     reference.display_index = self.read_morph_index()
+                    model.morphs[reference.display_index].display_slot = display_slot.index
                 display_slot.references.append(reference)
 
             model.display_slots.append(display_slot)

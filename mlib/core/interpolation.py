@@ -3,8 +3,8 @@ from functools import lru_cache
 import bezier
 import numpy as np
 
-from mlib.base.base import BaseModel
-from mlib.base.math import MVector2D
+from mlib.core.base import BaseModel
+from mlib.core.math import MVector2D
 
 # MMDでの補間曲線の最大値
 IP_MAX = 127
@@ -53,8 +53,11 @@ class Interpolation(BaseModel):
         # pythonは偶数丸めなので、整数部で丸めた後、元に戻す
         return int(round(round(t2, -6) / 1000000))
 
+    def __str__(self) -> str:
+        return f"[start={self.start}, end={self.end}]"
 
-def separate_interpolation(interpolation: Interpolation, start: int, now: int, end: int) -> tuple[Interpolation, Interpolation]:
+
+def split_interpolation(interpolation: Interpolation, start: int, now: int, end: int) -> tuple[Interpolation, Interpolation]:
     if (now - start) == 0 or (end - start) == 0:
         return Interpolation(), Interpolation()
 
@@ -83,6 +86,16 @@ def separate_interpolation(interpolation: Interpolation, start: int, now: int, e
     after_bz.end = iG
     after_bz.normalize(iJ, iD)
 
+    if (
+        before_bz.start.x == before_bz.start.y
+        and before_bz.end.x == before_bz.end.y
+        and after_bz.start.x == after_bz.start.y
+        and after_bz.end.x == after_bz.end.y
+    ):
+        # 線形の場合初期化
+        before_bz = Interpolation()
+        after_bz = Interpolation()
+
     return before_bz, after_bz
 
 
@@ -105,14 +118,28 @@ def get_threshold_infections(values: np.ndarray, threshold: float) -> np.ndarray
     start_idx = 0
     end_idx = 1
     while end_idx <= len(values) - 1:
-        diff = np.abs(values[start_idx:end_idx]).ptp()
+        diff = np.ptp(values[start_idx:end_idx])
         if diff >= threshold:
-            extract_idxs.append(start_idx)
-            extract_idxs.append(end_idx - 1)
+            extract_idxs.extend([start_idx, end_idx - 1])
             start_idx = end_idx - 1
         else:
             end_idx += 1
-    return np.array(sorted(list(set(extract_idxs))), dtype=np.float64)
+    return np.array(sorted(set(extract_idxs)), dtype=np.int32)
+
+
+# def get_threshold_infections(values: np.ndarray, threshold: float) -> np.ndarray:
+#     extract_idxs = []
+#     start_idx = 0
+#     end_idx = 1
+#     while end_idx <= len(values) - 1:
+#         diff = np.abs(values[start_idx:end_idx]).ptp()
+#         if diff >= threshold:
+#             extract_idxs.append(start_idx)
+#             extract_idxs.append(end_idx - 1)
+#             start_idx = end_idx - 1
+#         else:
+#             end_idx += 1
+#     return np.array(sorted(list(set(extract_idxs))), dtype=np.int32)
 
 
 def create_interpolation(values: list[float]):
@@ -123,7 +150,7 @@ def create_interpolation(values: list[float]):
     xs = np.arange(0, len(values))
 
     # YはXの移動分を許容範囲とする
-    ys = np.array(sorted(list(set(values))), dtype=np.float64)
+    ys = np.array(values, dtype=np.float64)
 
     # https://github.com/dhermes/bezier/issues/242
     s_vals = np.linspace(0, 1, len(values))

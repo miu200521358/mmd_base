@@ -1,16 +1,16 @@
 import os
-from typing import Generic, Optional, TypeVar
+from typing import Any, Generic, Optional, TypeVar
 
 import wx
 
-from mlib.base.collection import BaseHashModel
-from mlib.base.logger import MLogger
-from mlib.base.reader import BaseReader
+from mlib.core.collection import BaseHashModel
+from mlib.core.logger import MLogger
+from mlib.core.reader import BaseReader
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_reader import PmxReader
-from mlib.service.form.base_frame import BaseFrame
-from mlib.service.form.base_panel import BasePanel
-from mlib.utils.file_utils import get_dir_path, insert_history, unwrapped_path, validate_file, validate_save_file
+from mlib.service.form.notebook_frame import NotebookFrame
+from mlib.service.form.notebook_panel import NotebookPanel
+from mlib.utils.file_utils import get_dir_path, insert_history, separate_path, unwrapped_path, validate_file, validate_save_file
 from mlib.vmd.vmd_collection import VmdMotion
 from mlib.vmd.vmd_reader import VmdReader
 
@@ -24,8 +24,9 @@ TBaseReader = TypeVar("TBaseReader", bound=BaseReader)
 class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
     def __init__(
         self,
-        frame: BaseFrame,
-        parent: BasePanel,
+        parent: Any,
+        frame: NotebookFrame,
+        panel: NotebookPanel,
         reader: TBaseReader,
         title: str,
         key: Optional[str] = None,
@@ -35,8 +36,9 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         tooltip: str = "",
         file_change_event=None,
     ) -> None:
-        self.frame = frame
         self.parent = parent
+        self.frame = frame
+        self.panel = panel
         self.reader: TBaseReader = reader
         self.original_data: Optional[TBaseHashModel] = None
         self.data: Optional[TBaseHashModel] = None
@@ -157,6 +159,13 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         if self.valid(v):
             self.file_ctrl.SetPath(v)
 
+    @property
+    def separated_path(self) -> tuple[str, str, str]:
+        """パスを「ディレクトリパス」「ファイル名」「ファイル拡張子」に分割して返す"""
+        if not self.path:
+            return "", "", ""
+        return separate_path(self.file_ctrl.GetPath())
+
     def valid(self, v: Optional[str] = None) -> bool:
         path = v if v else self.file_ctrl.GetPath()
         if not path.strip():
@@ -274,8 +283,9 @@ class MFileDropTarget(wx.FileDropTarget):
 class MPmxFilePickerCtrl(MFilePickerCtrl[PmxModel, PmxReader]):
     def __init__(
         self,
-        frame: BaseFrame,
-        parent: BasePanel,
+        parent: Any,
+        frame: NotebookFrame,
+        panel: NotebookPanel,
         title: str,
         key: Optional[str] = None,
         is_show_name: bool = True,
@@ -284,14 +294,15 @@ class MPmxFilePickerCtrl(MFilePickerCtrl[PmxModel, PmxReader]):
         tooltip: str = "",
         file_change_event=None,
     ) -> None:
-        super().__init__(frame, parent, PmxReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)
+        super().__init__(parent, frame, panel, PmxReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)
 
 
 class MVmdFilePickerCtrl(MFilePickerCtrl[VmdMotion, VmdReader]):
     def __init__(
         self,
-        frame: BaseFrame,
-        parent: BasePanel,
+        parent: Any,
+        frame: NotebookFrame,
+        panel: NotebookPanel,
         title: str,
         key: Optional[str] = None,
         is_show_name: bool = True,
@@ -300,4 +311,4 @@ class MVmdFilePickerCtrl(MFilePickerCtrl[VmdMotion, VmdReader]):
         tooltip: str = "",
         file_change_event=None,
     ) -> None:
-        super().__init__(frame, parent, VmdReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)
+        super().__init__(parent, frame, panel, VmdReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)

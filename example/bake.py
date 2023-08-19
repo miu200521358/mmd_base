@@ -4,13 +4,13 @@ import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from mlib.base.interpolation import Interpolation, separate_interpolation
-from mlib.base.math import MMatrix4x4
-from mlib.pmx.pmx_part import STANDARD_BONE_NAMES
+from mlib.core.interpolation import Interpolation, split_interpolation
+from mlib.core.math import MMatrix4x4
 from mlib.pmx.pmx_collection import PmxModel
+from mlib.pmx.pmx_part import STANDARD_BONE_NAMES
 from mlib.pmx.pmx_reader import PmxReader
-from mlib.vmd.vmd_part import VmdBoneFrame
 from mlib.vmd.vmd_collection import VmdMotion
+from mlib.vmd.vmd_part import VmdBoneFrame
 from mlib.vmd.vmd_reader import VmdReader
 from mlib.vmd.vmd_writer import VmdWriter
 
@@ -100,15 +100,15 @@ for n in range(1, 5):
         for bone_name in bone_names:
             new_bf = new_motion.bones[bone_name][fno]
             new_bf.position = motion.bones[bone_name][fno].position
-            new_bf.rotation = MMatrix4x4(*qqs[fidx, model.bones[bone_name].index].flatten()).to_quaternion()
+            new_bf.rotation = MMatrix4x4(qqs[fidx, model.bones[bone_name].index]).to_quaternion()
 
             prev_fno, now_fno, next_fno = motion.bones[bone_name].range_indexes(fno)
             if now_fno < next_fno:
                 next_bf = motion.bones[bone_name].data[next_fno]
-                now_rot_ip, next_rot_ip = separate_interpolation(next_bf.interpolations.rotation, prev_fno, now_fno, next_fno)
-                now_mov_x_ip, next_mov_x_ip = separate_interpolation(next_bf.interpolations.translation_x, prev_fno, now_fno, next_fno)
-                now_mov_y_ip, next_mov_y_ip = separate_interpolation(next_bf.interpolations.translation_y, prev_fno, now_fno, next_fno)
-                now_mov_z_ip, next_mov_z_ip = separate_interpolation(next_bf.interpolations.translation_z, prev_fno, now_fno, next_fno)
+                now_rot_ip, next_rot_ip = split_interpolation(next_bf.interpolations.rotation, prev_fno, now_fno, next_fno)
+                now_mov_x_ip, next_mov_x_ip = split_interpolation(next_bf.interpolations.translation_x, prev_fno, now_fno, next_fno)
+                now_mov_y_ip, next_mov_y_ip = split_interpolation(next_bf.interpolations.translation_y, prev_fno, now_fno, next_fno)
+                now_mov_z_ip, next_mov_z_ip = split_interpolation(next_bf.interpolations.translation_z, prev_fno, now_fno, next_fno)
 
                 new_bf.interpolations.rotation = now_rot_ip
                 new_bf.interpolations.translation_x = now_mov_x_ip

@@ -17,6 +17,7 @@ uniform sampler2D sphereSampler;
 uniform vec4 sphereFactor;
 
 uniform vec3 lightDirection;
+uniform int isShowBoneWeight;
 
 in float alpha;
 in vec4 vertexColor;
@@ -25,6 +26,7 @@ in vec2 vertexUv;
 in vec3 vetexNormal;
 in vec2 sphereUv;
 in vec3 eye;
+in float totalBoneWeight;
 
 out vec4  outColor;
 
@@ -58,4 +60,9 @@ void main() {
 
     // スペキュラ適用
     outColor.rgb += vertexSpecular;
+
+    if (isShowBoneWeight == 1) {
+        // ボーンウェイトを表示する場合、透明度を乗算する
+        outColor.a *= totalBoneWeight;
+    }
 }

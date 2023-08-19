@@ -1,14 +1,14 @@
 import os
 from enum import IntEnum
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
 
-from mlib.base.exception import MViewerException
-from mlib.base.math import MMatrix4x4, MQuaternion, MVector3D, MVector4D
+from mlib.core.exception import MViewerException
+from mlib.core.math import MMatrix4x4, MQuaternion, MVector3D, MVector4D
 
 
 class VsLayout(IntEnum):
@@ -22,6 +22,7 @@ class VsLayout(IntEnum):
     MORPH_POS_ID = 7
     MORPH_UV_ID = 8
     MORPH_UV1_ID = 9
+    MORPH_AFTER_POS_ID = 10
 
 
 class ProgramType(IntEnum):
@@ -116,21 +117,21 @@ class MShader:
     INITIAL_CAMERA_OFFSET_POSITION = MVector3D()
     INITIAL_LOOK_AT_CENTER_POSITION = MVector3D(0.0, INITIAL_LOOK_AT_CENTER_Y, 0.0)
 
-    def __init__(self, width: int, height: int) -> None:
+    def __init__(
+        self,
+        width: int,
+        height: int,
+        camera_position: MVector3D,
+        camera_offset_position: MVector3D,
+        camera_degrees: MVector3D,
+        look_at_center: MVector3D,
+        vertical_degrees: float,
+        aspect_ratio: float,
+    ) -> None:
         self.width = width
         self.height = height
-        self.vertical_degrees = self.INITIAL_VERTICAL_DEGREES
-        self.aspect_ratio = float(self.width) / float(self.height)
         self.near_plane = 1
         self.far_plane = 100
-        self.look_at_center = self.INITIAL_LOOK_AT_CENTER_POSITION.copy()
-
-        # カメラの位置
-        self.camera_position = self.INITIAL_CAMERA_POSITION.copy()
-        # カメラの補正位置
-        self.camera_offset_position = self.INITIAL_CAMERA_OFFSET_POSITION.copy()
-        # カメラの回転(eulerで扱う)
-        self.camera_degrees = MVector3D()
 
         # light position
         self.light_position = MVector3D(-20, self.INITIAL_CAMERA_POSITION_Y * 2, self.INITIAL_CAMERA_POSITION_Z * 2)
@@ -162,6 +163,8 @@ class MShader:
         self.sphere_uniform: dict[int, Any] = {}
         self.sphere_factor_uniform: dict[int, Any] = {}
         self.bone_count_uniform: dict[int, Any] = {}
+        self.is_show_bone_weight_uniform: dict[int, Any] = {}
+        self.show_bone_indexes_uniform: dict[int, Any] = {}
 
         # モデル描画シェーダー ------------------
         self.model_program = gl.glCreateProgram()
@@ -200,7 +203,9 @@ class MShader:
         self.unuse()
 
         # フィット（両方）
-        self.fit(self.width, self.height)
+        self.fit(
+            self.width, self.height, camera_position, camera_offset_position, camera_degrees, look_at_center, vertical_degrees, aspect_ratio
+        )
 
     def __del__(self) -> None:
         if self.model_program:
@@ -221,7 +226,7 @@ class MShader:
             except Exception as e:
                 raise MViewerException(f"MShader glDeleteProgram Failure\n{self.bone_program}", e)
 
-    def load_shader(self, src: str, shader_type: int) -> int:
+    def load_shader(self, src: str, shader_type) -> int:
         shader = gl.glCreateShader(shader_type)
         gl.glShaderSource(shader, src)
         gl.glCompileShader(shader)
@@ -246,6 +251,7 @@ class MShader:
                 VsLayout.MORPH_POS_ID.value,
                 VsLayout.MORPH_UV_ID.value,
                 VsLayout.MORPH_UV1_ID.value,
+                VsLayout.MORPH_AFTER_POS_ID.value,
             )
 
         fragments_shader_src = Path(os.path.join(os.path.dirname(__file__), "glsl", fragments_shader_name)).read_text(encoding="utf-8")
@@ -337,30 +343,47 @@ class MShader:
             self.sphere_uniform[program_type.value] = gl.glGetUniformLocation(program, "sphereSampler")
             self.sphere_factor_uniform[program_type.value] = gl.glGetUniformLocation(program, "sphereFactor")
 
-    def update_camera(self) -> None:
+            # ウェイトの描写
+            self.is_show_bone_weight_uniform[program_type.value] = gl.glGetUniformLocation(program, "isShowBoneWeight")
+            self.show_bone_indexes_uniform[program_type.value] = gl.glGetUniformLocation(program, "showBoneIndexes")
+
+    def update_camera(
+        self,
+        camera_position: MVector3D,
+        camera_offset_position: MVector3D,
+        camera_degrees: MVector3D,
+        look_at_center: MVector3D,
+        vertical_degrees: float,
+        aspect_ratio: float,
+        result_camera_position: Optional[MVector3D] = None,
+    ) -> None:
         # 視野領域の決定
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
         glu.gluPerspective(
-            self.vertical_degrees,
-            self.aspect_ratio,
+            vertical_degrees,
+            aspect_ratio,
             self.near_plane,
             self.far_plane,
         )
 
         self.projection_matrix = np.array(gl.glGetFloatv(gl.GL_PROJECTION_MATRIX), dtype=np.float32)
-        camera_rotation = MQuaternion.from_euler_degrees(self.camera_degrees)
+        camera_rotation = MQuaternion.from_euler_degrees(camera_degrees)
 
         # カメラ位置
-        camera_mat = MMatrix4x4()
-        camera_mat.translate(self.camera_offset_position)
-        camera_mat.rotate(camera_rotation)
-        camera_mat.translate(self.camera_position)
-        camera_pos = camera_mat * MVector3D()
+        if result_camera_position is None:
+            camera_mat = MMatrix4x4()
+            camera_mat.translate(camera_offset_position)
+            camera_mat.rotate(camera_rotation)
+            camera_mat.translate(camera_position)
+            result_camera_position = camera_mat * MVector3D()
 
-        # カメラの上方向
-        look_at_right = (camera_rotation * MVector3D(1, 0, 0)).normalized()
-        look_at_up = look_at_right.cross(camera_pos - self.look_at_center).normalized()
+            # カメラの上方向
+            look_at_right = (camera_rotation * MVector3D(1, 0, 0)).normalized()
+            look_at_up = look_at_right.cross(result_camera_position - look_at_center).normalized()
+        else:
+            look_at_right = MVector3D(1, 0, 0)
+            look_at_up = MVector3D(0, 1, 0)
         # print(
         #     f"camera_pos: {camera_pos}, camera_degrees: {self.camera_degrees}, camera_rotation: {camera_rotation.to_euler_degrees()}"
         #     + f", look_at_right: {look_at_right}, look_at_up: {look_at_up}, look_at_center: {self.look_at_center}"
@@ -369,7 +392,7 @@ class MShader:
         # 視点位置の決定
         gl.glMatrixMode(gl.GL_MODELVIEW)
         gl.glLoadIdentity()
-        glu.gluLookAt(*camera_pos.vector, *self.look_at_center.vector, *look_at_up.vector)
+        glu.gluLookAt(*result_camera_position.vector, *look_at_center.vector, *look_at_up.vector)
 
         model_view_matrix = np.array(gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX), dtype=np.float32)
         model_view_projection_matrix = np.matmul(model_view_matrix, self.projection_matrix)
@@ -377,8 +400,8 @@ class MShader:
         for program_type in ProgramType:
             self.use(program_type)
 
-            if program_type == ProgramType.MODEL:
-                gl.glUniform3f(self.camera_vec_uniform[program_type.value], *camera_pos.vector)
+            if result_camera_position is not None and program_type == ProgramType.MODEL:
+                gl.glUniform3f(self.camera_vec_uniform[program_type.value], *result_camera_position.vector)
 
             gl.glUniformMatrix4fv(
                 self.model_view_matrix_uniform[program_type.value],
@@ -396,26 +419,37 @@ class MShader:
 
             self.unuse()
 
-    def fit(self, width: int, height: int) -> None:
+    def fit(
+        self,
+        width: int,
+        height: int,
+        camera_position: MVector3D,
+        camera_offset_position: MVector3D,
+        camera_degrees: MVector3D,
+        look_at_center: MVector3D,
+        vertical_degrees: float,
+        aspect_ratio: float,
+    ) -> None:
         self.width = width
         self.height = height
-        self.aspect_ratio = float(self.width) / float(self.height)
+
+        # MSAAも作り直し
+        self.msaa = Msaa(width, height)
 
         # ビューポートの設定
         gl.glViewport(0, 0, self.width, self.height)
 
-        self.update_camera()
+        self.update_camera(camera_position, camera_offset_position, camera_degrees, look_at_center, vertical_degrees, aspect_ratio)
 
     def use(self, program_type: ProgramType) -> None:
-        match program_type:
-            case ProgramType.MODEL:
-                gl.glUseProgram(self.model_program)
-            case ProgramType.EDGE:
-                gl.glUseProgram(self.edge_program)
-            case ProgramType.BONE:
-                gl.glUseProgram(self.bone_program)
-            case ProgramType.AXIS:
-                gl.glUseProgram(self.axis_program)
+        if program_type == ProgramType.MODEL:
+            gl.glUseProgram(self.model_program)
+        elif program_type == ProgramType.EDGE:
+            gl.glUseProgram(self.edge_program)
+        elif program_type == ProgramType.BONE:
+            gl.glUseProgram(self.bone_program)
+        elif program_type == ProgramType.AXIS:
+            gl.glUseProgram(self.axis_program)
 
     def unuse(self) -> None:
         gl.glUseProgram(0)

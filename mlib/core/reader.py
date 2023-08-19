@@ -7,11 +7,11 @@ from typing import Callable, Generic, TypeVar
 
 import numpy as np
 
-from mlib.base.base import BaseModel, Encoding, FileType
-from mlib.base.collection import BaseHashModel
-from mlib.base.exception import MParseException
-from mlib.base.logger import MLogger
-from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
+from mlib.core.base import BaseModel, Encoding, FileType
+from mlib.core.collection import BaseHashModel
+from mlib.core.exception import MParseException
+from mlib.core.logger import MLogger
+from mlib.core.math import MQuaternion, MVector2D, MVector3D, MVector4D
 from mlib.service.base_worker import verify_thread
 
 TBaseModel = TypeVar("TBaseModel", bound=BaseModel)
@@ -229,7 +229,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         return read_text
 
     @lru_cache(maxsize=None)
-    def decode_text(self, main_encoding: Encoding, fbytes: bytearray) -> str:
+    def decode_text(self, main_encoding: Encoding, fbytes: bytes) -> str:
         """
         テキストデコード
 
@@ -237,7 +237,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         ----------
         main_encoding : Encoding
             基本のエンコーディング
-        fbytes : bytearray
+        fbytes : bytes
             バイト文字列
 
         Returns

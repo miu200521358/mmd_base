@@ -5,30 +5,29 @@ from typing import Iterable, Optional
 import numpy as np
 import OpenGL.GL as gl
 
-from mlib.base.base import VecAxis
-from mlib.base.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictModel
-from mlib.base.exception import MViewerException
-from mlib.base.logger import MLogger
-from mlib.base.math import MMatrix4x4, MMatrix4x4List, MQuaternion, MVector3D
-from mlib.base.part import Switch
+from mlib.core.collection import BaseHashModel, BaseIndexDictModel, BaseIndexNameDictModel
+from mlib.core.exception import MViewerException
+from mlib.core.logger import MLogger
+from mlib.core.math import MMatrix4x4, MMatrix4x4List, MVector3D, MVectorDict
+from mlib.core.part import Switch
+from mlib.pmx.bone_setting import STANDARD_BONE_NAMES, BoneFlg, BoneSettings
 from mlib.pmx.mesh import IBO, VAO, VBO, Mesh
 from mlib.pmx.pmx_part import (
-    STANDARD_BONE_NAMES,
+    Bdef1,
     Bdef2,
-    Bdef4,
     Bone,
-    BoneFlg,
     BoneMorphOffset,
     DisplaySlot,
+    DisplaySlotReference,
     DisplayType,
     DrawFlg,
     Face,
     Joint,
     Material,
     Morph,
+    MorphPanel,
     MorphType,
     RigidBody,
-    Sdef,
     ShaderMaterial,
     Texture,
     TextureType,
@@ -99,11 +98,10 @@ class Bones(BaseIndexNameDictModel[Bone]):
         "cache",
         "indexes",
         "_names",
-        "_iter_index",
-        "_size",
         "is_bone_not_local_cancels",
         "local_axises",
         "parent_revert_matrixes",
+        "bone_link_indexes",
     )
 
     def __init__(self) -> None:
@@ -111,11 +109,13 @@ class Bones(BaseIndexNameDictModel[Bone]):
         self.is_bone_not_local_cancels: list[bool] = [False]
         self.local_axises: list[MVector3D] = [MVector3D()]
         self.parent_revert_matrixes: np.ndarray = np.full((1, 4, 4), np.eye(4))
+        self.bone_link_indexes: list[int] = []
 
     def setup(self) -> None:
         self.is_bone_not_local_cancels = [bone.is_not_local_cancel for bone in self.data.values()]
         self.local_axises = [bone.local_axis for bone in self.data.values()]
         self.parent_revert_matrixes = np.array([bone.parent_revert_matrix for bone in self.data.values()])
+        self.bone_link_indexes = [bidx for (_, bidx) in sorted([(bone.layer, bone.index) for bone in self.data.values()])]
 
     def writable(self) -> list[Bone]:
         """出力対象となるボーン一覧を取得する"""
@@ -146,7 +146,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
             end_bone.tree_indexes = []
             bone_tree = BoneTree(name=end_bone.name)
             for _, bidx in sorted(self.create_bone_link_indexes(end_bone.index)):
-                bone_tree.append(self.data[bidx])
+                bone_tree.append(self.data[bidx].copy())
                 end_bone.tree_indexes.append(bidx)
             bone_trees.append(bone_tree, name=end_bone.name)
 
@@ -230,8 +230,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
 
         from_pos = bone.position
         bone_setting = STANDARD_BONE_NAMES.get(bone.name)
-        if bone_setting and isinstance(bone_setting.tails, (Iterable, list, tuple)):
-            # 表示先ボーンが指定されており、いずれかある場合、そのまま使用
+        if bone_setting:
             for tail_bone_name in bone_setting.tails:
                 if tail_bone_name in self:
                     return self[tail_bone_name].position - from_pos
@@ -240,7 +239,7 @@ class Bones(BaseIndexNameDictModel[Bone]):
         if bone.is_tail_bone and 0 <= bone.tail_index and bone.tail_index in self:
             # 表示先が指定されているの場合、保持
             to_pos = self[bone.tail_index].position
-        elif not bone.is_tail_bone:
+        elif not bone.is_tail_bone and 0 < bone.tail_position.length():
             # 表示先が相対パスの場合、保持
             to_pos = from_pos + bone.tail_position
         else:
@@ -305,7 +304,12 @@ class Morphs(BaseIndexNameDictModel[Morph]):
         super().__init__()
 
     def filter_by_type(self, *keys: MorphType) -> list[Morph]:
+        """モーフ種別にあったモーフリスト"""
         return [v for v in self.data.values() if v.morph_type in keys]
+
+    def filter_by_panel(self, *keys: MorphPanel) -> list[Morph]:
+        """表示枠にあったモーフリスト"""
+        return [v for v in self.data.values() if v.panel in keys]
 
     def writable(self) -> list[Morph]:
         """出力対象となるモーフ一覧を取得する"""
@@ -424,6 +428,9 @@ class PmxModel(BaseHashModel):
         "toon_textures",
         "vertices_by_materials",
         "vertices_by_bones",
+        "faces_by_materials",
+        "for_sub_draw",
+        "sub_meshes",
     )
 
     def __init__(
@@ -457,8 +464,11 @@ class PmxModel(BaseHashModel):
         self.joints: Joints = Joints()
         self.for_draw = False
         self.meshes: Optional[Meshes] = None
+        self.for_sub_draw = False
+        self.sub_meshes: Optional[Meshes] = None
         self.vertices_by_bones: dict[int, list[int]] = {}
         self.vertices_by_materials: dict[int, list[int]] = {}
+        self.faces_by_materials: dict[int, list[int]] = {}
 
     @property
     def name(self) -> str:
@@ -512,16 +522,19 @@ class PmxModel(BaseHashModel):
         """材質別頂点INDEXリストの更新"""
         prev_face_count = 0
         self.vertices_by_materials = {}
+        self.faces_by_materials = {}
         for material in self.materials:
             vertices: list[int] = []
+            self.faces_by_materials[material.index] = []
             face_count = material.vertices_count // 3
             for face_index in range(prev_face_count, prev_face_count + face_count):
                 vertices.extend(self.faces[face_index].vertices)
+                self.faces_by_materials[material.index].append(face_index)
             self.vertices_by_materials[material.index] = list(set(vertices))
             prev_face_count += face_count
 
-    def init_draw(self, shader: MShader):
-        if self.for_draw:
+    def init_draw(self, is_sub: bool) -> None:
+        if (not is_sub and self.for_draw) or (is_sub and self.for_sub_draw):
             # 既にフラグが立ってたら描画初期化済み
             return
 
@@ -539,44 +552,87 @@ class PmxModel(BaseHashModel):
         ):
             self.toon_textures.append(Texture(tidx, os.path.abspath(tpath)))
 
-        self.meshes = Meshes(shader, self)
-        # 描画初期化
-        self.for_draw = True
+        if is_sub:
+            self.sub_meshes = Meshes(self, is_sub)
+            # 描画初期化
+            self.for_sub_draw = True
+        else:
+            self.meshes = Meshes(self, is_sub)
+            # 描画初期化
+            self.for_draw = True
 
     def delete_draw(self) -> None:
         if not self.for_draw or not self.meshes:
             # 描画初期化してなければスルー
             return
 
-        while 0 < len(self.toon_textures):
-            del self.toon_textures[0]
-
         self.meshes.delete_draw()
         self.for_draw = False
 
     def draw(
         self,
+        shader: MShader,
         bone_matrixes: np.ndarray,
         vertex_morph_poses: np.ndarray,
+        after_vertex_morph_poses: np.ndarray,
         uv_morph_poses: np.ndarray,
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
         is_alpha: bool,
+        is_show_bone_weight: bool,
+        show_bone_indexes: list[int],
+        is_sub: bool,
     ) -> None:
-        if not self.for_draw or not self.meshes:
-            return
-        self.meshes.draw(bone_matrixes, vertex_morph_poses, uv_morph_poses, uv1_morph_poses, material_morphs, is_alpha)
+        if is_sub:
+            if not self.for_sub_draw or not self.sub_meshes:
+                return
+            self.sub_meshes.draw(
+                shader,
+                bone_matrixes,
+                vertex_morph_poses,
+                after_vertex_morph_poses,
+                uv_morph_poses,
+                uv1_morph_poses,
+                material_morphs,
+                is_alpha,
+                is_show_bone_weight,
+                show_bone_indexes,
+                is_sub,
+            )
+        else:
+            if not self.for_draw or not self.meshes:
+                return
+            self.meshes.draw(
+                shader,
+                bone_matrixes,
+                vertex_morph_poses,
+                after_vertex_morph_poses,
+                uv_morph_poses,
+                uv1_morph_poses,
+                material_morphs,
+                is_alpha,
+                is_show_bone_weight,
+                show_bone_indexes,
+                is_sub,
+            )
 
     def draw_bone(
         self,
+        shader: MShader,
         bone_matrixes: np.ndarray,
         select_bone_color: np.ndarray,
         unselect_bone_color: np.ndarray,
         selected_bone_indexes: np.ndarray,
+        is_sub: bool,
     ) -> None:
-        if not self.for_draw or not self.meshes:
-            return
-        self.meshes.draw_bone(bone_matrixes, select_bone_color, unselect_bone_color, selected_bone_indexes)
+        if is_sub:
+            if not self.for_sub_draw or not self.sub_meshes:
+                return
+            self.sub_meshes.draw_bone(shader, bone_matrixes, select_bone_color, unselect_bone_color, selected_bone_indexes, is_sub)
+        else:
+            if not self.for_draw or not self.meshes:
+                return
+            self.meshes.draw_bone(shader, bone_matrixes, select_bone_color, unselect_bone_color, selected_bone_indexes, is_sub)
 
     # def draw_axis(
     #     self,
@@ -592,40 +648,84 @@ class PmxModel(BaseHashModel):
         total_index_count = len(self.bones)
 
         # システム用ボーン追加
-        if "右腕" in self.bones and "左腕" in self.bones and "上半身" in self.bones and "首根元" not in self.bones:
-            neck_root_bone = Bone(name="首根元")
-            parent_bone_name = "上半身3" if "上半身3" in self.bones else "上半身2" if "上半身2" in self.bones else "上半身"
-            neck_root_bone.parent_index = self.bones[parent_bone_name].index
-            neck_root_bone.index = self.bones[parent_bone_name].index + 1
-            neck_root_bone.position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
-            self.insert_bone(neck_root_bone)
-            for replace_bone_name in ("右肩P", "左肩P", "右肩", "左肩"):
-                if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones[parent_bone_name].index:
-                    self.bones[replace_bone_name].parent_index = self.bones["首根元"].index
+        if "右腕" in self.bones and "左腕" in self.bones and "上半身" in self.bones:
+            neck_root_position = (self.bones["右腕"].position + self.bones["左腕"].position) / 2
 
-        if "右足" in self.bones and "左足" in self.bones and "下半身" in self.bones and "足中心" not in self.bones:
-            leg_root_bone = Bone(name="足中心")
-            leg_root_bone.parent_index = self.bones["下半身"].index
-            leg_root_bone.index = self.bones["下半身"].index + 1
-            leg_root_bone.position = (self.bones["右足"].position + self.bones["左足"].position) / 2
-            self.insert_bone(leg_root_bone)
-            for replace_bone_name in ("腰キャンセル右", "腰キャンセル左", "右足", "左足", "右足D", "左足D"):
-                if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones["下半身"].index:
-                    self.bones[replace_bone_name].parent_index = self.bones["足中心"].index
+            if "首根元" in self.bones:
+                self.bones["首根元"].position = neck_root_position.copy()
+                self.bones["左肩根元"].position = neck_root_position.copy()
+                self.bones["右肩根元"].position = neck_root_position.copy()
+            else:
+                parent_bone_name = "上半身3" if "上半身3" in self.bones else "上半身2" if "上半身2" in self.bones else "上半身"
+                parent_bone = self.bones[parent_bone_name]
+
+                # 首根元を追加
+                neck_root_bone = Bone(name="首根元")
+                neck_root_bone.is_system = True
+                neck_root_bone.parent_index = parent_bone.index
+                neck_root_bone.index = parent_bone.index + 1
+                neck_root_bone.position = neck_root_position.copy()
+                if "首" in self.bones:
+                    neck_root_bone.local_axis = (self.bones["首"].position - neck_root_bone.position).normalized()
+                else:
+                    neck_root_bone.local_axis = MVector3D(0, 1, 0)
+                self.insert_bone(neck_root_bone)
+
+                # 肩根元を追加
+                right_shoulder_root = Bone(name="右肩根元", index=neck_root_bone.index + 1)
+                right_shoulder_root.parent_index = neck_root_bone.index
+                right_shoulder_root.is_system = True
+                right_shoulder_root.position = neck_root_position.copy()
+                if "右腕" in self.bones:
+                    right_shoulder_root.local_axis = (self.bones["右腕"].position - right_shoulder_root.position).normalized()
+                else:
+                    right_shoulder_root.local_axis = MVector3D(-1, 0, 0)
+                self.insert_bone(right_shoulder_root)
+
+                left_shoulder_root = Bone(name="左肩根元", index=neck_root_bone.index + 1)
+                left_shoulder_root.parent_index = neck_root_bone.index
+                left_shoulder_root.is_system = True
+                left_shoulder_root.position = neck_root_position.copy()
+                if "左腕" in self.bones:
+                    left_shoulder_root.local_axis = (self.bones["左腕"].position - left_shoulder_root.position).normalized()
+                else:
+                    left_shoulder_root.local_axis = MVector3D(1, 0, 0)
+                self.insert_bone(left_shoulder_root)
+
+                # 腕系で左右に分かれてるのは親を肩根元に置き換える
+                for bone in self.bones:
+                    if bone.parent_index == neck_root_bone.index and "肩根元" not in bone.name:
+                        if "右" in bone.name:
+                            bone.parent_index = self.bones["右肩根元"].index
+                        elif "左" in bone.name:
+                            bone.parent_index = self.bones["左肩根元"].index
+
+        if "右足" in self.bones and "左足" in self.bones and "下半身" in self.bones:
+            if "足中心" in self.bones:
+                self.bones["足中心"].position = (self.bones["右足"].position + self.bones["左足"].position) / 2
+            else:
+                leg_root_bone = Bone(name="足中心")
+                leg_root_bone.parent_index = self.bones["下半身"].index
+                leg_root_bone.index = self.bones["下半身"].index + 1
+                leg_root_bone.position = (self.bones["右足"].position + self.bones["左足"].position) / 2
+                leg_root_bone.is_system = True
+                self.insert_bone(leg_root_bone)
+                for replace_bone_name in ("腰キャンセル右", "腰キャンセル左", "右足", "左足", "右足D", "左足D"):
+                    if replace_bone_name in self.bones and self.bones[replace_bone_name].parent_index == self.bones["下半身"].index:
+                        self.bones[replace_bone_name].parent_index = self.bones["足中心"].index
 
         logger.info("モデルセットアップ：システム用ボーン")
 
         for bone in self.bones:
-            # IKのリンクとターゲットを一旦クリア
-            if bone.is_ik and bone.ik:
-                for link in bone.ik.links:
-                    self.bones[link.bone_index].ik_link_indexes = []
-                self.bones[bone.ik.bone_index].ik_target_indexes = []
+            # 関係ボーンリストを一旦クリア
+            bone.ik_link_indexes = []
+            bone.ik_target_indexes = []
+            bone.effective_target_indexes = []
+            bone.child_bone_indexes = []
 
         for bone in self.bones:
-            # IKのリンクとターゲット
             if bone.is_ik and bone.ik:
-                # IKボーンの場合
+                # IKのリンクとターゲット
                 for link in bone.ik.links:
                     if link.bone_index in self.bones and bone.index not in self.bones[link.bone_index].ik_link_indexes:
                         # リンクボーンにフラグを立てる
@@ -633,45 +733,27 @@ class PmxModel(BaseHashModel):
                 if bone.ik.bone_index in self.bones and bone.index not in self.bones[bone.ik.bone_index].ik_target_indexes:
                     # ターゲットボーンにもフラグを立てる
                     self.bones[bone.ik.bone_index].ik_target_indexes.append(bone.index)
+            if 0 <= bone.effect_index and bone.effect_index in self.bones:
+                # 付与親の方に付与子情報を保持
+                self.bones[bone.effect_index].effective_target_indexes.append(bone.index)
+
+        # ボーンツリー生成
+        self.bone_trees = self.bones.create_bone_trees()
 
         # ボーン変形行列を計算するのに影響する全てのボーンINDEXのリストを取得する
-        bone_relative_indexes: dict[int, set[int]] = {}
         for bone in self.bones:
             # ボーンセットアップ
             self.setup_bone(bone)
 
             # 影響があるボーンINDEXリスト
-            bone_relative_indexes[bone.index] = self.get_tree_relative_bone_indexes(bone.index, set([]))
-
-            # 一旦子ボーンリストをクリア
-            bone.child_bone_indexes = []
-
-            logger.count(
-                "モデルセットアップ：ボーン",
-                index=bone.index,
-                total_index_count=total_index_count,
-                display_block=100,
-            )
-
-        # ボーンツリー生成
-        self.bone_trees = self.bones.create_bone_trees()
-
-        for bone in self.bones:
-            # ボーンセットアップ
-
-            # ボーン変形行列を計算するのに影響する全てのボーンINDEXのリストを取得する
-            bone.relative_bone_indexes = list(
-                sorted(
-                    set([bone_index for relative_index in bone_relative_indexes for bone_index in bone_relative_indexes[relative_index]])
-                )
-            )
+            bone.relative_bone_indexes = list(sorted(self.get_tree_relative_bone_indexes(bone.index, recursive=True)))
 
             if bone.parent_index in self.bones:
                 # 親ボーンに子ボーンとして登録する
                 self.bones[bone.parent_index].child_bone_indexes.append(bone.index)
 
             logger.count(
-                "モデルセットアップ：関連ボーン",
+                "モデルセットアップ：ボーン",
                 index=bone.index,
                 total_index_count=total_index_count,
                 display_block=100,
@@ -682,8 +764,8 @@ class PmxModel(BaseHashModel):
 
         logger.info("モデルセットアップ：ボーンツリー")
 
-    def get_tree_relative_bone_indexes(self, bone_index: int, tree_relative_bone_indexes: set[int]) -> set[int]:
-        logger.debug(f"get_tree_relative_bone_indexes: {bone_index}({self.bones[bone_index].name}), {tree_relative_bone_indexes}")
+    def get_tree_relative_bone_indexes(self, bone_index: int, recursive: bool = False) -> set[int]:
+        logger.debug(f"get_tree_relative_bone_indexes: {bone_index}({self.bones[bone_index].name})")
 
         if 0 >= bone_index or bone_index not in self.bones.indexes:
             return set([])
@@ -691,26 +773,28 @@ class PmxModel(BaseHashModel):
         # 直接関係するボーンINDEXセット
         bone = self.bones[bone_index]
         relative_bone_indexes: set[int] = set(self.bone_trees[self.bones[bone_index].name].indexes[:-1])
-        if (bone.is_external_rotation or bone.is_external_translation) and 0 <= bone.effect_index:
-            relative_bone_indexes |= {bone.effect_index}
-        if bone.ik:
-            relative_bone_indexes |= {bone.ik.bone_index}
-            for link in bone.ik.links:
-                relative_bone_indexes |= {link.bone_index}
+        # if 0 <= bone.parent_index:
+        #     relative_bone_indexes |= {bone.parent_index}
+        # if (bone.is_external_rotation or bone.is_external_translation) and 0 <= bone.effect_index:
+        #     relative_bone_indexes |= {bone.effect_index}
+        if bone.effective_target_indexes:
+            relative_bone_indexes |= set(bone.effective_target_indexes)
+        # if bone.ik:
+        #     relative_bone_indexes |= {bone.ik.bone_index}
+        #     for link in bone.ik.links:
+        #         relative_bone_indexes |= {link.bone_index}
         if bone.ik_link_indexes:
             relative_bone_indexes |= set(bone.ik_link_indexes)
         if bone.ik_target_indexes:
             relative_bone_indexes |= set(bone.ik_target_indexes)
 
-        for relative_index in relative_bone_indexes:
-            tree_relative_bone_indexes |= set(self.bone_trees[self.bones[relative_index].name].indexes[:-1])
+        tree_relative_bone_indexes: set[int] = set([])
+        if recursive:
+            for relative_index in relative_bone_indexes:
+                for tree_index in self.bone_trees[self.bones[relative_index].name].indexes[1:]:
+                    tree_relative_bone_indexes |= self.get_tree_relative_bone_indexes(tree_index)
 
-        for relative_index in relative_bone_indexes - tree_relative_bone_indexes:
-            tree_relative_bone_indexes |= self.get_tree_relative_bone_indexes(
-                relative_index, relative_bone_indexes | tree_relative_bone_indexes
-            )
-
-        return tree_relative_bone_indexes
+        return tree_relative_bone_indexes | relative_bone_indexes | {bone_index}
 
     def setup_bone(self, bone: Bone):
         """各ボーンのセットアップ"""
@@ -776,15 +860,15 @@ class PmxModel(BaseHashModel):
         for m in self.morphs:
             if m.morph_type == MorphType.BONE:
                 for offset in m.offsets:
-                    bone_offset: BoneMorphOffset = offset
-                    if bone_offset.bone_index in replaced_map:
-                        bone_offset.bone_index = replaced_map[bone_offset.bone_index]
+                    if not isinstance(offset, BoneMorphOffset):
+                        continue
+                    if offset.bone_index in replaced_map:
+                        offset.bone_index = replaced_map[offset.bone_index]
 
         for d in self.display_slots:
-            for r in d.references:
-                if r.display_type == DisplayType.BONE:
-                    if r.display_index in replaced_map:
-                        r.display_index = replaced_map[r.display_index]
+            for dr in d.references:
+                if dr.display_type == DisplayType.BONE and dr.display_index in replaced_map:
+                    dr.display_index = replaced_map[dr.display_index]
 
         for r in self.rigidbodies:
             if r.bone_index in replaced_map:
@@ -796,6 +880,26 @@ class PmxModel(BaseHashModel):
         replaced_map = self.bones.insert(bone)
 
         if not replaced_map:
+            if bone.is_visible:
+                # 表示対象な場合、親と同じ表示枠に追加
+                is_add_display = False
+                for d in self.display_slots:
+                    if d.special_flg == Switch.ON:
+                        continue
+                    for dr in d.references:
+                        if dr.display_type == DisplayType.BONE and bone.parent_index == dr.display_index:
+                            d.references.append(DisplaySlotReference(DisplayType.BONE, bone.index))
+                            is_add_display = True
+                            break
+                    if is_add_display:
+                        break
+
+                if not is_add_display:
+                    # 表示枠に追加できなかった場合、ボーン名の表示枠を作ってそこに追加する
+                    display_slot = DisplaySlot(name=bone.name, english_name=bone.english_name)
+                    display_slot.references.append(DisplaySlotReference(DisplayType.BONE, display_index=bone.index))
+                    self.display_slots.append(display_slot)
+
             return
 
         for v in self.vertices:
@@ -858,6 +962,7 @@ class PmxModel(BaseHashModel):
                         and is_same_direction
                         and original_parent_distance
                         and (0.5 > replaced_parent_distance / original_parent_distance or original_parent.position == bone.position)
+                        and "捩" not in b.name
                     ):
                         # 準標準ボーンの範囲外かつ挿入ボーンのと親子関係があり、距離が挿入ボーンの方が近いか全く同じ位置の場合、挿入ボーンで置き換える
                         b.parent_index = bone.index
@@ -867,15 +972,15 @@ class PmxModel(BaseHashModel):
         for m in self.morphs:
             if m.morph_type == MorphType.BONE:
                 for offset in m.offsets:
-                    bone_offset: BoneMorphOffset = offset
-                    if bone_offset.bone_index in replaced_map:
-                        bone_offset.bone_index = replaced_map[bone_offset.bone_index]
+                    if not isinstance(offset, BoneMorphOffset):
+                        continue
+                    if offset.bone_index in replaced_map:
+                        offset.bone_index = replaced_map[offset.bone_index]
 
         for d in self.display_slots:
-            for r in d.references:
-                if r.display_type == DisplayType.BONE:
-                    if r.display_index in replaced_map:
-                        r.display_index = replaced_map[r.display_index]
+            for dr in d.references:
+                if dr.display_type == DisplayType.BONE and dr.display_index in replaced_map:
+                    dr.display_index = replaced_map[dr.display_index]
 
         for r in self.rigidbodies:
             if r.bone_index in replaced_map:
@@ -890,6 +995,32 @@ class PmxModel(BaseHashModel):
                     r.bone_index = bone.index
                 else:
                     r.bone_index = replaced_map[r.bone_index]
+
+        if bone.is_visible:
+            # ボーンツリーだけ再生成
+            self.bone_trees = self.bones.create_bone_trees()
+
+            # 親ボーンで表示枠に入ってるとこに入れる
+            is_add_display_reference = False
+            for tree_name in reversed(self.bone_trees[bone.name].names):
+                for d in self.display_slots:
+                    if d.special_flg == Switch.ON:
+                        continue
+                    for dr in d.references:
+                        if dr.display_type == DisplayType.BONE and self.bones[tree_name].index == dr.display_index:
+                            d.references.append(DisplaySlotReference(DisplayType.BONE, display_index=bone.index))
+                            is_add_display_reference = True
+                            break
+                    if is_add_display_reference:
+                        break
+                if is_add_display_reference:
+                    break
+
+            if not is_add_display_reference:
+                # 最後まで追加されなかった場合、表示枠そのものを追加
+                display_slot = DisplaySlot(name=bone.name, english_name=bone.english_name)
+                display_slot.references.append(DisplaySlotReference(DisplayType.BONE, display_index=bone.index))
+                self.display_slots.append(display_slot)
 
     def insert_standard_bone(self, bone_name: str, bone_matrixes: VmdBoneFrameTrees) -> bool:
         bone_setting = STANDARD_BONE_NAMES[bone_name]
@@ -933,10 +1064,6 @@ class PmxModel(BaseHashModel):
             bone.position = bone_matrixes[0, f"{direction}腕"].position.copy()
             bone.tail_position = MVector3D()
             bone.bone_flg &= ~BoneFlg.TAIL_IS_BONE
-        elif "腰キャンセル" in bone.name and f"{bone.name[-1]}足" in self.bones:
-            bone.position = bone_matrixes[0, f"{bone.name[-1]}足"].position.copy()
-            bone.tail_position = MVector3D()
-            bone.bone_flg &= ~BoneFlg.TAIL_IS_BONE
         elif "足IK親" in bone.name and f"{direction}足首" in self.bones:
             bone.position = bone_matrixes[0, f"{direction}足首"].position.copy()
             bone.position.y = 0
@@ -961,7 +1088,7 @@ class PmxModel(BaseHashModel):
             bone.position = MVector3D(
                 *np.average(
                     [bone_matrixes[0, f"{direction}腕"].position.vector, bone_matrixes[0, f"{direction}ひじ"].position.vector],
-                    weights=[0.35, 0.65],
+                    weights=[0.4, 0.6],
                     axis=0,
                 )
             )
@@ -970,12 +1097,11 @@ class PmxModel(BaseHashModel):
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.tail_position = MVector3D()
             bone.bone_flg &= ~BoneFlg.TAIL_IS_BONE
-            bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
         elif "手捩" in bone.name and f"{direction}ひじ" in self.bones and f"{direction}手首" in self.bones:
             bone.position = MVector3D(
                 *np.average(
                     [bone_matrixes[0, f"{direction}ひじ"].position.vector, bone_matrixes[0, f"{direction}手首"].position.vector],
-                    weights=[0.35, 0.65],
+                    weights=[0.4, 0.6],
                     axis=0,
                 )
             )
@@ -984,7 +1110,6 @@ class PmxModel(BaseHashModel):
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.tail_position = MVector3D()
             bone.bone_flg &= ~BoneFlg.TAIL_IS_BONE
-            bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
         elif (
             "足先EX" in bone.name
             and f"{direction}足首" in self.bones
@@ -995,7 +1120,7 @@ class PmxModel(BaseHashModel):
             bone.position = MVector3D(
                 *np.average(
                     [bone_matrixes[0, f"{direction}足首"].position.vector, bone_matrixes[0, toe_target_bone.name].position.vector],
-                    weights=[0.3, 0.7],
+                    weights=[0.35, 0.65],
                     axis=0,
                 )
             )
@@ -1010,7 +1135,7 @@ class PmxModel(BaseHashModel):
             bone.position = MVector3D(
                 *np.average(
                     [bone_matrixes[0, f"{direction}手首"].position.vector, bone_matrixes[0, f"{direction}親指１"].position.vector],
-                    weights=[0.3, 0.7],
+                    weights=[0.2, 0.8],
                     axis=0,
                 )
             )
@@ -1027,18 +1152,15 @@ class PmxModel(BaseHashModel):
             return False
 
         # 表示先
-        if isinstance(bone_setting.relatives, MVector3D):
+        if isinstance(bone_setting.display_tail, MVector3D):
             if BoneFlg.TAIL_IS_BONE in bone.bone_flg:
-                bone.tail_position = bone_setting.relatives.copy()
-        elif isinstance(bone_setting.relatives, list) and bone_setting.relatives[0] in self.bones:
-            bone.tail_index = self.bones[bone_setting.relatives[0]].index
+                bone.tail_position = bone_setting.display_tail.copy()
+        elif isinstance(bone_setting.display_tail, list) and bone_setting.display_tail[0] in self.bones:
+            bone.tail_index = self.bones[bone_setting.display_tail[0]].index
 
         # 回転付与
         if "肩C" in bone.name and f"{direction}肩P" in self.bones:
             bone.effect_index = self.bones[f"{direction}肩P"].index
-            bone.effect_factor = -1
-        elif "腰キャンセル" in bone.name and "腰" in self.bones:
-            bone.effect_index = self.bones["腰"].index
             bone.effect_factor = -1
         elif bone.is_leg_d:
             bone.effect_index = self.bones[bone.name[:-1]].index
@@ -1051,7 +1173,7 @@ class PmxModel(BaseHashModel):
             # 捩りの場合、分散用ボーンも追加する
             from_name = f"{direction}腕" if "腕捩" in bone.name else f"{direction}ひじ"
             to_name = f"{direction}ひじ" if "腕捩" in bone.name else f"{direction}手首"
-            for no, ratio in ((1, 0.3), (2, 0.6), (3, 0.9)):
+            for no, ratio, factor in ((1, 0.3, 0.25), (2, 0.5, 0.5), (3, 0.7, 0.75)):
                 twist_bone_name = f"{bone.name}{no}"
                 if twist_bone_name in self.bones:
                     continue
@@ -1063,17 +1185,74 @@ class PmxModel(BaseHashModel):
                         axis=0,
                     )
                 )
-                twist_bone.parent_index = bone.index
+                # 親ボーンは捩りの親（腕ないしひじ）
+                twist_bone.parent_index = bone.parent_index
                 twist_bone.bone_flg = BoneFlg.CAN_ROTATE | BoneFlg.IS_EXTERNAL_ROTATION
                 twist_bone.effect_index = bone.index
-                twist_bone.effect_factor = ratio
+                twist_bone.effect_factor = factor
 
                 self.insert_bone(twist_bone)
 
-            for bname in self.bones.names:
-                # 親ボーンは捩りの親
-                if self.bones[bname].parent_index == twist_bone.index:
-                    self.bones[bname].parent_index = bone.index
+            # ひじの親は捩りボーンそのもの
+            if "腕捩" in bone.name:
+                self.bones[f"{direction}ひじ"].parent_index = bone.index
+            elif "手捩" in bone.name:
+                self.bones[f"{direction}手首"].parent_index = bone.index
+
+        elif "肩P" in bone_name:
+            # 肩Pの場合、肩Cも追加する
+            self.insert_standard_bone(f"{bone_name[:2]}C", bone_matrixes)
+        elif bone_name == "腰":
+            # 腰の場合、腰キャンセルも追加する
+            left_leg_bone = self.bones["左足"]
+            waist_cancel_left_parent_bone = [
+                self.bones[parent_name] for parent_name in BoneSettings.LEFT_WAIST_CANCEL.value.parents if parent_name in self.bones
+            ][0]
+            # 親のひとつ下
+            waist_cancel_left_bone = Bone(name="腰キャンセル左", index=waist_cancel_left_parent_bone.index + 1)
+            # 親ボーンは足中心 or 腰
+            waist_cancel_left_bone.parent_index = waist_cancel_left_parent_bone.index
+
+            waist_cancel_left_bone.position = bone_matrixes[0, left_leg_bone.name].position.copy()
+            waist_cancel_left_bone.tail_position = MVector3D()
+            waist_cancel_left_bone.bone_flg = BoneSettings.LEFT_WAIST_CANCEL.value.flag
+            # 変形階層
+            waist_cancel_left_bone.layer = parent_bone.layer
+            # 付与親でキャンセル
+            waist_cancel_left_bone.effect_index = bone.index
+            waist_cancel_left_bone.effect_factor = -1
+            # 腰キャンセル左を追加
+            self.insert_bone(waist_cancel_left_bone)
+
+            right_leg_bone = self.bones["右足"]
+            waist_cancel_right_parent_bone = [
+                self.bones[parent_name] for parent_name in BoneSettings.RIGHT_WAIST_CANCEL.value.parents if parent_name in self.bones
+            ][0]
+            # 親のひとつ下
+            waist_cancel_right_bone = Bone(name="腰キャンセル右", index=waist_cancel_right_parent_bone.index + 1)
+            # 親ボーンは足中心 or 腰
+            waist_cancel_right_bone.parent_index = waist_cancel_right_parent_bone.index
+
+            waist_cancel_right_bone.position = bone_matrixes[0, right_leg_bone.name].position.copy()
+            waist_cancel_right_bone.tail_position = MVector3D()
+            waist_cancel_right_bone.bone_flg = BoneSettings.RIGHT_WAIST_CANCEL.value.flag
+            # 変形階層
+            waist_cancel_right_bone.layer = parent_bone.layer
+            # 付与親でキャンセル
+            waist_cancel_right_bone.effect_index = bone.index
+            waist_cancel_right_bone.effect_factor = -1
+            # 腰キャンセル右を追加
+            self.insert_bone(waist_cancel_right_bone)
+
+            if "左足" in self.bones:
+                self.bones["左足"].parent_index = waist_cancel_left_bone.index
+            if "左足D" in self.bones:
+                self.bones["左足D"].parent_index = waist_cancel_left_bone.index
+
+            if "右足" in self.bones:
+                self.bones["右足"].parent_index = waist_cancel_right_bone.index
+            if "右足D" in self.bones:
+                self.bones["右足D"].parent_index = waist_cancel_right_bone.index
 
         # 付与親の設定
         if "両目" == bone.name:
@@ -1090,223 +1269,265 @@ class PmxModel(BaseHashModel):
         return True
 
     def replace_standard_weights(self, bone_names: list[str]) -> None:
+        """準標準ボーンのウェイトの乗せ替え"""
+
         self.update_vertices_by_bone()
 
         if "上半身2" in bone_names and self.bones.exists(("上半身", "上半身2")):
-            self.separate_weights("上半身", "上半身2", VecAxis.Y, 0.2, self.vertices_by_bones.get(self.bones["上半身"].index, []))
+            tail_bone_name = "上半身3" if "上半身3" in self.bones else "首"
+            to_tail_y = self.bones[tail_bone_name].position.y - self.bones["上半身2"].position.y
+            self.separate_weights("上半身", "上半身2", tail_bone_name, 0.3, 0.5, ("上半身", "上半身2"), to_tail_pos=MVector3D(0, to_tail_y, 0))
         if "上半身3" in bone_names and self.bones.exists(("上半身2", "上半身3")):
-            self.separate_weights("上半身2", "上半身3", VecAxis.Y, 0.2, self.vertices_by_bones.get(self.bones["上半身2"].index, []))
+            self.update_vertices_by_bone()
+            to_tail_y = self.bones["首"].position.y - self.bones["上半身3"].position.y
+            self.separate_weights("上半身2", "上半身3", "首", 0.3, 0.0, ("上半身2", "上半身3"), to_tail_pos=MVector3D(0, to_tail_y, 0))
         if "右足先EX" in bone_names and self.bones.exists(("右足首", "右足首D", "右足先EX")):
-            self.separate_weights("右足首D", "右足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["右足首D"].index, []))
-            self.separate_weights("右足首", "右足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["右足首"].index, []))
+            to_tail_z = self.bones["右足先EX"].position.z - self.bones["右足首"].position.z
+            self.separate_weights("右足首", "右足先EX", "右足先EX", 0.2, 0.1, ("右足首", "右足首D", "右足先EX"), to_tail_pos=MVector3D(0, 0, to_tail_z))
         if "左足先EX" in bone_names and self.bones.exists(("左足首", "左足首D", "左足先EX")):
-            self.separate_weights("左足首D", "左足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["左足首D"].index, []))
-            self.separate_weights("左足首", "左足先EX", VecAxis.Z, 0.2, self.vertices_by_bones.get(self.bones["左足首"].index, []))
+            to_tail_z = self.bones["左足先EX"].position.z - self.bones["左足首"].position.z
+            self.separate_weights("左足首", "左足先EX", "左足先EX", 0.2, 0.1, ("左足首", "左足首D", "左足先EX"), to_tail_pos=MVector3D(0, 0, to_tail_z))
+        if "右肩" in bone_names and self.bones.exists(("上半身", "上半身2", "右肩", "右腕")):
+            self.separate_weights("上半身2", "右肩", "右腕", 0.05, 0.6, ("上半身2", "右肩"), is_shoulder=True)
+        if "左肩" in bone_names and self.bones.exists(("上半身", "上半身2", "左肩", "左腕")):
+            self.separate_weights("上半身2", "左肩", "左腕", 0.05, 0.6, ("上半身2", "左肩"), is_shoulder=True)
         if "右親指０" in bone_names and self.bones.exists(("右手首", "右親指０", "右親指１")):
-            self.separate_thumb_weights("右手首", "右親指０", "右親指１", self.vertices_by_bones.get(self.bones["右手首"].index, []))
+            self.separate_weights("右手首", "右親指０", "右親指１", 0.1, 0.0, ("右手首", "右親指１"), is_thumb=True)
         if "左親指０" in bone_names and self.bones.exists(("左手首", "左親指０", "左親指１")):
-            self.separate_thumb_weights("左手首", "左親指０", "左親指１", self.vertices_by_bones.get(self.bones["左手首"].index, []))
-        if "右腕捩" in bone_names and self.bones.exists(("右腕", "右腕捩1", "右腕捩2", "右腕捩3", "右ひじ")):
-            self.separate_twist_weights(
-                "右腕",
-                "右腕捩1",
-                "右腕捩2",
-                "右腕捩3",
-                "右ひじ",
-                self.vertices_by_bones.get(self.bones["右腕"].index, []) + self.vertices_by_bones.get(self.bones["右ひじ"].index, []),
-            )
-        if "左腕捩" in bone_names and self.bones.exists(("左腕", "左腕捩1", "左腕捩2", "左腕捩3", "左ひじ")):
-            self.separate_twist_weights(
-                "左腕",
-                "左腕捩1",
-                "左腕捩2",
-                "左腕捩3",
-                "左ひじ",
-                self.vertices_by_bones.get(self.bones["左腕"].index, []) + self.vertices_by_bones.get(self.bones["左ひじ"].index, []),
-            )
-        if "右手捩" in bone_names and self.bones.exists(("右ひじ", "右手捩1", "右手捩2", "右手捩3", "右手首")):
-            self.separate_twist_weights(
-                "右ひじ",
-                "右手捩1",
-                "右手捩2",
-                "右手捩3",
-                "右手首",
-                self.vertices_by_bones.get(self.bones["右ひじ"].index, []) + self.vertices_by_bones.get(self.bones["右手首"].index, []),
-            )
-        if "左手捩" in bone_names and self.bones.exists(("左ひじ", "左手捩1", "左手捩2", "左手捩3", "左手首")):
-            self.separate_twist_weights(
-                "左ひじ",
-                "左手捩1",
-                "左手捩2",
-                "左手捩3",
-                "左手首",
-                self.vertices_by_bones.get(self.bones["左ひじ"].index, []) + self.vertices_by_bones.get(self.bones["左手首"].index, []),
-            )
+            self.separate_weights("左手首", "左親指０", "左親指１", 0.1, 0.0, ("左手首", "左親指１"), is_thumb=True)
+        if "右腕捩" in bone_names and self.bones.exists(("右腕", "右腕捩", "右腕捩1", "右腕捩2", "右腕捩3")):
+            self.separate_weights("右腕", "右腕捩1", "右腕捩2", 1.2, 1.0, ("右腕", "右腕捩", "右腕捩1", "右腕捩2", "右腕捩3"), is_twist=True)
+            self.separate_weights("右腕捩1", "右腕捩2", "右腕捩3", 1.2, 1.0, ("右腕", "右腕捩", "右腕捩1", "右腕捩2", "右腕捩3"), is_twist=True)
+            self.separate_weights("右腕捩2", "右腕捩3", "右腕捩", 1.2, 1.0, ("右腕", "右腕捩", "右腕捩1", "右腕捩2", "右腕捩3"), is_twist=True)
+        if "左腕捩" in bone_names and self.bones.exists(("左腕", "左腕捩", "左腕捩1", "左腕捩2", "左腕捩3")):
+            self.separate_weights("左腕", "左腕捩1", "左腕捩2", 1.2, 1.0, ("左腕", "左腕捩", "左腕捩1", "左腕捩2", "左腕捩3"), is_twist=True)
+            self.separate_weights("左腕捩1", "左腕捩2", "左腕捩3", 1.2, 1.0, ("左腕", "左腕捩", "左腕捩1", "左腕捩2", "左腕捩3"), is_twist=True)
+            self.separate_weights("左腕捩2", "左腕捩3", "左腕捩", 1.2, 1.0, ("左腕", "左腕捩", "左腕捩1", "左腕捩2", "左腕捩3"), is_twist=True)
+        if "右手捩" in bone_names and self.bones.exists(("右手", "右手捩", "右手捩1", "右手捩2", "右手捩3")):
+            self.separate_weights("右ひじ", "右手捩1", "右手捩2", 1.2, 1.0, ("右ひじ", "右手捩", "右手捩1", "右手捩2", "右手捩3"), is_twist=True)
+            self.separate_weights("右手捩1", "右手捩2", "右手捩3", 1.2, 1.0, ("右ひじ", "右手捩", "右手捩1", "右手捩2", "右手捩3"), is_twist=True)
+            self.separate_weights("右手捩2", "右手捩3", "右手捩", 1.2, 1.0, ("右ひじ", "右手捩", "右手捩1", "右手捩2", "右手捩3"), is_twist=True)
+        if "左手捩" in bone_names and self.bones.exists(("左手", "左手捩", "左手捩1", "左手捩2", "左手捩3")):
+            self.separate_weights("左ひじ", "左手捩1", "左手捩2", 1.2, 1.0, ("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3"), is_twist=True)
+            self.separate_weights("左手捩1", "左手捩2", "左手捩3", 1.2, 1.0, ("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3"), is_twist=True)
+            self.separate_weights("左手捩2", "左手捩3", "左手捩", 1.2, 1.0, ("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3"), is_twist=True)
 
-        replaced_map = dict([(b.index, b.index) for b in self.bones])
-        for bone_name in bone_names:
-            if bone_name not in self.bones:
-                continue
-            bone = self.bones[bone_name]
-            # ウェイトの一括置換
-            if bone.is_leg_d:
-                # 足Dはそのまま置き換える
-                replaced_map[self.bones[bone_name[:-1]].index] = bone.index
-        # 一括置換系はそのまま置き換える
-        for v in self.vertices:
-            v.deform.indexes = np.vectorize(replaced_map.get)(v.deform.indexes)
-
-    def separate_twist_weights(
-        self, from_name: str, twist1_name: str, twist2_name: str, twist3_name: str, to_name: str, vertices_bones: list[int]
-    ):
-        if not self.bones.exists((from_name, to_name, twist1_name, twist2_name, twist3_name)):
-            return
-
-        """捩りのウェイト置換"""
-        x_direction = (self.bones[to_name].position - self.bones[from_name].position).normalized()
-        z_direction = MVector3D(0, 0, -1)
-        y_direction = x_direction.cross(z_direction)
-        slope_qq = MQuaternion.from_direction(x_direction, y_direction)
-
-        for original_name, separate_name, weight_name in (
-            (from_name, twist1_name, twist1_name),
-            (twist1_name, twist2_name, twist2_name),
-            (twist2_name, twist3_name, twist3_name),
-        ):
-            mat = MMatrix4x4()
-            mat.translate(self.bones[original_name].position)
-            mat.rotate(slope_qq)
-            separate_local_pos = mat.inverse() * self.bones[separate_name].position
-            separate_to_pos = mat.inverse() * self.bones[to_name].position
-
-            for vertex_index in vertices_bones:
-                v = self.vertices[vertex_index]
-                vertex_local_pos = mat.inverse() * v.position
-                if np.sign(vertex_local_pos.z) != np.sign(separate_local_pos.z):
+        if True in [self.bones[bone_name].is_leg_d for bone_name in bone_names]:
+            # 足Dはそのまま置き換える
+            replaced_map = dict([(b.index, b.index) for b in self.bones])
+            target_vertex_indexes: list[int] = []
+            for bone_name in bone_names:
+                if bone_name not in self.bones:
                     continue
-                if abs(vertex_local_pos.z) >= abs(separate_local_pos.z):
-                    # 分割先ボーンより先の場合、元ボーンのウェイトをそのまま分割先に置き換える
-                    v.deform.indexes = np.where(
-                        v.deform.indexes == self.bones[original_name].index, self.bones[weight_name].index, v.deform.indexes
-                    )
-                else:
-                    separate_factor = (
-                        1 - abs((vertex_local_pos.z - separate_local_pos.z) / (separate_to_pos.z - separate_local_pos.z)) * 1.5
-                    )
-                    original_weight = np.sum(v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)])
-                    separate_weight = original_weight * separate_factor
-                    # 元ボーンは分割先ボーンの残り
-                    v.deform.weights = np.where(
-                        v.deform.indexes == self.bones[original_name].index, v.deform.weights - separate_weight, v.deform.weights
-                    )
-                    v.deform.weights = np.append(v.deform.weights, separate_weight)
-                    v.deform.indexes = np.append(v.deform.indexes, self.bones[weight_name].index)
-                    # 一旦最大値で正規化
-                    v.deform.count = 4
-                    v.deform.normalize()
-                    if np.count_nonzero(v.deform.weights) <= 2:
-                        # Bdef2で再定義
-                        v.deform = Bdef2(v.deform.indexes[0], v.deform.indexes[1], v.deform.weights[0])
-                    elif not isinstance(v.deform, Sdef):
-                        # SdefではなければBdef4で再定義
-                        v.deform = Bdef4(
-                            *(v.deform.indexes.tolist() + [0, 0, 0, 0])[:4], *(v.deform.weights.tolist() + [0.0, 0.0, 0.0, 0.0])[:4]
-                        )
-                    v.deform.normalize(align=True)
-
-    def separate_thumb_weights(self, original_name: str, separate_name: str, tail_name: str, vertex_indexes: list[int]):
-        """親指０のウェイト置換"""
-        if not self.bones.exists((original_name, separate_name, tail_name)):
-            return
-
-        # 親指０から親指１への距離
-        tail_distance = self.bones[tail_name].position.distance(self.bones[separate_name].position)
-        for vertex_index in vertex_indexes:
-            v = self.vertices[vertex_index]
-            vertex_original_distance = v.position.distance(self.bones[original_name].position)
-            vertex_separate_distance = v.position.distance(self.bones[separate_name].position)
-            vertex_tail_distance = v.position.distance(self.bones[tail_name].position)
-            vertex_separate_z = np.mean([self.bones[separate_name].position.vector, self.bones[tail_name].position.vector], axis=0)[2]
-            if vertex_separate_distance > (tail_distance + abs(vertex_separate_z)):
-                # 親指０から頂点への距離が、親指０から親指１の距離の一定倍より離れていたらスルー
-                if v.position.z < vertex_separate_z and vertex_original_distance > vertex_tail_distance:
-                    # 手首より親指１の方が近い場合、親指１に置き換えておく
-                    v.deform.indexes = np.where(
-                        v.deform.indexes == self.bones[original_name].index, self.bones[tail_name].index, v.deform.indexes
-                    )
-                continue
-            separate_factor = vertex_separate_distance / (tail_distance + abs(vertex_separate_z))
-            original_weight = np.sum(v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)])
-            separate_weight = original_weight * separate_factor
-            # 元ボーンは分割先ボーンの残り
-            v.deform.weights = np.where(
-                v.deform.indexes == self.bones[original_name].index, v.deform.weights - separate_weight, v.deform.weights
-            )
-            v.deform.weights = np.append(v.deform.weights, separate_weight)
-            v.deform.indexes = np.append(v.deform.indexes, self.bones[separate_name].index)
-            if vertex_original_distance > vertex_separate_distance:
-                # 手首より親指１の方が近い場合、手首のウェイトを親指１に置き換える
-                v.deform.indexes = np.where(
-                    v.deform.indexes == self.bones[original_name].index, self.bones[tail_name].index, v.deform.indexes
-                )
-            # 一旦最大値で正規化
-            v.deform.count = 4
-            v.deform.normalize()
-            if np.count_nonzero(v.deform.weights) <= 2:
-                # Bdef2で再定義
-                v.deform = Bdef2(v.deform.indexes[0], v.deform.indexes[1], v.deform.weights[0])
-            elif not isinstance(v.deform, Sdef):
-                # SdefではなければBdef4で再定義
-                v.deform = Bdef4(*(v.deform.indexes.tolist() + [0, 0, 0, 0])[:4], *(v.deform.weights.tolist() + [0.0, 0.0, 0.0, 0.0])[:4])
-            v.deform.normalize(align=True)
+                bone = self.bones[bone_name]
+                # ウェイトの一括置換
+                if bone.is_leg_d and bone_name[:-1] in self.bones:
+                    leg_fk_index = self.bones[bone_name[:-1]].index
+                    replaced_map[leg_fk_index] = bone.index
+                    target_vertex_indexes += self.vertices_by_bones.get(leg_fk_index, [])
+            for v in self.vertices:
+                v.deform.indexes = np.vectorize(replaced_map.get)(v.deform.indexes)
 
     def separate_weights(
         self,
-        original_name: str,
+        from_name: str,
         separate_name: str,
-        axis: int,
-        ratio: float,
-        vertex_indexes: list[int],
+        to_name: str,
+        from_ratio: float,
+        to_ratio: float,
+        weight_bone_names: Iterable[str] = [],
+        to_tail_pos: MVector3D = MVector3D(),
+        is_thumb: bool = False,
+        is_shoulder: bool = False,
+        is_twist: bool = False,
     ):
-        if not self.bones.exists((original_name, separate_name)):
+        """ウェイト置換"""
+        from_bone = self.bones[from_name]
+        separate_bone = self.bones[separate_name]
+        to_bone = self.bones[to_name]
+
+        # ウェイト乗せ替え対象頂点はFROMとTOの間
+        vertex_indexes = set(
+            [
+                vertex_index
+                for weight_bone_name in weight_bone_names
+                for vertex_index in self.vertices_by_bones.get(self.bones[weight_bone_name].index, [])
+            ]
+        )
+
+        if not vertex_indexes:
             return
 
-        separate_axis_distance = self.bones[separate_name].position[axis] - self.bones[original_name].position[axis]
+        match_bone_indexes = [
+            self.bones[weight_bone_name].index for weight_bone_name in weight_bone_names if weight_bone_name in self.bones
+        ]
+
+        if not to_tail_pos:
+            # 先は分割したボーンの表示先
+            to_tail_pos = self.bones.get_tail_relative_position(separate_bone.index)
+            if np.isclose(to_tail_pos.length(), 0.0):
+                # 表示先がない場合、表示先に類するボーンのうち最も遠いものを選ぶ
+                bone_pos_dict = MVectorDict()
+                # 分割ボーンの付与親ボーンの末端
+                if (separate_bone.is_external_translation or separate_bone.is_external_rotation) and 0 <= separate_bone.effect_index:
+                    bone_pos_dict.append(separate_bone.effect_index, self.bones[separate_bone.effect_index].tail_relative_position)
+                # 分割ボーンの親ボーン
+                separate_parent_bone = self.bones[separate_bone.parent_index]
+                # 分割ボーンの親ボーンの末端
+                if separate_parent_bone.is_tail_bone and separate_bone.tail_index in self.bones:
+                    bone_pos_dict.append(separate_parent_bone.index, self.bones[separate_parent_bone.index].tail_relative_position)
+                if (
+                    separate_parent_bone.is_external_translation or separate_parent_bone.is_external_rotation
+                ) and 0 <= separate_parent_bone.effect_index:
+                    # 分割ボーンの親ボーンの付与親ボーンの末端
+                    separate_parent_effect_bone = self.bones[separate_parent_bone.effect_index]
+                    bone_pos_dict.append(
+                        separate_parent_effect_bone.index, self.bones[separate_parent_effect_bone.index].tail_relative_position
+                    )
+
+                if not len(bone_pos_dict):
+                    # 見つからない場合、親ボーンからの距離を加味する
+                    to_tail_pos = from_bone.position - separate_bone.position
+                else:
+                    # 見つかった場合、そのうちに最も遠いものをTOターゲットにする
+                    to_tail_pos = bone_pos_dict.farthest_value(MVector3D())
+        else:
+            to_tail_pos *= self.bones.get_tail_relative_position(separate_bone.index).length()
+
+        to_pos = separate_bone.position + to_tail_pos
+        mat = MMatrix4x4()
+        mat.translate(separate_bone.position)
+        if is_shoulder:
+            if "右" in separate_bone.name:
+                mat = mat @ MVector3D(-1, 0, 0).to_local_matrix4x4()
+            else:
+                mat = mat @ MVector3D(1, 0, 0).to_local_matrix4x4()
+        else:
+            mat = mat @ to_tail_pos.to_local_matrix4x4()
+
+        # ローカル位置
+        local_from_pos = mat.inverse() * from_bone.position
+        local_to_pos = mat.inverse() * to_pos
 
         for vertex_index in vertex_indexes:
             v = self.vertices[vertex_index]
-            vertex_axis_distance = v.position[axis] - self.bones[original_name].position[axis]
-            if np.sign(separate_axis_distance) != np.sign(vertex_axis_distance):
-                # 元ボーンより下
-                continue
-            separate_factor = abs((vertex_axis_distance * ratio) / separate_axis_distance)
+            v.deform.normalize(align=True)
+            to_separate_ratio = 0.0
 
-            if separate_factor >= ratio:
-                # 分割先ボーンより上の場合、元ボーンのウェイトをそのまま分割先に置き換える
-                v.deform.indexes = np.where(
-                    v.deform.indexes == self.bones[original_name].index, self.bones[separate_name].index, v.deform.indexes
-                )
+            # 頂点のローカル位置
+            local_vpos = mat.inverse() * v.position
+
+            # 同じボーンINDEXで複数の欄にウェイトを持っている可能性があるので、matchで確認
+            bone_matches = np.array([i in match_bone_indexes for i in v.deform.indexes])
+
+            if is_thumb:
+                # 親指の場合、親指の周囲だけウェイトを塗る
+                if to_tail_pos.z > local_vpos.z or v.position.z > from_bone.position.z:
+                    # FROMの一定距離より内側のボーン方向にある場合、スルー
+                    continue
+                else:
+                    if 0 <= local_vpos.z:
+                        # ウェイト割り当てボーンより外側にある場合、TO側で置換してスルー
+                        v.deform.indexes = np.where(bone_matches, separate_bone.index, v.deform.indexes)
+                        continue
+                    else:
+                        # 親指０より手首よりの場合、ウェイト計算
+                        ratio = 1 - abs(local_vpos.z / to_tail_pos.z)
+            elif is_shoulder:
+                # 肩の場合、肩の周囲だけウェイトを塗る
+                if np.sign(v.position.x) != np.sign(to_pos.x):
+                    # 上半身より反対側の場合、スルー
+                    continue
+
+                if local_vpos.x <= local_to_pos.x * from_ratio * -1:
+                    # 上半身寄りで、頂点のX位置が肩から腕の距離の一定割合より遠い場合、上半身に割り当ててスルー
+                    v.deform.indexes = np.where(bone_matches, from_bone.index, v.deform.indexes)
+                    continue
+                elif local_vpos.x >= local_to_pos.x * to_ratio:
+                    # 腕寄りで、頂点のX位置が肩から腕の距離の一定割合より遠い場合、腕に割り当ててスルー
+                    v.deform.indexes = np.where(bone_matches, to_bone.index, v.deform.indexes)
+                    continue
+
+                if v.position.y < separate_bone.position.y + (local_to_pos.x * from_ratio * 0.5):
+                    # Y方向的に肩より下の場合、上半身側に渡してスルー
+                    v.deform.indexes = np.where(bone_matches, from_bone.index, v.deform.indexes)
+                    continue
+
+                ratio = (1 - abs(local_vpos.x / local_to_pos.x)) * 0.8
+                if 0 < v.position.x:
+                    # 腕側の場合のみ分割先に割り当てる
+                    to_separate_ratio = (1 - ratio) * 0.8
+            elif is_twist:
+                if 0 > local_vpos.x:
+                    ratio = 1 - (local_vpos.x / (local_from_pos.x * from_ratio)) if from_ratio else 1
+                    if 1 <= ratio:
+                        continue
+                else:
+                    if local_vpos.x <= local_to_pos.x * from_ratio * -1:
+                        # FROM寄りで、頂点のX位置が捩りから遠い場合、スルー
+                        continue
+
+                    if local_vpos.x >= local_to_pos.x * to_ratio:
+                        # TO寄りで、頂点のX位置が捩りから遠い場合、TOに割り当ててスルー
+                        v.deform.indexes = np.where(bone_matches, to_bone.index, v.deform.indexes)
+                        continue
+
+                    ratio = 1 - (abs(local_vpos.x) / local_to_pos.x)
+                    if 0 < local_vpos.x:
+                        # 腕側の場合のみ分割先に割り当てる
+                        to_separate_ratio = 1 - ratio
             else:
-                original_weight = np.sum(v.deform.weights[np.where(v.deform.indexes == self.bones[original_name].index)])
-                separate_weight = original_weight * separate_factor
-                # 元ボーンは分割先ボーンの残り
-                v.deform.weights = np.where(
-                    v.deform.indexes == self.bones[original_name].index, v.deform.weights - separate_weight, v.deform.weights
+                if 0 > local_vpos.x:
+                    ratio = 1 - (local_vpos.x / (local_from_pos.x * from_ratio)) if from_ratio else 1
+                    if 1 <= ratio:
+                        continue
+                else:
+                    if 0.0 == to_ratio:
+                        # 全部TOに乗せるのであれば、そのまま分割ボーンに乗せ替え
+                        v.deform.indexes = np.where(bone_matches, separate_bone.index, v.deform.indexes)
+                        continue
+                    else:
+                        ratio = local_vpos.x / (local_to_pos.x * to_ratio)
+                        if 1 <= ratio:
+                            # TOボーンの一定距離よりさきの場合、分割ボーンに分配する
+                            v.deform.indexes = np.where(bone_matches, separate_bone.index, v.deform.indexes)
+                            continue
+                        else:
+                            ratio = 1 - ratio
+
+            if 0 >= ratio:
+                continue
+
+            # # 分割先ボーンのウェイトは一旦元ボーンに載せ替える
+            # v.deform.indexes = np.where(bone_matches, from_bone.index, v.deform.indexes)
+            original_weight = np.sum(v.deform.weights[bone_matches])
+            separate_weight = original_weight * ratio / (np.count_nonzero(bone_matches) or 1)
+            to_weight = original_weight * to_separate_ratio / (np.count_nonzero(bone_matches) or 1)
+            # 元ボーンは分割先ボーンの残り
+            v.deform.weights = np.where(bone_matches, v.deform.weights - separate_weight - to_weight, v.deform.weights)
+            v.deform.weights[0.01 > v.deform.weights] = 0
+            v.deform.weights = np.append(v.deform.weights, original_weight * ratio)
+            v.deform.indexes = np.append(v.deform.indexes, separate_bone.index)
+            if 0 < to_separate_ratio and to_bone.index in self.bones:
+                v.deform.weights = np.append(v.deform.weights, original_weight * to_separate_ratio)
+                v.deform.indexes = np.append(v.deform.indexes, to_bone.index)
+            # 一旦最大値で正規化
+            v.deform.count = 4
+            v.deform.normalize(align=True)
+            if np.count_nonzero(v.deform.weights) == 0:
+                # 念のためウェイトが割り当てられなかったら、元ボーンを割り当てとく
+                v.deform = Bdef1(from_bone.index)
+            elif np.count_nonzero(v.deform.weights) == 1:
+                # Bdef1で再定義
+                v.deform = Bdef1(int(v.deform.indexes[np.argmax(v.deform.weights)]))
+            elif np.count_nonzero(v.deform.weights) == 2:
+                # Bdef2で再定義
+                v.deform = Bdef2(
+                    int(v.deform.indexes[np.argsort(v.deform.weights)[-1]]),
+                    int(v.deform.indexes[np.argsort(v.deform.weights)[-2]]),
+                    float(np.max(v.deform.weights)),
                 )
-                v.deform.weights = np.append(v.deform.weights, separate_weight)
-                v.deform.indexes = np.append(v.deform.indexes, self.bones[separate_name].index)
-                # 一旦最大値で正規化
-                v.deform.count = 4
-                v.deform.normalize()
-                if np.count_nonzero(v.deform.weights) <= 2:
-                    # Bdef2で再定義
-                    v.deform = Bdef2(v.deform.indexes[0], v.deform.indexes[1], v.deform.weights[0])
-                elif not isinstance(v.deform, Sdef):
-                    # SdefではなければBdef4で再定義
-                    v.deform = Bdef4(
-                        *(v.deform.indexes.tolist() + [0, 0, 0, 0])[:4], *(v.deform.weights.tolist() + [0.0, 0.0, 0.0, 0.0])[:4]
-                    )
-                v.deform.normalize(align=True)
+            v.deform.normalize(align=True)
 
 
 class Meshes(BaseIndexDictModel[Mesh]):
@@ -1317,9 +1538,6 @@ class Meshes(BaseIndexDictModel[Mesh]):
     __slots__ = (
         "data",
         "indexes",
-        "_iter_index",
-        "_size",
-        "shader",
         "model",
         "vertices",
         "faces",
@@ -1344,10 +1562,9 @@ class Meshes(BaseIndexDictModel[Mesh]):
         "axis_ibo_faces",
     )
 
-    def __init__(self, shader: MShader, model: PmxModel) -> None:
+    def __init__(self, model: PmxModel, is_sub: bool) -> None:
         super().__init__()
 
-        self.shader = shader
         self.model = model
 
         # 頂点情報
@@ -1374,9 +1591,12 @@ class Meshes(BaseIndexDictModel[Mesh]):
                         0.0,
                         0.0,
                         0.0,
+                        0.0,
+                        0.0,
+                        0.0,
                     ],
                     dtype=np.float32,
-                    count=30,
+                    count=33,
                 )
                 for v in model.vertices
             ],
@@ -1394,22 +1614,22 @@ class Meshes(BaseIndexDictModel[Mesh]):
             texture: Optional[Texture] = None
             if 0 <= material.texture_index:
                 texture = model.textures[material.texture_index]
-                texture.init_draw(model.path, TextureType.TEXTURE)
+                texture.init_draw(model.path, TextureType.TEXTURE, is_sub=is_sub)
 
             toon_texture: Optional[Texture] = None
             if ToonSharing.SHARING == material.toon_sharing_flg:
                 # 共有Toon
                 toon_texture = model.toon_textures[material.toon_texture_index]
-                toon_texture.init_draw(model.path, TextureType.TOON, is_individual=False)
+                toon_texture.init_draw(model.path, TextureType.TOON, is_individual=False, is_sub=is_sub)
             elif ToonSharing.INDIVIDUAL == material.toon_sharing_flg and 0 <= material.toon_texture_index:
                 # 個別Toon
                 toon_texture = model.textures[material.toon_texture_index]
-                toon_texture.init_draw(model.path, TextureType.TOON)
+                toon_texture.init_draw(model.path, TextureType.TOON, is_sub=is_sub)
 
             sphere_texture: Optional[Texture] = None
             if 0 <= material.sphere_texture_index:
                 sphere_texture = model.textures[material.sphere_texture_index]
-                sphere_texture.init_draw(model.path, TextureType.SPHERE)
+                sphere_texture.init_draw(model.path, TextureType.SPHERE, is_sub=is_sub)
 
             self.append(
                 Mesh(
@@ -1427,7 +1647,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         # ---------------------
 
         # 頂点VAO
-        self.vao = VAO()
+        self.vao = VAO(is_sub)
         self.vbo_components = {
             VsLayout.POSITION_ID.value: {"size": 3, "offset": 0},
             VsLayout.NORMAL_ID.value: {"size": 3, "offset": 3},
@@ -1439,15 +1659,18 @@ class Meshes(BaseIndexDictModel[Mesh]):
             VsLayout.MORPH_POS_ID.value: {"size": 3, "offset": 19},
             VsLayout.MORPH_UV_ID.value: {"size": 4, "offset": 22},
             VsLayout.MORPH_UV1_ID.value: {"size": 4, "offset": 26},
+            VsLayout.MORPH_AFTER_POS_ID.value: {"size": 3, "offset": 30},
         }
         self.morph_pos_comps = self.vbo_components[VsLayout.MORPH_POS_ID.value]
         self.morph_uv_comps = self.vbo_components[VsLayout.MORPH_UV_ID.value]
         self.morph_uv1_comps = self.vbo_components[VsLayout.MORPH_UV1_ID.value]
+        self.morph_after_pos_comps = self.vbo_components[VsLayout.MORPH_AFTER_POS_ID.value]
         self.vbo_vertices = VBO(
             self.vertices,
             self.vbo_components,
+            is_sub,
         )
-        self.ibo_faces = IBO(self.faces)
+        self.ibo_faces = IBO(self.faces, is_sub)
 
         # ----------
 
@@ -1484,7 +1707,7 @@ class Meshes(BaseIndexDictModel[Mesh]):
         )
 
         # ボーンVAO
-        self.bone_vao = VAO()
+        self.bone_vao = VAO(is_sub)
         self.bone_vbo_components = {
             0: {"size": 3, "offset": 0},
             1: {"size": 1, "offset": 3},
@@ -1493,8 +1716,9 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.bone_vbo_vertices = VBO(
             self.bones,
             self.bone_vbo_components,
+            is_sub,
         )
-        self.bone_ibo_faces = IBO(self.bone_hierarchies)
+        self.bone_ibo_faces = IBO(self.bone_hierarchies, is_sub)
 
         # # ----------
 
@@ -1552,12 +1776,17 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
     def draw(
         self,
+        shader: MShader,
         bone_matrixes: np.ndarray,
         vertex_morph_poses: np.ndarray,
+        after_vertex_morph_poses: np.ndarray,
         uv_morph_poses: np.ndarray,
         uv1_morph_poses: np.ndarray,
         material_morphs: list[ShaderMaterial],
         is_alpha: bool,
+        is_show_bone_weight: bool,
+        show_bone_indexes: list[int],
+        is_sub: bool,
     ):
         # 隠面消去
         # https://learnopengl.com/Advanced-OpenGL/Depth-testing
@@ -1574,10 +1803,16 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.vbo_vertices.data[
             :, self.morph_uv1_comps["offset"] : (self.morph_uv1_comps["offset"] + self.morph_uv1_comps["size"])
         ] = uv1_morph_poses
+        self.vbo_vertices.data[
+            :, self.morph_after_pos_comps["offset"] : (self.morph_after_pos_comps["offset"] + self.morph_after_pos_comps["size"])
+        ] = after_vertex_morph_poses
+
+        # 必ず50個渡すようにする（ただし該当しないボーンINDEXにしておく）
+        limited_show_bone_indexes = (show_bone_indexes + [-2 for _ in range(50)])[:50]
 
         for mesh in self:
-            self.vao.bind()
-            self.vbo_vertices.bind()
+            self.vao.bind(is_sub)
+            self.vbo_vertices.bind(is_sub)
             self.vbo_vertices.set_slot(VsLayout.POSITION_ID)
             self.vbo_vertices.set_slot(VsLayout.NORMAL_ID)
             self.vbo_vertices.set_slot(VsLayout.UV_ID)
@@ -1588,7 +1823,8 @@ class Meshes(BaseIndexDictModel[Mesh]):
             self.vbo_vertices.set_slot(VsLayout.MORPH_POS_ID)
             self.vbo_vertices.set_slot(VsLayout.MORPH_UV_ID)
             self.vbo_vertices.set_slot(VsLayout.MORPH_UV1_ID)
-            self.ibo_faces.bind()
+            self.vbo_vertices.set_slot(VsLayout.MORPH_AFTER_POS_ID)
+            self.ibo_faces.bind(is_sub)
 
             material_morph = material_morphs[mesh.material.index]
 
@@ -1611,15 +1847,23 @@ class Meshes(BaseIndexDictModel[Mesh]):
             gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
             # モデル描画
-            self.shader.use(ProgramType.MODEL)
-            mesh.draw_model(bone_matrixes, material_morph, self.shader, self.ibo_faces)
-            self.shader.unuse()
+            shader.use(ProgramType.MODEL)
+            mesh.draw_model(
+                bone_matrixes,
+                material_morph,
+                shader,
+                self.ibo_faces,
+                is_show_bone_weight,
+                limited_show_bone_indexes,
+                is_sub,
+            )
+            shader.unuse()
 
             if DrawFlg.DRAWING_EDGE in mesh.material.draw_flg and 0 < material_morph.material.diffuse.w:
                 # エッジ描画
-                self.shader.use(ProgramType.EDGE)
-                mesh.draw_edge(bone_matrixes, material_morph, self.shader, self.ibo_faces)
-                self.shader.unuse()
+                shader.use(ProgramType.EDGE)
+                mesh.draw_edge(bone_matrixes, material_morph, shader, self.ibo_faces)
+                shader.unuse()
 
             # ---------------
 
@@ -1634,10 +1878,12 @@ class Meshes(BaseIndexDictModel[Mesh]):
 
     def draw_bone(
         self,
+        shader: MShader,
         bone_matrixes: np.ndarray,
         select_bone_color: np.ndarray,
         unselect_bone_color: np.ndarray,
         selected_bone_indexes: np.ndarray,
+        is_sub: bool,
     ):
         # ボーンをモデルメッシュの前面に描画するために深度テストを無効化
         gl.glEnable(gl.GL_DEPTH_TEST)
@@ -1653,21 +1899,21 @@ class Meshes(BaseIndexDictModel[Mesh]):
         # 選択ボーンを切り替える
         self.bone_vbo_vertices.data[:, -1] = selected_bone_indexes
 
-        self.bone_vao.bind()
-        self.bone_vbo_vertices.bind()
+        self.bone_vao.bind(is_sub)
+        self.bone_vbo_vertices.bind(is_sub)
         self.bone_vbo_vertices.set_slot_by_value(0)
         self.bone_vbo_vertices.set_slot_by_value(1)
         self.bone_vbo_vertices.set_slot_by_value(2)
-        self.bone_ibo_faces.bind()
+        self.bone_ibo_faces.bind(is_sub)
 
-        self.shader.use(ProgramType.BONE)
+        shader.use(ProgramType.BONE)
 
-        gl.glUniform4f(self.shader.select_bone_color_uniform[ProgramType.BONE.value], *select_bone_color)
-        gl.glUniform4f(self.shader.unselect_bone_color_uniform[ProgramType.BONE.value], *unselect_bone_color)
-        gl.glUniform1i(self.shader.bone_count_uniform[ProgramType.BONE.value], len(self.model.bones))
+        gl.glUniform4f(shader.select_bone_color_uniform[ProgramType.BONE.value], *select_bone_color)
+        gl.glUniform4f(shader.unselect_bone_color_uniform[ProgramType.BONE.value], *unselect_bone_color)
+        gl.glUniform1i(shader.bone_count_uniform[ProgramType.BONE.value], len(self.model.bones))
 
         if self.model.meshes:
-            self.model.meshes[0].bind_bone_matrixes(bone_matrixes, self.shader, ProgramType.BONE)
+            self.model.meshes[0].bind_bone_matrixes(bone_matrixes, shader, ProgramType.BONE)
 
         try:
             gl.glDrawElements(
@@ -1689,63 +1935,11 @@ class Meshes(BaseIndexDictModel[Mesh]):
         self.bone_ibo_faces.unbind()
         self.bone_vbo_vertices.unbind()
         self.bone_vao.unbind()
-        self.shader.unuse()
+        shader.unuse()
 
         gl.glDisable(gl.GL_BLEND)
         gl.glDisable(gl.GL_ALPHA_TEST)
         gl.glDisable(gl.GL_DEPTH_TEST)
-
-    # def draw_axis(self, axis_matrixes: np.ndarray, axis_color: np.ndarray):
-    #     # ボーンをモデルメッシュの前面に描画するために深度テストを無効化
-    #     gl.glEnable(gl.GL_DEPTH_TEST)
-    #     gl.glDepthFunc(gl.GL_ALWAYS)
-
-    #     # アルファテストを有効にする
-    #     gl.glEnable(gl.GL_ALPHA_TEST)
-
-    #     # ブレンディングを有効にする
-    #     gl.glEnable(gl.GL_BLEND)
-    #     gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
-
-    #     self.axis_vao.bind()
-    #     self.axis_vbo_vertices.bind()
-    #     self.axis_vbo_vertices.set_slot_by_value(0)
-    #     self.axis_vbo_vertices.set_slot_by_value(1)
-    #     self.axis_ibo_faces.bind()
-
-    #     self.shader.use(ProgramType.AXIS)
-
-    #     gl.glUniform4f(self.shader.edge_color_uniform[ProgramType.BONE.value], *axis_color)
-    #     gl.glUniform1i(self.shader.bone_count_uniform[ProgramType.BONE.value], len(self.model.bones) * 2)
-
-    #     if self.model.meshes:
-    #         self.model.meshes[0].bind_bone_matrixes(np.concatenate([axis_matrixes, axis_matrixes]), self.shader, ProgramType.AXIS)
-
-    #     try:
-    #         gl.glDrawElements(
-    #             gl.GL_LINES,
-    #             self.axis_hierarchies.size,
-    #             self.axis_ibo_faces.dtype,
-    #             gl.ctypes.c_void_p(0),
-    #         )
-    #     except Exception as e:
-    #         raise MViewerException("Meshes draw_axis Failure", e)
-
-    #     error_code = gl.glGetError()
-    #     if error_code != gl.GL_NO_ERROR:
-    #         raise MViewerException(f"Meshes draw_axis Failure\n{error_code}")
-
-    #     if self.model.meshes:
-    #         self.model.meshes[0].unbind_bone_matrixes()
-
-    #     self.axis_ibo_faces.unbind()
-    #     self.axis_vbo_vertices.unbind()
-    #     self.axis_vao.unbind()
-    #     self.shader.unuse()
-
-    #     gl.glDisable(gl.GL_BLEND)
-    #     gl.glDisable(gl.GL_ALPHA_TEST)
-    #     gl.glDisable(gl.GL_DEPTH_TEST)
 
     def delete_draw(self) -> None:
         for material in self.model.materials:

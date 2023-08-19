@@ -10,6 +10,7 @@ in layout(location = %d) vec4  boneWeights;
 in layout(location = %d) vec3  morphPos;
 in layout(location = %d) vec4  morphUv;
 in layout(location = %d) vec4  morphUv1;
+in layout(location = %d) vec3  morphAfterPos;
 
 // ボーン変形行列を格納するテクスチャ
 uniform sampler2D boneMatrixTexture;
@@ -29,6 +30,9 @@ uniform int useSphere;
 uniform int sphereMode;
 uniform vec3 lightDirection;
 
+uniform int isShowBoneWeight;
+uniform int showBoneIndexes[50];
+
 out float alpha;
 out vec4 vertexColor;
 out vec3 vertexSpecular;
@@ -36,11 +40,22 @@ out vec2 vertexUv;
 out vec3 vetexNormal;
 out vec2 sphereUv;
 out vec3 eye;
+out float totalBoneWeight;
+
+bool containBone(int boneIndex) {
+    for (int i = 0; i < 50; i++) {
+        if (showBoneIndexes[i] == boneIndex) {
+            return true;
+        }
+    }
+    return false;
+}
 
 void main() {
     vec4 position4 = vec4(position + morphPos, 1.0);
 
     // 各頂点で使用されるボーン変形行列を計算する
+    totalBoneWeight = 0;
     mat4 boneTransformMatrix = mat4(0.0);
     for(int i = 0; i < 4; i++) {
         float boneWeight = boneWeights[i];
@@ -58,13 +73,25 @@ void main() {
 
         // ボーン変形行列を乗算する
         boneTransformMatrix += boneMatrix * boneWeight;
+
+        // ボーンウェイトを保持しておく
+        if (containBone(boneIndex)) {
+            totalBoneWeight += boneWeight;
+        }
     }
+
+    // ボーン変形後頂点モーフ変形量
+    mat4 afterVertexTransformMatrix = mat4(1.0);
+    afterVertexTransformMatrix[3] = vec4(morphAfterPos, 1.0); // 4列目に移動量を設定
+
+    // ボーンがまったく表示対象外でも少し描画するため、下限を決めておく
+    totalBoneWeight = clamp(totalBoneWeight, 0.2, 1.0);
 
     // 各頂点で使用される法線変形行列をボーン変形行列から回転情報のみ抽出して生成する
     mat3 normalTransformMatrix = mat3(boneTransformMatrix);
 
     // 頂点位置
-    gl_Position = modelViewProjectionMatrix * boneTransformMatrix * position4;
+    gl_Position = modelViewProjectionMatrix * afterVertexTransformMatrix * boneTransformMatrix * position4;
 
     // 頂点法線
     vetexNormal = normalize(normalTransformMatrix * normalize(normal)).xyz;

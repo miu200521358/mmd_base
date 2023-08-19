@@ -12,7 +12,7 @@ from typing import Optional
 import numpy as np
 import wx
 
-from mlib.base.exception import MLibException
+from mlib.core.exception import MLibException
 
 
 class LoggingMode(IntEnum):
@@ -107,7 +107,7 @@ class MLogger:
         if self.console_handler:
             for h in self.logger.handlers:
                 if isinstance(h, ConsoleHandler):
-                    return
+                    self.logger.removeHandler(h)
             if self.is_out_log:
                 self.console_handler.setFormatter(Formatter(self.STREAM_FORMAT))
             self.logger.addHandler(self.console_handler)

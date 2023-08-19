@@ -1,9 +1,9 @@
-from typing import Optional
+from typing import Iterator, Optional
 
-from mlib.base.base import BaseModel
-from mlib.base.interpolation import Interpolation, evaluate
-from mlib.base.math import MQuaternion, MVector3D
-from mlib.base.part import BaseIndexNameModel, BaseRotationModel
+from mlib.core.base import BaseModel
+from mlib.core.interpolation import Interpolation, evaluate
+from mlib.core.math import MQuaternion, MVector3D
+from mlib.core.part import BaseIndexNameModel, BaseRotationModel
 
 
 class BaseVmdNameFrame(BaseIndexNameModel):
@@ -131,6 +131,12 @@ class BoneInterpolations(BaseModel):
             0,
         ]
 
+    def __str__(self) -> str:
+        return (
+            f"translation_x[{self.translation_x}], translation_y[{self.translation_y}], "
+            + f"translation_z[{self.translation_z}], rotation[{self.rotation}]"
+        )
+
     def evaluate(self, prev_index: int, index: int, next_index: int) -> tuple[float, float, float, float]:
         # 補間結果Yは、FKキーフレ内で計算する
         _, ry, _ = evaluate(self.rotation, prev_index, index, next_index)
@@ -207,6 +213,30 @@ class BoneInterpolations(BaseModel):
             self.vals[62],
             self.vals[63],
         ]
+
+    def __iter__(self) -> Iterator[Interpolation]:
+        return iter([self.translation_x, self.translation_y, self.translation_z, self.rotation])
+
+    def __getitem__(self, index: int) -> Interpolation:
+        if index == 0:
+            return self.translation_x
+        elif index == 1:
+            return self.translation_y
+        elif index == 2:
+            return self.translation_z
+        elif index == 3:
+            return self.rotation
+        raise IndexError(f"Interpolation index [{index}]")
+
+    def __setitem__(self, index: int, value: Interpolation) -> None:
+        if index == 0:
+            self.translation_x = value
+        elif index == 1:
+            self.translation_y = value
+        elif index == 2:
+            self.translation_z = value
+        elif index == 3:
+            self.rotation = value
 
 
 class VmdBoneFrame(BaseVmdNameFrame):
@@ -418,6 +448,34 @@ class CameraInterpolations(BaseModel):
         self.rotation = rotation or Interpolation()
         self.distance = distance or Interpolation()
         self.viewing_angle = viewing_angle or Interpolation()
+
+    def merge(self) -> list[int]:
+        return [
+            int(self.translation_x.start.x),
+            int(self.translation_y.start.x),
+            int(self.translation_z.start.x),
+            int(self.rotation.start.x),
+            int(self.distance.start.x),
+            int(self.viewing_angle.start.x),
+            int(self.translation_x.start.y),
+            int(self.translation_y.start.y),
+            int(self.translation_z.start.y),
+            int(self.rotation.start.y),
+            int(self.distance.start.y),
+            int(self.viewing_angle.start.y),
+            int(self.translation_x.end.x),
+            int(self.translation_y.end.x),
+            int(self.translation_z.end.x),
+            int(self.rotation.end.x),
+            int(self.distance.end.x),
+            int(self.viewing_angle.end.x),
+            int(self.translation_x.end.y),
+            int(self.translation_y.end.y),
+            int(self.translation_z.end.y),
+            int(self.rotation.end.y),
+            int(self.distance.end.y),
+            int(self.viewing_angle.end.y),
+        ]
 
 
 class VmdCameraFrame(BaseVmdNameFrame):

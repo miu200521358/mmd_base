@@ -1,16 +1,17 @@
 import os
 from abc import ABC, abstractmethod
-from enum import Enum, Flag, IntEnum, unique
-from typing import Iterable, Optional, Union
+from enum import Flag, IntEnum, unique
+from typing import Any, Optional, Union
 
 import numpy as np
 import OpenGL.GL as gl
 from PIL import Image, ImageOps
 
-from mlib.base.base import BaseModel
-from mlib.base.exception import MViewerException
-from mlib.base.math import MQuaternion, MVector2D, MVector3D, MVector4D
-from mlib.base.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
+from mlib.core.base import BaseModel
+from mlib.core.exception import MViewerException
+from mlib.core.math import MQuaternion, MVector2D, MVector3D, MVector4D
+from mlib.core.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
+from mlib.pmx.bone_setting import STANDARD_BONE_NAMES, BoneFlg
 
 
 @unique
@@ -97,10 +98,17 @@ class Deform(BaseModel, ABC):
             countのボーン数に揃えるか, by default False
         """
         if align:
+            # ウェイトを統合する
+            index_weights: dict[int, float] = {}
+            for n in range(len(self.indexes)):
+                if self.indexes[n] not in index_weights:
+                    index_weights[self.indexes[n]] = 0.0
+                index_weights[self.indexes[n]] += self.weights[n]
+
             # 揃える必要がある場合
             # 数が足りるよう、かさ増しする
-            ilist = np.array(self.indexes.tolist() + [0, 0, 0, 0], dtype=np.int64)
-            wlist = np.array(self.weights.tolist() + [0, 0, 0, 0], dtype=np.float32)
+            ilist = np.array(list(index_weights.keys()) + [0, 0, 0, 0], dtype=np.int64)
+            wlist = np.array(list(index_weights.values()) + [0, 0, 0, 0], dtype=np.float32)
             # 正規化
             wlist /= wlist.sum(axis=0, keepdims=True)
 
@@ -116,21 +124,17 @@ class Deform(BaseModel, ABC):
         ウェイト正規化して4つのボーンINDEXとウェイトを返す（合計8個）
         """
         # 揃える必要がある場合
+        # ウェイトを統合する
+        index_weights: dict[int, float] = {}
+        for n in range(len(self.indexes)):
+            if self.indexes[n] not in index_weights:
+                index_weights[self.indexes[n]] = 0.0
+            index_weights[self.indexes[n]] += self.weights[n]
+
+        # 揃える必要がある場合
         # 数が足りるよう、かさ増しする
-        ilist = np.array(
-            np.array(
-                self.indexes.tolist() + [0, 0, 0, 0],
-                dtype=np.float32,
-            ),
-            dtype=np.float32,
-        )
-        wlist = np.array(
-            np.array(
-                self.weights.tolist() + [0, 0, 0, 0],
-                dtype=np.float32,
-            ),
-            dtype=np.float32,
-        )
+        ilist = np.array(list(index_weights.keys()) + [0, 0, 0, 0], dtype=np.float32)
+        wlist = np.array(list(index_weights.values()) + [0, 0, 0, 0], dtype=np.float32)
         # 正規化
         wlist /= wlist.sum(axis=0, keepdims=True)
 
@@ -322,38 +326,55 @@ class Texture(BaseIndexNameModel):
         "index",
         "name",
         "for_draw",
+        "for_sub_draw",
         "image",
         "texture_type",
         "texture_id",
         "texture_idx",
         "valid",
+        "path",
     )
 
     def __init__(self, index: int = -1, name: str = ""):
         super().__init__(index=index, name=name)
         self.for_draw = False
+        self.for_sub_draw = False
         self.image = None
-        self.texture_id: Optional[Image.Image] = None
+        self.texture_id: Optional[Any] = None
+        self.sub_texture_id: Optional[Any] = None
         self.texture_type: Optional[TextureType] = None
         self.texture_idx = None
         self.valid = True
+        self.path = ""
 
     def delete_draw(self) -> None:
-        if not self.for_draw or not self.texture_id:
-            # 描画フラグが立ってなければスルー
-            return
+        if self.texture_id is not None:
+            try:
+                gl.glDeleteTextures(1, [self.texture_id])
+            except Exception as e:
+                raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.texture_id}", e)
 
-        try:
-            gl.glDeleteTextures(1, [self.texture_id])
-        except Exception as e:
-            raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.texture_id}", e)
+            error_code = gl.glGetError()
+            if error_code != gl.GL_NO_ERROR:
+                raise MViewerException(f"glDeleteTextures Failure\n{self.name}: {error_code}")
 
-        error_code = gl.glGetError()
-        if error_code != gl.GL_NO_ERROR:
-            raise MViewerException(f"glDeleteTextures Failure\n{self.name}: {error_code}")
+        if self.sub_texture_id is not None:
+            try:
+                gl.glDeleteTextures(1, [self.sub_texture_id])
+            except Exception as e:
+                raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.sub_texture_id}", e)
 
-    def init_draw(self, model_path: str, texture_type: TextureType, is_individual: bool = True) -> None:
-        if self.for_draw:
+            error_code = gl.glGetError()
+            if error_code != gl.GL_NO_ERROR:
+                raise MViewerException(f"glDeleteTextures Failure\n{self.name}: {error_code}")
+
+        self.texture_id = None
+        self.for_draw = False
+        self.sub_texture_id = None
+        self.for_sub_draw = False
+
+    def init_draw(self, model_path: str, texture_type: TextureType, is_individual: bool = True, is_sub: bool = False) -> None:
+        if (not is_sub and self.for_draw) or (is_sub and self.for_sub_draw):
             # 既にフラグが立ってたら描画初期化済み
             return
 
@@ -366,6 +387,7 @@ class Texture(BaseIndexNameModel):
         # テクスチャがちゃんとある場合のみ初期化処理実施
         self.valid = os.path.exists(tex_path) & os.path.isfile(tex_path)
         if self.valid:
+            self.path = tex_path
             try:
                 self.image = Image.open(tex_path).convert("RGBA")
                 self.image = ImageOps.flip(self.image)
@@ -375,17 +397,27 @@ class Texture(BaseIndexNameModel):
             if self.valid:
                 self.texture_type = texture_type
 
-                # テクスチャオブジェクト生成
-                try:
-                    self.texture_id = gl.glGenTextures(1)
-                except Exception as e:
-                    raise MViewerException(f"glGenTextures Failure\n{self.name}", e)
+                if is_sub:
+                    # テクスチャオブジェクト生成
+                    try:
+                        self.sub_texture_id = gl.glGenTextures(1)
+                    except Exception as e:
+                        raise MViewerException(f"glGenTextures Failure\n{self.name}", e)
 
-                error_code = gl.glGetError()
-                if error_code != gl.GL_NO_ERROR:
-                    raise MViewerException(f"glGenTextures Failure\n{self.name}: {error_code}")
+                    error_code = gl.glGetError()
+                    if error_code != gl.GL_NO_ERROR:
+                        raise MViewerException(f"glGenTextures Failure\n{self.name}: {error_code}")
+                else:
+                    # テクスチャオブジェクト生成
+                    try:
+                        self.texture_id = gl.glGenTextures(1)
+                    except Exception as e:
+                        raise MViewerException(f"glGenTextures Failure\n{self.name}", e)
 
-                self.texture_type = texture_type
+                    error_code = gl.glGetError()
+                    if error_code != gl.GL_NO_ERROR:
+                        raise MViewerException(f"glGenTextures Failure\n{self.name}: {error_code}")
+
                 self.texture_idx = (
                     gl.GL_TEXTURE0
                     if texture_type == TextureType.TEXTURE
@@ -393,14 +425,14 @@ class Texture(BaseIndexNameModel):
                     if texture_type == TextureType.TOON
                     else gl.GL_TEXTURE2
                 )
-                self.set_texture()
+                self.set_texture(is_sub)
 
         # 描画初期化
         self.for_draw = True
 
-    def set_texture(self) -> None:
+    def set_texture(self, is_sub: bool) -> None:
         if self.image:
-            self.bind()
+            self.bind(is_sub)
 
             try:
                 gl.glTexImage2D(
@@ -423,9 +455,12 @@ class Texture(BaseIndexNameModel):
 
             self.unbind()
 
-    def bind(self) -> None:
+    def bind(self, is_sub: bool) -> None:
         gl.glActiveTexture(self.texture_idx)
-        gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture_id)
+        if is_sub:
+            gl.glBindTexture(gl.GL_TEXTURE_2D, self.sub_texture_id)
+        else:
+            gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture_id)
 
         if self.texture_type == TextureType.TOON:
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
@@ -636,40 +671,6 @@ class Ik(BaseModel):
         return 0 <= self.bone_index
 
 
-@unique
-class BoneFlg(Flag):
-    """ボーンフラグ"""
-
-    NONE = 0x0000
-    """"初期値"""
-    TAIL_IS_BONE = 0x0001
-    """接続先(PMD子ボーン指定)表示方法 -> 0:座標オフセットで指定 1:ボーンで指定"""
-    CAN_ROTATE = 0x0002
-    """回転可能"""
-    CAN_TRANSLATE = 0x0004
-    """移動可能"""
-    IS_VISIBLE = 0x0008
-    """表示"""
-    CAN_MANIPULATE = 0x0010
-    """操作可"""
-    IS_IK = 0x0020
-    """IK"""
-    IS_EXTERNAL_LOCAL = 0x0080
-    """ローカル付与 | 付与対象 0:ユーザー変形値／IKリンク／多重付与 1:親のローカル変形量"""
-    IS_EXTERNAL_ROTATION = 0x0100
-    """回転付与"""
-    IS_EXTERNAL_TRANSLATION = 0x0200
-    """移動付与"""
-    HAS_FIXED_AXIS = 0x0400
-    """軸固定"""
-    HAS_LOCAL_COORDINATE = 0x0800
-    """ローカル軸"""
-    IS_AFTER_PHYSICS_DEFORM = 0x1000
-    """物理後変形"""
-    IS_EXTERNAL_PARENT_DEFORM = 0x2000
-    """外部親変形"""
-
-
 class Bone(BaseIndexNameModel):
     """
     ボーン
@@ -742,7 +743,7 @@ class Bone(BaseIndexNameModel):
         "local_z_vector",
         "external_key",
         "ik",
-        "display",
+        "display_slot",
         "is_system",
         "corrected_local_y_vector",
         "corrected_local_z_vector",
@@ -758,6 +759,7 @@ class Bone(BaseIndexNameModel):
         "offset_matrix",
         "relative_bone_indexes",
         "child_bone_indexes",
+        "effective_target_indexes",
     )
 
     SYSTEM_ROOT_NAME = "SYSTEM_ROOT"
@@ -782,10 +784,11 @@ class Bone(BaseIndexNameModel):
         self.local_z_vector = MVector3D(0, 0, -1)
         self.external_key = -1
         self.ik: Ik = Ik()
-        self.display: bool = False
+        self.display_slot: int = -1
         self.is_system: bool = False
         self.ik_link_indexes: list[int] = []
         self.ik_target_indexes: list[int] = []
+        self.effective_target_indexes: list[int] = []
 
         self.corrected_local_x_vector = self.local_x_vector.copy()
         self.corrected_local_y_vector = self.local_z_vector.cross(self.corrected_local_x_vector)
@@ -1024,7 +1027,7 @@ class Bone(BaseIndexNameModel):
     @property
     def is_standard_extend(self) -> bool:
         """準標準の拡張ボーンであるか"""
-        if f"{self.name}先" in STANDARD_BONE_NAMES or self.name[:-1] in STANDARD_BONE_NAMES:
+        if f"{self.name}先" in STANDARD_BONE_NAMES or (self.name[:-1] in STANDARD_BONE_NAMES and self.name[-1] in ("先", "端")):
             return True
         return False
 
@@ -1067,7 +1070,6 @@ class Bone(BaseIndexNameModel):
             in (
                 "上半身",
                 "上半身2",
-                "上半身3",
                 "首根元",
             )
             or self.is_head
@@ -1079,1485 +1081,14 @@ class Bone(BaseIndexNameModel):
     def is_not_local_cancel(self) -> bool:
         """
         ローカル軸行列計算で親のキャンセルをさせないボーン
-        準標準だけど捩りと足先EXは親を伝播させる
+        準標準だけど捩り・指・足先EXは親を伝播させる
         """
-        return self.is_twist or "足先EX" in self.name
+        return self.is_twist or self.is_finger or "足先EX" in self.name
 
     @property
     def is_standard(self) -> bool:
         """準標準であるか"""
         return self.name in STANDARD_BONE_NAMES
-
-    @property
-    def is_scalable_standard(self) -> bool:
-        """スケール計算を行える準標準ボーンか"""
-        return self.name in STANDARD_BONE_NAMES and STANDARD_BONE_NAMES[self.name].scalable
-
-    @property
-    def is_rotatable_standard(self) -> bool:
-        """回転計算を行える準標準ボーンか"""
-        return self.name in STANDARD_BONE_NAMES and STANDARD_BONE_NAMES[self.name].rotatable
-
-    @property
-    def is_translatable_standard(self) -> bool:
-        """移動計算を行える準標準ボーンか"""
-        return self.name in STANDARD_BONE_NAMES and STANDARD_BONE_NAMES[self.name].translatable
-
-
-class BoneSetting:
-    """ボーン設定"""
-
-    def __init__(
-        self,
-        name: str,
-        category: str,
-        parents: Iterable[str],
-        relatives: Union[MVector3D, Iterable[str]],
-        tails: Iterable[str],
-        flag: BoneFlg,
-        axis: MVector3D,
-        weight_names: Iterable[str],
-        translatable: bool,
-        rotatable: bool,
-        scalable: bool,
-    ) -> None:
-        """
-        name : 準標準ボーン名
-        category : 種類名
-        parents : 親ボーン名候補リスト
-        relative : 軸計算時の相対位置
-            vector の場合はそのまま使う。名前リストの場合、該当ボーンの位置との相対位置
-        tails : 末端ボーン名候補リスト
-        flag : ボーンの特性
-        axis : ボーンの仮想軸
-        weight_names: 同一ウェイトで扱うボーン名リスト
-        translatable: 移動可能か
-        rotatable: 回転可能か
-        scalable: 縮尺可能か
-        """
-        self.name = name
-        self.category = category
-        self.parents = parents
-        self.relatives = relatives
-        self.tails = tails
-        self.flag = flag
-        self.axis = axis
-        self.weight_names = weight_names
-        self.translatable = translatable
-        self.rotatable = rotatable
-        self.scalable = scalable
-
-
-class BoneSettings(Enum):
-    """準標準ボーン設定一覧"""
-
-    ROOT = BoneSetting(
-        name="全ての親",
-        category="全ての親",
-        parents=[],
-        relatives=MVector3D(0, 1, 0),
-        tails=("センター",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    CENTER = BoneSetting(
-        name="センター",
-        category="センター",
-        parents=("全ての親",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("上半身", "下半身"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    GROOVE = BoneSetting(
-        name="グルーブ",
-        category="グルーブ",
-        parents=("センター",),
-        relatives=MVector3D(0, -1, 0),
-        tails=("上半身", "下半身"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    WAIST = BoneSetting(
-        name="腰",
-        category="体幹",
-        parents=("グルーブ", "センター"),
-        relatives=MVector3D(0, -1, 0),
-        tails=("上半身", "下半身"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    LOWER = BoneSetting(
-        name="下半身",
-        category="体幹",
-        parents=("腰", "グルーブ", "センター"),
-        relatives=("足中心",),
-        tails=("足中心",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=("下半身",),
-        translatable=True,
-        rotatable=False,
-        scalable=True,
-    )
-    LEG_CENTER = BoneSetting(
-        name="足中心",
-        category="体幹",
-        parents=("腰", "グルーブ", "センター"),
-        relatives=MVector3D(0, -1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    UPPER = BoneSetting(
-        name="上半身",
-        category="体幹",
-        parents=("腰", "グルーブ", "センター"),
-        relatives=("上半身2", "首根元"),
-        tails=("上半身2", "首根元"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=("上半身",),
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    UPPER2 = BoneSetting(
-        name="上半身2",
-        category="体幹",
-        parents=("上半身",),
-        relatives=("上半身3", "首根元"),
-        tails=("上半身3", "首根元"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=("上半身2", "左胸", "右胸", "首根元"),
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    UPPER3 = BoneSetting(
-        name="上半身3",
-        category="体幹",
-        parents=("上半身2",),
-        relatives=("首根元",),
-        tails=("首根元",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=("上半身3", "左胸", "右胸", "首根元"),
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    ARM_CENTER = BoneSetting(
-        name="首根元",
-        category="体幹",
-        parents=("上半身3", "上半身2"),
-        relatives=("首",),
-        tails=("首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    NECK = BoneSetting(
-        name="首",
-        category="首",
-        parents=("首根元",),
-        relatives=("頭",),
-        tails=("頭",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=("首"),
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    HEAD = BoneSetting(
-        name="頭",
-        category="頭",
-        parents=("首",),
-        relatives=MVector3D(0, 1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=("頭",),
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    EYES = BoneSetting(
-        name="両目",
-        category="目",
-        parents=("頭",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左目", "右目"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_EYE = BoneSetting(
-        name="左目",
-        category="目",
-        parents=("頭",),
-        relatives=MVector3D(0, 1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION,
-        axis=MVector3D(0, 1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_EYE = BoneSetting(
-        name="右目",
-        category="目",
-        parents=("頭",),
-        relatives=MVector3D(0, 1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION,
-        axis=MVector3D(0, 1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-
-    RIGHT_SHOULDER_P = BoneSetting(
-        name="右肩P",
-        category="肩",
-        parents=("首根元", "上半身3", "上半身2", "上半身"),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右肩",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_SHOULDER = BoneSetting(
-        name="右肩",
-        category="肩",
-        parents=("右肩P", "首根元", "上半身3", "上半身2", "上半身"),
-        relatives=("右腕",),
-        tails=("右腕",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右肩",),
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    RIGHT_SHOULDER_C = BoneSetting(
-        name="右肩C",
-        category="肩",
-        parents=("右肩",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_ARM = BoneSetting(
-        name="右腕",
-        category="腕",
-        parents=("右肩C", "右肩"),
-        relatives=("右ひじ",),
-        tails=("右ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右腕", "右腕捩", "右腕捩1", "右腕捩2", "右腕捩3", "右腕捩4", "右腕捩5"),
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    RIGHT_ARM_TWIST = BoneSetting(
-        name="右腕捩",
-        category="腕",
-        parents=("右腕",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_ARM_TWIST1 = BoneSetting(
-        name="右腕捩1",
-        category="腕",
-        parents=("右腕捩",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_ARM_TWIST2 = BoneSetting(
-        name="右腕捩2",
-        category="腕",
-        parents=("右腕捩",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_ARM_TWIST3 = BoneSetting(
-        name="右腕捩3",
-        category="腕",
-        parents=("右腕捩",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_ELBOW = BoneSetting(
-        name="右ひじ",
-        category="腕",
-        parents=("右腕捩", "右腕"),
-        relatives=("右手首",),
-        tails=("右手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右ひじ", "右手捩", "右手捩1", "右手捩2", "右手捩3", "右手捩4", "右手捩5"),
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    RIGHT_HAND_TWIST = BoneSetting(
-        name="右手捩",
-        category="腕",
-        parents=("右ひじ",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_HAND_TWIST1 = BoneSetting(
-        name="右手捩1",
-        category="腕",
-        parents=("右手捩",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_HAND_TWIST2 = BoneSetting(
-        name="右手捩2",
-        category="腕",
-        parents=("右手捩",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_HAND_TWIST3 = BoneSetting(
-        name="右手捩3",
-        category="腕",
-        parents=("右手捩",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_WRIST = BoneSetting(
-        name="右手首",
-        category="手首",
-        parents=("右手捩", "右ひじ"),
-        relatives=("右中指１", "右人指１", "右薬指１", "右小指１"),
-        tails=("右中指１", "右人指１", "右薬指１", "右小指１"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右手首",),
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    RIGHT_THUMB0 = BoneSetting(
-        name="右親指０",
-        category="指",
-        parents=("右手首",),
-        relatives=("右親指１",),
-        tails=("右親指２",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右親指０",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_THUMB1 = BoneSetting(
-        name="右親指１",
-        category="指",
-        parents=("右親指０",),
-        relatives=("右親指２",),
-        tails=("右親指２",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右親指１",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_THUMB2 = BoneSetting(
-        name="右親指２",
-        category="指",
-        parents=("右親指１",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右親指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右親指２",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_THUMB_TAIL = BoneSetting(
-        name="右親指先",
-        category="指",
-        parents=("右親指２",),
-        relatives=MVector3D(0, 1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_INDEX0 = BoneSetting(
-        name="右人指１",
-        category="指",
-        parents=("右手首",),
-        relatives=("右人指２",),
-        tails=("右人指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右人指１",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_INDEX1 = BoneSetting(
-        name="右人指２",
-        category="指",
-        parents=("右人指１",),
-        relatives=("右人指３",),
-        tails=("右人指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右人指２",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_INDEX2 = BoneSetting(
-        name="右人指３",
-        category="指",
-        parents=("右人指２",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右人指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右人指３",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_INDEX_TAIL = BoneSetting(
-        name="右人指先",
-        category="指",
-        parents=("右人指３",),
-        relatives=MVector3D(0, 1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_MIDDLE0 = BoneSetting(
-        name="右中指１",
-        category="指",
-        parents=("右手首",),
-        relatives=("右中指２",),
-        tails=("右中指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右中指１",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_MIDDLE1 = BoneSetting(
-        "右中指２",
-        "指",
-        ("右中指１",),
-        ("右中指３",),
-        ("右中指３",),
-        BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        MVector3D(-1, 0, 0),
-        ("右中指２",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_MIDDLE2 = BoneSetting(
-        name="右中指３",
-        category="指",
-        parents=("右中指２",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右中指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右中指３",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_MIDDLE_TAIL = BoneSetting(
-        name="右中指先",
-        category="指",
-        parents=("右中指３",),
-        relatives=MVector3D(0, 1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_RING0 = BoneSetting(
-        name="右薬指１",
-        category="指",
-        parents=("右手首",),
-        relatives=("右薬指２",),
-        tails=("右薬指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右薬指１",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_RING1 = BoneSetting(
-        name="右薬指２",
-        category="指",
-        parents=("右薬指１",),
-        relatives=("右薬指３",),
-        tails=("右薬指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右薬指２",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_RING2 = BoneSetting(
-        name="右薬指３",
-        category="指",
-        parents=("右薬指２",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右薬指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右薬指３",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_RING_TAIL = BoneSetting(
-        name="右薬指先",
-        category="指",
-        parents=("右薬指３",),
-        relatives=MVector3D(0, 1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_PINKY0 = BoneSetting(
-        name="右小指１",
-        category="指",
-        parents=("右手首",),
-        relatives=("右小指２",),
-        tails=("右小指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右小指１",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_PINKY1 = BoneSetting(
-        name="右小指２",
-        category="指",
-        parents=("右小指１",),
-        relatives=("右小指３",),
-        tails=("右小指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右小指２",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_PINKY2 = BoneSetting(
-        name="右小指３",
-        category="指",
-        parents=("右小指２",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右小指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("右小指３",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_PINKY_TAIL = BoneSetting(
-        name="右小指先",
-        category="指",
-        parents=("右小指３",),
-        relatives=MVector3D(0, 1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_WRIST_CANCEL = BoneSetting(
-        name="腰キャンセル右",
-        category="足",
-        parents=("足中心", "下半身"),
-        relatives=MVector3D(0, -1, 0),
-        tails=("右足",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_LEG = BoneSetting(
-        name="右足",
-        category="足",
-        parents=("腰キャンセル右", "足中心", "下半身"),
-        relatives=("右ひざ",),
-        tails=("右ひざ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=("右足", "右足D", "足中心"),
-        translatable=True,
-        rotatable=False,
-        scalable=True,
-    )
-    RIGHT_LEG_IK = BoneSetting(
-        name="右足ＩＫ",
-        category="足",
-        parents=("右足IK親", "全ての親"),
-        relatives=("右つま先ＩＫ",),
-        tails=("右つま先ＩＫ",),
-        flag=BoneFlg.CAN_ROTATE
-        | BoneFlg.CAN_TRANSLATE
-        | BoneFlg.CAN_MANIPULATE
-        | BoneFlg.IS_VISIBLE
-        | BoneFlg.IS_IK
-        | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_KNEE = BoneSetting(
-        name="右ひざ",
-        category="足",
-        parents=("右足",),
-        relatives=("右足首",),
-        tails=("右足首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=("右ひざ", "右ひざD"),
-        translatable=True,
-        rotatable=False,
-        scalable=True,
-    )
-    RIGHT_ANKLE = BoneSetting(
-        name="右足首",
-        category="足首",
-        parents=("右ひざ",),
-        relatives=("右つま先",),
-        tails=("右つま先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=("右足首", "右足首D", "右つま先", "右足先EX"),
-        translatable=True,
-        rotatable=False,
-        scalable=True,
-    )
-    RIGHT_TOE_IK = BoneSetting(
-        name="右つま先ＩＫ",
-        category="足",
-        parents=("右足ＩＫ",),
-        relatives=MVector3D(0, -1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_TOE = BoneSetting(
-        name="右つま先",
-        category="足",
-        parents=("右足首",),
-        relatives=MVector3D(0, -1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=("右つま先",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_LEG_D = BoneSetting(
-        name="右足D",
-        category="足",
-        parents=("腰キャンセル右", "下半身"),
-        relatives=("右ひざD",),
-        tails=("右ひざD",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    RIGHT_KNEE_D = BoneSetting(
-        name="右ひざD",
-        category="足",
-        parents=("右足D",),
-        relatives=("右足首D",),
-        tails=("右足首D",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    RIGHT_ANKLE_D = BoneSetting(
-        name="右足首D",
-        category="足首",
-        parents=("右ひざD",),
-        relatives=("右足先EX",),
-        tails=("右足先EX",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    RIGHT_TOE_EX = BoneSetting(
-        name="右足先EX",
-        category="足首",
-        parents=("右足首D",),
-        relatives=MVector3D(0, -1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    RIGHT_LEG_IK_PARENT = BoneSetting(
-        name="右足IK親",
-        category="足",
-        parents=("全ての親",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("右足ＩＫ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-
-    LEFT_SHOULDER_P = BoneSetting(
-        name="左肩P",
-        category="肩",
-        parents=("首根元", "上半身3", "上半身2", "上半身"),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左肩",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_SHOULDER = BoneSetting(
-        name="左肩",
-        category="肩",
-        parents=("左肩P", "首根元", "上半身3", "上半身2", "上半身"),
-        relatives=("左腕",),
-        tails=("左腕",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左肩",),
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    LEFT_SHOULDER_C = BoneSetting(
-        name="左肩C",
-        category="肩",
-        parents=("左肩",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_ARM = BoneSetting(
-        name="左腕",
-        category="腕",
-        parents=("左肩C", "左肩"),
-        relatives=("左ひじ",),
-        tails=("左ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左腕", "左腕捩", "左腕捩1", "左腕捩2", "左腕捩3", "左腕捩4", "左腕捩5"),
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    LEFT_ARM_TWIST = BoneSetting(
-        name="左腕捩",
-        category="腕",
-        parents=("左腕",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_ARM_TWIST1 = BoneSetting(
-        name="左腕捩1",
-        category="腕",
-        parents=("左腕捩",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_ARM_TWIST2 = BoneSetting(
-        name="左腕捩2",
-        category="腕",
-        parents=("左腕捩",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_ARM_TWIST3 = BoneSetting(
-        name="左腕捩3",
-        category="腕",
-        parents=("左腕捩",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左ひじ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_ELBOW = BoneSetting(
-        name="左ひじ",
-        category="腕",
-        parents=("左腕捩", "左腕"),
-        relatives=("左手首",),
-        tails=("左手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3", "左手捩4", "左手捩5"),
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    LEFT_HAND_TWIST = BoneSetting(
-        name="左手捩",
-        category="腕",
-        parents=("左ひじ",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_HAND_TWIST1 = BoneSetting(
-        name="左手捩1",
-        category="腕",
-        parents=("左手捩",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_HAND_TWIST2 = BoneSetting(
-        name="左手捩2",
-        category="腕",
-        parents=("左手捩",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_HAND_TWIST3 = BoneSetting(
-        name="左手捩3",
-        category="腕",
-        parents=("左手捩",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左手首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.HAS_FIXED_AXIS,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_WRIST = BoneSetting(
-        name="左手首",
-        category="手首",
-        parents=("左手捩", "左ひじ"),
-        relatives=("左中指１", "左人指１", "左薬指１", "左小指１"),
-        tails=("左中指１", "左人指１", "左薬指１", "左小指１"),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左手首",),
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    LEFT_THUMB0 = BoneSetting(
-        name="左親指０",
-        category="指",
-        parents=("左手首",),
-        relatives=("左親指１",),
-        tails=("左親指２",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左親指０",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_THUMB1 = BoneSetting(
-        name="左親指１",
-        category="指",
-        parents=("左親指０",),
-        relatives=("左親指２",),
-        tails=("左親指２",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左親指１",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_THUMB2 = BoneSetting(
-        name="左親指２",
-        category="指",
-        parents=("左親指１",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左親指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左親指２",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_THUMB_TAIL = BoneSetting(
-        name="左親指先",
-        category="指",
-        parents=("左親指２",),
-        relatives=MVector3D(0, 1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_INDEX0 = BoneSetting(
-        name="左人指１",
-        category="指",
-        parents=("左手首",),
-        relatives=("左人指２",),
-        tails=("左人指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左人指１",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_INDEX1 = BoneSetting(
-        name="左人指２",
-        category="指",
-        parents=("左人指１",),
-        relatives=("左人指３",),
-        tails=("左人指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左人指２",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_INDEX2 = BoneSetting(
-        name="左人指３",
-        category="指",
-        parents=("左人指２",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左人指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左人指３",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_INDEX_TAIL = BoneSetting(
-        name="左人指先",
-        category="指",
-        parents=("左人指３",),
-        relatives=MVector3D(0, 1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_MIDDLE0 = BoneSetting(
-        name="左中指１",
-        category="指",
-        parents=("左手首",),
-        relatives=("左中指２",),
-        tails=("左中指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左中指１",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_MIDDLE1 = BoneSetting(
-        "左中指２",
-        "指",
-        ("左中指１",),
-        ("左中指３",),
-        ("左中指３",),
-        BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        MVector3D(-1, 0, 0),
-        ("左中指２",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_MIDDLE2 = BoneSetting(
-        name="左中指３",
-        category="指",
-        parents=("左中指２",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左中指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左中指３",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_MIDDLE_TAIL = BoneSetting(
-        name="左中指先",
-        category="指",
-        parents=("左中指３",),
-        relatives=MVector3D(0, 1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_RING0 = BoneSetting(
-        name="左薬指１",
-        category="指",
-        parents=("左手首",),
-        relatives=("左薬指２",),
-        tails=("左薬指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左薬指１",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_RING1 = BoneSetting(
-        name="左薬指２",
-        category="指",
-        parents=("左薬指１",),
-        relatives=("左薬指３",),
-        tails=("左薬指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左薬指２",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_RING2 = BoneSetting(
-        name="左薬指３",
-        category="指",
-        parents=("左薬指２",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左薬指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左薬指３",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_RING_TAIL = BoneSetting(
-        name="左薬指先",
-        category="指",
-        parents=("左薬指３",),
-        relatives=MVector3D(0, 1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_PINKY0 = BoneSetting(
-        name="左小指１",
-        category="指",
-        parents=("左手首",),
-        relatives=("左小指２",),
-        tails=("左小指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左小指１",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_PINKY1 = BoneSetting(
-        name="左小指２",
-        category="指",
-        parents=("左小指１",),
-        relatives=("左小指３",),
-        tails=("左小指３",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左小指２",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_PINKY2 = BoneSetting(
-        name="左小指３",
-        category="指",
-        parents=("左小指２",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左小指先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=("左小指３",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_PINKY_TAIL = BoneSetting(
-        name="左小指先",
-        category="指",
-        parents=("左小指３",),
-        relatives=MVector3D(0, 1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE,
-        axis=MVector3D(-1, 0, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_WRIST_CANCEL = BoneSetting(
-        name="腰キャンセル左",
-        category="足",
-        parents=("足中心", "下半身"),
-        relatives=MVector3D(0, -1, 0),
-        tails=("左足",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_EXTERNAL_ROTATION,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_LEG = BoneSetting(
-        name="左足",
-        category="足",
-        parents=("腰キャンセル左", "足中心", "下半身"),
-        relatives=("左ひざ",),
-        tails=("左ひざ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=("左足", "左足D", "足中心"),
-        translatable=True,
-        rotatable=False,
-        scalable=True,
-    )
-    LEFT_LEG_IK = BoneSetting(
-        name="左足ＩＫ",
-        category="足",
-        parents=("左足IK親", "全ての親"),
-        relatives=("左つま先ＩＫ",),
-        tails=("左つま先ＩＫ",),
-        flag=BoneFlg.CAN_ROTATE
-        | BoneFlg.CAN_TRANSLATE
-        | BoneFlg.CAN_MANIPULATE
-        | BoneFlg.IS_VISIBLE
-        | BoneFlg.IS_IK
-        | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_KNEE = BoneSetting(
-        name="左ひざ",
-        category="足",
-        parents=("左足",),
-        relatives=("左足首",),
-        tails=("左足首",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=("左ひざ", "左ひざD"),
-        translatable=True,
-        rotatable=False,
-        scalable=True,
-    )
-    LEFT_ANKLE = BoneSetting(
-        name="左足首",
-        category="足首",
-        parents=("左ひざ",),
-        relatives=("左つま先",),
-        tails=("左つま先",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=("左足首", "左足首D", "左つま先", "左足先EX"),
-        translatable=True,
-        rotatable=False,
-        scalable=True,
-    )
-    LEFT_TOE_IK = BoneSetting(
-        name="左つま先ＩＫ",
-        category="足",
-        parents=("左足ＩＫ",),
-        relatives=MVector3D(0, -1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_IK,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_TOE = BoneSetting(
-        name="左つま先",
-        category="足",
-        parents=("左足首",),
-        relatives=MVector3D(0, -1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=("左つま先",),
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_LEG_D = BoneSetting(
-        name="左足D",
-        category="足",
-        parents=("腰キャンセル左", "下半身"),
-        relatives=("左ひざD",),
-        tails=("左ひざD",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    LEFT_KNEE_D = BoneSetting(
-        name="左ひざD",
-        category="足",
-        parents=("左足D",),
-        relatives=("左足首D",),
-        tails=("左足首D",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    LEFT_ANKLE_D = BoneSetting(
-        name="左足首D",
-        category="足首",
-        parents=("左ひざD",),
-        relatives=("左足先EX",),
-        tails=("左足先EX",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.IS_EXTERNAL_ROTATION | BoneFlg.TAIL_IS_BONE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=True,
-        scalable=True,
-    )
-    LEFT_TOE_EX = BoneSetting(
-        name="左足先EX",
-        category="足首",
-        parents=("左足首D",),
-        relatives=MVector3D(0, -1, 0),
-        tails=[],
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, -1, 0),
-        weight_names=[],
-        translatable=False,
-        rotatable=False,
-        scalable=False,
-    )
-    LEFT_LEG_IK_PARENT = BoneSetting(
-        name="左足IK親",
-        category="足",
-        parents=("全ての親",),
-        relatives=MVector3D(0, 1, 0),
-        tails=("左足ＩＫ",),
-        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_TRANSLATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
-        axis=MVector3D(0, 1, 0),
-        weight_names=[],
-        translatable=True,
-        rotatable=False,
-        scalable=False,
-    )
-
-
-STANDARD_BONE_NAMES: dict[str, BoneSetting] = dict([(bs.value.name, bs.value) for bs in BoneSettings])
-"""準標準ボーン名前とEnumのキーの辞書"""
 
 
 class MorphOffset(BaseModel):
@@ -2946,6 +1477,8 @@ class MorphType(IntEnum):
     """7:追加UV4"""
     MATERIAL = 8
     """"8:材質"""
+    AFTER_VERTEX = 91
+    """91:ボーン変形後頂点"""
 
 
 class Morph(BaseIndexNameModel):
@@ -2975,6 +1508,7 @@ class Morph(BaseIndexNameModel):
         "morph_type",
         "offsets",
         "is_system",
+        "display_slot",
     )
 
     def __init__(
@@ -2988,6 +1522,7 @@ class Morph(BaseIndexNameModel):
         self.morph_type = MorphType.GROUP
         self.offsets: list[VertexMorphOffset | UvMorphOffset | BoneMorphOffset | GroupMorphOffset | MaterialMorphOffset] = []
         self.is_system = False
+        self.display_slot = -1
 
 
 @unique

@@ -5,8 +5,8 @@ from io import BufferedWriter
 from math import isinf, isnan
 from typing import Tuple
 
-from mlib.base.base import BaseModel
-from mlib.base.logger import MLogger
+from mlib.core.base import BaseModel
+from mlib.core.logger import MLogger
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import (
     Bdef1,
@@ -47,8 +47,9 @@ class PmxWriter(BaseModel):
 
     def save(self) -> None:
         if not self.include_system:
-            for bone_name in ("足中心", "首根元"):
-                self.model.remove_bone(bone_name)
+            for bone in self.model.bones:
+                if bone.is_system:
+                    self.model.remove_bone(bone.name)
 
         with open(self.output_path, "wb") as fout:
             target_bones = [b for b in self.model.bones if b.index >= 0] if self.include_system else self.model.bones.writable()
@@ -136,6 +137,8 @@ class PmxWriter(BaseModel):
 
         # 頂点データ
         for vertex in self.model.vertices:
+            logger.count("頂点データ出力", index=vertex.index, total_index_count=len(self.model.vertices), display_block=10000)
+
             # position
             self.write_number(fout, PmxBinaryType.FLOAT, float(vertex.position.x))
             self.write_number(fout, PmxBinaryType.FLOAT, float(vertex.position.y))
@@ -257,6 +260,8 @@ class PmxWriter(BaseModel):
 
         # 面データ
         for face in self.model.faces:
+            logger.count("面データ出力", index=face.index, total_index_count=len(self.model.faces), display_block=10000)
+
             for vidx in face.vertices:
                 self.write_number(fout, vertex_idx_type, vidx, is_positive_only=True)
 
@@ -449,6 +454,8 @@ class PmxWriter(BaseModel):
         self.write_number(fout, PmxBinaryType.INT, len(target_bones), is_positive_only=True)
 
         for bidx, bone in enumerate(target_bones):
+            logger.count("ボーンデータ出力", index=bone.index, total_index_count=len(target_bones), display_block=100)
+
             # ボーン名
             self.write_text(fout, bone.name, f"Bone {bidx}")
             self.write_text(fout, bone.english_name, f"Bone {bidx}")
@@ -511,7 +518,7 @@ class PmxWriter(BaseModel):
                     # n  : ボーンIndexサイズ  | リンクボーンのボーンIndex
                     self.write_number(fout, bone_idx_type, link.bone_index)
                     # 1  : byte	| 角度制限 0:OFF 1:ON
-                    self.write_byte(fout, link.angle_limit)
+                    self.write_byte(fout, int(link.angle_limit))
 
                     if link.angle_limit:
                         self.write_number(
@@ -581,9 +588,9 @@ class PmxWriter(BaseModel):
             self.write_text(fout, morph.name, f"Morph {midx}")
             self.write_text(fout, morph.english_name, f"Morph {midx}")
             # 操作パネル (PMD:カテゴリ) 1:眉(左下) 2:目(左上) 3:口(右上) 4:その他(右下)  | 0:システム予約
-            self.write_byte(fout, morph.panel)
+            self.write_byte(fout, morph.panel.value)
             # モーフ種類 - 0:グループ, 1:頂点, 2:ボーン, 3:UV, 4:追加UV1, 5:追加UV2, 6:追加UV3, 7:追加UV4, 8:材質
-            self.write_byte(fout, morph.morph_type)
+            self.write_byte(fout, morph.morph_type.value)
             # モーフのオフセット数 : 後続の要素数
             self.write_number(fout, PmxBinaryType.INT, len(morph.offsets))
 
@@ -614,7 +621,7 @@ class PmxWriter(BaseModel):
                 elif type(offset) is MaterialMorphOffset:
                     # 材質モーフ
                     self.write_number(fout, material_idx_type, offset.material_index)
-                    self.write_byte(fout, offset.calc_mode)
+                    self.write_byte(fout, offset.calc_mode.value)
                     self.write_number(fout, PmxBinaryType.FLOAT, float(offset.diffuse.x))
                     self.write_number(fout, PmxBinaryType.FLOAT, float(offset.diffuse.y))
                     self.write_number(fout, PmxBinaryType.FLOAT, float(offset.diffuse.z))
@@ -690,7 +697,7 @@ class PmxWriter(BaseModel):
             # ボーンの場合
             for reference in display_slot.references:
                 # 要素対象 0:ボーン 1:モーフ
-                self.write_byte(fout, reference.display_type)
+                self.write_byte(fout, reference.display_type.value)
                 if 0 == reference.display_type:
                     # ボーンIndex
                     self.write_number(fout, bone_idx_type, reference.display_index)

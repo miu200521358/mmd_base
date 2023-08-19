@@ -6,41 +6,45 @@ from typing import Any, Optional
 
 import numpy as np
 import wx
+import wx.lib.agw.cubecolourdialog as CCD
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
-from mlib.base.exception import MApplicationException
-from mlib.base.logger import MLogger
-from mlib.base.math import MQuaternion, MVector3D
-from mlib.pmx.canvas import CanvasPanel
+from mlib.core.exception import MApplicationException
+from mlib.core.logger import MLogger
+from mlib.pmx.canvas import PmxCanvas, SyncSubCanvasWindow
 from mlib.pmx.pmx_collection import PmxModel
-from mlib.pmx.pmx_part import Bone, BoneMorphOffset, Face, Morph, MorphType, SphereMode, Texture, ToonSharing
+from mlib.pmx.pmx_part import Bone, Face, SphereMode, Texture, ToonSharing
 from mlib.pmx.pmx_writer import PmxWriter
 from mlib.service.base_worker import BaseWorker
-from mlib.service.form.base_frame import BaseFrame
-from mlib.service.form.base_panel import BasePanel
+from mlib.service.form.notebook_frame import NotebookFrame
+from mlib.service.form.notebook_panel import NotebookPanel
 from mlib.service.form.widgets.console_ctrl import ConsoleCtrl
 from mlib.service.form.widgets.exec_btn_ctrl import ExecButton
 from mlib.service.form.widgets.file_ctrl import MPmxFilePickerCtrl, MVmdFilePickerCtrl
 from mlib.service.form.widgets.float_slider_ctrl import FloatSliderCtrl
+from mlib.service.form.widgets.frame_slider_ctrl import FrameSliderCtrl
 from mlib.service.form.widgets.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
 from mlib.utils.file_utils import save_histories, separate_path
 from mlib.vmd.vmd_collection import VmdMotion
-from mlib.vmd.vmd_part import VmdBoneFrame, VmdMorphFrame
+from mlib.service.form.widgets.bezier_ctrl import BezierCtrl
+from mlib.service.form.widgets.image_btn_ctrl import ImageButton
+from mlib.service.form.widgets.morph_ctrl import MorphChoiceCtrl
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
 
-class FilePanel(BasePanel):
-    def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
+class FilePanel(NotebookPanel):
+    def __init__(self, frame: NotebookFrame, tab_idx: int, *args, **kw):
         super().__init__(frame, tab_idx, *args, **kw)
 
         self._initialize_ui()
 
     def _initialize_ui(self) -> None:
         self.model_ctrl = MPmxFilePickerCtrl(
+            self,
             self.frame,
             self,
             key="model_pmx",
@@ -54,6 +58,7 @@ class FilePanel(BasePanel):
         self.model_ctrl.set_parent_sizer(self.root_sizer)
 
         self.dress_ctrl = MPmxFilePickerCtrl(
+            self,
             self.frame,
             self,
             key="dress_pmx",
@@ -67,6 +72,7 @@ class FilePanel(BasePanel):
         self.dress_ctrl.set_parent_sizer(self.root_sizer)
 
         self.motion_ctrl = MVmdFilePickerCtrl(
+            self,
             self.frame,
             self,
             key="motion_vmd",
@@ -80,6 +86,7 @@ class FilePanel(BasePanel):
         self.motion_ctrl.set_parent_sizer(self.root_sizer)
 
         self.output_pmx_ctrl = MPmxFilePickerCtrl(
+            self,
             self.frame,
             self,
             title="出力先",
@@ -90,16 +97,15 @@ class FilePanel(BasePanel):
         self.output_pmx_ctrl.set_parent_sizer(self.root_sizer)
 
         self.exec_btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.exec_btn_ctrl = ExecButton(self, "実行", "実行中", self.exec, 200, "実行ボタンだよ")
+        self.exec_btn_ctrl = ExecButton(self, self, "実行", "実行中", self.exec, 200, "実行ボタンだよ")
         self.exec_btn_ctrl.exec_worker = SaveWorker(self, self.exec_result)
         self.exec_btn_sizer.Add(self.exec_btn_ctrl, 0, wx.ALL, 3)
         self.root_sizer.Add(self.exec_btn_sizer, 0, wx.ALIGN_CENTER | wx.SHAPED, 5)
 
-        self.console_ctrl = ConsoleCtrl(self.frame, self, rows=300)
+        self.console_ctrl = ConsoleCtrl(self, self.frame, self, rows=300)
         self.console_ctrl.set_parent_sizer(self.root_sizer)
 
         self.root_sizer.Add(wx.StaticLine(self, wx.ID_ANY), wx.GROW)
-        self.fit()
 
     def exec(self, event: wx.Event) -> None:
         if not (self.model_ctrl.data and self.dress_ctrl.data):
@@ -137,7 +143,7 @@ class FilePanel(BasePanel):
 
 
 class PmxLoadWorker(BaseWorker):
-    def __init__(self, panel: BasePanel, result_event: wx.Event) -> None:
+    def __init__(self, panel: NotebookPanel, result_event: wx.Event) -> None:
         super().__init__(panel, result_event)
 
     def thread_execute(self) -> None:
@@ -186,7 +192,7 @@ class PmxLoadWorker(BaseWorker):
 
 
 class SaveWorker(BaseWorker):
-    def __init__(self, panel: BasePanel, result_event: wx.Event) -> None:
+    def __init__(self, panel: NotebookPanel, result_event: wx.Event) -> None:
         super().__init__(panel, result_event)
 
     def output_log(self):
@@ -387,37 +393,60 @@ class SaveWorker(BaseWorker):
         return copy_texture
 
 
-class ConfigPanel(CanvasPanel):
-    def __init__(self, frame: BaseFrame, tab_idx: int, *args, **kw):
-        super().__init__(frame, tab_idx, 500, 800, *args, **kw)
+class ConfigPanel(NotebookPanel):
+    def __init__(self, frame: NotebookFrame, tab_idx: int, *args, **kw):
+        super().__init__(frame, tab_idx, *args, **kw)
+        self.canvas_width_ratio = 0.5
+        self.canvas_height_ratio = 1.0
+        self.canvas = PmxCanvas(self, False)
 
         self._initialize_ui()
         self._initialize_event()
+
+    def get_canvas_size(self) -> wx.Size:
+        w, h = self.frame.GetClientSize()
+        canvas_width = w * self.canvas_width_ratio
+        if canvas_width % 2 != 0:
+            # 2で割り切れる値にする
+            canvas_width += 1
+        canvas_height = h * self.canvas_height_ratio
+        return wx.Size(int(canvas_width), int(canvas_height))
 
     def _initialize_ui(self) -> None:
         self.config_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         self.config_sizer.Add(self.canvas, 0, wx.EXPAND | wx.ALL, 0)
 
+        self.scrolled_window = wx.ScrolledWindow(
+            self,
+            wx.ID_ANY,
+            wx.DefaultPosition,
+            wx.DefaultSize,
+            wx.FULL_REPAINT_ON_RESIZE | wx.VSCROLL,
+        )
+        self.scrolled_window.SetScrollRate(5, 5)
+
         self.btn_sizer = wx.BoxSizer(wx.VERTICAL)
 
         # キーフレ
-        self.frame_ctrl = WheelSpinCtrl(self, change_event=self.on_change_frame, initial=0, min=-100, max=10000, size=wx.Size(80, -1))
+        self.frame_ctrl = WheelSpinCtrl(
+            self.scrolled_window, change_event=self.on_change_frame, initial=0, min=-100, max=10000, size=wx.Size(80, -1)
+        )
         self.btn_sizer.Add(self.frame_ctrl, 0, wx.ALL, 5)
 
         # キーフレ
         self.double_ctrl = WheelSpinCtrlDouble(
-            self, change_event=self.on_change_frame, initial=0, min=-100, max=10000, inc=0.01, size=wx.Size(80, -1)
+            self.scrolled_window, change_event=self.on_change_frame, initial=0, min=-100, max=10000, inc=0.01, size=wx.Size(80, -1)
         )
         self.btn_sizer.Add(self.double_ctrl, 0, wx.ALL, 5)
 
         # 再生
-        self.play_btn = wx.Button(self, wx.ID_ANY, "Play", wx.DefaultPosition, wx.Size(100, 50))
+        self.play_btn = wx.Button(self.scrolled_window, wx.ID_ANY, "Play", wx.DefaultPosition, wx.Size(100, 50))
         self.btn_sizer.Add(self.play_btn, 0, wx.ALL, 5)
 
         # スライダー
         self.float_slider = FloatSliderCtrl(
-            self,
+            self.scrolled_window,
             value=0.5,
             min_value=0,
             max_value=3,
@@ -430,13 +459,88 @@ class ConfigPanel(CanvasPanel):
         )
         self.btn_sizer.Add(self.float_slider.sizer, 0, wx.ALL, 0)
 
-        self.config_sizer.Add(self.btn_sizer, 0, wx.ALL, 0)
-        self.root_sizer.Add(self.config_sizer, 0, wx.ALL, 0)
+        # スライダー
+        self.frame_slider = FrameSliderCtrl(
+            self.scrolled_window,
+            border=3,
+            position=wx.DefaultPosition,
+            size=wx.Size(200, -1),
+            tooltip="キーフレスライダー",
+        )
+        self.btn_sizer.Add(self.frame_slider.sizer, 0, wx.ALL, 0)
 
-        self.fit()
+        # 選択色
+        self.color_ctrl = wx.TextCtrl(
+            self.scrolled_window,
+            wx.ID_ANY,
+            f"{self.canvas.color[0]},{self.canvas.color[1]},{self.canvas.color[2]}",
+            wx.DefaultPosition,
+            wx.Size(-1, -1),
+            wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS,
+        )
+        self.btn_sizer.Add(self.color_ctrl, 0, wx.ALL, 0)
+
+        self.color_panel = wx.Panel(self.scrolled_window, size=(50, 50))
+        self.color_panel.SetBackgroundColour(wx.Colour(*self.canvas.color))
+        self.btn_sizer.Add(self.color_panel, 0, wx.ALL, 0)
+
+        self.palette_btn_ctrl = ImageButton(
+            self.scrolled_window,
+            "C:/MMD/pmx_dressup/src/resources/icon/palette.png",
+            wx.Size(10, 10),
+            self.on_click_color_picker,
+            "カラーツールチップ",
+        )
+        self.btn_sizer.Add(self.palette_btn_ctrl, 0, wx.ALL, 0)
+
+        # 再生
+        self.capture_btn = wx.Button(self.scrolled_window, wx.ID_ANY, "Capture", wx.DefaultPosition, wx.Size(100, 50))
+        self.btn_sizer.Add(self.capture_btn, 0, wx.ALL, 5)
+        self.scrolled_window.SetSizer(self.btn_sizer)
+
+        # 顔アップ
+        self.sub_window_btn = wx.Button(self.scrolled_window, wx.ID_ANY, "サブウィンドウ", wx.DefaultPosition, wx.Size(100, 50))
+        self.btn_sizer.Add(self.sub_window_btn, 0, wx.ALL, 5)
+
+        # ベジェ
+        self.bezier_ctrl = BezierCtrl(self.frame, self.scrolled_window, wx.Size(150, 150))
+        self.btn_sizer.Add(self.bezier_ctrl.sizer, 0, wx.ALL, 5)
+
+        # モーフ選択肢
+        self.morph_choice_ctrl = MorphChoiceCtrl(self, self.scrolled_window, "モーフ", 150, "モーフ選べるよ")
+        self.morph_choice_ctrl.initialize(["あ", "い", "う", "え", "お"])
+        self.btn_sizer.Add(self.morph_choice_ctrl.sizer, 0, wx.ALL, 5)
+
+        self.config_sizer.Add(self.scrolled_window, 1, wx.ALL | wx.EXPAND | wx.FIXED_MINSIZE, 0)
+
+        self.root_sizer.Add(self.config_sizer, 0, wx.ALL, 0)
+        self.scrolled_window.Layout()
+        self.scrolled_window.Fit()
+        self.Layout()
+
+        self.on_resize(wx.EVT_SIZE)
 
     def _initialize_event(self) -> None:
         self.play_btn.Bind(wx.EVT_BUTTON, self.on_play)
+        self.capture_btn.Bind(wx.EVT_BUTTON, self.canvas.on_capture)
+        self.canvas.color_changed_event = self.on_change_color
+        self.color_panel.Bind(wx.EVT_LEFT_DOWN, self.on_click_color_picker)
+        self.sub_window_btn.Bind(wx.EVT_BUTTON, self.frame.on_show_sub_window)
+
+    def on_click_color_picker(self, event: wx.Event):
+        data = wx.ColourData()
+        data.SetColour(self.color_panel.GetBackgroundColour())
+        with CCD.CubeColourDialog(self, data) as color_dialog:
+            if color_dialog.ShowModal() == wx.ID_CANCEL:
+                return
+
+            self.color_panel.SetBackgroundColour(data.GetColour())
+            self.color_panel.Refresh()
+
+    def on_change_color(self):
+        self.color_ctrl.ChangeValue(f"{self.canvas.color[0]},{self.canvas.color[1]},{self.canvas.color[2]}")
+        self.color_panel.SetBackgroundColour(wx.Colour(*self.canvas.color))
+        self.color_panel.Refresh()
 
     def on_play(self, event: wx.Event) -> None:
         self.canvas.on_play(event)
@@ -450,6 +554,9 @@ class ConfigPanel(CanvasPanel):
     def fno(self, v: int) -> None:
         self.frame_ctrl.SetValue(v)
 
+    def start_play(self) -> None:
+        pass
+
     def stop_play(self) -> None:
         self.play_btn.SetLabel("Play")
 
@@ -457,8 +564,15 @@ class ConfigPanel(CanvasPanel):
         self.fno = self.frame_ctrl.GetValue()
         self.canvas.change_motion(event)
 
+    def on_resize(self, event: wx.Event):
+        w, h = self.frame.GetClientSize()
+        size = self.get_canvas_size()
 
-class TestFrame(BaseFrame):
+        self.scrolled_window.SetPosition(wx.Point(size.width, 0))
+        self.scrolled_window.SetSize(wx.Size(w - size.width, h))
+
+
+class TestFrame(NotebookFrame):
     def __init__(self, app) -> None:
         super().__init__(
             app,
@@ -473,6 +587,9 @@ class TestFrame(BaseFrame):
         # 設定タブ
         self.config_panel = ConfigPanel(self, 1)
         self.notebook.AddPage(self.config_panel, __("設定"), False)
+
+        self.sub_window_size = wx.Size(300, 300)
+        self.sub_window: Optional[SyncSubCanvasWindow] = None
 
         self.worker = PmxLoadWorker(self.file_panel, self.on_result)
 
@@ -571,14 +688,26 @@ class TestFrame(BaseFrame):
         # bf.local_scale = MVector3D(0, 1, 1)
         # dress_motion.bones["頭"].append(bf)
 
-        # モーフ追加
-        morph = Morph(name="左足")
-        morph.morph_type = MorphType.BONE
-        offset = BoneMorphOffset(dress.bones["左足"].index, local_scale=MVector3D(0, 1, 0))
-        morph.offsets.append(offset)
-        dress.morphs.append(morph)
+        # # モーフ追加
+        # morph = Morph(name="左足")
+        # morph.morph_type = MorphType.BONE
+        # offset = BoneMorphOffset(dress.bones["左足"].index, local_scale=MVector3D(0, 1, 1))
+        # morph.offsets.append(offset)
+        # dress.morphs.append(morph)
 
-        dress_motion.morphs["左足"].append(VmdMorphFrame(0, "左足", 1))
+        # dress_motion.morphs["左足"].append(VmdMorphFrame(0, "左足", 1))
+
+        # dress.update_vertices_by_bone()
+
+        # # モーフ追加
+        # morph2 = Morph(name="左足頂点")
+        # morph2.morph_type = MorphType.AFTER_VERTEX
+        # for vertex_index in dress.vertices_by_bones[dress.bones["左足"].index]:
+        #     offset2 = VertexMorphOffset(vertex_index, position=MVector3D(2, 0, 0))
+        #     morph2.offsets.append(offset2)
+        # dress.morphs.append(morph2)
+
+        # dress_motion.morphs["左足頂点"].append(VmdMorphFrame(0, "左足頂点", 1))
 
         # # モーフ追加
         # morph = Morph(name="上半身")
@@ -590,6 +719,8 @@ class TestFrame(BaseFrame):
         # dress_motion.morphs["上半身"].append(VmdMorphFrame(0, "上半身", 1))
 
         try:
+            self.config_panel.frame_slider.SetMaxFrameNo(dress_motion.max_fno)
+            self.config_panel.frame_slider.SetKeyFrames([f for f in range(0, dress_motion.max_fno, 100)])
             self.config_panel.canvas.set_context()
             self.config_panel.canvas.append_model_set(self.file_panel.model_ctrl.data, self.file_panel.motion_ctrl.data.copy(), 0.5)
             self.config_panel.canvas.append_model_set(dress, dress_motion, 0.7)
@@ -603,6 +734,26 @@ class TestFrame(BaseFrame):
             self.notebook.ChangeSelection(self.config_panel.tab_idx)
         except:
             logger.critical("モデル描画初期化処理失敗")
+
+    def on_show_sub_window(self, event: wx.Event) -> None:
+        self.create_sub_window()
+
+        if self.sub_window:
+            if not self.sub_window.IsShown():
+                self.sub_window.Show()
+                # self.sub_window.panel.canvas.Refresh()
+            elif self.sub_window.IsShown():
+                self.sub_window.Hide()
+        event.Skip()
+
+    def create_sub_window(self) -> None:
+        model: Optional[PmxModel] = self.file_panel.model_ctrl.data
+        if not self.sub_window and model:
+            self.sub_window = SyncSubCanvasWindow(
+                self, self.config_panel.canvas, "サブウィンドウ", self.sub_window_size, [model.name], [model.bones.names]
+            )
+            frame_x, frame_y = self.GetPosition()
+            self.sub_window.SetPosition(wx.Point(max(0, frame_x - self.sub_window_size.x - 10), max(0, frame_y)))
 
 
 class MuApp(wx.App):

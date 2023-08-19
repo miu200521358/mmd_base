@@ -1,8 +1,9 @@
 from typing import Optional
 
-from mlib.base.collection import BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
-from mlib.base.math import MVector3D
-from mlib.pmx.pmx_part import STANDARD_BONE_NAMES, Bone
+from mlib.core.collection import BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
+from mlib.core.math import MVector3D
+from mlib.pmx.bone_setting import STANDARD_BONE_NAMES
+from mlib.pmx.pmx_part import Bone
 
 
 class BoneTree(BaseIndexNameDictModel[Bone]):
@@ -93,6 +94,33 @@ class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
 
         return False
 
+    def has_standard_child(self, name: str) -> bool:
+        """準標準の子どもをもつボーンであるか否か"""
+        # チェック対象ボーンが含まれるボーンツリー
+        if name in STANDARD_BONE_NAMES:
+            return False
+
+        for bone_tree in [bt for bt in self.data.values() if name in bt.names and name != bt.last_name]:
+            bone_find_index = [i for i, b in enumerate(bone_tree) if b.name == name][0]
+            # 子系統に準標準ボーンが含まれている場合、TRUE
+            for child_name in bone_tree.names[bone_find_index + 1 :]:
+                if child_name in STANDARD_BONE_NAMES:
+                    return True
+
+        return False
+
+    def get_standard_children(self, name: str) -> list[Bone]:
+        """子ボーンの準標準ボーンを所得"""
+        bones: list[Bone] = []
+        for bone_tree in [bt for bt in self.data.values() if name in bt.names and name != bt.last_name]:
+            bone_find_index = [i for i, b in enumerate(bone_tree) if b.name == name][0]
+            # 子系統に準標準ボーンが含まれている場合、TRUE
+            for child_name in bone_tree.names[bone_find_index + 1 :]:
+                if child_name in STANDARD_BONE_NAMES:
+                    bones.append(bone_tree[child_name])
+
+        return bones
+
     def is_standard_tail(self, name: str) -> bool:
         """準標準までのボーンツリーに含まれるボーンの表示先であるか否か"""
         if name in STANDARD_BONE_NAMES:
@@ -119,3 +147,16 @@ class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
 
         # 自分が準標準ボーンの範囲内の親を持ち、子ボーンがいない場合、表示先とみなす
         return True
+
+    def get_child_bone_names(self, bone_name: str, is_standard: bool) -> list[str]:
+        """指定されたボーンを親に持つ子ボーンリストの取得"""
+        child_bone_names: list[str] = []
+
+        for bone_tree in [bt for bt in self.data.values() if bone_name in bt.names and bone_name != bt.last_name]:
+            bone_find_index = [i for i, b in enumerate(bone_tree) if b.name == bone_name][0]
+            # 自分を親に持つ子ボーン名のリストを保持
+            for child_name in bone_tree.names[bone_find_index + 1 :]:
+                if (is_standard and child_name in STANDARD_BONE_NAMES) or not is_standard:
+                    child_bone_names.append(child_name)
+
+        return child_bone_names
