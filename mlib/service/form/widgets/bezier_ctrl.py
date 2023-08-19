@@ -58,6 +58,7 @@ class BezierCtrl:
         for i in range(1, 8):
             self.template_ctrl.Append(f"{i:02d}", self.create_bitmap(f"mlib/resources/bezier/{i:02d}.png"))
         self.template_ctrl.Bind(wx.EVT_COMBOBOX, self.on_select)
+        self.template_ctrl.SetToolTip(__("選択された補間曲線をパネルに設定します"))
         self.value_sizer.Add(self.template_ctrl, (4, 0), (1, 2), wx.ALL, 0)
 
         self.sizer.Add(self.value_sizer, 0, wx.ALL, 0)
