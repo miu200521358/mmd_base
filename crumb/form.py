@@ -8,10 +8,6 @@ import numpy as np
 import wx
 import wx.lib.agw.cubecolourdialog as CCD
 
-from mlib.service.form.widgets.bezier_ctrl import BezierCtrl
-from mlib.service.form.widgets.image_btn_ctrl import ImageButton
-from mlib.service.form.widgets.morph_ctrl import MorphChoiceCtrl
-
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
@@ -32,6 +28,9 @@ from mlib.service.form.widgets.frame_slider_ctrl import FrameSliderCtrl
 from mlib.service.form.widgets.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
 from mlib.utils.file_utils import save_histories, separate_path
 from mlib.vmd.vmd_collection import VmdMotion
+from mlib.service.form.widgets.bezier_ctrl import BezierCtrl
+from mlib.service.form.widgets.image_btn_ctrl import ImageButton
+from mlib.service.form.widgets.morph_ctrl import MorphChoiceCtrl
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
