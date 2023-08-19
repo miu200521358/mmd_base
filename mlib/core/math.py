@@ -589,7 +589,7 @@ class MVectorDict:
     def append(self, vkey: int, v: MVector) -> None:
         self.vectors[vkey] = v.vector
 
-    def distances(self, v: MVector):
+    def distances(self, v: MVector) -> np.ndarray:
         return norm((self.values() - v.vector), ord=2, axis=1)
 
     def nearest_distance(self, v: MVectorT) -> float:
@@ -608,7 +608,7 @@ class MVectorDict:
         """
         return float(np.min(self.distances(v)))
 
-    def nearest_value(self, v: MVectorT):
+    def nearest_value(self, v: MVectorT) -> MVectorT:
         """
         指定ベクトル直近値
 
@@ -655,7 +655,7 @@ class MVectorDict:
         """
         return float(np.max(self.distances(v)))
 
-    def farthest_value(self, v: MVectorT):
+    def farthest_value(self, v: MVectorT) -> MVectorT:
         """
         指定ベクトル最遠値
 
