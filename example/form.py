@@ -10,6 +10,7 @@ import wx.lib.agw.cubecolourdialog as CCD
 
 from mlib.service.form.widgets.bezier_ctrl import BezierCtrl
 from mlib.service.form.widgets.image_btn_ctrl import ImageButton
+from mlib.service.form.widgets.morph_ctrl import MorphChoiceCtrl
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -505,6 +506,11 @@ class ConfigPanel(NotebookPanel):
         # ベジェ
         self.bezier_ctrl = BezierCtrl(self.frame, self.scrolled_window, wx.Size(150, 150))
         self.btn_sizer.Add(self.bezier_ctrl.sizer, 0, wx.ALL, 5)
+
+        # モーフ選択肢
+        self.morph_choice_ctrl = MorphChoiceCtrl(self, self.scrolled_window, "モーフ", 150, "モーフ選べるよ")
+        self.morph_choice_ctrl.initialize(["あ", "い", "う", "え", "お"])
+        self.btn_sizer.Add(self.morph_choice_ctrl.sizer, 0, wx.ALL, 5)
 
         self.config_sizer.Add(self.scrolled_window, 1, wx.ALL | wx.EXPAND | wx.FIXED_MINSIZE, 0)
 
