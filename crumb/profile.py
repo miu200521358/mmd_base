@@ -12,9 +12,9 @@ from mlib.vmd.vmd_part import VmdMorphFrame
 from mlib.vmd.vmd_reader import VmdReader
 
 # 全体プロファイル
-# python -m cProfile -s cumtime example\profile.py
+# python -m cProfile -s cumtime crumb\profile.py
 # 行プロファイル
-# kernprof -l example\profile.py
+# kernprof -l crumb\profile.py
 # python -m line_profiler profile.py.lprof
 
 # model = PmxReader().read_by_filepath("D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/Lat式ミクVer2.31/Lat式ミクVer2.31_Normal_準標準.pmx")
