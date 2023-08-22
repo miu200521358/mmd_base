@@ -56,6 +56,7 @@ class FilePanel(NotebookPanel):
             file_change_event=self.on_change_model_pmx,
         )
         self.model_ctrl.set_parent_sizer(self.root_sizer)
+        # self.model_ctrl.set_color(wx.Colour("RED"))
 
         self.dress_ctrl = MPmxFilePickerCtrl(
             self,

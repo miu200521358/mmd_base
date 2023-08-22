@@ -70,6 +70,8 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
                     self.parent, wx.ID_ANY, " " * name_spacer, wx.DefaultPosition, wx.Size(name_spacer * 16, -1), 0
                 )
                 self.title_sizer.Add(self.spacer_ctrl, 0, wx.ALL, 3)
+            else:
+                self.spacer_ctrl = None
 
             self.name_ctrl = wx.TextCtrl(
                 self.parent,
@@ -230,6 +232,16 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         if not self.is_save:
             # 保存じゃなければ履歴ボタンを表示
             self.history_ctrl.Enable(enable)
+
+    def set_color(self, color: wx.Colour) -> None:
+        self.title_ctrl.SetBackgroundColour(color)
+        self.file_ctrl.SetBackgroundColour(color)
+
+        if self.spacer_ctrl:
+            self.spacer_ctrl.SetBackgroundColour(color)
+
+        if self.name_ctrl:
+            self.name_ctrl.SetBackgroundColour(color)
 
 
 class MFileDropTarget(wx.FileDropTarget):
