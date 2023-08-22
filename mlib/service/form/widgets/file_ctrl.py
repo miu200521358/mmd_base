@@ -62,6 +62,8 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         self.title_ctrl = wx.StaticText(self.parent, wx.ID_ANY, self.title, wx.DefaultPosition, wx.Size(len(self.title) * 16, -1), 0)
         self.title_ctrl.SetToolTip(__(tooltip))
         self.title_sizer.Add(self.title_ctrl, 0, wx.ALL, 3)
+        self.spacer_ctrl = None
+        self.name_ctrl = None
 
         # モデル名等の表示
         if self.is_show_name and not self.is_save:
@@ -70,8 +72,6 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
                     self.parent, wx.ID_ANY, " " * name_spacer, wx.DefaultPosition, wx.Size(name_spacer * 16, -1), 0
                 )
                 self.title_sizer.Add(self.spacer_ctrl, 0, wx.ALL, 3)
-            else:
-                self.spacer_ctrl = None
 
             self.name_ctrl = wx.TextCtrl(
                 self.parent,
@@ -191,17 +191,20 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         bool
             読み取り出来るパスか否か
         """
-        if not self.file_ctrl.GetPath().strip():
+        if self.name_ctrl and not self.file_ctrl.GetPath().strip():
             self.name_ctrl.SetValue(__("(未設定)"))
             self.clear_data()
             return False
 
-        if self.is_show_name and not self.is_save:
+        if self.name_ctrl and self.is_show_name and not self.is_save:
             if validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
                 name = self.reader.read_name_by_filepath(self.file_ctrl.GetPath())
                 self.name_ctrl.SetValue(f"({name[:20]})")
                 return True
-        self.name_ctrl.SetValue(__("(読取失敗)"))
+
+        if self.name_ctrl:
+            self.name_ctrl.SetValue(__("(読取失敗)"))
+
         self.clear_data()
         return False
 
