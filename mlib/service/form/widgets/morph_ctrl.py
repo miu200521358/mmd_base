@@ -5,7 +5,6 @@ import wx
 
 from mlib.core.logger import MLogger
 
-
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 

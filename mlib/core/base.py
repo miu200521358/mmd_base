@@ -1,5 +1,5 @@
 from enum import Enum, IntEnum, unique
-from pickle import dumps, loads, HIGHEST_PROTOCOL
+from pickle import HIGHEST_PROTOCOL, dumps, loads
 from typing import TypeVar
 
 from mlib.core.logger import parse2str
