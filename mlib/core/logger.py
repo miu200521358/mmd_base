@@ -8,7 +8,7 @@ from enum import Enum, IntEnum
 from functools import wraps
 from logging import Formatter, Handler, LogRecord, StreamHandler
 from logging.handlers import QueueHandler
-from multiprocessing import get_logger
+from multiprocessing import Queue, get_logger
 from typing import Optional
 
 import numpy as np
@@ -81,7 +81,7 @@ class MLogger:
     # ログ出力モード
     is_out_log = False
 
-    console_handler: Optional["ConsoleHandler"] = None
+    console_handler: Optional["ConsoleHandler" | "ConsoleQueueHandler"] = None
     queue_handler: Optional[QueueHandler] = None
     re_break = re.compile(r"\n")
 
@@ -452,6 +452,21 @@ def get_file_encoding(file_path):
 class ConsoleHandler(Handler):
     def __init__(self, text_ctrl: wx.TextCtrl):
         super().__init__()
+        self.text_ctrl = text_ctrl
+
+    def emit(self, record: LogRecord):
+        try:
+            msg = self.format(record)
+            wx.CallAfter(self.text_ctrl.AppendText, msg + "\n")
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            self.handleError(record)
+
+
+class ConsoleQueueHandler(QueueHandler):
+    def __init__(self, text_ctrl: wx.TextCtrl, queue: Queue):
+        super().__init__(queue)
         self.text_ctrl = text_ctrl
 
     def emit(self, record: LogRecord):
