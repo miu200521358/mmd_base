@@ -215,6 +215,13 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
             if self.original_data and self.original_data.digest != digest:
                 self.clear_data()
 
+    @property
+    def digest(self) -> Optional[str]:
+        """ハッシュを読み取る"""
+        if not self.is_save and validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
+            return self.reader.read_hash_by_filepath(self.file_ctrl.GetPath())
+        return None
+
     def clear_data(self) -> None:
         """リーダー対象オブジェクトをクリア"""
         if self.original_data is not None:
