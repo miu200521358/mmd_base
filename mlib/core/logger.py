@@ -7,6 +7,7 @@ from datetime import datetime
 from enum import Enum, IntEnum
 from functools import wraps
 from logging import Formatter, Handler, LogRecord, StreamHandler
+from logging.handlers import QueueHandler
 from multiprocessing import get_logger
 from typing import Optional
 
@@ -81,6 +82,7 @@ class MLogger:
     is_out_log = False
 
     console_handler: Optional["ConsoleHandler"] = None
+    queue_handler: Optional[QueueHandler] = None
     re_break = re.compile(r"\n")
 
     def __init__(
@@ -108,6 +110,11 @@ class MLogger:
             if self.is_out_log:
                 self.console_handler.setFormatter(Formatter(self.STREAM_FORMAT))
             logger.addHandler(self.console_handler)
+
+        if self.queue_handler:
+            if self.is_out_log:
+                self.queue_handler.setFormatter(Formatter(self.STREAM_FORMAT))
+            logger.addHandler(self.queue_handler)
 
     def get_extra(self, msg: str, func: Optional[str] = "", lno: Optional[int] = 0):
         return {"original_msg": msg, "call_file": self.file_name, "call_func": func, "call_lno": str(lno)}
