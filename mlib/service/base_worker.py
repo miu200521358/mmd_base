@@ -1,5 +1,7 @@
+from multiprocessing import Process
 import os
 from functools import wraps
+import signal
 from threading import Thread, current_thread, enumerate
 from time import sleep, time
 from typing import Any, Callable, Optional
@@ -72,6 +74,17 @@ def task_takes_time(callable: Callable):
                 for th in enumerate():
                     if isinstance(th, SimpleThread) and th.ident != current_thread().ident:
                         th.killed = True
+
+                for pid in worker.sub_process:
+                    # サブプロセスを殺す
+                    try:
+                        os.kill(pid, signal.SIGTERM)
+                    except Exception:
+                        try:
+                            os.kill(pid, signal.SIGINT)
+                        except Exception:
+                            pass
+
                 break
 
         return thread.result()
@@ -103,6 +116,7 @@ class BaseWorker:
         self.result: bool = True
         self.result_data: Optional[Any] = None
         self.result_func = result_func
+        self.sub_process: dict[int, Process] = {}
 
     def start(self) -> None:
         self.started = True
