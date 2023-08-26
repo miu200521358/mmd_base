@@ -14,6 +14,8 @@ class VmdBoneFrameTree:
         "local_matrix_ary",
         "cache_global_matrix",
         "cache_local_matrix",
+        "cache_global_matrix_no_scale",
+        "cache_local_matrix_no_scale",
         "cache_position",
     )
 
@@ -32,6 +34,8 @@ class VmdBoneFrameTree:
         self.local_matrix_ary = local_matrix_ary
         self.cache_global_matrix: Optional[MMatrix4x4] = None
         self.cache_local_matrix: Optional[MMatrix4x4] = None
+        self.cache_global_matrix_no_scale: Optional[MMatrix4x4] = None
+        self.cache_local_matrix_no_scale: Optional[MMatrix4x4] = None
         self.cache_position: Optional[MVector3D] = None
 
     @property
@@ -47,6 +51,38 @@ class VmdBoneFrameTree:
             return self.cache_local_matrix
         self.cache_local_matrix = MMatrix4x4(self.local_matrix_ary)
         return self.cache_local_matrix
+
+    @property
+    def global_matrix_no_scale(self) -> MMatrix4x4:
+        if self.cache_global_matrix_no_scale is not None:
+            return self.cache_global_matrix_no_scale
+
+        global_matrix = self.global_matrix
+
+        rot = global_matrix.to_quaternion()
+        pos = global_matrix.to_position()
+
+        no_scale_mat = MMatrix4x4()
+        no_scale_mat.translate(pos)
+        no_scale_mat.rotate(rot)
+        self.cache_global_matrix_no_scale = no_scale_mat
+        return self.cache_global_matrix_no_scale
+
+    @property
+    def local_matrix_no_scale(self) -> MMatrix4x4:
+        if self.cache_local_matrix_no_scale is not None:
+            return self.cache_local_matrix_no_scale
+
+        local_matrix = self.local_matrix
+
+        rot = local_matrix.to_quaternion()
+        pos = local_matrix.to_position()
+
+        no_scale_mat = MMatrix4x4()
+        no_scale_mat.translate(pos)
+        no_scale_mat.rotate(rot)
+        self.cache_local_matrix_no_scale = no_scale_mat
+        return self.cache_local_matrix_no_scale
 
     @property
     def position(self) -> MVector3D:
