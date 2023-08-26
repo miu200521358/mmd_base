@@ -9,7 +9,7 @@ from functools import wraps
 from logging import Formatter, Handler, LogRecord, StreamHandler
 from logging.handlers import QueueHandler
 from multiprocessing import Queue, get_logger
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import wx
@@ -81,7 +81,7 @@ class MLogger:
     # ログ出力モード
     is_out_log = False
 
-    console_handler: Optional["ConsoleHandler" | "ConsoleQueueHandler"] = None
+    console_handler: Optional[Union["ConsoleHandler", "ConsoleQueueHandler"]] = None
     queue_handler: Optional[QueueHandler] = None
     re_break = re.compile(r"\n")
 
