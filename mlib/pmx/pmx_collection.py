@@ -1312,7 +1312,7 @@ class PmxModel(BaseHashModel):
             self.separate_weights("左手捩1", "左手捩2", "左手捩3", 1.2, 1.0, ("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3"), is_twist=True)
             self.separate_weights("左手捩2", "左手捩3", "左手捩", 1.2, 1.0, ("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3"), is_twist=True)
 
-        if True in [self.bones[bone_name].is_leg_d for bone_name in bone_names]:
+        if True in [self.bones[bone_name].is_leg_d for bone_name in bone_names if bone_name in self.bones]:
             # 足Dはそのまま置き換える
             replaced_map = dict([(b.index, b.index) for b in self.bones])
             target_vertex_indexes: list[int] = []
