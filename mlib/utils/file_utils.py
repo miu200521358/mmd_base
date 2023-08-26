@@ -74,7 +74,8 @@ def save_histories(histories: dict[str, list[Any]]):
 
     limited_histories: dict[str, list[Any]] = {}
     for key, values in histories.items():
-        limited_histories[key] = values[:HISTORY_MAX]
+        if isinstance(values, list):
+            limited_histories[key] = values[:HISTORY_MAX]
 
     try:
         with open(os.path.join(root_dir, "history.json"), "w", encoding="utf-8") as f:
