@@ -81,7 +81,6 @@ class MLogger:
     # ログ出力モード
     is_out_log = False
 
-    stream_err_handler: Optional[StreamHandler] = None
     console_handler: Optional[Union["ConsoleHandler", "ConsoleQueueHandler"]] = None
     queue_handler: Optional[QueueHandler] = None
     re_break = re.compile(r"\n")
@@ -376,8 +375,9 @@ def add_mlogger_handler(logger: MLogger) -> None:
     for h in logger.logger.handlers:
         logger.logger.removeHandler(h)
 
-    if MLogger.stream_err_handler:
-        logger.logger.addHandler(MLogger.stream_err_handler)
+    logger.stream_err_handler = StreamHandler(sys.stderr)
+    logger.stream_err_handler.setFormatter(Formatter(logger.STREAM_FORMAT))
+    logger.logger.addHandler(logger.stream_err_handler)
 
     if MLogger.console_handler:
         if logger.is_out_log:
