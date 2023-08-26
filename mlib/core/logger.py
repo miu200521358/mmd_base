@@ -7,6 +7,7 @@ from datetime import datetime
 from enum import Enum, IntEnum
 from functools import wraps
 from logging import Formatter, Handler, LogRecord, StreamHandler
+from multiprocessing import get_logger
 from typing import Optional
 
 import numpy as np
@@ -98,19 +99,15 @@ class MLogger:
 
         self.logger.setLevel(level)
 
-    def add_handler(self) -> None:
-        for h in self.logger.handlers:
-            if isinstance(h, StreamHandler):
-                self.logger.removeHandler(h)
-        self.logger.addHandler(self.stream_err_handler)
+    def add_handler(self, logger: logging.Logger) -> None:
+        for h in logger.handlers:
+            logger.removeHandler(h)
+        logger.addHandler(self.stream_err_handler)
 
         if self.console_handler:
-            for h in self.logger.handlers:
-                if isinstance(h, ConsoleHandler):
-                    self.logger.removeHandler(h)
             if self.is_out_log:
                 self.console_handler.setFormatter(Formatter(self.STREAM_FORMAT))
-            self.logger.addHandler(self.console_handler)
+            logger.addHandler(self.console_handler)
 
     def get_extra(self, msg: str, func: Optional[str] = "", lno: Optional[int] = 0):
         return {"original_msg": msg, "call_file": self.file_name, "call_func": func, "call_lno": str(lno)}
@@ -126,8 +123,9 @@ class MLogger:
         **kwargs,
     ):
         if self.default_level == 1:
-            self.add_handler()
-            self.logger.info(
+            logger = get_logger() or self.logger
+            self.add_handler(logger)
+            logger.info(
                 self.create_message(msg, logging.DEBUG, None, decoration, **kwargs),
                 extra=self.get_extra(msg, func, lno),
             )
@@ -143,8 +141,9 @@ class MLogger:
         **kwargs,
     ):
         if self.total_level <= logging.DEBUG and self.default_level <= self.total_level:
-            self.add_handler()
-            self.logger.info(
+            logger = get_logger() or self.logger
+            self.add_handler(logger)
+            logger.info(
                 self.create_message(msg, logging.DEBUG, None, decoration, **kwargs),
                 extra=self.get_extra(msg, func, lno),
             )
@@ -160,8 +159,9 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        self.add_handler()
-        self.logger.info(
+        logger = get_logger() or self.logger
+        self.add_handler(logger)
+        logger.info(
             self.create_message(msg, logging.INFO, title, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
         )
@@ -182,12 +182,14 @@ class MLogger:
         **kwargs,
     ):
         if 0 < total_index_count and 0 < index and (0 == index % display_block or index == total_index_count):
-            self.add_handler()
+            logger = get_logger() or self.logger
+            self.add_handler(logger)
+
             percentage = (index / total_index_count) * 100
             log_msg = "-- " + self.get_text(msg) + " [{i} ({p:.2f}%)]"
             count_msg = self.create_message(log_msg, logging.INFO, title, decoration, p=percentage, i=index, **kwargs)
 
-            self.logger.info(
+            logger.info(
                 count_msg,
                 extra=self.get_extra(count_msg, func, lno),
             )
@@ -203,8 +205,9 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        self.add_handler()
-        self.logger.warning(
+        logger = get_logger() or self.logger
+        self.add_handler(logger)
+        logger.warning(
             self.create_message(msg, logging.WARNING, title, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
         )
@@ -220,8 +223,9 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        self.add_handler()
-        self.logger.error(
+        logger = get_logger() or self.logger
+        self.add_handler(logger)
+        logger.error(
             self.create_message(msg, logging.ERROR, title, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
         )
@@ -237,8 +241,9 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        self.add_handler()
-        self.logger.critical(
+        logger = get_logger() or self.logger
+        self.add_handler(logger)
+        logger.critical(
             self.create_message(msg, logging.CRITICAL, title, decoration or MLogger.Decoration.BOX, **kwargs),
             exc_info=True,
             stack_info=True,
