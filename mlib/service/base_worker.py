@@ -1,7 +1,5 @@
-from multiprocessing import Process
 import os
 from functools import wraps
-import signal
 from threading import Thread, current_thread, enumerate
 from time import sleep, time
 from typing import Any, Callable, Optional
@@ -40,16 +38,10 @@ def verify_thread(callable: Callable):
     @wraps(callable)
     def f(self, *args, **kwargs):
         thread = current_thread()
-        if isinstance(thread, SimpleThread) and thread.killed:
+        if (isinstance(thread, SimpleThread) and thread.killed) or thread._kwargs.get("killed"):
             raise MKilledException
 
-        result = callable(self, *args, **kwargs)
-
-        thread = current_thread()
-        if isinstance(thread, SimpleThread) and thread.killed:
-            raise MKilledException
-
-        return result
+        return callable(self, *args, **kwargs)
 
     return f
 
@@ -72,19 +64,11 @@ def task_takes_time(callable: Callable):
             if worker.killed:
                 # 呼び出し元から停止命令が出ている場合、自分以外の全部のスレッドに終了命令
                 for th in enumerate():
-                    if isinstance(th, SimpleThread) and th.ident != current_thread().ident:
-                        th.killed = True
-
-                for pid in worker.sub_process:
-                    # サブプロセスを殺す
-                    try:
-                        os.kill(pid, signal.SIGTERM)
-                    except Exception:
-                        try:
-                            os.kill(pid, signal.SIGINT)
-                        except Exception:
-                            pass
-
+                    if th.ident != current_thread().ident:
+                        if isinstance(th, SimpleThread):
+                            th.killed = True
+                        else:
+                            th._kwargs["killed"] = True
                 break
 
         return thread.result()
@@ -116,7 +100,6 @@ class BaseWorker:
         self.result: bool = True
         self.result_data: Optional[Any] = None
         self.result_func = result_func
-        self.sub_process: dict[int, Process] = {}
 
     def start(self) -> None:
         self.started = True
