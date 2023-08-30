@@ -2546,5 +2546,29 @@ def test_align_triangle():
     ).all()
 
 
+def test_intersect_line_point():
+    import numpy as np
+
+    from mlib.core.math import MVector3D, intersect_line_point
+
+    assert np.isclose(
+        MVector3D(-5.89536869, 10.05249932, -0.01969229).vector,
+        intersect_line_point(
+            MVector3D(-3.219347, 12.35182, -0.01938487),
+            MVector3D(-4.016106, 11.66722, -0.0194764),
+            MVector3D(-6.391519, 10.62996, -0.2093448),
+        ).vector,
+    ).all()
+
+    assert np.isclose(
+        MVector3D(-4.26564252, 11.4528105, -0.01950507).vector,
+        intersect_line_point(
+            MVector3D(-3.219347, 12.35182, -0.01938487),
+            MVector3D(-4.016106, 11.66722, -0.0194764),
+            MVector3D(-4.373949, 11.57889, -0.2365222),
+        ).vector,
+    ).all()
+
+
 if __name__ == "__main__":
     pytest.main()

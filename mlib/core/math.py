@@ -1663,6 +1663,24 @@ def intersect_line_plane(line_point: MVector3D, line_direction: MVector3D, plane
     return intersection
 
 
+def intersect_line_point(M: MVector3D, N: MVector3D, P: MVector3D):
+    """三次元頂点Pから直線A(M -> N)に向かって下ろした垂線との交点P'を求める"""
+
+    # 直線Aの方向ベクトルを計算
+    direction_vector = (N - M).vector
+
+    # 直線A上での垂線ベクトルを計算
+    perpendicular_vector = (P - M).vector
+
+    # 直線A上での垂線の長さを計算
+    perpendicular_length = np.dot(perpendicular_vector, direction_vector) / np.dot(direction_vector, direction_vector)
+
+    # 直線A上の交点P'を計算
+    intersection_point = M.vector + perpendicular_length * direction_vector
+
+    return MVector3D(*intersection_point)
+
+
 def align_triangle(
     a1: MVector3D,
     a2: MVector3D,
