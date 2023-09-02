@@ -752,6 +752,9 @@ class MVectorDict:
         """中央値"""
         return np.median(self.values(), axis=0)
 
+    def __getitem__(self, key: int) -> Optional[np.ndarray]:
+        return self.vectors.get(key)
+
 
 @lru_cache(maxsize=None)
 def cache_slerp_evaluate(q1: quaternion, q2: quaternion, t: float) -> quaternion:
