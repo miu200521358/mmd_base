@@ -658,7 +658,7 @@ class MVectorDict:
         nearest_keys: list[int] = []
         for nk, nv in zip(np.array(self.keys())[np.argsort(self.distances(v))], np.array(self.values())[np.argsort(self.distances(v))]):
             if np.isclose(nv, nearest_value, atol=atol, rtol=rtol).all():
-                nearest_keys.append(nk)
+                nearest_keys.append(int(nk))
             else:
                 # 同じのでなくなったら終了
                 break
