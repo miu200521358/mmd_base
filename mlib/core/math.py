@@ -752,8 +752,15 @@ class MVectorDict:
         """中央値"""
         return np.median(self.values(), axis=0)
 
-    def __getitem__(self, key: int) -> Optional[np.ndarray]:
-        return self.vectors.get(key)
+    def __getitem__(self, key: int) -> Optional[MVector]:
+        v = self.vectors.get(key)
+        if v is not None and v.size == 2:
+            return MVector2D(*v)
+        elif v is not None and v.size == 3:
+            return MVector3D(*v)
+        elif v is not None and v.size == 4:
+            return MVector4D(*v)
+        return None
 
 
 @lru_cache(maxsize=None)
