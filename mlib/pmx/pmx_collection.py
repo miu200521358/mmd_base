@@ -1027,7 +1027,12 @@ class PmxModel(BaseHashModel):
         if bone_name in self.bones:
             # 既にある場合、作成しない
             return False
-        if not [bname for bname in bone_setting.tails if bname in self.bones] and "D" != bone_name[-1] and "EX" != bone_name[-2:]:
+        if (
+            bone_name != "全ての親"
+            and not [bname for bname in bone_setting.tails if bname in self.bones]
+            and "D" != bone_name[-1]
+            and "EX" != bone_name[-2:]
+        ):
             # 先に接続可能なボーンが無い場合、作成しない
             return False
         parent_names = [p for p in bone_setting.parents if p in self.bones.names]
