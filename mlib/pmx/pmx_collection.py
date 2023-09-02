@@ -1271,6 +1271,12 @@ class PmxModel(BaseHashModel):
             self.bones[bone.parent_index].tail_index = bone.index
             self.bones[bone.parent_index].bone_flg |= BoneFlg.TAIL_IS_BONE
 
+        # 全親の場合、親が-1のものを子どもにする
+        if bone_name == "全ての親":
+            for b in self.bones:
+                if 0 > b.parent_index:
+                    b.parent_index = bone.index
+
         return True
 
     def replace_standard_weights(self, bone_names: list[str]) -> None:
