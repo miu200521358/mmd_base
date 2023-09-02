@@ -639,6 +639,32 @@ class MVectorDict:
         """
         return int(np.array(self.keys())[np.argmin(self.distances(v))])
 
+    def nearest_all_keys(self, v: MVectorT, atol=1e-3, rtol=1e-3) -> list[int]:
+        """
+        指定ベクトル直近キー(同一距離であるキーを全て取得する)
+
+        Parameters
+        ----------
+        v : MVector
+            比較対象ベクトル
+
+        Returns
+        -------
+        直近キー
+        """
+        nearest_value = self.nearest_value(v).vector
+
+        # 近い方からチェックして同じ距離のキーを保持
+        nearest_keys: list[int] = []
+        for nk, nv in zip(np.array(self.keys())[np.argsort(self.distances(v))], np.array(self.values())[np.argsort(self.distances(v))]):
+            if np.isclose(nv, nearest_value, atol=atol, rtol=rtol).all():
+                nearest_keys.append(nk)
+            else:
+                # 同じのでなくなったら終了
+                break
+
+        return nearest_keys
+
     def farthest_distance(self, v: MVectorT) -> float:
         """
         指定ベクトル最遠値

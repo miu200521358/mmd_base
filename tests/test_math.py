@@ -1403,6 +1403,22 @@ def test_MVectorDict_distances():
     assert 1 == vd.nearest_key(MVector3D(2, -2, 2))
 
 
+def test_MVectorDict_nearest_all_keys():
+    from mlib.core.math import MVector3D, MVectorDict
+
+    vd = MVectorDict()
+    vd.append(1, MVector3D(1, 2, 3))
+    vd.append(2, MVector3D(3, 4, 5))
+    vd.append(3, MVector3D(1, 2, 3))
+    vd.append(4, MVector3D(4, -5, 6))
+
+    nearest_keys = vd.nearest_all_keys(MVector3D(1, 2, 3.1))
+
+    assert 2 == len(nearest_keys)
+    assert 1 in nearest_keys
+    assert 3 in nearest_keys
+
+
 def test_MMatrix4x4List_translate():
     import numpy as np
 
