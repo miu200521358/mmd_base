@@ -580,6 +580,7 @@ class TestFrame(NotebookFrame):
             history_keys=["model_pmx", "dress_pmx", "motion_vmd"],
             title="Mu Test Frame",
             size=wx.Size(1000, 800),
+            is_saving=False,
         )
         # ファイルタブ
         self.file_panel = FilePanel(self, 0)

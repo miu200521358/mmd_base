@@ -10,9 +10,10 @@ from mlib.utils.file_utils import read_histories
 
 
 class NotebookFrame(BaseFrame):
-    def __init__(self, app: wx.App, title: str, history_keys: list[str], size: wx.Size, *args, **kw):
+    def __init__(self, app: wx.App, title: str, history_keys: list[str], size: wx.Size, is_saving: bool, *args, **kw):
         super().__init__(app, title, size)
 
+        self.is_saving = is_saving
         self.history_keys = history_keys
         self.histories = read_histories(self.history_keys)
 
@@ -23,7 +24,7 @@ class NotebookFrame(BaseFrame):
 
     def _initialize_ui(self) -> None:
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW))
-        self.notebook = BaseNotebook(self)
+        self.notebook = BaseNotebook(self, self.is_saving)
 
     def _initialize_event(self) -> None:
         self.Bind(wx.EVT_CLOSE, self.on_close)
