@@ -204,8 +204,8 @@ class BoneSettings(Enum):
     RIGHT_ARM = BoneSetting(
         name="右腕",
         parents=("右肩C", "右肩"),
-        display_tail=("右腕捩", "右ひじ"),
-        tails=("右腕捩", "右ひじ"),
+        display_tail=("右ひじ",),
+        tails=("右ひじ",),
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
     )
     RIGHT_ARM_TWIST = BoneSetting(
@@ -239,8 +239,8 @@ class BoneSettings(Enum):
     RIGHT_ELBOW = BoneSetting(
         name="右ひじ",
         parents=("右腕捩", "右腕"),
-        display_tail=("右手捩", "右手首"),
-        tails=("右手捩", "右手首"),
+        display_tail=("右手首",),
+        tails=("右手首",),
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
     )
     RIGHT_HAND_TWIST = BoneSetting(
@@ -546,8 +546,8 @@ class BoneSettings(Enum):
     LEFT_ARM = BoneSetting(
         name="左腕",
         parents=("左肩C", "左肩"),
-        display_tail=("左腕捩", "左ひじ"),
-        tails=("左腕捩", "左ひじ"),
+        display_tail=("左ひじ",),
+        tails=("左ひじ",),
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
     )
     LEFT_ARM_TWIST = BoneSetting(
@@ -581,8 +581,8 @@ class BoneSettings(Enum):
     LEFT_ELBOW = BoneSetting(
         name="左ひじ",
         parents=("左腕捩", "左腕"),
-        display_tail=("左手捩", "左手首"),
-        tails=("左手捩", "左手首"),
+        display_tail=("左手首",),
+        tails=("左手首",),
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
     )
     LEFT_HAND_TWIST = BoneSetting(
