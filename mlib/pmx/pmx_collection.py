@@ -935,7 +935,7 @@ class PmxModel(BaseHashModel):
 
                 in_bone_tree = set(self.bones.create_bone_link_indexes(replaced_map[b.parent_index]))
                 in_standard = self.bone_trees.is_in_standard(b.name)
-                if b.is_ik:
+                if b.is_ik and len(b.ik.links):
                     # IKの場合リンクの起点をボーンツリーの基準とする
                     in_bone_tree = set(self.bones.create_bone_link_indexes(b.index)) | set(
                         self.bones.create_bone_link_indexes(b.ik.links[-1].bone_index)
