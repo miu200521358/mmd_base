@@ -1274,7 +1274,7 @@ class PmxModel(BaseHashModel):
         # 全親の場合、親が-1のものを子どもにする
         if bone_name == "全ての親":
             for b in self.bones:
-                if 0 > b.parent_index:
+                if 0 > b.parent_index and b.name != "全ての親":
                     b.parent_index = bone.index
 
         return True
