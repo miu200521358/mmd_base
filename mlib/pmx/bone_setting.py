@@ -176,7 +176,7 @@ class BoneSettings(Enum):
     RIGHT_BUST = BoneSetting(
         name="右胸",
         parents=("上半身3", "上半身2", "上半身"),
-        display_tail=("上半身3", "上半身2", "上半身"),
+        display_tail=MVector3D(0, 0, -1),
         tails=[],
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
     )
@@ -518,7 +518,7 @@ class BoneSettings(Enum):
     LEFT_BUST = BoneSetting(
         name="左胸",
         parents=("上半身3", "上半身2", "上半身"),
-        display_tail=("上半身3", "上半身2", "上半身"),
+        display_tail=MVector3D(0, 0, -1),
         tails=[],
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
     )
