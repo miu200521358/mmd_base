@@ -1292,13 +1292,19 @@ class PmxModel(BaseHashModel):
         self.update_vertices_by_bone()
 
         if "上半身2" in bone_names and self.bones.exists(("上半身", "上半身2")):
-            tail_bone_name = "上半身3" if "上半身3" in self.bones else "首"
-            to_tail_y = self.bones[tail_bone_name].position.y - self.bones["上半身2"].position.y
-            self.separate_weights("上半身", "上半身2", tail_bone_name, 0.3, 0.5, ("上半身", "上半身2"), to_tail_pos=MVector3D(0, to_tail_y, 0))
-        if "上半身3" in bone_names and self.bones.exists(("上半身2", "上半身3")):
+            tail_bone_name = "上半身3" if "上半身3" in self.bones else "首" if "首" in self.bones else None
+            if tail_bone_name:
+                to_tail_y = self.bones[tail_bone_name].position.y - self.bones["上半身2"].position.y
+                self.separate_weights("上半身", "上半身2", tail_bone_name, 0.3, 0.5, ("上半身", "上半身2"), to_tail_pos=MVector3D(0, to_tail_y, 0))
+            else:
+                self.separate_weights("上半身", "上半身2", "上半身2", 0.3, 0.5, ("上半身", "上半身2"), to_tail_pos=MVector3D(0, 1, 0))
+        if "上半身3" in bone_names and self.bones.exists(("上半身", "上半身2", "上半身3")):
             self.update_vertices_by_bone()
-            to_tail_y = self.bones["首"].position.y - self.bones["上半身3"].position.y
-            self.separate_weights("上半身2", "上半身3", "首", 0.3, 0.0, ("上半身2", "上半身3"), to_tail_pos=MVector3D(0, to_tail_y, 0))
+            if "首" in self.bones:
+                to_tail_y = self.bones["首"].position.y - self.bones["上半身3"].position.y
+                self.separate_weights("上半身2", "上半身3", "首", 0.3, 0.0, ("上半身2", "上半身3"), to_tail_pos=MVector3D(0, to_tail_y, 0))
+            else:
+                self.separate_weights("上半身2", "上半身3", "上半身3", 0.3, 0.0, ("上半身2", "上半身3"), to_tail_pos=MVector3D(0, 1, 0))
         if "右足先EX" in bone_names and self.bones.exists(("右足首", "右足首D", "右足先EX")):
             to_tail_z = self.bones["右足先EX"].position.z - self.bones["右足首"].position.z
             self.separate_weights("右足首", "右足先EX", "右足先EX", 0.2, 0.1, ("右足首", "右足首D", "右足先EX"), to_tail_pos=MVector3D(0, 0, to_tail_z))
