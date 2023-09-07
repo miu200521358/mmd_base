@@ -889,7 +889,7 @@ class PmxModel(BaseHashModel):
         replaced_map = self.bones.insert(bone)
 
         if not replaced_map:
-            if bone.is_visible:
+            if not bone.is_system and bone.is_visible:
                 # 表示対象な場合、親と同じ表示枠に追加
                 is_add_display = False
                 for d in self.display_slots:
