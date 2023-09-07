@@ -329,6 +329,15 @@ class DisplaySlots(BaseIndexNameDictModel[DisplaySlot]):
     def __init__(self) -> None:
         super().__init__()
 
+    def writable(self) -> list[DisplaySlot]:
+        """出力対象となる表示枠一覧を取得する"""
+        display_slots: list[DisplaySlot] = []
+        for d in self:
+            if d.is_system:
+                continue
+            display_slots.append(d)
+        return display_slots
+
 
 class RigidBodies(BaseIndexNameDictModel[RigidBody]):
     """

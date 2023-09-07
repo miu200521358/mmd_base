@@ -1573,6 +1573,7 @@ class DisplaySlot(BaseIndexNameModel):
         特殊枠フラグ - 0:通常枠 1:特殊枠, by default Switch.OFF
     references : list[DisplaySlotReference], optional
         表示枠要素, by default []
+    is_system: ツール側で追加した表示枠
     """
 
     __slots__ = (
@@ -1581,6 +1582,7 @@ class DisplaySlot(BaseIndexNameModel):
         "english_name",
         "special_flg",
         "references",
+        "is_system",
     )
 
     def __init__(
@@ -1592,6 +1594,7 @@ class DisplaySlot(BaseIndexNameModel):
         super().__init__(index=index, name=name, english_name=english_name)
         self.special_flg = Switch.OFF
         self.references: list[DisplaySlotReference] = []
+        self.is_system: bool = False
 
 
 class RigidBodyParam(BaseModel):
