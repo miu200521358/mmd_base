@@ -1496,7 +1496,7 @@ class MMatrix4x4(MVector):
         return bool(not (self.vector == np.eye(4)).all())
 
     def copy(self) -> "MMatrix4x4":
-        return self.__class__(*self.vector)
+        return self.__class__(self.vector)
 
 
 class MMatrix4x4List:
