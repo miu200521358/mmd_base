@@ -1005,7 +1005,7 @@ class PmxModel(BaseHashModel):
                 else:
                     r.bone_index = replaced_map[r.bone_index]
 
-        if bone.is_visible:
+        if bone.is_visible and not bone.is_system:
             # ボーンツリーだけ再生成
             self.bone_trees = self.bones.create_bone_trees()
 
