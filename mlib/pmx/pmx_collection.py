@@ -685,20 +685,22 @@ class PmxModel(BaseHashModel):
                 right_shoulder_root.parent_index = neck_root_bone.index
                 right_shoulder_root.is_system = True
                 right_shoulder_root.position = neck_root_position.copy()
-                if "右腕" in self.bones:
-                    right_shoulder_root.local_axis = (self.bones["右腕"].position - right_shoulder_root.position).normalized()
+                if "右肩" in self.bones:
+                    right_shoulder_root.tail_relative_position = self.bones["右肩"].position - right_shoulder_root.position
+                    right_shoulder_root.local_axis = right_shoulder_root.tail_relative_position.normalized()
                 else:
-                    right_shoulder_root.local_axis = MVector3D(-1, 0, 0)
+                    right_shoulder_root.tail_relative_position = right_shoulder_root.local_axis = MVector3D(-1, 0, 0)
                 self.insert_bone(right_shoulder_root)
 
                 left_shoulder_root = Bone(name="左肩根元", index=neck_root_bone.index + 1)
                 left_shoulder_root.parent_index = neck_root_bone.index
                 left_shoulder_root.is_system = True
                 left_shoulder_root.position = neck_root_position.copy()
-                if "左腕" in self.bones:
-                    left_shoulder_root.local_axis = (self.bones["左腕"].position - left_shoulder_root.position).normalized()
+                if "左肩" in self.bones:
+                    left_shoulder_root.tail_relative_position = self.bones["左肩"].position - left_shoulder_root.position
+                    left_shoulder_root.local_axis = left_shoulder_root.tail_relative_position.normalized()
                 else:
-                    left_shoulder_root.local_axis = MVector3D(1, 0, 0)
+                    left_shoulder_root.tail_relative_position = left_shoulder_root.local_axis = MVector3D(1, 0, 0)
                 self.insert_bone(left_shoulder_root)
 
                 # 腕系で左右に分かれてるのは親を肩根元に置き換える
