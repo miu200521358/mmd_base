@@ -1,6 +1,7 @@
 # パス解決
 import json
 import os
+import re
 import sys
 from glob import glob
 from pathlib import Path
@@ -192,3 +193,8 @@ def escape_path(path: str):
         path = path.replace(org_txt, rep_txt)
 
     return path
+
+
+def get_clear_path(path: str):
+    """ファイルパスに出力する用に出力出来ない文字を削除する"""
+    return re.sub(r"(\:|\;|\"|\'|\*|\+|\.|\?|\{|\}|\(|\)|\[|\]|\<|\>|\^|\$|\-|\||\/|\\)", r"", path)

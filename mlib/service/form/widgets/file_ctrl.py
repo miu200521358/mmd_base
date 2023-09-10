@@ -10,7 +10,15 @@ from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_reader import PmxReader
 from mlib.service.form.notebook_frame import NotebookFrame
 from mlib.service.form.notebook_panel import NotebookPanel
-from mlib.utils.file_utils import get_dir_path, insert_history, separate_path, unwrapped_path, validate_file, validate_save_file
+from mlib.utils.file_utils import (
+    get_clear_path,
+    get_dir_path,
+    insert_history,
+    separate_path,
+    unwrapped_path,
+    validate_file,
+    validate_save_file,
+)
 from mlib.vmd.vmd_collection import VmdMotion
 from mlib.vmd.vmd_reader import VmdReader
 
@@ -252,6 +260,11 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
 
         if self.name_ctrl:
             self.name_ctrl.SetBackgroundColour(color)
+
+    def get_name_for_file(self) -> str:
+        if not self.name_ctrl:
+            return ""
+        return get_clear_path(self.name_ctrl.GetValue()[1:-1])
 
 
 class MFileDropTarget(wx.FileDropTarget):

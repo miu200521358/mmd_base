@@ -124,7 +124,11 @@ class FilePanel(NotebookPanel):
         if self.model_ctrl.read_name():
             self.model_ctrl.read_digest()
             dir_path, file_name, file_ext = separate_path(self.model_ctrl.path)
-            model_path = os.path.join(dir_path, f"{datetime.now():%Y%m%d_%H%M%S}", f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
+            model_path = os.path.join(
+                dir_path,
+                f"{datetime.now():%Y%m%d_%H%M%S}",
+                f"{file_name}_{self.model_ctrl.get_name_for_file()}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}",
+            )
             self.output_pmx_ctrl.path = model_path
 
     def on_change_dress_pmx(self, event: wx.Event) -> None:
