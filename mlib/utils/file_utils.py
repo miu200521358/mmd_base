@@ -1,6 +1,7 @@
 # パス解決
 import json
 import os
+import re
 import sys
 from glob import glob
 from pathlib import Path
@@ -74,7 +75,8 @@ def save_histories(histories: dict[str, list[Any]]):
 
     limited_histories: dict[str, list[Any]] = {}
     for key, values in histories.items():
-        limited_histories[key] = values[:HISTORY_MAX]
+        if isinstance(values, list):
+            limited_histories[key] = values[:HISTORY_MAX]
 
     try:
         with open(os.path.join(root_dir, "history.json"), "w", encoding="utf-8") as f:
@@ -191,3 +193,8 @@ def escape_path(path: str):
         path = path.replace(org_txt, rep_txt)
 
     return path
+
+
+def get_clear_path(path: str):
+    """ファイルパスに出力する用に出力出来ない文字を削除する"""
+    return re.sub(r"(\:|\;|\"|\'|\*|\+|\.|\?|\{|\}|\(|\)|\[|\]|\<|\>|\^|\$|\-|\||\/|\\)", r"", path)

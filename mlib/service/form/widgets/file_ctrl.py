@@ -10,7 +10,15 @@ from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_reader import PmxReader
 from mlib.service.form.notebook_frame import NotebookFrame
 from mlib.service.form.notebook_panel import NotebookPanel
-from mlib.utils.file_utils import get_dir_path, insert_history, separate_path, unwrapped_path, validate_file, validate_save_file
+from mlib.utils.file_utils import (
+    get_clear_path,
+    get_dir_path,
+    insert_history,
+    separate_path,
+    unwrapped_path,
+    validate_file,
+    validate_save_file,
+)
 from mlib.vmd.vmd_collection import VmdMotion
 from mlib.vmd.vmd_reader import VmdReader
 
@@ -62,6 +70,8 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         self.title_ctrl = wx.StaticText(self.parent, wx.ID_ANY, self.title, wx.DefaultPosition, wx.Size(len(self.title) * 16, -1), 0)
         self.title_ctrl.SetToolTip(__(tooltip))
         self.title_sizer.Add(self.title_ctrl, 0, wx.ALL, 3)
+        self.spacer_ctrl = None
+        self.name_ctrl = None
 
         # モデル名等の表示
         if self.is_show_name and not self.is_save:
@@ -189,17 +199,20 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         bool
             読み取り出来るパスか否か
         """
-        if not self.file_ctrl.GetPath().strip():
+        if self.name_ctrl and not self.file_ctrl.GetPath().strip():
             self.name_ctrl.SetValue(__("(未設定)"))
             self.clear_data()
             return False
 
-        if self.is_show_name and not self.is_save:
+        if self.name_ctrl and self.is_show_name and not self.is_save:
             if validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
                 name = self.reader.read_name_by_filepath(self.file_ctrl.GetPath())
                 self.name_ctrl.SetValue(f"({name[:20]})")
                 return True
-        self.name_ctrl.SetValue(__("(読取失敗)"))
+
+        if self.name_ctrl:
+            self.name_ctrl.SetValue(__("(読取失敗)"))
+
         self.clear_data()
         return False
 
@@ -209,6 +222,13 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
             digest = self.reader.read_hash_by_filepath(self.file_ctrl.GetPath())
             if self.original_data and self.original_data.digest != digest:
                 self.clear_data()
+
+    @property
+    def digest(self) -> Optional[str]:
+        """ハッシュを読み取る"""
+        if not self.is_save and validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
+            return self.reader.read_hash_by_filepath(self.file_ctrl.GetPath())
+        return None
 
     def clear_data(self) -> None:
         """リーダー対象オブジェクトをクリア"""
@@ -230,6 +250,21 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         if not self.is_save:
             # 保存じゃなければ履歴ボタンを表示
             self.history_ctrl.Enable(enable)
+
+    def set_color(self, color: wx.Colour) -> None:
+        self.title_ctrl.SetBackgroundColour(color)
+        self.file_ctrl.SetBackgroundColour(color)
+
+        if self.spacer_ctrl:
+            self.spacer_ctrl.SetBackgroundColour(color)
+
+        if self.name_ctrl:
+            self.name_ctrl.SetBackgroundColour(color)
+
+    def get_name_for_file(self) -> str:
+        if not self.name_ctrl:
+            return ""
+        return get_clear_path(self.name_ctrl.GetValue()[1:-1])
 
 
 class MFileDropTarget(wx.FileDropTarget):

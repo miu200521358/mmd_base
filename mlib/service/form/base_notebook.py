@@ -8,10 +8,11 @@ logger = MLogger(os.path.basename(__file__))
 
 
 class BaseNotebook(wx.Notebook):
-    def __init__(self, frame: wx.Frame, *args, **kw):
+    def __init__(self, frame: wx.Frame, is_saving: bool, *args, **kw):
         self.frame = frame
         super().__init__(frame, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL)
 
+        self.is_saving = is_saving
         self._initialize_ui()
         self._initialize_event()
 
@@ -19,7 +20,7 @@ class BaseNotebook(wx.Notebook):
         if logger.total_level <= LoggingLevel.DEBUG.value:
             # テスト（デバッグ版）の場合
             self.SetBackgroundColour("CORAL")
-        elif not logger.saving:
+        elif not self.is_saving:
             # ハイスペック版の場合、色変え
             self.SetBackgroundColour("BLUE")
         elif logger.is_out_log:

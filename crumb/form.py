@@ -20,17 +20,17 @@ from mlib.pmx.pmx_writer import PmxWriter
 from mlib.service.base_worker import BaseWorker
 from mlib.service.form.notebook_frame import NotebookFrame
 from mlib.service.form.notebook_panel import NotebookPanel
+from mlib.service.form.widgets.bezier_ctrl import BezierCtrl
 from mlib.service.form.widgets.console_ctrl import ConsoleCtrl
 from mlib.service.form.widgets.exec_btn_ctrl import ExecButton
 from mlib.service.form.widgets.file_ctrl import MPmxFilePickerCtrl, MVmdFilePickerCtrl
 from mlib.service.form.widgets.float_slider_ctrl import FloatSliderCtrl
 from mlib.service.form.widgets.frame_slider_ctrl import FrameSliderCtrl
+from mlib.service.form.widgets.image_btn_ctrl import ImageButton
+from mlib.service.form.widgets.morph_ctrl import MorphChoiceCtrl
 from mlib.service.form.widgets.spin_ctrl import WheelSpinCtrl, WheelSpinCtrlDouble
 from mlib.utils.file_utils import save_histories, separate_path
 from mlib.vmd.vmd_collection import VmdMotion
-from mlib.service.form.widgets.bezier_ctrl import BezierCtrl
-from mlib.service.form.widgets.image_btn_ctrl import ImageButton
-from mlib.service.form.widgets.morph_ctrl import MorphChoiceCtrl
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -56,6 +56,7 @@ class FilePanel(NotebookPanel):
             file_change_event=self.on_change_model_pmx,
         )
         self.model_ctrl.set_parent_sizer(self.root_sizer)
+        # self.model_ctrl.set_color(wx.Colour("RED"))
 
         self.dress_ctrl = MPmxFilePickerCtrl(
             self,
@@ -123,7 +124,11 @@ class FilePanel(NotebookPanel):
         if self.model_ctrl.read_name():
             self.model_ctrl.read_digest()
             dir_path, file_name, file_ext = separate_path(self.model_ctrl.path)
-            model_path = os.path.join(dir_path, f"{datetime.now():%Y%m%d_%H%M%S}", f"{file_name}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}")
+            model_path = os.path.join(
+                dir_path,
+                f"{datetime.now():%Y%m%d_%H%M%S}",
+                f"{file_name}_{self.model_ctrl.get_name_for_file()}_{datetime.now():%Y%m%d_%H%M%S}{file_ext}",
+            )
             self.output_pmx_ctrl.path = model_path
 
     def on_change_dress_pmx(self, event: wx.Event) -> None:
@@ -579,6 +584,7 @@ class TestFrame(NotebookFrame):
             history_keys=["model_pmx", "dress_pmx", "motion_vmd"],
             title="Mu Test Frame",
             size=wx.Size(1000, 800),
+            is_saving=False,
         )
         # ファイルタブ
         self.file_panel = FilePanel(self, 0)

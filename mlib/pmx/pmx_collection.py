@@ -329,6 +329,15 @@ class DisplaySlots(BaseIndexNameDictModel[DisplaySlot]):
     def __init__(self) -> None:
         super().__init__()
 
+    def writable(self) -> list[DisplaySlot]:
+        """出力対象となる表示枠一覧を取得する"""
+        display_slots: list[DisplaySlot] = []
+        for d in self:
+            if d.is_system:
+                continue
+            display_slots.append(d)
+        return display_slots
+
 
 class RigidBodies(BaseIndexNameDictModel[RigidBody]):
     """
@@ -676,20 +685,22 @@ class PmxModel(BaseHashModel):
                 right_shoulder_root.parent_index = neck_root_bone.index
                 right_shoulder_root.is_system = True
                 right_shoulder_root.position = neck_root_position.copy()
-                if "右腕" in self.bones:
-                    right_shoulder_root.local_axis = (self.bones["右腕"].position - right_shoulder_root.position).normalized()
+                if "右肩" in self.bones:
+                    right_shoulder_root.tail_relative_position = self.bones["右肩"].position - right_shoulder_root.position
+                    right_shoulder_root.local_axis = right_shoulder_root.tail_relative_position.normalized()
                 else:
-                    right_shoulder_root.local_axis = MVector3D(-1, 0, 0)
+                    right_shoulder_root.tail_relative_position = right_shoulder_root.local_axis = MVector3D(-1, 0, 0)
                 self.insert_bone(right_shoulder_root)
 
                 left_shoulder_root = Bone(name="左肩根元", index=neck_root_bone.index + 1)
                 left_shoulder_root.parent_index = neck_root_bone.index
                 left_shoulder_root.is_system = True
                 left_shoulder_root.position = neck_root_position.copy()
-                if "左腕" in self.bones:
-                    left_shoulder_root.local_axis = (self.bones["左腕"].position - left_shoulder_root.position).normalized()
+                if "左肩" in self.bones:
+                    left_shoulder_root.tail_relative_position = self.bones["左肩"].position - left_shoulder_root.position
+                    left_shoulder_root.local_axis = left_shoulder_root.tail_relative_position.normalized()
                 else:
-                    left_shoulder_root.local_axis = MVector3D(1, 0, 0)
+                    left_shoulder_root.tail_relative_position = left_shoulder_root.local_axis = MVector3D(1, 0, 0)
                 self.insert_bone(left_shoulder_root)
 
                 # 腕系で左右に分かれてるのは親を肩根元に置き換える
@@ -880,7 +891,7 @@ class PmxModel(BaseHashModel):
         replaced_map = self.bones.insert(bone)
 
         if not replaced_map:
-            if bone.is_visible:
+            if not bone.is_system and bone.is_visible:
                 # 表示対象な場合、親と同じ表示枠に追加
                 is_add_display = False
                 for d in self.display_slots:
@@ -935,7 +946,7 @@ class PmxModel(BaseHashModel):
 
                 in_bone_tree = set(self.bones.create_bone_link_indexes(replaced_map[b.parent_index]))
                 in_standard = self.bone_trees.is_in_standard(b.name)
-                if b.is_ik:
+                if b.is_ik and len(b.ik.links):
                     # IKの場合リンクの起点をボーンツリーの基準とする
                     in_bone_tree = set(self.bones.create_bone_link_indexes(b.index)) | set(
                         self.bones.create_bone_link_indexes(b.ik.links[-1].bone_index)
@@ -996,7 +1007,7 @@ class PmxModel(BaseHashModel):
                 else:
                     r.bone_index = replaced_map[r.bone_index]
 
-        if bone.is_visible:
+        if bone.is_visible and not bone.is_system:
             # ボーンツリーだけ再生成
             self.bone_trees = self.bones.create_bone_trees()
 
@@ -1027,7 +1038,12 @@ class PmxModel(BaseHashModel):
         if bone_name in self.bones:
             # 既にある場合、作成しない
             return False
-        if not [bname for bname in bone_setting.tails if bname in self.bones] and "D" != bone_name[-1] and "EX" != bone_name[-2:]:
+        if (
+            bone_name != "全ての親"
+            and not [bname for bname in bone_setting.tails if bname in self.bones]
+            and "D" != bone_name[-1]
+            and "EX" != bone_name[-2:]
+        ):
             # 先に接続可能なボーンが無い場合、作成しない
             return False
         parent_names = [p for p in bone_setting.parents if p in self.bones.names]
@@ -1078,10 +1094,17 @@ class PmxModel(BaseHashModel):
             bone.local_x_vector = (bone_matrixes[0, "首"].position - bone_matrixes[0, "上半身"].position).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
-        elif "上半身3" == bone.name and "上半身2" in self.bones and "首" in self.bones:
-            bone.position = (bone_matrixes[0, "上半身2"].position + bone_matrixes[0, "首"].position) / 2
-            bone.position.z += abs(bone_matrixes[0, "首"].position.z - bone_matrixes[0, "上半身2"].position.z) * 0.5
-            bone.local_x_vector = (bone_matrixes[0, "首"].position - bone_matrixes[0, "上半身2"].position).normalized()
+        elif "上半身3" == bone.name and "上半身2" in self.bones and "上半身" in self.bones:
+            if "首" in self.bones:
+                bone.position = (bone_matrixes[0, "上半身2"].position + bone_matrixes[0, "首"].position) / 2
+                bone.position.z += abs(bone_matrixes[0, "首"].position.z - bone_matrixes[0, "上半身2"].position.z) * 0.5
+                bone.local_x_vector = (bone_matrixes[0, "首"].position - bone_matrixes[0, "上半身2"].position).normalized()
+            else:
+                bone.position = bone_matrixes[0, "上半身"].position + (
+                    (bone_matrixes[0, "上半身2"].position - bone_matrixes[0, "上半身"].position) / 2
+                )
+                bone.position.z += abs(bone_matrixes[0, "上半身2"].position.z - bone_matrixes[0, "上半身"].position.z) * 0.5
+                bone.local_x_vector = (bone_matrixes[0, "上半身2"].position - bone_matrixes[0, "上半身"].position).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
         elif "腕捩" in bone.name and f"{direction}腕" in self.bones and f"{direction}ひじ" in self.bones:
@@ -1266,6 +1289,12 @@ class PmxModel(BaseHashModel):
             self.bones[bone.parent_index].tail_index = bone.index
             self.bones[bone.parent_index].bone_flg |= BoneFlg.TAIL_IS_BONE
 
+        # 全親の場合、親が-1のものを子どもにする
+        if bone_name == "全ての親":
+            for b in self.bones:
+                if 0 > b.parent_index and b.name != "全ての親":
+                    b.parent_index = bone.index
+
         return True
 
     def replace_standard_weights(self, bone_names: list[str]) -> None:
@@ -1274,13 +1303,19 @@ class PmxModel(BaseHashModel):
         self.update_vertices_by_bone()
 
         if "上半身2" in bone_names and self.bones.exists(("上半身", "上半身2")):
-            tail_bone_name = "上半身3" if "上半身3" in self.bones else "首"
-            to_tail_y = self.bones[tail_bone_name].position.y - self.bones["上半身2"].position.y
-            self.separate_weights("上半身", "上半身2", tail_bone_name, 0.3, 0.5, ("上半身", "上半身2"), to_tail_pos=MVector3D(0, to_tail_y, 0))
-        if "上半身3" in bone_names and self.bones.exists(("上半身2", "上半身3")):
+            tail_bone_name = "上半身3" if "上半身3" in self.bones else "首" if "首" in self.bones else None
+            if tail_bone_name:
+                to_tail_y = self.bones[tail_bone_name].position.y - self.bones["上半身2"].position.y
+                self.separate_weights("上半身", "上半身2", tail_bone_name, 0.3, 0.5, ("上半身", "上半身2"), to_tail_pos=MVector3D(0, to_tail_y, 0))
+            else:
+                self.separate_weights("上半身", "上半身2", "上半身2", 0.3, 0.5, ("上半身", "上半身2"), to_tail_pos=MVector3D(0, 1, 0))
+        if "上半身3" in bone_names and self.bones.exists(("上半身", "上半身2", "上半身3")):
             self.update_vertices_by_bone()
-            to_tail_y = self.bones["首"].position.y - self.bones["上半身3"].position.y
-            self.separate_weights("上半身2", "上半身3", "首", 0.3, 0.0, ("上半身2", "上半身3"), to_tail_pos=MVector3D(0, to_tail_y, 0))
+            if "首" in self.bones:
+                to_tail_y = self.bones["首"].position.y - self.bones["上半身3"].position.y
+                self.separate_weights("上半身2", "上半身3", "首", 0.3, 0.0, ("上半身2", "上半身3"), to_tail_pos=MVector3D(0, to_tail_y, 0))
+            else:
+                self.separate_weights("上半身2", "上半身3", "上半身3", 0.3, 0.0, ("上半身2", "上半身3"), to_tail_pos=MVector3D(0, 1, 0))
         if "右足先EX" in bone_names and self.bones.exists(("右足首", "右足首D", "右足先EX")):
             to_tail_z = self.bones["右足先EX"].position.z - self.bones["右足首"].position.z
             self.separate_weights("右足首", "右足先EX", "右足先EX", 0.2, 0.1, ("右足首", "右足首D", "右足先EX"), to_tail_pos=MVector3D(0, 0, to_tail_z))
@@ -1312,7 +1347,7 @@ class PmxModel(BaseHashModel):
             self.separate_weights("左手捩1", "左手捩2", "左手捩3", 1.2, 1.0, ("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3"), is_twist=True)
             self.separate_weights("左手捩2", "左手捩3", "左手捩", 1.2, 1.0, ("左ひじ", "左手捩", "左手捩1", "左手捩2", "左手捩3"), is_twist=True)
 
-        if True in [self.bones[bone_name].is_leg_d for bone_name in bone_names]:
+        if True in [self.bones[bone_name].is_leg_d for bone_name in bone_names if bone_name in self.bones]:
             # 足Dはそのまま置き換える
             replaced_map = dict([(b.index, b.index) for b in self.bones])
             target_vertex_indexes: list[int] = []

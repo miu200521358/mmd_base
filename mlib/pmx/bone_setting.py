@@ -119,13 +119,20 @@ class BoneSettings(Enum):
     UPPER2 = BoneSetting(
         name="上半身2",
         parents=("上半身",),
+        display_tail=("上半身3", "首根元"),
+        tails=("上半身3", "首根元"),
+        flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
+    )
+    UPPER3 = BoneSetting(
+        name="上半身3",
+        parents=("上半身2",),
         display_tail=("首根元",),
         tails=("首根元",),
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE | BoneFlg.TAIL_IS_BONE,
     )
     NECK_ROOT = BoneSetting(
         name="首根元",
-        parents=("上半身2", "上半身"),
+        parents=("上半身3", "上半身2", "上半身"),
         display_tail=("首",),
         tails=("首",),
         flag=BoneFlg.CAN_ROTATE,
@@ -168,8 +175,8 @@ class BoneSettings(Enum):
 
     RIGHT_BUST = BoneSetting(
         name="右胸",
-        parents=("上半身2", "上半身"),
-        display_tail=("上半身2", "上半身"),
+        parents=("上半身3", "上半身2", "上半身"),
+        display_tail=MVector3D(0, 0, -1),
         tails=[],
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
     )
@@ -510,8 +517,8 @@ class BoneSettings(Enum):
 
     LEFT_BUST = BoneSetting(
         name="左胸",
-        parents=("上半身2", "上半身"),
-        display_tail=("上半身2", "上半身"),
+        parents=("上半身3", "上半身2", "上半身"),
+        display_tail=MVector3D(0, 0, -1),
         tails=[],
         flag=BoneFlg.CAN_ROTATE | BoneFlg.CAN_MANIPULATE | BoneFlg.IS_VISIBLE,
     )

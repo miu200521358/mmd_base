@@ -200,13 +200,18 @@ def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> tu
         return 0.0, 0.0, 0.0
 
     x = (now - start) / (end - start)
+
+    if 1 <= x:
+        return 1.0, 1.0, 1.0
+
+    if interpolation.start.x == interpolation.start.y and interpolation.end.x == interpolation.end.y:
+        # 前後が同じ場合、必ず線形補間になる
+        return x, x, x
+
     x1 = interpolation.start.x / IP_MAX
     y1 = interpolation.start.y / IP_MAX
     x2 = interpolation.end.x / IP_MAX
     y2 = interpolation.end.y / IP_MAX
-
-    if 1 <= x:
-        return 1.0, 1.0, 1.0
 
     return cache_evaluate(x, x1, y1, x2, y2)
 

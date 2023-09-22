@@ -686,7 +686,9 @@ class PmxWriter(BaseModel):
             is_positive_only=True,
         )
 
-        for didx, display_slot in enumerate(self.model.display_slots):
+        target_display_slots = self.model.display_slots.data.values() if self.include_system else self.model.display_slots.writable()
+
+        for didx, display_slot in enumerate(target_display_slots):
             # 表示枠名
             self.write_text(fout, display_slot.name, f"Display {didx}")
             self.write_text(fout, display_slot.english_name, f"Display {didx}")

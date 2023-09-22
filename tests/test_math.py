@@ -1403,6 +1403,22 @@ def test_MVectorDict_distances():
     assert 1 == vd.nearest_key(MVector3D(2, -2, 2))
 
 
+def test_MVectorDict_nearest_all_keys():
+    from mlib.core.math import MVector3D, MVectorDict
+
+    vd = MVectorDict()
+    vd.append(1, MVector3D(1, 2, 3))
+    vd.append(2, MVector3D(3, 4, 5))
+    vd.append(3, MVector3D(1, 2, 3))
+    vd.append(4, MVector3D(4, -5, 6))
+
+    nearest_keys = vd.nearest_all_keys(MVector3D(1, 2, 3.1))
+
+    assert 2 == len(nearest_keys)
+    assert 1 in nearest_keys
+    assert 3 in nearest_keys
+
+
 def test_MMatrix4x4List_translate():
     import numpy as np
 
@@ -2542,6 +2558,30 @@ def test_align_triangle():
             MVector3D(0, 13.20861, -0.3309),
             MVector3D(-0.00166671, 18.97112, 0.2007481),
             MVector3D(5.339733e-07, 13.34194, 0.5546426),
+        ).vector,
+    ).all()
+
+
+def test_intersect_line_point():
+    import numpy as np
+
+    from mlib.core.math import MVector3D, intersect_line_point
+
+    assert np.isclose(
+        MVector3D(-5.89536869, 10.05249932, -0.01969229).vector,
+        intersect_line_point(
+            MVector3D(-3.219347, 12.35182, -0.01938487),
+            MVector3D(-4.016106, 11.66722, -0.0194764),
+            MVector3D(-6.391519, 10.62996, -0.2093448),
+        ).vector,
+    ).all()
+
+    assert np.isclose(
+        MVector3D(-4.26564252, 11.4528105, -0.01950507).vector,
+        intersect_line_point(
+            MVector3D(-3.219347, 12.35182, -0.01938487),
+            MVector3D(-4.016106, 11.66722, -0.0194764),
+            MVector3D(-4.373949, 11.57889, -0.2365222),
         ).vector,
     ).all()
 

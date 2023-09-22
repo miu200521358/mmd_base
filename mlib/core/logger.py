@@ -98,20 +98,6 @@ class MLogger:
 
         self.logger.setLevel(level)
 
-    def add_handler(self) -> None:
-        for h in self.logger.handlers:
-            if isinstance(h, StreamHandler):
-                self.logger.removeHandler(h)
-        self.logger.addHandler(self.stream_err_handler)
-
-        if self.console_handler:
-            for h in self.logger.handlers:
-                if isinstance(h, ConsoleHandler):
-                    self.logger.removeHandler(h)
-            if self.is_out_log:
-                self.console_handler.setFormatter(Formatter(self.STREAM_FORMAT))
-            self.logger.addHandler(self.console_handler)
-
     def get_extra(self, msg: str, func: Optional[str] = "", lno: Optional[int] = 0):
         return {"original_msg": msg, "call_file": self.file_name, "call_func": func, "call_lno": str(lno)}
 
@@ -126,7 +112,7 @@ class MLogger:
         **kwargs,
     ):
         if self.default_level == 1:
-            self.add_handler()
+            add_mlogger_handler(self)
             self.logger.info(
                 self.create_message(msg, logging.DEBUG, None, decoration, **kwargs),
                 extra=self.get_extra(msg, func, lno),
@@ -143,7 +129,7 @@ class MLogger:
         **kwargs,
     ):
         if self.total_level <= logging.DEBUG and self.default_level <= self.total_level:
-            self.add_handler()
+            add_mlogger_handler(self)
             self.logger.info(
                 self.create_message(msg, logging.DEBUG, None, decoration, **kwargs),
                 extra=self.get_extra(msg, func, lno),
@@ -160,7 +146,7 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        self.add_handler()
+        add_mlogger_handler(self)
         self.logger.info(
             self.create_message(msg, logging.INFO, title, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
@@ -182,7 +168,8 @@ class MLogger:
         **kwargs,
     ):
         if 0 < total_index_count and 0 < index and (0 == index % display_block or index == total_index_count):
-            self.add_handler()
+            add_mlogger_handler(self)
+
             percentage = (index / total_index_count) * 100
             log_msg = "-- " + self.get_text(msg) + " [{i} ({p:.2f}%)]"
             count_msg = self.create_message(log_msg, logging.INFO, title, decoration, p=percentage, i=index, **kwargs)
@@ -203,7 +190,7 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        self.add_handler()
+        add_mlogger_handler(self)
         self.logger.warning(
             self.create_message(msg, logging.WARNING, title, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
@@ -220,7 +207,7 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        self.add_handler()
+        add_mlogger_handler(self)
         self.logger.error(
             self.create_message(msg, logging.ERROR, title, decoration, **kwargs),
             extra=self.get_extra(msg, func, lno),
@@ -237,7 +224,7 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        self.add_handler()
+        add_mlogger_handler(self)
         self.logger.critical(
             self.create_message(msg, logging.CRITICAL, title, decoration or MLogger.Decoration.BOX, **kwargs),
             exc_info=True,
@@ -379,6 +366,20 @@ class MLogger:
         if os.path.exists(f"{log_dir}/quit.log"):
             # 終了ログは初期化時に削除
             os.remove(f"{log_dir}/quit.log")
+
+
+def add_mlogger_handler(logger: MLogger) -> None:
+    for h in logger.logger.handlers:
+        logger.logger.removeHandler(h)
+
+    logger.stream_err_handler = StreamHandler(sys.stderr)
+    logger.stream_err_handler.setFormatter(Formatter(logger.STREAM_FORMAT))
+    logger.logger.addHandler(logger.stream_err_handler)
+
+    if MLogger.console_handler:
+        if logger.is_out_log:
+            MLogger.console_handler.setFormatter(Formatter(logger.STREAM_FORMAT))
+        logger.logger.addHandler(MLogger.console_handler)
 
 
 def parse2str(obj: object) -> str:

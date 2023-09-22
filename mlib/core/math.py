@@ -639,6 +639,32 @@ class MVectorDict:
         """
         return int(np.array(self.keys())[np.argmin(self.distances(v))])
 
+    def nearest_all_keys(self, v: MVectorT, atol=1e-3, rtol=1e-3) -> list[int]:
+        """
+        指定ベクトル直近キー(同一距離であるキーを全て取得する)
+
+        Parameters
+        ----------
+        v : MVector
+            比較対象ベクトル
+
+        Returns
+        -------
+        直近キー
+        """
+        nearest_value = self.nearest_value(v).vector
+
+        # 近い方からチェックして同じ距離のキーを保持
+        nearest_keys: list[int] = []
+        for nk, nv in zip(np.array(self.keys())[np.argsort(self.distances(v))], np.array(self.values())[np.argsort(self.distances(v))]):
+            if np.isclose(nv, nearest_value, atol=atol, rtol=rtol).all():
+                nearest_keys.append(int(nk))
+            else:
+                # 同じのでなくなったら終了
+                break
+
+        return nearest_keys
+
     def farthest_distance(self, v: MVectorT) -> float:
         """
         指定ベクトル最遠値
@@ -725,6 +751,16 @@ class MVectorDict:
     def median_value(self) -> np.ndarray:
         """中央値"""
         return np.median(self.values(), axis=0)
+
+    def __getitem__(self, key: int) -> Optional[MVector]:
+        v = self.vectors.get(key)
+        if v is not None and v.size == 2:
+            return MVector2D(*v)
+        elif v is not None and v.size == 3:
+            return MVector3D(*v)
+        elif v is not None and v.size == 4:
+            return MVector4D(*v)
+        return None
 
 
 @lru_cache(maxsize=None)
@@ -1460,7 +1496,7 @@ class MMatrix4x4(MVector):
         return bool(not (self.vector == np.eye(4)).all())
 
     def copy(self) -> "MMatrix4x4":
-        return self.__class__(*self.vector)
+        return self.__class__(self.vector)
 
 
 class MMatrix4x4List:
@@ -1661,6 +1697,24 @@ def intersect_line_plane(line_point: MVector3D, line_direction: MVector3D, plane
     intersection = line_point + line_direction * t
 
     return intersection
+
+
+def intersect_line_point(M: MVector3D, N: MVector3D, P: MVector3D):
+    """三次元頂点Pから直線A(M -> N)に向かって下ろした垂線との交点P'を求める"""
+
+    # 直線Aの方向ベクトルを計算
+    direction_vector = (N - M).vector
+
+    # 直線A上での垂線ベクトルを計算
+    perpendicular_vector = (P - M).vector
+
+    # 直線A上での垂線の長さを計算
+    perpendicular_length = np.dot(perpendicular_vector, direction_vector) / np.dot(direction_vector, direction_vector)
+
+    # 直線A上の交点P'を計算
+    intersection_point = M.vector + perpendicular_length * direction_vector
+
+    return MVector3D(*intersection_point)
 
 
 def align_triangle(
