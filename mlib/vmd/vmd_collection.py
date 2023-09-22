@@ -786,7 +786,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         ik_qq = MQuaternion.from_euler_degrees(euler_degrees)
 
                     link_bf.ik_rotation = ik_qq
-                    self[link_bf.name].append(link_bf)
+                    self[link_bf.name].insert(link_bf)
 
                 if is_break:
                     break
