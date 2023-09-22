@@ -1301,7 +1301,7 @@ class VmdMotion(BaseHashModel):
 
     @property
     def bone_count(self) -> int:
-        return int(np.sum([len(bfs.indexes) for bfs in self.bones]))
+        return int(np.sum([len(bfs.register_indexes) for bfs in self.bones]))
 
     @property
     def morph_count(self) -> int:
