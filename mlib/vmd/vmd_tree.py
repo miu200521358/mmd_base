@@ -94,12 +94,14 @@ class VmdBoneFrameTree:
 
 class VmdBoneFrameTrees:
     __slots__ = (
+        "_names",
         "_indexes",
         "data",
     )
 
     def __init__(self) -> None:
-        self._indexes: dict[tuple[int, int], tuple[int, str]] = {}
+        self._names: list[str] = []
+        self._indexes: list[int] = []
         self.data: dict[tuple[int, str], VmdBoneFrameTree] = {}
 
     def append(
@@ -124,7 +126,10 @@ class VmdBoneFrameTrees:
         """
 
         self.data[(fno, bone_name)] = VmdBoneFrameTree(fno, bone_index, bone_name, global_matrix, local_matrix)
-        self._indexes[(fno, bone_index)] = (fno, bone_name)
+        if bone_name not in self._names:
+            self._names.append(bone_name)
+        if fno not in self._indexes:
+            self._indexes.append(fno)
 
     def __getitem__(self, key) -> VmdBoneFrameTree:
         return self.data[key]
@@ -138,3 +143,11 @@ class VmdBoneFrameTrees:
 
     def __iter__(self) -> Iterator[VmdBoneFrameTree]:
         return iter([self.data[k] for k in list(self.data.keys())])
+
+    @property
+    def indexes(self) -> list[int]:
+        return sorted(self._indexes)
+
+    @property
+    def names(self) -> list[str]:
+        return self._names
