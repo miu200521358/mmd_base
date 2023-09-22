@@ -182,6 +182,10 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
 
         return bf
 
+    @property
+    def register_indexes(self) -> list[int]:
+        return sorted([bf.index for bf in self.data.values() if bf.register])
+
 
 class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     """
@@ -786,7 +790,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         ik_qq = MQuaternion.from_euler_degrees(euler_degrees)
 
                     link_bf.ik_rotation = ik_qq
-                    self[link_bf.name].insert(link_bf)
+                    # IK用なので最後に追加して補間曲線は分割しない
+                    self[link_bf.name].append(link_bf)
 
                 if is_break:
                     break

@@ -40,7 +40,7 @@ class VmdWriter(BaseModel):
             fidx = 0
             bone_count = self.motion.bone_count
             for bone_name in self.motion.bones.names:
-                for fno in reversed(self.motion.bones[bone_name].indexes):
+                for fno in reversed(self.motion.bones[bone_name].register_indexes):
                     logger.count("ボーンモーション出力", index=fidx, total_index_count=bone_count, display_block=10000)
                     fidx += 1
 
