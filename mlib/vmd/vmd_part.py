@@ -282,7 +282,6 @@ class VmdBoneFrame(BaseVmdNameFrame):
         "local_scale",
         "interpolations",
         "ik_rotation",
-        "ik_target_rotation",
         "corrected_rotation",
         "corrected_position",
     )
