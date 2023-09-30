@@ -336,7 +336,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
             for bone in model.bones:
                 bone_matrixes.append(
-                    fno, bone.index, bone.name, result_global_matrixes[fidx, bone.index], result_matrixes[fidx, bone.index]
+                    fno,
+                    bone.index,
+                    bone.name,
+                    result_global_matrixes[fidx, bone.index],
+                    result_matrixes[fidx, bone.index],
+                    motion_bone_poses[fidx, bone.index],
+                    motion_bone_qqs[fidx, bone.index],
                 )
 
         return bone_matrixes

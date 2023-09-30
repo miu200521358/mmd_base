@@ -2,7 +2,7 @@ from typing import Iterator, Optional
 
 import numpy as np
 
-from mlib.core.math import MMatrix4x4, MVector3D
+from mlib.core.math import MMatrix4x4, MQuaternion, MVector3D
 
 
 class VmdBoneFrameTree:
@@ -12,11 +12,15 @@ class VmdBoneFrameTree:
         "bone_name",
         "global_matrix_ary",
         "local_matrix_ary",
+        "frame_position_matrix_ary",
+        "frame_rotation_matrix_ary",
         "cache_global_matrix",
         "cache_local_matrix",
         "cache_global_matrix_no_scale",
         "cache_local_matrix_no_scale",
         "cache_position",
+        "cache_frame_position",
+        "cache_frame_rotation",
     )
 
     def __init__(
@@ -26,17 +30,23 @@ class VmdBoneFrameTree:
         bone_name: str,
         global_matrix_ary: np.ndarray,
         local_matrix_ary: np.ndarray,
+        frame_position_matrix_ary: np.ndarray,
+        frame_rotation_matrix_ary: np.ndarray,
     ) -> None:
         self.fno = fno
         self.bone_index = bone_index
         self.bone_name = bone_name
         self.global_matrix_ary = global_matrix_ary
         self.local_matrix_ary = local_matrix_ary
+        self.frame_position_matrix_ary = frame_position_matrix_ary
+        self.frame_rotation_matrix_ary = frame_rotation_matrix_ary
         self.cache_global_matrix: Optional[MMatrix4x4] = None
         self.cache_local_matrix: Optional[MMatrix4x4] = None
         self.cache_global_matrix_no_scale: Optional[MMatrix4x4] = None
         self.cache_local_matrix_no_scale: Optional[MMatrix4x4] = None
         self.cache_position: Optional[MVector3D] = None
+        self.cache_frame_position: Optional[MVector3D] = None
+        self.cache_frame_rotation: Optional[MQuaternion] = None
 
     @property
     def global_matrix(self) -> MMatrix4x4:
@@ -91,6 +101,21 @@ class VmdBoneFrameTree:
         self.cache_position = MVector3D(*self.global_matrix_ary[:3, 3])
         return self.cache_position
 
+    @property
+    def frame_position(self) -> MVector3D:
+        if self.cache_frame_position is not None:
+            return self.cache_frame_position
+        self.cache_frame_position = MVector3D(*self.frame_position_matrix_ary[:3, 3])
+        return self.cache_frame_position
+
+    @property
+    def frame_rotation(self) -> MQuaternion:
+        if self.cache_frame_rotation is not None:
+            return self.cache_frame_rotation
+
+        self.cache_frame_rotation = MMatrix4x4(self.frame_rotation_matrix_ary).to_quaternion()
+        return self.cache_frame_rotation
+
 
 class VmdBoneFrameTrees:
     __slots__ = (
@@ -111,6 +136,8 @@ class VmdBoneFrameTrees:
         bone_name: str,
         global_matrix: np.ndarray,
         local_matrix: np.ndarray,
+        frame_position_matrix: np.ndarray,
+        frame_rotation_matrix: np.ndarray,
     ):
         """
         ボーン変形結果追加
@@ -125,7 +152,15 @@ class VmdBoneFrameTrees:
         position : ボーン変形後のグローバル位置
         """
 
-        self.data[(fno, bone_name)] = VmdBoneFrameTree(fno, bone_index, bone_name, global_matrix, local_matrix)
+        self.data[(fno, bone_name)] = VmdBoneFrameTree(
+            fno,
+            bone_index,
+            bone_name,
+            global_matrix,
+            local_matrix,
+            frame_position_matrix,
+            frame_rotation_matrix,
+        )
         if bone_name not in self._names:
             self._names.append(bone_name)
         if fno not in self._indexes:
