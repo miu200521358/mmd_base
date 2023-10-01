@@ -13,10 +13,14 @@ from mlib.pmx.pmx_writer import PmxWriter
 from mlib.utils import file_utils
 
 pmx_reader = PmxReader()
-# "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/らぶ式ミク/らぶ式ミク_準標準_袖なし.pmx"
-# "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/Appearance Miku/Appearance Miku_準標準.pmx"
 model: PmxModel = pmx_reader.read_by_filepath(
-    "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/Tda式初音ミク・アペンドVer1.10/Tda式初音ミク・アペンド_Ver1.10.pmx"
+    "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/刀剣乱舞/025_一期一振/一期一振 peco式 20190316/一期一振_通常衣装_ver1.00.pmx"
+    # "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/刀剣乱舞/112_膝丸/膝丸mkmk009b 刀剣乱舞/膝丸mkmk009b/膝丸mkmk009b_準標準.pmx"
+    # "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/ゲーム/原神/バーバラ/芭芭拉.pmx"
+    # "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/らぶ式ミク/らぶ式ミク_準標準_袖なし.pmx"
+    # "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/らぶ式ミク/sizing_らぶ式ミク_準標準_袖なし_青.pmx"
+    # "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/Appearance Miku/Appearance Miku_準標準.pmx"
+    # "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/Tda式初音ミク・アペンドVer1.10/Tda式初音ミク・アペンド_Ver1.10.pmx"
 )
 model.setup()
 
@@ -106,8 +110,9 @@ NORMAL_VEC = MVector3D(0, 1, 0)
 model_dir_path, model_file_name, model_ext = file_utils.separate_path(model.path)
 
 stick_model = PmxModel(os.path.join(model_dir_path, f"bone_{model_file_name}.pmx"))
-stick_model.initialize_display_slots()
 stick_model.model_name = model_file_name + "[Bone]"
+stick_model.bones = model.bones.copy()
+stick_model.initialize_display_slots()
 
 # センターボーン材質作成
 center_material = Material(name="センター材質")
@@ -144,11 +149,16 @@ twist_material.ambient = MVector3D(0, 1, 0)
 twist_material.draw_flg = DrawFlg.DOUBLE_SIDED_DRAWING
 stick_model.materials.append(twist_material)
 
-sizing_slot = DisplaySlot(name="SIZING")
-stick_model.display_slots.append(sizing_slot)
-
-stick_model.bones = model.bones.copy()
 stick_model.display_slots["Root"].references.append(DisplaySlotReference(display_index=stick_model.bones["全ての親"].index))
+
+for ds in model.display_slots:
+    if ds.name in ("表情", "Root"):
+        continue
+    stick_ds = DisplaySlot(name=ds.name)
+    stick_model.display_slots.append(stick_ds)
+    for r in ds.references:
+        stick_ds.references.append(DisplaySlotReference(display_index=stick_model.bones[model.bones[r.display_index].name].index))
+
 
 for bone_name in OUTPUT_CENTER_NAMES + OUTPUT_GROOVE_NAMES + OUTPUT_TRUNK_NAMES + OUTPUT_BONE_NAMES + OUTPUT_TWIST_NAMES:
     if bone_name not in stick_model.bones:
@@ -158,7 +168,6 @@ for bone_name in OUTPUT_CENTER_NAMES + OUTPUT_GROOVE_NAMES + OUTPUT_TRUNK_NAMES 
     if BoneFlg.IS_VISIBLE not in bone.bone_flg:
         # 非表示ボーンの場合、表示する
         bone.bone_flg |= BoneFlg.IS_VISIBLE | BoneFlg.CAN_MANIPULATE
-    sizing_slot.references.append(DisplaySlotReference(display_index=bone.index))
 
     from_pos = bone.position
     if bone.name in OUTPUT_CENTER_NAMES:
