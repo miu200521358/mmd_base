@@ -22,6 +22,7 @@ class FileType(Enum):
     PMX = "PMXファイル (*.pmx)|*.pmx|すべてのファイル (*.*)|*.*"
     CSV = "CSVファイル (*.csv)|*.csv|すべてのファイル (*.*)|*.*"
     VRM = "VRMファイル (*.vrm)|*.vrm|すべてのファイル (*.*)|*.*"
+    IMAGE = "画像ファイル (*.png, *.jpg, *.bmp)|*.png;*.jpg;*.jpeg;*.bmp|すべてのファイル (*.*)|*.*"
 
 
 @unique

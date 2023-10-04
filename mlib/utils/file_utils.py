@@ -112,8 +112,14 @@ def validate_file(
         return False
 
     _, _, file_ext = separate_path(path)
-    if not file_ext[1:].lower() in file_type.name.lower():
-        return False
+
+    if file_type == FileType.IMAGE:
+        # 画像系は固定拡張子
+        if file_ext[1:].lower() not in ("png", "jpg", "jpeg", "bmp"):
+            return False
+    else:
+        if not file_ext[1:].lower() in file_type.name.lower():
+            return False
 
     return True
 

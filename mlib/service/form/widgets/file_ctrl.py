@@ -19,6 +19,7 @@ from mlib.utils.file_utils import (
     validate_file,
     validate_save_file,
 )
+from mlib.utils.image_utils import ImageModel, ImageReader
 from mlib.vmd.vmd_collection import VmdMotion
 from mlib.vmd.vmd_reader import VmdReader
 
@@ -347,3 +348,20 @@ class MVmdFilePickerCtrl(MFilePickerCtrl[VmdMotion, VmdReader]):
         file_change_event=None,
     ) -> None:
         super().__init__(parent, frame, panel, VmdReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)
+
+
+class MImagePickerCtrl(MFilePickerCtrl[ImageModel, ImageReader]):
+    def __init__(
+        self,
+        parent: Any,
+        frame: NotebookFrame,
+        panel: NotebookPanel,
+        title: str,
+        key: Optional[str] = None,
+        is_show_name: bool = False,
+        name_spacer: int = 0,
+        is_save: bool = False,
+        tooltip: str = "",
+        file_change_event=None,
+    ) -> None:
+        super().__init__(parent, frame, panel, ImageReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)

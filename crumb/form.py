@@ -23,7 +23,7 @@ from mlib.service.form.notebook_panel import NotebookPanel
 from mlib.service.form.widgets.bezier_ctrl import BezierCtrl
 from mlib.service.form.widgets.console_ctrl import ConsoleCtrl
 from mlib.service.form.widgets.exec_btn_ctrl import ExecButton
-from mlib.service.form.widgets.file_ctrl import MPmxFilePickerCtrl, MVmdFilePickerCtrl
+from mlib.service.form.widgets.file_ctrl import MImagePickerCtrl, MPmxFilePickerCtrl, MVmdFilePickerCtrl
 from mlib.service.form.widgets.float_slider_ctrl import FloatSliderCtrl
 from mlib.service.form.widgets.frame_slider_ctrl import FrameSliderCtrl
 from mlib.service.form.widgets.image_btn_ctrl import ImageButton
@@ -96,6 +96,18 @@ class FilePanel(NotebookPanel):
             tooltip="実際は動いてないよ",
         )
         self.output_pmx_ctrl.set_parent_sizer(self.root_sizer)
+
+        self.image_ctrl = MImagePickerCtrl(
+            self,
+            self.frame,
+            self,
+            key="image",
+            title="画像パス",
+            is_show_name=False,
+            is_save=False,
+            tooltip="画像パスの説明",
+        )
+        self.image_ctrl.set_parent_sizer(self.root_sizer)
 
         self.exec_btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.exec_btn_ctrl = ExecButton(self, self, "実行", "実行中", self.exec, 200, "実行ボタンだよ")
@@ -581,7 +593,7 @@ class TestFrame(NotebookFrame):
     def __init__(self, app) -> None:
         super().__init__(
             app,
-            history_keys=["model_pmx", "dress_pmx", "motion_vmd"],
+            history_keys=["model_pmx", "dress_pmx", "motion_vmd", "image"],
             title="Mu Test Frame",
             size=wx.Size(1000, 800),
             is_saving=False,
@@ -623,6 +635,7 @@ class TestFrame(NotebookFrame):
         self.file_panel.model_ctrl.save_path()
         self.file_panel.dress_ctrl.save_path()
         self.file_panel.motion_ctrl.save_path()
+        self.file_panel.image_ctrl.save_path()
 
         save_histories(self.histories)
 
