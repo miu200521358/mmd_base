@@ -14,6 +14,7 @@ class VmdBoneFrameTree:
         "local_matrix_ary",
         "frame_position_matrix_ary",
         "frame_rotation_matrix_ary",
+        "frame_ik_rotation_matrix_ary",
         "cache_global_matrix",
         "cache_local_matrix",
         "cache_global_matrix_no_scale",
@@ -21,6 +22,7 @@ class VmdBoneFrameTree:
         "cache_position",
         "cache_frame_position",
         "cache_frame_rotation",
+        "cache_frame_ik_rotation",
     )
 
     def __init__(
@@ -32,6 +34,7 @@ class VmdBoneFrameTree:
         local_matrix_ary: np.ndarray,
         frame_position_matrix_ary: np.ndarray,
         frame_rotation_matrix_ary: np.ndarray,
+        frame_ik_rotation_matrix_ary: np.ndarray,
     ) -> None:
         self.fno = fno
         self.bone_index = bone_index
@@ -40,6 +43,7 @@ class VmdBoneFrameTree:
         self.local_matrix_ary = local_matrix_ary
         self.frame_position_matrix_ary = frame_position_matrix_ary
         self.frame_rotation_matrix_ary = frame_rotation_matrix_ary
+        self.frame_ik_rotation_matrix_ary = frame_ik_rotation_matrix_ary
         self.cache_global_matrix: Optional[MMatrix4x4] = None
         self.cache_local_matrix: Optional[MMatrix4x4] = None
         self.cache_global_matrix_no_scale: Optional[MMatrix4x4] = None
@@ -47,6 +51,7 @@ class VmdBoneFrameTree:
         self.cache_position: Optional[MVector3D] = None
         self.cache_frame_position: Optional[MVector3D] = None
         self.cache_frame_rotation: Optional[MQuaternion] = None
+        self.cache_frame_ik_rotation: Optional[MQuaternion] = None
 
     @property
     def global_matrix(self) -> MMatrix4x4:
@@ -116,6 +121,14 @@ class VmdBoneFrameTree:
         self.cache_frame_rotation = MMatrix4x4(self.frame_rotation_matrix_ary).to_quaternion()
         return self.cache_frame_rotation
 
+    @property
+    def frame_ik_rotation(self) -> MQuaternion:
+        if self.cache_frame_ik_rotation is not None:
+            return self.cache_frame_ik_rotation
+
+        self.cache_frame_ik_rotation = MMatrix4x4(self.frame_ik_rotation_matrix_ary).to_quaternion()
+        return self.cache_frame_ik_rotation
+
 
 class VmdBoneFrameTrees:
     __slots__ = (
@@ -138,6 +151,7 @@ class VmdBoneFrameTrees:
         local_matrix: np.ndarray,
         frame_position_matrix: np.ndarray,
         frame_rotation_matrix: np.ndarray,
+        frame_ik_rotation_matrix: np.ndarray,
     ):
         """
         ボーン変形結果追加
@@ -149,7 +163,9 @@ class VmdBoneFrameTrees:
         bone_name: ボーン名
         global_matrix : 自身のボーン位置を加味した行列
         local_matrix : 自身のボーン位置を加味しない行列
-        position : ボーン変形後のグローバル位置
+        frame_position_matrix : キーフレ時点の位置
+        frame_rotation_matrix : キーフレ時点の回転（FK・IK・付与）
+        frame_ik_rotation_matrix : キーフレ時点の付与を含まない回転（FK・IK）
         """
 
         self.data[(fno, bone_name)] = VmdBoneFrameTree(
@@ -160,6 +176,7 @@ class VmdBoneFrameTrees:
             local_matrix,
             frame_position_matrix,
             frame_rotation_matrix,
+            frame_ik_rotation_matrix,
         )
         if bone_name not in self._names:
             self._names.append(bone_name)

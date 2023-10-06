@@ -214,6 +214,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone_names: Iterable[str] = [],
         append_ik: bool = True,
         out_fno_log: bool = False,
+        description: str = "",
     ) -> VmdBoneFrameTrees:
         if not bone_names:
             target_bone_names = model.bones.names
@@ -233,7 +234,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             bone_offset_mats.append((bone.index, bone.offset_matrix))
 
         if out_fno_log:
-            logger.info("ボーンモーフ計算")
+            logger.info("ボーンモーフ計算[{d}]", d=description)
 
         # モーフボーン操作
         if morph_bone_frames is not None:
@@ -244,6 +245,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 morph_bone_local_poses,
                 morph_bone_local_qqs,
                 morph_bone_local_scales,
+                morph_bone_ik_qqs,
             ) = morph_bone_frames.get_bone_matrixes(fnos, model, target_bone_names, append_ik=False, out_fno_log=False)
         else:
             morph_row = len(fnos)
@@ -256,7 +258,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             morph_bone_local_scales = np.full((morph_row, morph_col, 4, 4), np.eye(4))
 
         if out_fno_log:
-            logger.info("ボーンモーション計算")
+            logger.info("ボーンモーション計算[{d}]", d=description)
 
         # モーションボーン操作
         (
@@ -266,6 +268,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             motion_bone_local_poses,
             motion_bone_local_qqs,
             motion_bone_local_scales,
+            motion_bone_ik_qqs,
         ) = self.get_bone_matrixes(fnos, model, target_bone_names, append_ik=append_ik, out_fno_log=out_fno_log)
 
         # ボーン変形行列
@@ -301,13 +304,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             matrixes = matrixes @ motion_bone_local_scales
 
         if out_fno_log:
-            logger.info("ボーン行列計算")
+            logger.info("ボーン行列計算[{d}]", d=description)
 
         # 各ボーンごとのボーン変形行列結果と逆BOf行列(初期姿勢行列)の行列積
         relative_matrixes = model.bones.parent_revert_matrixes @ matrixes
 
         if out_fno_log:
-            logger.info("ボーン変形行列リストアップ")
+            logger.info("ボーン変形行列リストアップ[{d}]", d=description)
 
         # ボーンツリーINDEXリストごとのボーン変形行列リスト(子どもから親に遡る)
         tree_relative_matrixes = [
@@ -320,7 +323,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         for i, (fidx, (bone_index, offset_matrix)) in enumerate(product(list(range(len(fnos))), bone_offset_mats)):
             if out_fno_log and 0 < i and 0 == i % 10000:
-                logger.info("-- ボーン変形行列積 [{i}]", i=i)
+                logger.info("-- ボーン変形行列積[{d}][{i}]", d=description, i=i)
 
             result_matrixes[fidx, bone_index] = offset_matrix.copy()
             for matrix in tree_relative_matrixes[fidx][bone_index]:
@@ -332,7 +335,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone_matrixes = VmdBoneFrameTrees()
         for fidx, fno in enumerate(fnos):
             if out_fno_log:
-                logger.count("ボーン行列結果", index=fidx, total_index_count=len(fnos), display_block=100)
+                logger.count("ボーン行列結果[{d}]", d=description, index=fidx, total_index_count=len(fnos), display_block=100)
 
             for bone in model.bones:
                 bone_matrixes.append(
@@ -343,6 +346,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     result_matrixes[fidx, bone.index],
                     motion_bone_poses[fidx, bone.index],
                     motion_bone_qqs[fidx, bone.index],
+                    motion_bone_ik_qqs[fidx, bone.index],
                 )
 
         return bone_matrixes
@@ -354,13 +358,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         target_bone_names: list[str],
         append_ik: bool = True,
         out_fno_log: bool = False,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        description: str = "",
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """ボーン変形行列を求める"""
 
         row = len(fnos)
         col = len(model.bones)
         poses = np.full((row, col, 4, 4), np.eye(4))
         qqs = np.full((row, col, 4, 4), np.eye(4))
+        ik_qqs = np.full((row, col, 4, 4), np.eye(4))
         scales = np.full((row, col, 4, 4), np.eye(4))
         local_poses = np.full((row, col, 4, 4), np.eye(4))
         local_qqs = np.full((row, col, 4, 4), np.eye(4))
@@ -387,7 +393,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for bidx, bone_name in enumerate(target_bone_names):
                 if out_fno_log:
                     logger.count(
-                        "ボーン計算",
+                        "ボーン計算[{d}]",
+                        d=description,
                         index=fidx * len(target_bone_names) + bidx,
                         total_index_count=total_count,
                         display_block=100,
@@ -443,8 +450,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     local_poses[fidx, bone.index] = local_pos_mat
 
                 # FK(捩り) > IK(捩り) > 付与親(捩り)
-                qq = self.get_rotation(fno, model, bone, append_ik=append_ik)
+                qq, ik_qq = self.get_rotation(fno, model, bone, append_ik=append_ik)
                 qqs[fidx, bone.index] = qq.to_matrix4x4().vector
+                ik_qqs[fidx, bone.index] = ik_qq.to_matrix4x4().vector
 
                 # ローカル回転
                 if is_valid_local_rot:
@@ -472,7 +480,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     )
                     local_scales[fidx, bone.index] = local_scale_mat
 
-        return poses, qqs, scales, local_poses, local_qqs, local_scales
+        return poses, qqs, scales, local_poses, local_qqs, local_scales, ik_qqs
 
     def get_position(self, fno: int, model: PmxModel, bone: Bone, position: MVector3D, loop: int = 0) -> np.ndarray:
         """
@@ -628,7 +636,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             tuple(parent_local_axises),
         )
 
-    def get_rotation(self, fno: int, model: PmxModel, bone: Bone, append_ik: bool = False, loop: int = 0) -> MQuaternion:
+    def get_rotation(
+        self, fno: int, model: PmxModel, bone: Bone, append_ik: bool = False, loop: int = 0
+    ) -> tuple[MQuaternion, MQuaternion]:
         """
         該当キーフレにおけるボーンの相対位置
         append_ik : IKを計算するか(循環してしまう場合があるので、デフォルトFalse)
@@ -650,7 +660,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # 付与親を加味した回転
         effect_qq = self.get_effect_rotation(fno, model, bone, ik_qq, loop=loop + 1)
 
-        return effect_qq
+        return effect_qq, ik_qq
 
     def get_effect_rotation(self, fno: int, model: PmxModel, bone: Bone, qq: MQuaternion, loop: int = 0) -> MQuaternion:
         """
@@ -666,7 +676,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_qq = self.get_rotation(fno, model, effect_bone, loop=loop + 1)
+        effect_qq, _ = self.get_rotation(fno, model, effect_bone, loop=loop + 1)
         if 0 < bone.effect_factor:
             # 正の付与親
             qq *= effect_qq.multiply_factor(bone.effect_factor)
@@ -1409,6 +1419,7 @@ class VmdMotion(BaseHashModel):
         append_ik: bool = True,
         clear_ik: bool = False,
         out_fno_log: bool = False,
+        description: str = "",
     ) -> VmdBoneFrameTrees:
         all_morph_bone_frames = VmdBoneFrames()
 
@@ -1417,7 +1428,7 @@ class VmdMotion(BaseHashModel):
 
         for fidx, fno in enumerate(fnos):
             if out_fno_log:
-                logger.count("キーフレ確認", index=fidx, total_index_count=len(fnos), display_block=100)
+                logger.count("キーフレ確認[{d}]", d=description, index=fidx, total_index_count=len(fnos), display_block=100)
 
             logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 開始")
 
@@ -1458,7 +1469,7 @@ class VmdMotion(BaseHashModel):
 
         # ボーン変形行列操作
         bone_matrixes = self.bones.animate_bone_matrixes(
-            fnos, model, all_morph_bone_frames, bone_names, append_ik=append_ik, out_fno_log=out_fno_log
+            fnos, model, all_morph_bone_frames, bone_names, append_ik=append_ik, out_fno_log=out_fno_log, description=description
         )
         logger.test(f"-- ボーンアニメーション[{model.name}]: ボーン変形行列操作")
 
