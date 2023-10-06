@@ -269,7 +269,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             motion_bone_local_qqs,
             motion_bone_local_scales,
             motion_bone_ik_qqs,
-        ) = self.get_bone_matrixes(fnos, model, target_bone_names, append_ik=append_ik, out_fno_log=out_fno_log)
+        ) = self.get_bone_matrixes(
+            fnos,
+            model,
+            target_bone_names,
+            append_ik=append_ik,
+            out_fno_log=out_fno_log,
+            description=description,
+        )
 
         # ボーン変形行列
         matrixes = np.full(motion_bone_poses.shape, np.eye(4))
