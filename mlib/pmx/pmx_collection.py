@@ -1196,9 +1196,9 @@ class PmxModel(BaseHashModel):
             # 捩りの場合、分散用ボーンも追加する
             from_name = f"{direction}腕" if "腕捩" in bone.name else f"{direction}ひじ"
             to_name = f"{direction}ひじ" if "腕捩" in bone.name else f"{direction}手首"
-            for no, ratio, factor in ((1, 0.3, 0.25), (2, 0.5, 0.5), (3, 0.7, 0.75)):
+            for no, zen_no, ratio, factor in ((1, "１", 0.3, 0.25), (2, "２", 0.5, 0.5), (3, "３", 0.7, 0.75)):
                 twist_bone_name = f"{bone.name}{no}"
-                if twist_bone_name in self.bones:
+                if twist_bone_name in self.bones or f"{bone.name}{zen_no}" in self.bones:
                     continue
                 twist_bone = Bone(name=twist_bone_name, index=bone.index + no)
                 twist_bone.position = MVector3D(
