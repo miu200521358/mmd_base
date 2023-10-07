@@ -723,6 +723,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 処理対象IKボーン
                     link_bone = model.bones[ik_link.bone_index]
 
+                    if (
+                        ik_link.angle_limit
+                        and np.isclose(ik_link.min_angle_limit.radians.length(), 0)
+                        and np.isclose(ik_link.max_angle_limit.radians.length(), 0)
+                    ):
+                        # 角度制限があってまったく動かない場合、IK計算しないで次に行く
+                        continue
+
                     # IK関連の行列を一括計算
                     ik_matrixes = self.animate_bone_matrixes(
                         [fno], model, bone_names=[ik_bone.name, effector_bone.name, link_bone.name], append_ik=False
