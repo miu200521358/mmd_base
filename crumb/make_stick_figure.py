@@ -1,6 +1,7 @@
 import os
 import sys
 from winsound import SND_ALIAS, PlaySound
+import argparse
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -12,9 +13,14 @@ from mlib.pmx.pmx_reader import PmxReader
 from mlib.pmx.pmx_writer import PmxWriter
 from mlib.utils import file_utils
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--path", default="", type=str)
+args, argv = parser.parse_known_args()
+
 pmx_reader = PmxReader()
 model: PmxModel = pmx_reader.read_by_filepath(
-    "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/刀剣乱舞/025_一期一振/一期一振 peco式 20190316/一期一振_通常衣装_ver1.00.pmx"
+    args.path
+    # "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/刀剣乱舞/025_一期一振/一期一振 peco式 20190316/一期一振_通常衣装_ver1.00.pmx"
     # "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/刀剣乱舞/112_膝丸/膝丸mkmk009b 刀剣乱舞/膝丸mkmk009b/膝丸mkmk009b_準標準.pmx"
     # "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/ゲーム/原神/バーバラ/芭芭拉.pmx"
     # "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/らぶ式ミク/らぶ式ミク_準標準_袖なし.pmx"
@@ -110,7 +116,7 @@ NORMAL_VEC = MVector3D(0, 1, 0)
 model_dir_path, model_file_name, model_ext = file_utils.separate_path(model.path)
 
 stick_model = PmxModel(os.path.join(model_dir_path, f"bone_{model_file_name}.pmx"))
-stick_model.model_name = model_file_name + "[Bone]"
+stick_model.model_name = "①" + model_file_name + "[Bone]"
 stick_model.bones = model.bones.copy()
 stick_model.initialize_display_slots()
 
@@ -256,6 +262,18 @@ for bone_name in OUTPUT_CENTER_NAMES + OUTPUT_GROOVE_NAMES + OUTPUT_TRUNK_NAMES 
     else:
         bone_material.vertices_count += 24
 
+PmxWriter(stick_model, stick_model.path, include_system=True).save()
+
+stick_model.path = os.path.join(model_dir_path, f"bone_{model_file_name}_2.pmx")
+stick_model.model_name = "②" + model_file_name + "[Bone]"
+trunk_material.ambient = MVector3D(1, 0, 0)
+bone_material.ambient = MVector3D(0, 1, 0)
+PmxWriter(stick_model, stick_model.path, include_system=True).save()
+
+stick_model.path = os.path.join(model_dir_path, f"bone_{model_file_name}_3.pmx")
+stick_model.model_name = "③" + model_file_name + "[Bone]"
+trunk_material.ambient = MVector3D(0, 0, 1)
+bone_material.ambient = MVector3D(1, 0, 0)
 PmxWriter(stick_model, stick_model.path, include_system=True).save()
 
 PlaySound("SystemAsterisk", SND_ALIAS)
