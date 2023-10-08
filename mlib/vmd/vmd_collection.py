@@ -715,9 +715,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
             is_break = False
             for loop in range(ik_bone.ik.loop_count):
-                for ik_link in ik_bone.ik.links:
+                for lidx, ik_link in enumerate(ik_bone.ik.links):
                     # ikLink は末端から並んでる
                     if ik_link.bone_index not in model.bones:
+                        continue
+                    if ik_bone.is_system and (loop + 1) % (lidx + 1) < (lidx + 1):
+                        # システムIKの場合、末端のループ件数を少なくする
                         continue
 
                     # 処理対象IKボーン
