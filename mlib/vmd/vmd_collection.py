@@ -719,7 +719,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # ikLink は末端から並んでる
                     if ik_link.bone_index not in model.bones:
                         continue
-                    if ik_bone.is_system and (loop + 1) % (lidx + 1) < (lidx + 1):
+                    if ik_bone.is_system and (loop + 1) % (lidx + 1) < lidx:
                         # システムIKの場合、末端のループ件数を少なくする
                         continue
 
