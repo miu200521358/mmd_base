@@ -730,6 +730,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         ik_link.angle_limit
                         and np.isclose(ik_link.min_angle_limit.radians.length(), 0)
                         and np.isclose(ik_link.max_angle_limit.radians.length(), 0)
+                        and np.isclose(ik_link.local_min_angle_limit.radians.length(), 0)
+                        and np.isclose(ik_link.local_max_angle_limit.radians.length(), 0)
                     ):
                         # 角度制限があってまったく動かない場合、IK計算しないで次に行く
                         continue
@@ -798,28 +800,35 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     if ik_link.angle_limit:
                         # 角度制限が入ってる場合、オイラー角度に分解する
-                        euler_degrees = ik_qq.separate_euler_degrees()
+                        if ik_link.local_min_angle_limit.degrees.length() > 0 or ik_link.local_max_angle_limit.degrees.length() > 0:
+                            euler_degrees = ik_qq.separate_euler_degrees_by_axis(link_bone.tail_relative_position.normalized())
+                            min_angle_limit = ik_link.local_min_angle_limit
+                            max_angle_limit = ik_link.local_max_angle_limit
+                        else:
+                            euler_degrees = ik_qq.separate_euler_degrees()
+                            min_angle_limit = ik_link.min_angle_limit
+                            max_angle_limit = ik_link.max_angle_limit
 
                         euler_degrees.x = max(
                             min(
                                 euler_degrees.x,
-                                ik_link.max_angle_limit.degrees.x,
+                                max_angle_limit.degrees.x,
                             ),
-                            ik_link.min_angle_limit.degrees.x,
+                            min_angle_limit.degrees.x,
                         )
                         euler_degrees.y = max(
                             min(
                                 euler_degrees.y,
-                                ik_link.max_angle_limit.degrees.y,
+                                max_angle_limit.degrees.y,
                             ),
-                            ik_link.min_angle_limit.degrees.y,
+                            min_angle_limit.degrees.y,
                         )
                         euler_degrees.z = max(
                             min(
                                 euler_degrees.z,
-                                ik_link.max_angle_limit.degrees.z,
+                                max_angle_limit.degrees.z,
                             ),
-                            ik_link.min_angle_limit.degrees.z,
+                            min_angle_limit.degrees.z,
                         )
                         ik_qq = MQuaternion.from_euler_degrees(euler_degrees)
 

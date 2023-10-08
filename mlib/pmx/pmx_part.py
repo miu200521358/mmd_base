@@ -610,9 +610,9 @@ class IkLink(BaseModel):
         リンクボーンのボーンIndex, by default -1
     angle_limit : bool, optional
         角度制限 0:OFF 1:ON, by default False
-    min_angle_limit_radians : MVector3D, optional
+    min_angle_limit : MVector3D, optional
         下限 (x,y,z) -> ラジアン角, by default MVector3D()
-    max_angle_limit_radians : MVector3D, optional
+    max_angle_limit : MVector3D, optional
         上限 (x,y,z) -> ラジアン角, by default MVector3D()
     """
 
@@ -621,6 +621,8 @@ class IkLink(BaseModel):
         "angle_limit",
         "min_angle_limit",
         "max_angle_limit",
+        "local_min_angle_limit",
+        "local_max_angle_limit",
     )
 
     def __init__(
@@ -631,6 +633,8 @@ class IkLink(BaseModel):
         self.angle_limit = False
         self.min_angle_limit = BaseRotationModel()
         self.max_angle_limit = BaseRotationModel()
+        self.local_min_angle_limit = BaseRotationModel()
+        self.local_max_angle_limit = BaseRotationModel()
 
     def __bool__(self) -> bool:
         return 0 <= self.bone_index
