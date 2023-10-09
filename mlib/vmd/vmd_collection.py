@@ -788,7 +788,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     rotation_degree = degrees(rotation_radian)
 
                     # 制限角で最大変位量を制限する(システムボーンは制限角に準拠)
-                    if 0 < loop and not ik_bone.is_system:
+                    if (0 < loop and not ik_bone.is_system) or not ik_bone.is_system:
                         rotation_degree = min(rotation_degree, ik_bone.ik.unit_rotation.degrees.x)
 
                     # リンクボーンの角度を保持
