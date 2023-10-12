@@ -1221,19 +1221,6 @@ class MQuaternion(MVector):
         x_radian = atan2(mat[2, 1] * cos(z_radian), mat[1, 1])
         y_radian = atan2(-mat[2, 0], mat[2, 2])
 
-        # if pi / 2 < -x_radian:
-        #     x_radian += pi
-        # if np.isclose(x_radian, pi):
-        #     x_radian = 0
-        # if pi / 2 < -y_radian:
-        #     y_radian += pi
-        # if np.isclose(y_radian, pi):
-        #     y_radian = 0
-        # if pi / 2 < -z_radian:
-        #     z_radian += pi
-        # if np.isclose(z_radian, pi):
-        #     z_radian = 0
-
         return MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
 
     def separate_euler_degrees_by_axis(self, local_axis: MVector3D) -> MVector3D:
@@ -1250,8 +1237,24 @@ class MQuaternion(MVector):
 
         mat = local_mat @ qq_mat
 
-        self = mat.to_quaternion()
-        return self.separate_euler_degrees()
+        z_radian = atan2(-mat[0, 1], mat[0, 0])
+        x_radian = atan2(mat[2, 1] * cos(z_radian), mat[1, 1])
+        y_radian = atan2(-mat[2, 0], mat[2, 2])
+
+        if pi / 2 < -x_radian:
+            x_radian += pi
+        if np.isclose(x_radian, pi):
+            x_radian = 0
+        if pi / 2 < -y_radian:
+            y_radian += pi
+        if np.isclose(y_radian, pi):
+            y_radian = 0
+        if pi / 2 < -z_radian:
+            z_radian += pi
+        if np.isclose(z_radian, pi):
+            z_radian = 0
+
+        return MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
 
 
 class MMatrix4x4(MVector):
