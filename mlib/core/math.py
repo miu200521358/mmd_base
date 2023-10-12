@@ -1221,18 +1221,18 @@ class MQuaternion(MVector):
         x_radian = atan2(mat[2, 1] * cos(z_radian), mat[1, 1])
         y_radian = atan2(-mat[2, 0], mat[2, 2])
 
-        if pi / 2 < -x_radian:
-            x_radian += pi
-        if np.isclose(x_radian, pi):
-            x_radian = 0
-        if pi / 2 < -y_radian:
-            y_radian += pi
-        if np.isclose(y_radian, pi):
-            y_radian = 0
-        if pi / 2 < -z_radian:
-            z_radian += pi
-        if np.isclose(z_radian, pi):
-            z_radian = 0
+        # if pi / 2 < -x_radian:
+        #     x_radian += pi
+        # if np.isclose(x_radian, pi):
+        #     x_radian = 0
+        # if pi / 2 < -y_radian:
+        #     y_radian += pi
+        # if np.isclose(y_radian, pi):
+        #     y_radian = 0
+        # if pi / 2 < -z_radian:
+        #     z_radian += pi
+        # if np.isclose(z_radian, pi):
+        #     z_radian = 0
 
         return MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
 
