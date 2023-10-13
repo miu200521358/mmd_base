@@ -801,7 +801,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     if ik_link.angle_limit:
                         # 角度制限が入ってる場合、オイラー角度に分解する
                         if ik_link.local_min_angle_limit.degrees.length() > 0 or ik_link.local_max_angle_limit.degrees.length() > 0:
-                            euler_degrees = ik_qq.separate_euler_degrees_by_axis(link_bone.tail_relative_position.normalized())
+                            euler_degrees = ik_qq.separate_euler_degrees_by_axis(link_bone.local_axis)
                             min_angle_limit = ik_link.local_min_angle_limit
                             max_angle_limit = ik_link.local_max_angle_limit
                         else:
