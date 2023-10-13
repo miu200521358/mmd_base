@@ -78,7 +78,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         if self.is_show_name and not self.is_save:
             if name_spacer:
                 self.spacer_ctrl = wx.StaticText(
-                    self.parent, wx.ID_ANY, " " * name_spacer, wx.DefaultPosition, wx.Size(name_spacer * 16, -1), 0
+                    self.parent, wx.ID_ANY, " " * name_spacer, wx.DefaultPosition, wx.Size(name_spacer * 2, -1), 0
                 )
                 self.title_sizer.Add(self.spacer_ctrl, 0, wx.ALL, 3)
 
