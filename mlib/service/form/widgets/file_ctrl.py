@@ -94,7 +94,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
 
             self.name_blank_ctrl = wx.StaticText(self.parent, wx.ID_ANY, self.title, wx.DefaultPosition, wx.Size(100, -1), 0)
             self.name_blank_ctrl.SetToolTip(__(tooltip))
-            self.title_sizer.Add(self.name_blank_ctrl, 0, wx.ALL | wx.ALIGN_RIGHT, 3)
+            self.title_sizer.Add(self.name_blank_ctrl, 0, wx.ALL, 3)
 
         self.root_sizer.Add(self.title_sizer, 1, wx.EXPAND | wx.ALL, 3)
 
