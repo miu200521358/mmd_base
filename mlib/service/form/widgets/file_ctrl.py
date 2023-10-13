@@ -68,7 +68,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         # ファイルタイトル
         self.title_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.title_ctrl = wx.StaticText(self.parent, wx.ID_ANY, self.title, wx.DefaultPosition, wx.Size(len(self.title) * 2, -1), 0)
+        self.title_ctrl = wx.StaticText(self.parent, wx.ID_ANY, self.title, wx.DefaultPosition, wx.Size(len(self.title) * 10, -1), 0)
         self.title_ctrl.SetToolTip(__(tooltip))
         self.title_sizer.Add(self.title_ctrl, 0, wx.ALL, 3)
         self.spacer_ctrl = None
@@ -78,7 +78,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         if self.is_show_name and not self.is_save:
             if name_spacer:
                 self.spacer_ctrl = wx.StaticText(
-                    self.parent, wx.ID_ANY, " " * name_spacer, wx.DefaultPosition, wx.Size(name_spacer * 2, -1), 0
+                    self.parent, wx.ID_ANY, " " * name_spacer, wx.DefaultPosition, wx.Size(name_spacer * 10, -1), 0
                 )
                 self.title_sizer.Add(self.spacer_ctrl, 0, wx.ALL, 3)
 
