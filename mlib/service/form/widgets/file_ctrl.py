@@ -73,6 +73,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         self.title_sizer.Add(self.title_ctrl, 0, wx.ALL, 3)
         self.spacer_ctrl = None
         self.name_ctrl = None
+        self.name_blank_ctrl = None
 
         # モデル名等の表示
         if self.is_show_name and not self.is_save:
@@ -263,6 +264,9 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
 
         if self.name_ctrl:
             self.name_ctrl.SetBackgroundColour(color)
+
+        if self.name_blank_ctrl:
+            self.name_blank_ctrl.SetBackgroundColour(color)
 
     def get_name_for_file(self) -> str:
         if not self.name_ctrl:
