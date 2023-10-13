@@ -86,11 +86,11 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
                 __("(未設定)"),
                 wx.DefaultPosition,
                 wx.Size(-1, -1),
-                wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS | wx.ALIGN_RIGHT,
+                wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS,
             )
             self.name_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
             self.name_ctrl.SetToolTip(__("{t}に記録されているモデル名です。\n文字列は選択およびコピー可能です。", t=self.title))
-            self.title_sizer.Add(self.name_ctrl, 1, wx.EXPAND | wx.ALL, 3)
+            self.title_sizer.Add(self.name_ctrl, 1, wx.ALIGN_RIGHT, 3)
 
             self.name_blank_ctrl = wx.StaticText(self.parent, wx.ID_ANY, "   ", wx.DefaultPosition, wx.Size(150, -1), 0)
             self.name_blank_ctrl.SetToolTip(__(tooltip))
