@@ -93,7 +93,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
             self.title_sizer.Add(self.name_ctrl, 1, wx.ALL, 3)
 
             self.name_blank_ctrl = wx.StaticText(self.parent, wx.ID_ANY, "   ", wx.DefaultPosition, wx.Size(150, -1), 0)
-            self.name_blank_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.RED))
+            self.name_blank_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT))
             self.title_sizer.Add(self.name_blank_ctrl, 0, wx.ALL, 3)
 
         self.root_sizer.Add(self.title_sizer, 1, wx.EXPAND | wx.ALL, 3)
