@@ -77,9 +77,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         # モデル名等の表示
         if self.is_show_name and not self.is_save:
             if name_spacer:
-                self.spacer_ctrl = wx.StaticText(
-                    self.parent, wx.ID_ANY, " " * name_spacer, wx.DefaultPosition, wx.Size(name_spacer * 3, -1), 0
-                )
+                self.spacer_ctrl = wx.StaticText(self.parent, wx.ID_ANY, " " * name_spacer, wx.DefaultPosition, wx.Size(-1, -1), 0)
                 self.title_sizer.Add(self.spacer_ctrl, 0, wx.ALL, 3)
 
             self.name_ctrl = wx.TextCtrl(
@@ -88,7 +86,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
                 __("(未設定)"),
                 wx.DefaultPosition,
                 wx.Size(-1, -1),
-                wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS,
+                wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS | wx.ALIGN_RIGHT,
             )
             self.name_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
             self.name_ctrl.SetToolTip(__("{t}に記録されているモデル名です。\n文字列は選択およびコピー可能です。", t=self.title))
