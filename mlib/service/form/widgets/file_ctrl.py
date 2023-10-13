@@ -92,7 +92,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
             self.name_ctrl.SetToolTip(__("{t}に記録されているモデル名です。\n文字列は選択およびコピー可能です。", t=self.title))
             self.title_sizer.Add(self.name_ctrl, 1, wx.EXPAND | wx.ALL, 3)
 
-            self.name_blank_ctrl = wx.StaticText(self.parent, wx.ID_ANY, "   ", wx.DefaultPosition, wx.Size(100, -1), 0)
+            self.name_blank_ctrl = wx.StaticText(self.parent, wx.ID_ANY, "   ", wx.DefaultPosition, wx.Size(150, -1), 0)
             self.name_blank_ctrl.SetToolTip(__(tooltip))
             self.title_sizer.Add(self.name_blank_ctrl, 0, wx.ALL, 3)
 
