@@ -832,6 +832,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         )
                         ik_qq = MQuaternion.from_euler_degrees(euler_degrees)
 
+                    if link_bone.has_fixed_axis:
+                        # 軸制限ありの場合、軸制限角度を求める
+                        ik_qq = ik_qq.to_fixed_axis_rotation(link_bone.corrected_fixed_axis)
+
                     link_bf.ik_rotation = ik_qq
                     # IK用なので最後に追加して補間曲線は分割しない
                     self[link_bf.name].append(link_bf)
@@ -850,7 +854,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         軸制限回転を求める
         """
         if bone.has_fixed_axis:
-            return qq.to_fixed_axis_quaternion(bone.corrected_fixed_axis)
+            return qq.to_fixed_axis_rotation(bone.corrected_fixed_axis)
 
         return qq
 

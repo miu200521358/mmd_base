@@ -1016,7 +1016,7 @@ class MQuaternion(MVector):
             return MQuaternion()
         return MQuaternion(self.scalar / factor, self.x, self.y, self.z)
 
-    def to_fixed_axis_quaternion(self, fixed_axis: MVector3D) -> "MQuaternion":
+    def to_fixed_axis_rotation(self, fixed_axis: MVector3D) -> "MQuaternion":
         """
         軸制限されたクォータニオンの回転
 
