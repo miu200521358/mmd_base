@@ -839,10 +839,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             min_angle_limit.degrees.z,
                         )
                         if ik_link.local_min_angle_limit.degrees.length() > 0 or ik_link.local_max_angle_limit.degrees.length() > 0:
-                            # 左右の場合、軸による角度の補正を行う
-                            if not np.isclose(link_bone.corrected_local_x_vector.x, 0.0, rtol=0.1, atol=0.1):
-                                euler_degrees *= -np.sign(link_bone.corrected_local_x_vector.x)
-
                             ik_qq = (
                                 MQuaternion.from_axis_angles(link_bone.corrected_local_y_vector, euler_degrees.y)
                                 * MQuaternion.from_axis_angles(link_bone.corrected_local_x_vector, euler_degrees.x)
