@@ -797,18 +797,23 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 補正関節回転量
                     if link_bone.has_fixed_axis:
                         # 軸制限ありの場合、軸にそった回転量とする
-                        correct_qq = MQuaternion.from_axis_angles(link_bone.corrected_fixed_axis, rotation_degree)
-                    elif ik_link.local_angle_limit and not np.isclose(link_bone.corrected_local_x_vector.x, 0.0, rtol=0.1, atol=0.1):
-                        # ローカル軸角度制限が入っている場合、ローカル軸に合わせる
-                        if ik_link.local_min_angle_limit.degrees.z or ik_link.local_min_angle_limit.degrees.z:
-                            correct_qq = MQuaternion.from_axis_angles(link_bone.corrected_local_z_vector, rotation_degree)
-                        elif ik_link.local_min_angle_limit.degrees.x or ik_link.local_min_angle_limit.degrees.x:
-                            correct_qq = MQuaternion.from_axis_angles(link_bone.corrected_local_x_vector, rotation_degree)
-                        elif ik_link.local_min_angle_limit.degrees.y or ik_link.local_min_angle_limit.degrees.y:
-                            correct_qq = MQuaternion.from_axis_angles(link_bone.corrected_local_y_vector, rotation_degree)
-                        else:
-                            correct_qq = MQuaternion()
+                        correct_qq = MQuaternion.from_axis_angles(link_bone.corrected_fixed_axis, rotation_degree * 0.5)
+                    # elif ik_link.local_angle_limit and not np.isclose(link_bone.corrected_local_x_vector.x, 0.0, rtol=0.1, atol=0.1):
+                    #     # ローカル軸角度制限が入っている場合、ローカル軸に合わせる
+                    #     if ik_link.local_min_angle_limit.degrees.z or ik_link.local_min_angle_limit.degrees.z:
+                    #         correct_qq = MQuaternion.from_axis_angles(link_bone.corrected_local_z_vector, rotation_degree)
+                    #     elif ik_link.local_min_angle_limit.degrees.x or ik_link.local_min_angle_limit.degrees.x:
+                    #         correct_qq = MQuaternion.from_axis_angles(link_bone.corrected_local_x_vector, rotation_degree)
+                    #     elif ik_link.local_min_angle_limit.degrees.y or ik_link.local_min_angle_limit.degrees.y:
+                    #         correct_qq = MQuaternion.from_axis_angles(link_bone.corrected_local_y_vector, rotation_degree)
+                    #     else:
+                    #         correct_qq = MQuaternion()
                     else:
+                        # if (link_bone.has_fixed_axis or ik_link.local_angle_limit) and not np.isclose(
+                        #     link_bone.corrected_fixed_axis.x, 0.0, rtol=0.1, atol=0.1
+                        # ):
+                        #     rotation_degree *= -np.sign(link_bone.corrected_fixed_axis.x)
+
                         correct_qq = MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
                     ik_qq = (link_bf.ik_rotation or MQuaternion()) * correct_qq
 
@@ -848,7 +853,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             ),
                             min_angle_limit.degrees.z,
                         )
-                        if ik_link.local_min_angle_limit.degrees.length() > 0 or ik_link.local_max_angle_limit.degrees.length() > 0:
+
+                        if ik_link.local_angle_limit:
+                            if not np.isclose(link_bone.corrected_local_x_vector.x, 0.0, rtol=0.1, atol=0.1):
+                                euler_degrees *= -np.sign(link_bone.corrected_local_x_vector.x)
+
                             ik_qq = (
                                 MQuaternion.from_axis_angles(link_bone.corrected_local_y_vector, euler_degrees.y)
                                 * MQuaternion.from_axis_angles(link_bone.corrected_local_x_vector, euler_degrees.x)
