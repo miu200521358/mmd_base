@@ -834,7 +834,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     if link_bone.has_fixed_axis:
                         # 軸制限ありの場合、軸制限角度を求める
-                        ik_qq = ik_qq.to_fixed_axis_rotation(link_bone.corrected_fixed_axis)
+                        ik_qq = ik_qq.to_fixed_axis_rotation(
+                            link_bone.corrected_local_x_vector,
+                            link_bone.corrected_local_y_vector,
+                            link_bone.corrected_local_z_vector,
+                        )
 
                     link_bf.ik_rotation = ik_qq
                     # IK用なので最後に追加して補間曲線は分割しない

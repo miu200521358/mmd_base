@@ -1055,24 +1055,30 @@ def test_MQuaternion_separate_euler_degrees_by_axis():
 
     from mlib.core.math import MQuaternion, MVector3D
 
-    degrees = MQuaternion.from_euler_degrees(10, 0, 0).separate_euler_degrees_by_axis(MVector3D(1, 0, 0))
+    degrees = MQuaternion.from_euler_degrees(10, 0, 0).separate_euler_degrees_by_axis(
+        MVector3D(1, 0, 0), MVector3D(0, 1, 0), MVector3D(0, 0, 1)
+    )
 
     assert np.isclose(
         np.array([10, 0, 0]),
         degrees.vector,
     ).all()
 
-    degrees = MQuaternion.from_euler_degrees(10, 0, 0).separate_euler_degrees_by_axis(MVector3D(1, 1, 0))
+    degrees = MQuaternion.from_euler_degrees(10, 0, 0).separate_euler_degrees_by_axis(
+        MVector3D(1, 1, 0), MVector3D(1, 1, 0).cross(MVector3D(0, 0, -1)), MVector3D(0, 0, -1)
+    )
 
     assert np.isclose(
-        np.array([10.07469126, 0.0, -44.56145141]),
+        np.array([7.08004951, -7.08004951, 0.0]),
         degrees.vector,
     ).all()
 
-    degrees = MQuaternion.from_euler_degrees(10, 0, 0).separate_euler_degrees_by_axis(MVector3D(0, 1, 1))
+    degrees = MQuaternion.from_euler_degrees(10, 0, 0).separate_euler_degrees_by_axis(
+        MVector3D(0, 1, 1), MVector3D(0, 1, 1).cross(MVector3D(0, 0, -1)), MVector3D(0, 0, -1)
+    )
 
     assert np.isclose(
-        np.array([9.21386408e-15, 4.54385486e01, 9.00000000e01]),
+        np.array([0.0, -10.0, 0.0]),
         degrees.vector,
     ).all()
 

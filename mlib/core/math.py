@@ -1223,38 +1223,22 @@ class MQuaternion(MVector):
 
         return MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
 
-    def separate_euler_degrees_by_axis(self, local_axis: MVector3D) -> MVector3D:
+    def separate_euler_degrees_by_axis(self, local_x_axis: MVector3D, local_y_axis: MVector3D, local_z_axis: MVector3D) -> MVector3D:
         """
-        ローカル軸基準で ZXYの回転順序でオイラー角度を求める
+        ローカル軸基準で オイラー角度を求める
         https://programming-surgeon.com/script/euler-python-script/
 
         Returns
         -------
-        ZXYローカル軸別のオイラー角度
+        ローカル軸別のオイラー角度
         """
-        qq_mat = self.normalized().to_matrix4x4()
-        local_mat = local_axis.to_local_matrix4x4()
+        x_qq, y_qq, z_qq, _ = self.separate_by_axis(local_x_axis)
 
-        mat = local_mat @ qq_mat
+        x_signed_degree = x_qq.to_signed_degrees(local_x_axis)
+        y_signed_degree = y_qq.to_signed_degrees(local_y_axis)
+        z_signed_degree = z_qq.to_signed_degrees(local_z_axis)
 
-        z_radian = atan2(-mat[0, 1], mat[0, 0])
-        x_radian = atan2(mat[2, 1] * cos(z_radian), mat[1, 1])
-        y_radian = atan2(-mat[2, 0], mat[2, 2])
-
-        if pi / 2 < -x_radian:
-            x_radian += pi
-        if np.isclose(x_radian, pi):
-            x_radian = 0
-        if pi / 2 < -y_radian:
-            y_radian += pi
-        if np.isclose(y_radian, pi):
-            y_radian = 0
-        if pi / 2 < -z_radian:
-            z_radian += pi
-        if np.isclose(z_radian, pi):
-            z_radian = 0
-
-        return MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
+        return MVector3D(x_signed_degree, y_signed_degree, z_signed_degree)
 
 
 class MMatrix4x4(MVector):
