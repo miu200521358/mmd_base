@@ -840,9 +840,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         )
                         if ik_link.local_min_angle_limit.degrees.length() > 0 or ik_link.local_max_angle_limit.degrees.length() > 0:
                             ik_qq = (
-                                MQuaternion.from_axis_angles(link_bone.corrected_local_z_vector, euler_degrees.z)
+                                MQuaternion.from_axis_angles(link_bone.corrected_local_y_vector, euler_degrees.y)
                                 * MQuaternion.from_axis_angles(link_bone.corrected_local_x_vector, euler_degrees.x)
-                                * MQuaternion.from_axis_angles(link_bone.corrected_local_y_vector, euler_degrees.y)
+                                * MQuaternion.from_axis_angles(link_bone.corrected_local_z_vector, euler_degrees.z)
                             )
                         else:
                             ik_qq = MQuaternion.from_euler_degrees(euler_degrees)

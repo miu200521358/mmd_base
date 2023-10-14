@@ -1238,7 +1238,12 @@ class MQuaternion(MVector):
         y_signed_degree = y_qq.to_signed_degrees(local_y_axis)
         z_signed_degree = z_qq.to_signed_degrees(local_z_axis)
 
-        return MVector3D(x_signed_degree, y_signed_degree, z_signed_degree)
+        degrees = MVector3D(x_signed_degree, y_signed_degree, z_signed_degree)
+
+        if not np.isclose(local_x_axis.x, 0.0, rtol=0.1, atol=0.1):
+            degrees *= -np.sign(local_x_axis.x)
+
+        return degrees
 
 
 class MMatrix4x4(MVector):
