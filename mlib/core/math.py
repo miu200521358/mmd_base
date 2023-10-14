@@ -1035,7 +1035,7 @@ class MQuaternion(MVector):
         return MQuaternion(self.scalar, fixed_qq_axis.x, fixed_qq_axis.y, fixed_qq_axis.z).normalized()
 
     @staticmethod
-    def from_euler_degrees(a: Union[int, float, MVector3D], b=0, c=0):
+    def from_euler_degrees(a: Union[int, float, MVector3D], b: float = 0.0, c: float = 0.0):
         """
         オイラー角をクォータニオンに変換する
         """
