@@ -621,6 +621,7 @@ class IkLink(BaseModel):
         "angle_limit",
         "min_angle_limit",
         "max_angle_limit",
+        "local_angle_limit",
         "local_min_angle_limit",
         "local_max_angle_limit",
     )
@@ -633,6 +634,7 @@ class IkLink(BaseModel):
         self.angle_limit = False
         self.min_angle_limit = BaseRotationModel()
         self.max_angle_limit = BaseRotationModel()
+        self.local_angle_limit = False
         self.local_min_angle_limit = BaseRotationModel()
         self.local_max_angle_limit = BaseRotationModel()
 

@@ -802,9 +802,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         correct_qq = MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
                     ik_qq = (link_bf.ik_rotation or MQuaternion()) * correct_qq
 
-                    if ik_link.angle_limit:
+                    if ik_link.angle_limit or ik_link.local_angle_limit:
                         # 角度制限が入ってる場合、オイラー角度に分解する
-                        if ik_link.local_min_angle_limit.degrees.length() > 0 or ik_link.local_max_angle_limit.degrees.length() > 0:
+                        if ik_link.local_angle_limit:
                             euler_degrees = ik_qq.separate_euler_degrees_by_axis(
                                 link_bone.corrected_local_x_vector,
                                 link_bone.corrected_local_y_vector,
