@@ -25,8 +25,8 @@ class VmdWriter(BaseModel):
                 model_bname = self.model_name.encode("cp932").decode("shift_jis").encode("shift_jis")[:20]
             except Exception:
                 logger.warning(
-                    "モデル名に日本語・英語で判読できない文字が含まれているため、仮モデル名を設定します。 %s",
-                    self.model_name,
+                    "モデル名に日本語・英語で判読できない文字が含まれているため、仮モデル名を設定します。 {m}",
+                    m=self.model_name,
                     decoration=MLogger.Decoration.BOX,
                 )
                 model_bname = "Vmd Sized Model".encode("shift_jis")[:20]
