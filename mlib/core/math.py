@@ -1240,9 +1240,6 @@ class MQuaternion(MVector):
 
         degrees = MVector3D(x_signed_degree, y_signed_degree, z_signed_degree)
 
-        if not np.isclose(local_x_axis.x, 0.0, rtol=0.1, atol=0.1):
-            degrees *= -np.sign(local_x_axis.x)
-
         return degrees
 
 

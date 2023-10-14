@@ -798,6 +798,16 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     if link_bone.has_fixed_axis:
                         # 軸制限ありの場合、軸にそった回転量とする
                         correct_qq = MQuaternion.from_axis_angles(link_bone.corrected_fixed_axis, rotation_degree)
+                    elif ik_link.local_angle_limit and not np.isclose(link_bone.corrected_local_x_vector.x, 0.0, rtol=0.1, atol=0.1):
+                        # ローカル軸角度制限が入っている場合、ローカル軸に合わせる
+                        if ik_link.local_min_angle_limit.degrees.z or ik_link.local_min_angle_limit.degrees.z:
+                            correct_qq = MQuaternion.from_axis_angles(link_bone.corrected_local_z_vector, rotation_degree)
+                        elif ik_link.local_min_angle_limit.degrees.x or ik_link.local_min_angle_limit.degrees.x:
+                            correct_qq = MQuaternion.from_axis_angles(link_bone.corrected_local_x_vector, rotation_degree)
+                        elif ik_link.local_min_angle_limit.degrees.y or ik_link.local_min_angle_limit.degrees.y:
+                            correct_qq = MQuaternion.from_axis_angles(link_bone.corrected_local_y_vector, rotation_degree)
+                        else:
+                            correct_qq = MQuaternion()
                     else:
                         correct_qq = MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
                     ik_qq = (link_bf.ik_rotation or MQuaternion()) * correct_qq
