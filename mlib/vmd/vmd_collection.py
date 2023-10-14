@@ -801,7 +801,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     if ik_link.angle_limit:
                         # 角度制限が入ってる場合、オイラー角度に分解する
                         if ik_link.local_min_angle_limit.degrees.length() > 0 or ik_link.local_max_angle_limit.degrees.length() > 0:
-                            euler_degrees = ik_qq.separate_euler_degrees_by_axis(link_bone.local_axis)
+                            euler_degrees = ik_qq.separate_euler_degrees_by_axis(
+                                link_bone.corrected_local_x_vector,
+                                link_bone.corrected_local_y_vector,
+                                link_bone.corrected_local_z_vector,
+                            )
                             min_angle_limit = ik_link.local_min_angle_limit
                             max_angle_limit = ik_link.local_max_angle_limit
                         else:
@@ -834,11 +838,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     if link_bone.has_fixed_axis:
                         # 軸制限ありの場合、軸制限角度を求める
-                        ik_qq = ik_qq.to_fixed_axis_rotation(
-                            link_bone.corrected_local_x_vector,
-                            link_bone.corrected_local_y_vector,
-                            link_bone.corrected_local_z_vector,
-                        )
+                        ik_qq = ik_qq.to_fixed_axis_rotation(link_bone.corrected_fixed_axis)
 
                     link_bf.ik_rotation = ik_qq
                     # IK用なので最後に追加して補間曲線は分割しない
