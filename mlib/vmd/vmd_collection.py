@@ -795,7 +795,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     link_bf = self[link_bone.name][fno]
 
                     # 補正関節回転量
-                    correct_qq = MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
+                    if link_bone.has_fixed_axis:
+                        # 軸制限ありの場合、軸にそった回転量とする
+                        correct_qq = MQuaternion.from_axis_angles(link_bone.corrected_fixed_axis, rotation_degree)
+                    else:
+                        correct_qq = MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
                     ik_qq = (link_bf.ik_rotation or MQuaternion()) * correct_qq
 
                     if ik_link.angle_limit:
@@ -834,7 +838,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             ),
                             min_angle_limit.degrees.z,
                         )
-                        ik_qq = MQuaternion.from_euler_degrees(euler_degrees)
+                        if ik_link.local_min_angle_limit.degrees.length() > 0 or ik_link.local_max_angle_limit.degrees.length() > 0:
+                            ik_qq = (
+                                MQuaternion.from_axis_angles(link_bone.corrected_local_z_vector, euler_degrees.z)
+                                * MQuaternion.from_axis_angles(link_bone.corrected_local_x_vector, euler_degrees.x)
+                                * MQuaternion.from_axis_angles(link_bone.corrected_local_y_vector, euler_degrees.y)
+                            )
+                        else:
+                            ik_qq = MQuaternion.from_euler_degrees(euler_degrees)
 
                     if link_bone.has_fixed_axis:
                         # 軸制限ありの場合、軸制限角度を求める
