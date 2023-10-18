@@ -817,7 +817,7 @@ class Bone(BaseIndexNameModel):
 
     def correct_local_vector(self, corrected_local_x_vector: MVector3D):
         self.corrected_local_x_vector = corrected_local_x_vector.normalized()
-        self.corrected_local_y_vector = MVector3D(0, 0, -1).cross(self.corrected_local_x_vector)
+        self.corrected_local_y_vector = self.corrected_local_x_vector.cross(MVector3D(0, 0, -1))
         self.corrected_local_z_vector = self.corrected_local_x_vector.cross(self.corrected_local_y_vector)
 
     @property

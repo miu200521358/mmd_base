@@ -963,6 +963,9 @@ class MQuaternion(MVector):
         return acos(min(1, max(-1, self.normalized().dot(v.normalized()))))
 
     def to_matrix4x4(self) -> "MMatrix4x4":
+        """
+        4x4回転行列を返す
+        """
         if not self:
             return MMatrix4x4()
 
@@ -971,6 +974,21 @@ class MQuaternion(MVector):
         return MMatrix4x4(mat4x4)
 
     def to_matrix4x4_axis(self, local_x_axis: MVector3D, local_z_axis: MVector3D) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        4x4回転行列から3軸の回転行列を生成する
+
+        Parameters
+        ----------
+        local_x_axis : MVector3D
+            ローカルX軸
+        local_z_axis : MVector3D
+            ローカルZ軸
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray, np.ndarray]
+            X軸回転行列、Y軸回転行列、Z軸回転行列
+        """
         if not self:
             return np.eye(4), np.eye(4), np.eye(4)
 
@@ -1033,6 +1051,35 @@ class MQuaternion(MVector):
         theta = acos(max(-1, min(1, normalized_fixed_axis.dot(self.xyz.normalized()))))
         fixed_qq_axis: MVector3D = normalized_fixed_axis * (1 if theta < pi / 2 else -1) * self.xyz.length()
         return MQuaternion(self.scalar, fixed_qq_axis.x, fixed_qq_axis.y, fixed_qq_axis.z).normalized()
+
+    def to_other_axis_rotation(self, other_axis: MVector3D) -> "MQuaternion":
+        """
+        他の軸に変換したクォータニオンの回転
+
+        Parameters
+        ----------
+        other_axis : MVector3D
+            他の軸
+
+        Returns
+        -------
+        MQuaternion
+        """
+        R = self.to_matrix4x4().vector
+        self_axis = MVector3D(R[2, 1] - R[1, 2], R[0, 2] - R[2, 0], R[1, 0] - R[0, 1]).normalized()
+
+        from_qq = MQuaternion.axis_to_quaternion(self_axis)
+        to_qq = MQuaternion.axis_to_quaternion(other_axis)
+        return from_qq.inverse() * self * to_qq
+
+    @staticmethod
+    def axis_to_quaternion(axis: MVector3D, target_axis: MVector3D = MVector3D(0, 0, 1)) -> "MQuaternion":
+        norm_axis = axis.normalized()
+        norm_target_axis = target_axis.normalized()
+        cross_product = norm_axis.cross(norm_target_axis)
+        dot_product = norm_axis.dot(norm_target_axis)
+        radian = np.arccos(dot_product) / 2
+        return MQuaternion(cos(radian), *(cross_product.vector * np.sin(radian))).normalized()
 
     @staticmethod
     def from_euler_degrees(a: Union[int, float, MVector3D], b: float = 0.0, c: float = 0.0):
