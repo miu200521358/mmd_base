@@ -1202,7 +1202,7 @@ class MQuaternion(MVector):
 
     def separate_by_axis(self, global_axis: MVector3D) -> tuple["MQuaternion", "MQuaternion", "MQuaternion", "MQuaternion"]:
         # ローカルZ軸ベースで求める場合
-        local_z_axis = MVector3D(0, 0, -1)
+        local_z_axis = MVector3D(0, 0, 1)
         # X軸ベクトル
         global_x_axis = global_axis.normalized()
         # Y軸ベクトル
