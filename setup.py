@@ -16,7 +16,7 @@ from setuptools import Extension, setup
 # bezier_path = "C:/Development/Anaconda3/envs/mmd_tool/Lib/site-packages/bezier/include"
 
 
-def get_ext():
+def get_ext() -> list:
     ext = []
 
     for source in glob("mlib\\**\\*.py", recursive=True):
@@ -43,7 +43,7 @@ setup(
     cmdclass={"build_ext": build_ext},
     ext_modules=cythonize(
         get_ext(),
-        compiler_directives={"language_level": "3"},
+        compiler_directives={"language_level": "3", "annotation_typing": False},
         **{"output_dir": "./build/output", "build_dir": "./build/"},
     ),
 )
