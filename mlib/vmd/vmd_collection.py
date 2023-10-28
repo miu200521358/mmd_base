@@ -659,7 +659,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             # IK用回転を持っている場合、追加
             qq *= bf.ik_rotation
 
-        fk_qq = self.get_fix_rotation(bone, qq)
+        fk_qq = self.get_axis_rotation(bone, qq)
 
         # IKを加味した回転
         ik_qq = self.get_ik_rotation(fno, model, bone, fk_qq) if append_ik else fk_qq
@@ -793,80 +793,73 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # リンクボーンの角度を保持
                     link_bf = self[link_bone.name][fno]
+                    ik_qq = link_bf.ik_rotation or MQuaternion()
 
-                    # 補正関節回転量
                     if link_bone.has_fixed_axis:
                         # 軸制限ありの場合、軸にそった回転量とする
-                        correct_qq = MQuaternion.from_euler_degrees(rotation_degree, 0, 0).to_other_axis_rotation(
-                            link_bone.corrected_fixed_axis
-                        )
+                        ik_qq *= MQuaternion.from_axis_angles(link_bone.corrected_fixed_axis, rotation_degree)
                     elif ik_link.local_angle_limit:
-                        # ローカル軸角度制限が入っている場合、ローカル軸に合わせる
                         if ik_link.local_min_angle_limit.degrees.z or ik_link.local_min_angle_limit.degrees.z:
-                            local_vector = link_bone.corrected_local_z_vector
+                            rotation_degree = max(
+                                min(
+                                    rotation_degree,
+                                    ik_link.local_max_angle_limit.degrees.z,
+                                ),
+                                ik_link.local_min_angle_limit.degrees.z,
+                            )
+
+                            ik_qq *= MQuaternion.from_axis_angles(link_bone.corrected_local_z_vector, rotation_degree)
                         elif ik_link.local_min_angle_limit.degrees.x or ik_link.local_min_angle_limit.degrees.x:
-                            local_vector = link_bone.corrected_local_x_vector
+                            rotation_degree = max(
+                                min(
+                                    rotation_degree,
+                                    ik_link.local_max_angle_limit.degrees.x,
+                                ),
+                                ik_link.local_min_angle_limit.degrees.x,
+                            )
+
+                            ik_qq *= MQuaternion.from_axis_angles(link_bone.corrected_local_x_vector, rotation_degree)
                         elif ik_link.local_min_angle_limit.degrees.y or ik_link.local_min_angle_limit.degrees.y:
-                            local_vector = link_bone.corrected_local_y_vector
+                            rotation_degree = max(
+                                min(
+                                    rotation_degree,
+                                    ik_link.local_max_angle_limit.degrees.y,
+                                ),
+                                ik_link.local_min_angle_limit.degrees.y,
+                            )
 
-                        correct_qq = MQuaternion.from_euler_degrees(rotation_degree, 0, 0).to_other_axis_rotation(local_vector)
+                            ik_qq *= MQuaternion.from_axis_angles(link_bone.corrected_local_y_vector, rotation_degree)
                     else:
-                        correct_qq = MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
+                        # 軸制限が無い場合の補正関節回転量
+                        ik_qq = (link_bf.ik_rotation or MQuaternion()) * MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
 
-                    ik_qq: MQuaternion = (link_bf.ik_rotation or MQuaternion()) * correct_qq
-
-                    if ik_link.angle_limit or ik_link.local_angle_limit:
-                        # 角度制限が入ってる場合、オイラー角度に分解する
-                        if ik_link.local_angle_limit:
-                            euler_degrees = ik_qq.separate_euler_degrees_by_axis(
-                                link_bone.corrected_local_x_vector,
-                                link_bone.corrected_local_y_vector,
-                                link_bone.corrected_local_z_vector,
-                            )
-                            min_angle_limit = ik_link.local_min_angle_limit
-                            max_angle_limit = ik_link.local_max_angle_limit
-                        else:
+                        if ik_link.angle_limit:
+                            # 角度制限が入ってる場合、オイラー角度に分解する
                             euler_degrees = ik_qq.separate_euler_degrees()
-                            min_angle_limit = ik_link.min_angle_limit
-                            max_angle_limit = ik_link.max_angle_limit
 
-                        euler_degrees.x = max(
-                            min(
-                                euler_degrees.x,
-                                max_angle_limit.degrees.x,
-                            ),
-                            min_angle_limit.degrees.x,
-                        )
-                        euler_degrees.y = max(
-                            min(
-                                euler_degrees.y,
-                                max_angle_limit.degrees.y,
-                            ),
-                            min_angle_limit.degrees.y,
-                        )
-                        euler_degrees.z = max(
-                            min(
-                                euler_degrees.z,
-                                max_angle_limit.degrees.z,
-                            ),
-                            min_angle_limit.degrees.z,
-                        )
-
-                        if ik_link.local_angle_limit:
-                            if not np.isclose(link_bone.corrected_local_x_vector.x, 0.0, rtol=0.1, atol=0.1):
-                                euler_degrees *= -np.sign(link_bone.corrected_local_x_vector.x)
-
-                            ik_qq = (
-                                MQuaternion.from_axis_angles(link_bone.corrected_local_y_vector, euler_degrees.y)
-                                * MQuaternion.from_axis_angles(link_bone.corrected_local_x_vector, euler_degrees.x)
-                                * MQuaternion.from_axis_angles(link_bone.corrected_local_z_vector, euler_degrees.z)
+                            euler_degrees.x = max(
+                                min(
+                                    euler_degrees.x,
+                                    ik_link.max_angle_limit.degrees.x,
+                                ),
+                                ik_link.max_angle_limit.degrees.x,
                             )
-                        else:
-                            ik_qq = MQuaternion.from_euler_degrees(euler_degrees)
+                            euler_degrees.y = max(
+                                min(
+                                    euler_degrees.y,
+                                    ik_link.max_angle_limit.degrees.y,
+                                ),
+                                ik_link.max_angle_limit.degrees.y,
+                            )
+                            euler_degrees.z = max(
+                                min(
+                                    euler_degrees.z,
+                                    ik_link.max_angle_limit.degrees.z,
+                                ),
+                                ik_link.max_angle_limit.degrees.z,
+                            )
 
-                    if link_bone.has_fixed_axis:
-                        # 軸制限ありの場合、軸制限角度を求める
-                        ik_qq = ik_qq.to_fixed_axis_rotation(link_bone.corrected_fixed_axis)
+                            ik_qq = MQuaternion.from_euler_degrees(euler_degrees)
 
                     link_bf.ik_rotation = ik_qq
                     # IK用なので最後に追加して補間曲線は分割しない
@@ -879,9 +872,19 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # IKの計算結果の回転を加味して返す
         bf = self[bone.name][fno]
-        return bf.rotation * (bf.ik_rotation or MQuaternion())
+        qq = bf.rotation * (bf.ik_rotation or MQuaternion())
 
-    def get_fix_rotation(self, bone: Bone, qq: MQuaternion) -> MQuaternion:
+        if bone.local_angle_limit:
+            if bone.local_min_angle_limit.degrees.z or bone.local_min_angle_limit.degrees.z:
+                return qq.to_other_axis_rotation(bone.corrected_local_z_vector)
+            elif ik_link.local_min_angle_limit.degrees.x or ik_link.local_min_angle_limit.degrees.x:
+                return qq.to_other_axis_rotation(bone.corrected_local_x_vector)
+            elif ik_link.local_min_angle_limit.degrees.y or ik_link.local_min_angle_limit.degrees.y:
+                return qq.to_other_axis_rotation(bone.corrected_local_y_vector)
+
+        return qq
+
+    def get_axis_rotation(self, bone: Bone, qq: MQuaternion) -> MQuaternion:
         """
         軸制限回転を求める
         """

@@ -766,6 +766,12 @@ class Bone(BaseIndexNameModel):
         "relative_bone_indexes",
         "child_bone_indexes",
         "effective_target_indexes",
+        "angle_limit",
+        "min_angle_limit",
+        "max_angle_limit",
+        "local_angle_limit",
+        "local_min_angle_limit",
+        "local_max_angle_limit",
     )
 
     SYSTEM_ROOT_NAME = "SYSTEM_ROOT"
@@ -795,6 +801,12 @@ class Bone(BaseIndexNameModel):
         self.ik_link_indexes: list[int] = []
         self.ik_target_indexes: list[int] = []
         self.effective_target_indexes: list[int] = []
+        self.angle_limit = False
+        self.min_angle_limit = BaseRotationModel()
+        self.max_angle_limit = BaseRotationModel()
+        self.local_angle_limit = False
+        self.local_min_angle_limit = BaseRotationModel()
+        self.local_max_angle_limit = BaseRotationModel()
 
         self.corrected_local_x_vector = self.local_x_vector.copy()
         self.corrected_local_y_vector = self.local_z_vector.cross(self.corrected_local_x_vector)

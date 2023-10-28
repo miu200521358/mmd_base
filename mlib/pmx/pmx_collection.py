@@ -741,6 +741,13 @@ class PmxModel(BaseHashModel):
                     if link.bone_index in self.bones and bone.index not in self.bones[link.bone_index].ik_link_indexes:
                         # リンクボーンにフラグを立てる
                         self.bones[link.bone_index].ik_link_indexes.append(bone.index)
+                        # リンクの制限をコピーしておく
+                        self.bones[link.bone_index].angle_limit = link.angle_limit
+                        self.bones[link.bone_index].min_angle_limit = link.min_angle_limit
+                        self.bones[link.bone_index].max_angle_limit = link.max_angle_limit
+                        self.bones[link.bone_index].local_angle_limit = link.local_angle_limit
+                        self.bones[link.bone_index].local_min_angle_limit = link.local_min_angle_limit
+                        self.bones[link.bone_index].local_max_angle_limit = link.local_max_angle_limit
                 if bone.ik.bone_index in self.bones and bone.index not in self.bones[bone.ik.bone_index].ik_target_indexes:
                     # ターゲットボーンにもフラグを立てる
                     self.bones[bone.ik.bone_index].ik_target_indexes.append(bone.index)
