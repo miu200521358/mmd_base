@@ -38,7 +38,7 @@ def verify_thread(callable: Callable):
     @wraps(callable)
     def f(self, *args, **kwargs):
         thread = current_thread()
-        if (isinstance(thread, SimpleThread) and thread.killed) or thread._kwargs.get("killed"):
+        if (isinstance(thread, SimpleThread) and thread.killed) or thread._kwargs.get("killed"):  # type: ignore
             raise MKilledException
 
         return callable(self, *args, **kwargs)
@@ -68,7 +68,7 @@ def task_takes_time(callable: Callable):
                         if isinstance(th, SimpleThread):
                             th.killed = True
                         else:
-                            th._kwargs["killed"] = True
+                            th._kwargs["killed"] = True  # type: ignore
                 break
 
         return thread.result()
@@ -124,10 +124,16 @@ class BaseWorker:
             logger.info(e.message, title="STOP", decoration=MLogger.Decoration.BOX)
             self.result = False
         except MLibException as e:
-            logger.error("処理が継続できないため、中断しました\n----------------\n" + e.message, decoration=MLogger.Decoration.BOX, **e.kwargs)
+            logger.error(
+                "[{v}]処理が継続できないため、中断しました\n----------------\n{m}",
+                v=logger.version_name,
+                m=e.message,
+                decoration=MLogger.Decoration.BOX,
+                **e.kwargs
+            )
             self.result = False
         except Exception:
-            logger.critical("予期せぬエラーが発生しました")
+            logger.critical("[{v}]予期せぬエラーが発生しました", v=logger.version_name)
             self.result = False
         finally:
             try:

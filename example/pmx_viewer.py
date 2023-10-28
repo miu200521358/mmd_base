@@ -138,6 +138,7 @@ class PmxApp(wx.App):
         MLogger.initialize(
             lang="ja_JP",
             root_dir=os.path.join(os.path.dirname(__file__), "..", "mlib"),
+            version_name="1.00.00",
             level=args.level,
         )
 

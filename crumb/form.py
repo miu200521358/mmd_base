@@ -786,6 +786,7 @@ if __name__ == "__main__":
     MLogger.initialize(
         lang="en",
         root_dir=os.path.join(os.path.dirname(__file__), "..", "mlib"),
+        version_name="1.00.00",
         level=10,
         is_out_log=True,
     )

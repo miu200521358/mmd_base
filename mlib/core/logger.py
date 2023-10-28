@@ -78,6 +78,8 @@ class MLogger:
     saving = True
     # ログ出力モード
     is_out_log = False
+    # バージョン番号
+    version_name = ""
 
     console_handler: Optional["ConsoleHandler"] = None
     re_break = re.compile(r"\n")
@@ -333,6 +335,7 @@ class MLogger:
         cls,
         lang: str,
         root_dir: str,
+        version_name: str,
         mode: LoggingMode = LoggingMode.MODE_READONLY,
         saving: bool = True,
         level=logging.INFO,
@@ -345,6 +348,7 @@ class MLogger:
         cls.saving = saving
         cls.is_out_log = is_out_log
         cls.lang_dir = f"{root_dir}/i18n"
+        cls.version_name = version_name
 
         # 翻訳用クラスの設定
         cls.translator = gettext.translation(
