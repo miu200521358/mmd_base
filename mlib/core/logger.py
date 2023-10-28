@@ -360,16 +360,14 @@ class MLogger:
 
         output_datetime = "{0:%Y%m%d_%H%M%S}".format(datetime.now())
         cls.output_datetime = output_datetime
-        log_dir = f"{root_dir}/log"
 
         # ファイル出力ありの場合、ログファイル名生成
         if is_out_log:
-            os.makedirs(log_dir, exist_ok=True)
-            cls.default_out_path = f"{log_dir}/mutool_{output_datetime}.log"
+            cls.default_out_path = f"{root_dir}/mutool_{output_datetime}.log"
 
-        if os.path.exists(f"{log_dir}/quit.log"):
+        if os.path.exists(f"{root_dir}/quit.log"):
             # 終了ログは初期化時に削除
-            os.remove(f"{log_dir}/quit.log")
+            os.remove(f"{root_dir}/quit.log")
 
 
 def add_mlogger_handler(logger: MLogger) -> None:
