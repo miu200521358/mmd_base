@@ -936,9 +936,19 @@ class MQuaternion(MVector):
 
     def to_degrees(self) -> float:
         """
-        角度に変換
+        角度(-180 ～ 180)に変換
         """
-        return degrees(self.theta)
+
+        # 角度を計算
+        radian = 2 * acos(min(1, max(-1, self.normalized().scalar)))
+        # ラジアンから度に変換
+        angle = degrees(radian)
+
+        # 角度を -180 ～ 180 の範囲に変換
+        if angle > 180:
+            angle -= 360
+
+        return angle
 
     def to_signed_degrees(self, local_axis: MVector3D) -> float:
         """
