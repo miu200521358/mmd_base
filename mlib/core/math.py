@@ -939,16 +939,7 @@ class MQuaternion(MVector):
         角度(-180 ～ 180)に変換
         """
 
-        # 角度を計算
-        radian = 2 * acos(min(1, max(-1, self.normalized().scalar)))
-        # ラジアンから度に変換
-        angle = degrees(radian)
-
-        # 角度を -180 ～ 180 の範囲に変換
-        if angle > 180:
-            angle -= 360
-
-        return angle
+        return MQuaternion.scalar_to_degrees(self.normalized().scalar)
 
     def to_signed_degrees(self, local_axis: MVector3D) -> float:
         """
@@ -1081,6 +1072,41 @@ class MQuaternion(MVector):
         from_qq = MQuaternion.axis_to_quaternion(self_axis)
         to_qq = MQuaternion.axis_to_quaternion(other_axis)
         return from_qq.inverse() * self * to_qq
+
+    def separate_euler_degrees(self) -> MVector3D:
+        """
+        ZXYの回転順序でオイラー角度を求める
+        https://programming-surgeon.com/script/euler-python-script/
+
+        Returns
+        -------
+        ZXYグローバル軸別のオイラー角度
+        """
+        mat = self.normalized().to_matrix4x4()
+        z_radian = atan2(-mat[0, 1], mat[0, 0])
+        x_radian = atan2(mat[2, 1] * cos(z_radian), mat[1, 1])
+        y_radian = atan2(-mat[2, 0], mat[2, 2])
+
+        return MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
+
+    def separate_euler_degrees_by_axis(self, local_x_axis: MVector3D, local_y_axis: MVector3D, local_z_axis: MVector3D) -> MVector3D:
+        """
+        ローカル軸基準で オイラー角度を求める
+        https://programming-surgeon.com/script/euler-python-script/
+
+        Returns
+        -------
+        ローカル軸別のオイラー角度
+        """
+        x_qq, y_qq, z_qq, _ = self.separate_by_axis(local_x_axis)
+
+        x_signed_degree = x_qq.to_signed_degrees(local_x_axis)
+        y_signed_degree = y_qq.to_signed_degrees(local_y_axis)
+        z_signed_degree = z_qq.to_signed_degrees(local_z_axis)
+
+        degrees = MVector3D(x_signed_degree, y_signed_degree, z_signed_degree)
+
+        return degrees
 
     @staticmethod
     def axis_to_quaternion(axis: MVector3D, target_axis: MVector3D = MVector3D(0, 0, 1)) -> "MQuaternion":
@@ -1264,40 +1290,22 @@ class MQuaternion(MVector):
 
         return x_qq, y_qq, z_qq, yz_qq
 
-    def separate_euler_degrees(self) -> MVector3D:
+    @staticmethod
+    def scalar_to_degrees(scalar: float) -> float:
         """
-        ZXYの回転順序でオイラー角度を求める
-        https://programming-surgeon.com/script/euler-python-script/
-
-        Returns
-        -------
-        ZXYグローバル軸別のオイラー角度
+        与えられたscalar（内積値でもOK）から角度(-180 ～ 180)に変換
         """
-        mat = self.normalized().to_matrix4x4()
-        z_radian = atan2(-mat[0, 1], mat[0, 0])
-        x_radian = atan2(mat[2, 1] * cos(z_radian), mat[1, 1])
-        y_radian = atan2(-mat[2, 0], mat[2, 2])
 
-        return MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
+        # 角度を計算
+        radian = 2 * acos(min(1, max(-1, scalar)))
+        # ラジアンから度に変換
+        angle = degrees(radian)
 
-    def separate_euler_degrees_by_axis(self, local_x_axis: MVector3D, local_y_axis: MVector3D, local_z_axis: MVector3D) -> MVector3D:
-        """
-        ローカル軸基準で オイラー角度を求める
-        https://programming-surgeon.com/script/euler-python-script/
+        # 角度を -180 ～ 180 の範囲に変換
+        if angle > 180:
+            angle -= 360
 
-        Returns
-        -------
-        ローカル軸別のオイラー角度
-        """
-        x_qq, y_qq, z_qq, _ = self.separate_by_axis(local_x_axis)
-
-        x_signed_degree = x_qq.to_signed_degrees(local_x_axis)
-        y_signed_degree = y_qq.to_signed_degrees(local_y_axis)
-        z_signed_degree = z_qq.to_signed_degrees(local_z_axis)
-
-        degrees = MVector3D(x_signed_degree, y_signed_degree, z_signed_degree)
-
-        return degrees
+        return angle
 
 
 class MMatrix4x4(MVector):
