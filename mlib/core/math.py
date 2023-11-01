@@ -1293,11 +1293,32 @@ class MQuaternion(MVector):
     @staticmethod
     def scalar_to_degrees(scalar: float) -> float:
         """
-        与えられたscalar（内積値でもOK）から角度(-180 ～ 180)に変換
+        与えられたscalarから角度(-180 ～ 180)に変換
         """
 
         # 角度を計算
         radian = 2 * acos(min(1, max(-1, scalar)))
+        # ラジアンから度に変換
+        angle = degrees(radian)
+
+        # 角度を -180 ～ 180 の範囲に変換
+        if angle > 180:
+            angle -= 360
+
+        return angle
+
+    @staticmethod
+    def vector_to_degrees(a: MVector3D, b: MVector3D) -> float:
+        """
+        与えられた2つのベクトルから角度(-180 ～ 180)に変換
+        """
+        p = a.dot(b)
+        norm_a = float(np.linalg.norm(a.vector))
+        norm_b = float(np.linalg.norm(b.vector))
+
+        # 角度を計算
+        cos_angle = p / (norm_a * norm_b)
+        radian = acos(min(1, max(-1, cos_angle)))
         # ラジアンから度に変換
         angle = degrees(radian)
 

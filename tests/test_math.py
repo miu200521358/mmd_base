@@ -1109,6 +1109,17 @@ def test_MQuaternion_mul():
     ).all()
 
 
+def test_MQuaternion_vector_to_degrees():
+    import numpy as np
+
+    from mlib.core.math import MQuaternion, MVector3D
+
+    assert np.isclose(
+        81.78678929826181,
+        MQuaternion.vector_to_degrees(MVector3D(10, 20, 30).normalized(), MVector3D(30, -20, 10).normalized()),
+    ).all()
+
+
 def test_MMatrix4x4_bool():
     import numpy as np
 
