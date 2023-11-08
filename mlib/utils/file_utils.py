@@ -118,7 +118,7 @@ def validate_file(
         if file_ext[1:].lower() not in ("png", "jpg", "jpeg", "bmp"):
             return False
     else:
-        if not file_ext[1:].lower() in file_type.name.lower():
+        if file_ext[1:].lower() not in file_type.name.lower():
             return False
 
     return True

@@ -108,7 +108,9 @@ class Deform(BaseModel, ABC):
             # 揃える必要がある場合
             # 数が足りるよう、かさ増しする
             ilist = np.array(list(index_weights.keys()) + [0, 0, 0, 0], dtype=np.int64)
-            wlist = np.array(list(index_weights.values()) + [0, 0, 0, 0], dtype=np.float32)
+            wlist = np.array(
+                list(index_weights.values()) + [0, 0, 0, 0], dtype=np.float32
+            )
             # 正規化
             wlist /= wlist.sum(axis=0, keepdims=True)
 
@@ -187,7 +189,9 @@ class Bdef4(Deform):
         weight2: float,
         weight3: float,
     ):
-        super().__init__([index0, index1, index2, index3], [weight0, weight1, weight2, weight3], 4)
+        super().__init__(
+            [index0, index1, index2, index3], [weight0, weight1, weight2, weight3], 4
+        )
 
     def type(self) -> int:
         return 2
@@ -352,35 +356,51 @@ class Texture(BaseIndexNameModel):
             try:
                 gl.glDeleteTextures(1, [self.texture_id])
             except Exception as e:
-                raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.texture_id}", e)
+                raise MViewerException(
+                    f"IBO glDeleteBuffers Failure\n{self.texture_id}", e
+                )
 
             error_code = gl.glGetError()
             if error_code != gl.GL_NO_ERROR:
-                raise MViewerException(f"glDeleteTextures Failure\n{self.name}: {error_code}")
+                raise MViewerException(
+                    f"glDeleteTextures Failure\n{self.name}: {error_code}"
+                )
 
         if self.sub_texture_id is not None:
             try:
                 gl.glDeleteTextures(1, [self.sub_texture_id])
             except Exception as e:
-                raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.sub_texture_id}", e)
+                raise MViewerException(
+                    f"IBO glDeleteBuffers Failure\n{self.sub_texture_id}", e
+                )
 
             error_code = gl.glGetError()
             if error_code != gl.GL_NO_ERROR:
-                raise MViewerException(f"glDeleteTextures Failure\n{self.name}: {error_code}")
+                raise MViewerException(
+                    f"glDeleteTextures Failure\n{self.name}: {error_code}"
+                )
 
         self.texture_id = None
         self.for_draw = False
         self.sub_texture_id = None
         self.for_sub_draw = False
 
-    def init_draw(self, model_path: str, texture_type: TextureType, is_individual: bool = True, is_sub: bool = False) -> None:
+    def init_draw(
+        self,
+        model_path: str,
+        texture_type: TextureType,
+        is_individual: bool = True,
+        is_sub: bool = False,
+    ) -> None:
         if (not is_sub and self.for_draw) or (is_sub and self.for_sub_draw):
             # 既にフラグが立ってたら描画初期化済み
             return
 
         # global texture
         if is_individual:
-            tex_path = os.path.abspath(os.path.join(os.path.dirname(model_path), self.name))
+            tex_path = os.path.abspath(
+                os.path.join(os.path.dirname(model_path), self.name)
+            )
         else:
             tex_path = self.name
 
@@ -391,7 +411,7 @@ class Texture(BaseIndexNameModel):
             try:
                 self.image = Image.open(tex_path).convert("RGBA")
                 self.image = ImageOps.flip(self.image)
-            except:
+            except Exception:
                 self.valid = False
 
             if self.valid:
@@ -406,7 +426,9 @@ class Texture(BaseIndexNameModel):
 
                     error_code = gl.glGetError()
                     if error_code != gl.GL_NO_ERROR:
-                        raise MViewerException(f"glGenTextures Failure\n{self.name}: {error_code}")
+                        raise MViewerException(
+                            f"glGenTextures Failure\n{self.name}: {error_code}"
+                        )
                 else:
                     # テクスチャオブジェクト生成
                     try:
@@ -416,7 +438,9 @@ class Texture(BaseIndexNameModel):
 
                     error_code = gl.glGetError()
                     if error_code != gl.GL_NO_ERROR:
-                        raise MViewerException(f"glGenTextures Failure\n{self.name}: {error_code}")
+                        raise MViewerException(
+                            f"glGenTextures Failure\n{self.name}: {error_code}"
+                        )
 
                 self.texture_idx = (
                     gl.GL_TEXTURE0
@@ -451,7 +475,9 @@ class Texture(BaseIndexNameModel):
 
             error_code = gl.glGetError()
             if error_code != gl.GL_NO_ERROR:
-                raise MViewerException(f"Texture set_texture Failure\n{self.name}: {error_code}")
+                raise MViewerException(
+                    f"Texture set_texture Failure\n{self.name}: {error_code}"
+                )
 
             self.unbind()
 
@@ -463,8 +489,12 @@ class Texture(BaseIndexNameModel):
             gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture_id)
 
         if self.texture_type == TextureType.TOON:
-            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
-            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
+            gl.glTexParameteri(
+                gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE
+            )
+            gl.glTexParameteri(
+                gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE
+            )
 
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAX_LEVEL, 0)
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
@@ -809,8 +839,12 @@ class Bone(BaseIndexNameModel):
         self.local_max_angle_limit = BaseRotationModel()
 
         self.corrected_local_x_vector = self.local_x_vector.copy()
-        self.corrected_local_y_vector = self.local_z_vector.cross(self.corrected_local_x_vector)
-        self.corrected_local_z_vector = self.corrected_local_x_vector.cross(self.corrected_local_y_vector)
+        self.corrected_local_y_vector = self.local_z_vector.cross(
+            self.corrected_local_x_vector
+        )
+        self.corrected_local_z_vector = self.corrected_local_x_vector.cross(
+            self.corrected_local_y_vector
+        )
         self.corrected_fixed_axis = self.fixed_axis.copy()
 
         self.parent_relative_position = MVector3D()
@@ -829,8 +863,12 @@ class Bone(BaseIndexNameModel):
 
     def correct_local_vector(self, corrected_local_x_vector: MVector3D):
         self.corrected_local_x_vector = corrected_local_x_vector.normalized()
-        self.corrected_local_y_vector = self.corrected_local_x_vector.cross(MVector3D(0, 0, -1))
-        self.corrected_local_z_vector = self.corrected_local_x_vector.cross(self.corrected_local_y_vector)
+        self.corrected_local_y_vector = self.corrected_local_x_vector.cross(
+            MVector3D(0, 0, -1)
+        )
+        self.corrected_local_z_vector = self.corrected_local_x_vector.cross(
+            self.corrected_local_y_vector
+        )
 
     @property
     def is_tail_bone(self) -> bool:
@@ -1045,7 +1083,9 @@ class Bone(BaseIndexNameModel):
     @property
     def is_standard_extend(self) -> bool:
         """準標準の拡張ボーンであるか"""
-        if f"{self.name}先" in STANDARD_BONE_NAMES or (self.name[:-1] in STANDARD_BONE_NAMES and self.name[-1] in ("先", "端")):
+        if f"{self.name}先" in STANDARD_BONE_NAMES or (
+            self.name[:-1] in STANDARD_BONE_NAMES and self.name[-1] in ("先", "端")
+        ):
             return True
         return False
 
@@ -1538,7 +1578,13 @@ class Morph(BaseIndexNameModel):
         super().__init__(index=index, name=name, english_name=english_name)
         self.panel = MorphPanel.EYE_UPPER_LEFT
         self.morph_type = MorphType.GROUP
-        self.offsets: list[VertexMorphOffset | UvMorphOffset | BoneMorphOffset | GroupMorphOffset | MaterialMorphOffset] = []
+        self.offsets: list[
+            VertexMorphOffset
+            | UvMorphOffset
+            | BoneMorphOffset
+            | GroupMorphOffset
+            | MaterialMorphOffset
+        ] = []
         self.is_system = False
         self.display_slot = -1
 

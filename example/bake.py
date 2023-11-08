@@ -4,13 +4,11 @@ import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from mlib.core.interpolation import Interpolation, split_interpolation
+from mlib.core.interpolation import split_interpolation
 from mlib.core.math import MMatrix4x4
 from mlib.pmx.pmx_collection import PmxModel
-from mlib.pmx.pmx_part import STANDARD_BONE_NAMES
 from mlib.pmx.pmx_reader import PmxReader
 from mlib.vmd.vmd_collection import VmdMotion
-from mlib.vmd.vmd_part import VmdBoneFrame
 from mlib.vmd.vmd_reader import VmdReader
 from mlib.vmd.vmd_writer import VmdWriter
 

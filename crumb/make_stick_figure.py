@@ -1,17 +1,25 @@
+import argparse
 import os
 import sys
 from winsound import SND_ALIAS, PlaySound
-import argparse
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from mlib.core.math import MVector3D, MVector4D
-from mlib.pmx.bone_setting import BoneFlg
-from mlib.pmx.pmx_collection import PmxModel
-from mlib.pmx.pmx_part import Bdef1, DisplaySlot, DisplaySlotReference, DrawFlg, Face, Material, Vertex
-from mlib.pmx.pmx_reader import PmxReader
-from mlib.pmx.pmx_writer import PmxWriter
-from mlib.utils import file_utils
+from mlib.core.math import MVector3D, MVector4D  # noqa: E402
+from mlib.pmx.bone_setting import BoneFlg  # noqa: E402
+from mlib.pmx.pmx_collection import PmxModel  # noqa: E402
+from mlib.pmx.pmx_part import (  # noqa: E402
+    Bdef1,
+    DisplaySlot,
+    DisplaySlotReference,
+    DrawFlg,
+    Face,
+    Material,
+    Vertex,
+)
+from mlib.pmx.pmx_reader import PmxReader  # noqa: E402
+from mlib.pmx.pmx_writer import PmxWriter  # noqa: E402
+from mlib.utils import file_utils  # noqa: E402
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", default="", type=str)
@@ -169,7 +177,9 @@ twist_material.ambient = MVector3D(0, 1, 0)
 twist_material.draw_flg = DrawFlg.DOUBLE_SIDED_DRAWING
 stick_model.materials.append(twist_material)
 
-stick_model.display_slots["Root"].references.append(DisplaySlotReference(display_index=stick_model.bones["全ての親"].index))
+stick_model.display_slots["Root"].references.append(
+    DisplaySlotReference(display_index=stick_model.bones["全ての親"].index)
+)
 
 for ds in model.display_slots:
     if ds.name in ("表情", "Root"):
@@ -177,10 +187,20 @@ for ds in model.display_slots:
     stick_ds = DisplaySlot(name=ds.name)
     stick_model.display_slots.append(stick_ds)
     for r in ds.references:
-        stick_ds.references.append(DisplaySlotReference(display_index=stick_model.bones[model.bones[r.display_index].name].index))
+        stick_ds.references.append(
+            DisplaySlotReference(
+                display_index=stick_model.bones[model.bones[r.display_index].name].index
+            )
+        )
 
 
-for bone_name in OUTPUT_CENTER_NAMES + OUTPUT_GROOVE_NAMES + OUTPUT_TRUNK_NAMES + OUTPUT_BONE_NAMES + OUTPUT_TWIST_NAMES:
+for bone_name in (
+    OUTPUT_CENTER_NAMES
+    + OUTPUT_GROOVE_NAMES
+    + OUTPUT_TRUNK_NAMES
+    + OUTPUT_BONE_NAMES
+    + OUTPUT_TWIST_NAMES
+):
     if bone_name not in stick_model.bones:
         continue
 
@@ -196,7 +216,9 @@ for bone_name in OUTPUT_CENTER_NAMES + OUTPUT_GROOVE_NAMES + OUTPUT_TRUNK_NAMES 
         tail_pos = MVector3D(0, -1.5, 0) + bone.position
     elif bone.name in OUTPUT_TWIST_NAMES:
         local_y_vector = MVector3D(0, 0.5, 0)
-        local_x_vector = (bone.position - stick_model.bones[bone.parent_index].position).normalized()
+        local_x_vector = (
+            bone.position - stick_model.bones[bone.parent_index].position
+        ).normalized()
         local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
 
         tail_pos = local_z_vector + bone.position
@@ -256,14 +278,30 @@ for bone_name in OUTPUT_CENTER_NAMES + OUTPUT_GROOVE_NAMES + OUTPUT_TRUNK_NAMES 
     v8.deform = Bdef1(bone.index)
     stick_model.vertices.append(v8)
 
-    stick_model.faces.append(Face(vertex_index0=v1.index, vertex_index1=v2.index, vertex_index2=v3.index))
-    stick_model.faces.append(Face(vertex_index0=v3.index, vertex_index1=v2.index, vertex_index2=v4.index))
-    stick_model.faces.append(Face(vertex_index0=v3.index, vertex_index1=v4.index, vertex_index2=v5.index))
-    stick_model.faces.append(Face(vertex_index0=v5.index, vertex_index1=v4.index, vertex_index2=v6.index))
-    stick_model.faces.append(Face(vertex_index0=v5.index, vertex_index1=v6.index, vertex_index2=v7.index))
-    stick_model.faces.append(Face(vertex_index0=v7.index, vertex_index1=v6.index, vertex_index2=v8.index))
-    stick_model.faces.append(Face(vertex_index0=v7.index, vertex_index1=v8.index, vertex_index2=v1.index))
-    stick_model.faces.append(Face(vertex_index0=v1.index, vertex_index1=v8.index, vertex_index2=v2.index))
+    stick_model.faces.append(
+        Face(vertex_index0=v1.index, vertex_index1=v2.index, vertex_index2=v3.index)
+    )
+    stick_model.faces.append(
+        Face(vertex_index0=v3.index, vertex_index1=v2.index, vertex_index2=v4.index)
+    )
+    stick_model.faces.append(
+        Face(vertex_index0=v3.index, vertex_index1=v4.index, vertex_index2=v5.index)
+    )
+    stick_model.faces.append(
+        Face(vertex_index0=v5.index, vertex_index1=v4.index, vertex_index2=v6.index)
+    )
+    stick_model.faces.append(
+        Face(vertex_index0=v5.index, vertex_index1=v6.index, vertex_index2=v7.index)
+    )
+    stick_model.faces.append(
+        Face(vertex_index0=v7.index, vertex_index1=v6.index, vertex_index2=v8.index)
+    )
+    stick_model.faces.append(
+        Face(vertex_index0=v7.index, vertex_index1=v8.index, vertex_index2=v1.index)
+    )
+    stick_model.faces.append(
+        Face(vertex_index0=v1.index, vertex_index1=v8.index, vertex_index2=v2.index)
+    )
 
     if bone.name in OUTPUT_CENTER_NAMES:
         center_material.vertices_count += 24

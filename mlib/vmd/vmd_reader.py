@@ -7,7 +7,15 @@ from mlib.core.logger import MLogger
 from mlib.core.math import MVector3D
 from mlib.core.reader import BaseReader, StructUnpackType
 from mlib.vmd.vmd_collection import VmdMotion
-from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdIkOnOff, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
+from mlib.vmd.vmd_part import (
+    VmdBoneFrame,
+    VmdCameraFrame,
+    VmdIkOnOff,
+    VmdLightFrame,
+    VmdMorphFrame,
+    VmdShadowFrame,
+    VmdShowIkFrame,
+)
 
 TRIM_TEXT_REGEXP = [
     re.compile(rb"\x00+$"),
@@ -307,7 +315,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                 )
 
             motion.cameras.sort_indexes()
-        except:
+        except Exception:
             pass
 
     def read_lights(self, motion: VmdMotion):
@@ -339,7 +347,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                 )
 
             motion.lights.sort_indexes()
-        except:
+        except Exception:
             pass
 
     def read_shadows(self, motion: VmdMotion):
@@ -367,7 +375,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                 )
 
             motion.shadows.sort_indexes()
-        except:
+        except Exception:
             pass
 
     def read_show_iks(self, motion: VmdMotion):
@@ -379,7 +387,9 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                 kf.show = bool(self.read_byte())
 
                 for _i in range(self.read_uint()):
-                    kf.iks.append(VmdIkOnOff(self.read_text(20), bool(self.read_byte())))
+                    kf.iks.append(
+                        VmdIkOnOff(self.read_text(20), bool(self.read_byte()))
+                    )
 
                 motion.show_iks.append(kf)
 
@@ -391,5 +401,5 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                 )
 
             motion.show_iks.sort_indexes()
-        except:
+        except Exception:
             pass

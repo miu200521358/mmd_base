@@ -8,7 +8,11 @@ from typing import Iterable, Optional
 import numpy as np
 from numpy.linalg import inv
 
-from mlib.core.collection import BaseHashModel, BaseIndexNameDictModel, BaseIndexNameDictWrapperModel
+from mlib.core.collection import (
+    BaseHashModel,
+    BaseIndexNameDictModel,
+    BaseIndexNameDictWrapperModel,
+)
 from mlib.core.interpolation import split_interpolation
 from mlib.core.logger import MLogger
 from mlib.core.math import MQuaternion, MVector3D, MVector4D, calc_list_by_ratio
@@ -26,7 +30,14 @@ from mlib.pmx.pmx_part import (
     VertexMorphOffset,
 )
 from mlib.pmx.shader import MShader
-from mlib.vmd.vmd_part import VmdBoneFrame, VmdCameraFrame, VmdLightFrame, VmdMorphFrame, VmdShadowFrame, VmdShowIkFrame
+from mlib.vmd.vmd_part import (
+    VmdBoneFrame,
+    VmdCameraFrame,
+    VmdLightFrame,
+    VmdMorphFrame,
+    VmdShadowFrame,
+    VmdShowIkFrame,
+)
 from mlib.vmd.vmd_tree import VmdBoneFrameTrees
 
 logger = MLogger(os.path.basename(__file__))
@@ -76,13 +87,17 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             self.data[index].corrected_position = None
             self.data[index].corrected_rotation = None
 
-    def append(self, value: VmdBoneFrame, is_sort: bool = True, is_positive_index: bool = True) -> None:
+    def append(
+        self, value: VmdBoneFrame, is_sort: bool = True, is_positive_index: bool = True
+    ) -> None:
         if value.ik_rotation is not None and value.index not in self._ik_indexes:
             self._ik_indexes.append(value.index)
             self._ik_indexes.sort()
         super().append(value, is_sort, is_positive_index)
 
-    def insert(self, value: VmdBoneFrame, is_sort: bool = True, is_positive_index: bool = True) -> dict[int, int]:
+    def insert(
+        self, value: VmdBoneFrame, is_sort: bool = True, is_positive_index: bool = True
+    ) -> dict[int, int]:
         if value.ik_rotation is not None and value.index not in self._ik_indexes:
             self._ik_indexes.append(value.index)
             self._ik_indexes.sort()
@@ -94,8 +109,13 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
 
         if next_index > value.index:
             # 次のキーフレが自身より後の場合、自身のキーフレがないので補間曲線を分割する
-            for i, next_interpolation in enumerate(self.data[next_index].interpolations):
-                split_target_interpolation, split_next_interpolation = split_interpolation(
+            for i, next_interpolation in enumerate(
+                self.data[next_index].interpolations
+            ):
+                (
+                    split_target_interpolation,
+                    split_next_interpolation,
+                ) = split_interpolation(
                     next_interpolation, prev_index, middle_index, next_index
                 )
                 self.data[middle_index].interpolations[i] = split_target_interpolation
@@ -134,18 +154,34 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
                 bf.corrected_rotation = next_bf.corrected_rotation.copy()
             return bf
 
-        prev_bf = self.data[prev_index] if prev_index in self else VmdBoneFrame(name=self.name, index=prev_index)
-        next_bf = self.data[next_index] if next_index in self else VmdBoneFrame(name=self.name, index=next_index)
+        prev_bf = (
+            self.data[prev_index]
+            if prev_index in self
+            else VmdBoneFrame(name=self.name, index=prev_index)
+        )
+        next_bf = (
+            self.data[next_index]
+            if next_index in self
+            else VmdBoneFrame(name=self.name, index=next_index)
+        )
 
         slice_idx = bisect_left(self._ik_indexes, index)
         prev_ik_indexes = self._ik_indexes[:slice_idx]
         next_ik_indexes = self._ik_indexes[slice_idx:]
 
         prev_ik_index = prev_ik_indexes[-1] if prev_ik_indexes else prev_index
-        prev_ik_rotation = self.data[prev_ik_index].ik_rotation or MQuaternion() if prev_ik_index in self.data else MQuaternion()
+        prev_ik_rotation = (
+            self.data[prev_ik_index].ik_rotation or MQuaternion()
+            if prev_ik_index in self.data
+            else MQuaternion()
+        )
 
         next_ik_index = next_ik_indexes[0] if next_ik_indexes else next_index
-        next_ik_rotation = self.data[next_ik_index].ik_rotation or MQuaternion() if next_ik_index in self.data else prev_ik_rotation
+        next_ik_rotation = (
+            self.data[next_ik_index].ik_rotation or MQuaternion()
+            if next_ik_index in self.data
+            else prev_ik_rotation
+        )
 
         # 補間結果Yは、FKキーフレ内で計算する
         ry, xy, yy, zy = next_bf.interpolations.evaluate(prev_index, index, next_index)
@@ -157,10 +193,17 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
 
         # ローカル回転
-        bf.local_rotation = MQuaternion.slerp(prev_bf.local_rotation, next_bf.local_rotation, ry)
+        bf.local_rotation = MQuaternion.slerp(
+            prev_bf.local_rotation, next_bf.local_rotation, ry
+        )
 
         # 移動・スケール・ローカル移動・ローカルスケール　は一括で計算
-        bf.position.vector, bf.scale.vector, bf.local_position.vector, bf.local_scale.vector = calc_list_by_ratio(
+        (
+            bf.position.vector,
+            bf.scale.vector,
+            bf.local_position.vector,
+            bf.local_scale.vector,
+        ) = calc_list_by_ratio(
             tuple(
                 [
                     tuple(prev_bf.position.vector.tolist()),
@@ -222,7 +265,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             target_bone_names = [
                 model.bones[bone_index].name
                 for bone_index in sorted(
-                    set([bone_index for bone_name in bone_names for bone_index in model.bones[bone_name].relative_bone_indexes])
+                    set(
+                        [
+                            bone_index
+                            for bone_name in bone_names
+                            for bone_index in model.bones[
+                                bone_name
+                            ].relative_bone_indexes
+                        ]
+                    )
                 )
             ]
 
@@ -246,7 +297,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 morph_bone_local_qqs,
                 morph_bone_local_scales,
                 morph_bone_ik_qqs,
-            ) = morph_bone_frames.get_bone_matrixes(fnos, model, target_bone_names, append_ik=False, out_fno_log=False)
+            ) = morph_bone_frames.get_bone_matrixes(
+                fnos, model, target_bone_names, append_ik=False, out_fno_log=False
+            )
         else:
             morph_row = len(fnos)
             morph_col = len(model.bones)
@@ -321,20 +374,28 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # ボーンツリーINDEXリストごとのボーン変形行列リスト(子どもから親に遡る)
         tree_relative_matrixes = [
-            [relative_matrixes[fidx, list(reversed(bone.tree_indexes))] for bone in model.bones] for fidx in range(len(fnos))
+            [
+                relative_matrixes[fidx, list(reversed(bone.tree_indexes))]
+                for bone in model.bones
+            ]
+            for fidx in range(len(fnos))
         ]
 
         # 行列積ボーン変形行列結果
         result_matrixes = np.full(motion_bone_poses.shape, np.eye(4))
         result_global_matrixes = np.full(motion_bone_poses.shape, np.eye(4))
 
-        for i, (fidx, (bone_index, offset_matrix)) in enumerate(product(list(range(len(fnos))), bone_offset_mats)):
+        for i, (fidx, (bone_index, offset_matrix)) in enumerate(
+            product(list(range(len(fnos))), bone_offset_mats)
+        ):
             if out_fno_log and 0 < i and 0 == i % 10000:
                 logger.info("-- ボーン変形行列積[{d}][{i}]", d=description, i=i)
 
             result_matrixes[fidx, bone_index] = offset_matrix.copy()
             for matrix in tree_relative_matrixes[fidx][bone_index]:
-                result_matrixes[fidx, bone_index] = matrix @ result_matrixes[fidx, bone_index]
+                result_matrixes[fidx, bone_index] = (
+                    matrix @ result_matrixes[fidx, bone_index]
+                )
 
         # グローバル行列は最後にボーン位置に移動させる
         result_global_matrixes = result_matrixes @ bone_pos_mats
@@ -342,7 +403,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone_matrixes = VmdBoneFrameTrees()
         for fidx, fno in enumerate(fnos):
             if out_fno_log:
-                logger.count("ボーン行列結果[{d}]", d=description, index=fidx, total_index_count=len(fnos), display_block=100)
+                logger.count(
+                    "ボーン行列結果[{d}]",
+                    d=description,
+                    index=fidx,
+                    total_index_count=len(fnos),
+                    display_block=100,
+                )
 
             for bone in model.bones:
                 bone_matrixes.append(
@@ -366,7 +433,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         append_ik: bool = True,
         out_fno_log: bool = False,
         description: str = "",
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+    ]:
         """ボーン変形行列を求める"""
 
         row = len(fnos)
@@ -437,13 +512,19 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         fno_local_poses[parent_bone.index] = parent_bf.local_position
                         fno_local_qqs[parent_bone.index] = parent_bf.local_rotation
                         fno_local_scales[parent_bone.index] = parent_bf.local_scale
-                    is_parent_bone_not_local_cancels.append(model.bones.is_bone_not_local_cancels[parent_bone.index])
-                    parent_local_axises.append(model.bones.local_axises[parent_bone.index])
+                    is_parent_bone_not_local_cancels.append(
+                        model.bones.is_bone_not_local_cancels[parent_bone.index]
+                    )
+                    parent_local_axises.append(
+                        model.bones.local_axises[parent_bone.index]
+                    )
                     parent_local_poses.append(fno_local_poses[parent_bone.index])
                     parent_local_qqs.append(fno_local_qqs[parent_bone.index])
                     parent_local_scales.append(fno_local_scales[parent_bone.index])
 
-                poses[fidx, bone.index] = self.get_position(fno, model, bone, fno_poses[bone.index])
+                poses[fidx, bone.index] = self.get_position(
+                    fno, model, bone, fno_poses[bone.index]
+                )
 
                 # モーションによるローカル移動量
                 if is_valid_local_pos:
@@ -489,7 +570,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return poses, qqs, scales, local_poses, local_qqs, local_scales, ik_qqs
 
-    def get_position(self, fno: int, model: PmxModel, bone: Bone, position: MVector3D, loop: int = 0) -> np.ndarray:
+    def get_position(
+        self, fno: int, model: PmxModel, bone: Bone, position: MVector3D, loop: int = 0
+    ) -> np.ndarray:
         """
         該当キーフレにおけるボーンの移動位置
         """
@@ -500,7 +583,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # 付与親を加味して返す
         return mat @ self.get_effect_position(fno, model, bone, loop=loop + 1)
 
-    def get_effect_position(self, fno: int, model: PmxModel, bone: Bone, loop: int = 0) -> np.ndarray:
+    def get_effect_position(
+        self, fno: int, model: PmxModel, bone: Bone, loop: int = 0
+    ) -> np.ndarray:
         """
         付与親を加味した移動を求める
         """
@@ -514,7 +599,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # 付与親の移動量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
         effect_bf = self[effect_bone.name][fno]
-        effect_pos_mat = self.get_position(fno, model, effect_bone, effect_bf.position, loop=loop + 1)
+        effect_pos_mat = self.get_position(
+            fno, model, effect_bone, effect_bf.position, loop=loop + 1
+        )
         # 付与率を加味する
         effect_pos_mat[:3, 3] *= bone.effect_factor
 
@@ -543,10 +630,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             tuple(parent_local_axises),
         )
 
-    def calc_ik_rotations(self, fno: int, model: PmxModel, target_bone_names: Iterable[str]):
+    def calc_ik_rotations(
+        self, fno: int, model: PmxModel, target_bone_names: Iterable[str]
+    ):
         """IK関連ボーンの事前計算"""
         ik_target_names = [
-            model.bone_trees[target_bone_name].last_name for target_bone_name in target_bone_names if model.bones[target_bone_name].is_ik
+            model.bone_trees[target_bone_name].last_name
+            for target_bone_name in target_bone_names
+            if model.bones[target_bone_name].is_ik
         ]
         if not ik_target_names:
             # IK計算対象がない場合はそのまま終了
@@ -559,7 +650,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     [
                         relative_bone_index
                         for ik_target_name in ik_target_names
-                        for relative_bone_index in model.bones[ik_target_name].relative_bone_indexes
+                        for relative_bone_index in model.bones[
+                            ik_target_name
+                        ].relative_bone_indexes
                     ]
                 )
             )
@@ -590,7 +683,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for relative_bone_name in ik_relative_bone_names:
                 self.get_rotation(fno, model, bone, append_ik=True)
 
-    def get_scale(self, fno: int, model: PmxModel, bone: Bone, scale: MVector3D, loop: int = 0) -> np.ndarray:
+    def get_scale(
+        self, fno: int, model: PmxModel, bone: Bone, scale: MVector3D, loop: int = 0
+    ) -> np.ndarray:
         """
         該当キーフレにおけるボーンの縮尺
         """
@@ -602,7 +697,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # 付与親を加味して返す
         return self.get_effect_scale(fno, model, bone, scale_mat, loop=loop + 1)
 
-    def get_effect_scale(self, fno: int, model: PmxModel, bone: Bone, scale_mat: np.ndarray, loop: int = 0) -> np.ndarray:
+    def get_effect_scale(
+        self,
+        fno: int,
+        model: PmxModel,
+        bone: Bone,
+        scale_mat: np.ndarray,
+        loop: int = 0,
+    ) -> np.ndarray:
         """
         付与親を加味した縮尺を求める
         """
@@ -616,7 +718,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
         effect_bf = self[effect_bone.name][fno]
-        effect_scale_mat = self.get_scale(fno, model, effect_bone, effect_bf.scale, loop=loop + 1)
+        effect_scale_mat = self.get_scale(
+            fno, model, effect_bone, effect_bf.scale, loop=loop + 1
+        )
 
         return scale_mat @ effect_scale_mat
 
@@ -644,7 +748,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         )
 
     def get_rotation(
-        self, fno: int, model: PmxModel, bone: Bone, append_ik: bool = False, loop: int = 0
+        self,
+        fno: int,
+        model: PmxModel,
+        bone: Bone,
+        append_ik: bool = False,
+        loop: int = 0,
     ) -> tuple[MQuaternion, MQuaternion]:
         """
         該当キーフレにおけるボーンの相対位置
@@ -669,7 +778,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return effect_qq, ik_qq
 
-    def get_effect_rotation(self, fno: int, model: PmxModel, bone: Bone, qq: MQuaternion, loop: int = 0) -> MQuaternion:
+    def get_effect_rotation(
+        self, fno: int, model: PmxModel, bone: Bone, qq: MQuaternion, loop: int = 0
+    ) -> MQuaternion:
         """
         付与親を加味した回転を求める
         """
@@ -695,7 +806,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         return qq
 
-    def get_ik_rotation(self, fno: int, model: PmxModel, bone: Bone, qq: MQuaternion) -> MQuaternion:
+    def get_ik_rotation(
+        self, fno: int, model: PmxModel, bone: Bone, qq: MQuaternion
+    ) -> MQuaternion:
         """
         IKを加味した回転を求める
         """
@@ -730,15 +843,22 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         ik_link.angle_limit
                         and np.isclose(ik_link.min_angle_limit.radians.length(), 0)
                         and np.isclose(ik_link.max_angle_limit.radians.length(), 0)
-                        and np.isclose(ik_link.local_min_angle_limit.radians.length(), 0)
-                        and np.isclose(ik_link.local_max_angle_limit.radians.length(), 0)
+                        and np.isclose(
+                            ik_link.local_min_angle_limit.radians.length(), 0
+                        )
+                        and np.isclose(
+                            ik_link.local_max_angle_limit.radians.length(), 0
+                        )
                     ):
                         # 角度制限があってまったく動かない場合、IK計算しないで次に行く
                         continue
 
                     # IK関連の行列を一括計算
                     ik_matrixes = self.animate_bone_matrixes(
-                        [fno], model, bone_names=[ik_bone.name, effector_bone.name, link_bone.name], append_ik=False
+                        [fno],
+                        model,
+                        bone_names=[ik_bone.name, effector_bone.name, link_bone.name],
+                        append_ik=False,
                     )
 
                     # IKボーンのグローバル位置
@@ -772,7 +892,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 回転角
                     rotation_dot = norm_effector_pos.dot(norm_target_pos)
 
-                    logger.test(f"[{model.name}][{fno}][{bone.name}:{link_bone.name}][{loop:02d}][{1 - rotation_dot}]: IK計算")
+                    logger.test(
+                        f"[{model.name}][{fno}][{bone.name}:{link_bone.name}][{loop:02d}][{1 - rotation_dot}]: IK計算"
+                    )
 
                     if 1e-8 > 1 - rotation_dot:
                         # 変形角度がほぼ変わらない場合、スルー
@@ -783,13 +905,17 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     rotation_radian = acos(max(-1, min(1, rotation_dot)))
 
                     # 回転軸
-                    rotation_axis = norm_effector_pos.cross(norm_target_pos).normalized()
+                    rotation_axis = norm_effector_pos.cross(
+                        norm_target_pos
+                    ).normalized()
                     # 回転角度
                     rotation_degree = degrees(rotation_radian)
 
                     # 制限角で最大変位量を制限する(システムボーンは制限角に準拠)
                     if (0 < loop and not ik_bone.is_system) or ik_bone.is_system:
-                        rotation_degree = min(rotation_degree, ik_bone.ik.unit_rotation.degrees.x)
+                        rotation_degree = min(
+                            rotation_degree, ik_bone.ik.unit_rotation.degrees.x
+                        )
 
                     # リンクボーンの角度を保持
                     link_bf = self[link_bone.name][fno]
@@ -797,9 +923,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     if link_bone.has_fixed_axis:
                         # 軸制限ありの場合、軸にそった回転量とする
-                        ik_qq *= MQuaternion.from_axis_angles(link_bone.corrected_fixed_axis, rotation_degree)
+                        ik_qq *= MQuaternion.from_axis_angles(
+                            link_bone.corrected_fixed_axis, rotation_degree
+                        )
                     elif ik_link.local_angle_limit:
-                        if ik_link.local_min_angle_limit.degrees.z or ik_link.local_min_angle_limit.degrees.z:
+                        # ローカル軸角度制限が入っている場合、ローカル軸に合わせる
+                        if (
+                            ik_link.local_min_angle_limit.degrees.z
+                            or ik_link.local_min_angle_limit.degrees.z
+                        ):
                             rotation_degree = max(
                                 min(
                                     rotation_degree,
@@ -808,8 +940,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                                 ik_link.local_min_angle_limit.degrees.z,
                             )
 
-                            ik_qq *= MQuaternion.from_axis_angles(link_bone.corrected_local_z_vector, rotation_degree)
-                        elif ik_link.local_min_angle_limit.degrees.x or ik_link.local_min_angle_limit.degrees.x:
+                            ik_qq *= MQuaternion.from_axis_angles(
+                                link_bone.corrected_local_z_vector, rotation_degree
+                            )
+                        elif (
+                            ik_link.local_min_angle_limit.degrees.x
+                            or ik_link.local_min_angle_limit.degrees.x
+                        ):
                             rotation_degree = max(
                                 min(
                                     rotation_degree,
@@ -818,8 +955,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                                 ik_link.local_min_angle_limit.degrees.x,
                             )
 
-                            ik_qq *= MQuaternion.from_axis_angles(link_bone.corrected_local_x_vector, rotation_degree)
-                        elif ik_link.local_min_angle_limit.degrees.y or ik_link.local_min_angle_limit.degrees.y:
+                            ik_qq *= MQuaternion.from_axis_angles(
+                                link_bone.corrected_local_x_vector, rotation_degree
+                            )
+                        elif (
+                            ik_link.local_min_angle_limit.degrees.y
+                            or ik_link.local_min_angle_limit.degrees.y
+                        ):
                             rotation_degree = max(
                                 min(
                                     rotation_degree,
@@ -828,10 +970,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                                 ik_link.local_min_angle_limit.degrees.y,
                             )
 
-                            ik_qq *= MQuaternion.from_axis_angles(link_bone.corrected_local_y_vector, rotation_degree)
+                            ik_qq *= MQuaternion.from_axis_angles(
+                                link_bone.corrected_local_y_vector, rotation_degree
+                            )
                     else:
                         # 軸制限が無い場合の補正関節回転量
-                        ik_qq = (link_bf.ik_rotation or MQuaternion()) * MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
+                        ik_qq = (
+                            link_bf.ik_rotation or MQuaternion()
+                        ) * MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
 
                         if ik_link.angle_limit:
                             # 角度制限が入ってる場合、オイラー角度に分解する
@@ -875,11 +1021,20 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         qq = bf.rotation * (bf.ik_rotation or MQuaternion())
 
         if bone.local_angle_limit:
-            if bone.local_min_angle_limit.degrees.z or bone.local_min_angle_limit.degrees.z:
+            if (
+                bone.local_min_angle_limit.degrees.z
+                or bone.local_min_angle_limit.degrees.z
+            ):
                 return qq.to_other_axis_rotation(bone.corrected_local_z_vector)
-            elif ik_link.local_min_angle_limit.degrees.x or ik_link.local_min_angle_limit.degrees.x:
+            elif (
+                ik_link.local_min_angle_limit.degrees.x
+                or ik_link.local_min_angle_limit.degrees.x
+            ):
                 return qq.to_other_axis_rotation(bone.corrected_local_x_vector)
-            elif ik_link.local_min_angle_limit.degrees.y or ik_link.local_min_angle_limit.degrees.y:
+            elif (
+                ik_link.local_min_angle_limit.degrees.y
+                or ik_link.local_min_angle_limit.degrees.y
+            ):
                 return qq.to_other_axis_rotation(bone.corrected_local_y_vector)
 
         return qq
@@ -947,7 +1102,12 @@ def calc_local_position(
     local_pos_mat[:3, 3] = local_pos.vector
 
     # ローカル軸に合わせた移動行列を作成する(親はキャンセルする)
-    return inv(local_parent_matrix) @ inv(rotation_matrix) @ local_pos_mat @ rotation_matrix
+    return (
+        inv(local_parent_matrix)
+        @ inv(rotation_matrix)
+        @ local_pos_mat
+        @ rotation_matrix
+    )
 
 
 @lru_cache(maxsize=None)
@@ -979,7 +1139,12 @@ def calc_local_rotation(
     local_rot_mat = local_qq.to_matrix4x4().vector
 
     # ローカル軸に合わせた移動行列を作成する(親はキャンセルする)
-    return inv(local_parent_matrix) @ inv(rotation_matrix) @ local_rot_mat @ rotation_matrix
+    return (
+        inv(local_parent_matrix)
+        @ inv(rotation_matrix)
+        @ local_rot_mat
+        @ rotation_matrix
+    )
 
 
 @lru_cache(maxsize=None)
@@ -1010,10 +1175,17 @@ def calc_local_scale(
 
     # マイナス縮尺にはしない
     local_scale_mat = np.eye(4)
-    local_scale_mat[:3, :3] += np.diag(np.where(local_scale.vector < -1, -1, local_scale.vector))
+    local_scale_mat[:3, :3] += np.diag(
+        np.where(local_scale.vector < -1, -1, local_scale.vector)
+    )
 
     # ローカル軸に合わせた移動行列を作成する(親はキャンセルする)
-    return inv(local_parent_matrix) @ inv(rotation_matrix) @ local_scale_mat @ rotation_matrix
+    return (
+        inv(local_parent_matrix)
+        @ inv(rotation_matrix)
+        @ local_scale_mat
+        @ rotation_matrix
+    )
 
 
 class VmdMorphNameFrames(BaseIndexNameDictModel[VmdMorphFrame]):
@@ -1057,8 +1229,16 @@ class VmdMorphNameFrames(BaseIndexNameDictModel[VmdMorphFrame]):
             mf.ratio = self.data[next_index].ratio
             return mf
 
-        prev_mf = self.data[prev_index] if prev_index in self else VmdMorphFrame(name=self.name, index=prev_index)
-        next_mf = self.data[next_index] if next_index in self else VmdMorphFrame(name=self.name, index=next_index)
+        prev_mf = (
+            self.data[prev_index]
+            if prev_index in self
+            else VmdMorphFrame(name=self.name, index=prev_index)
+        )
+        next_mf = (
+            self.data[next_index]
+            if next_index in self
+            else VmdMorphFrame(name=self.name, index=next_index)
+        )
 
         # モーフは補間なし
         ry = (index - prev_index) / (next_index - prev_index)
@@ -1082,7 +1262,9 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
     def max_fno(self) -> int:
         return max([max(self[fname].indexes + [0]) for fname in self.names] + [0])
 
-    def animate_vertex_morphs(self, fno: int, model: PmxModel, is_gl: bool = True) -> np.ndarray:
+    def animate_vertex_morphs(
+        self, fno: int, model: PmxModel, is_gl: bool = True
+    ) -> np.ndarray:
         """頂点モーフ変形量"""
         row = len(model.vertices)
         poses = np.full((row, 3), np.zeros(3))
@@ -1106,7 +1288,9 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
         return np.array(poses)
 
-    def animate_after_vertex_morphs(self, fno: int, model: PmxModel, is_gl: bool = True) -> np.ndarray:
+    def animate_after_vertex_morphs(
+        self, fno: int, model: PmxModel, is_gl: bool = True
+    ) -> np.ndarray:
         """ボーン変形後頂点モーフ変形量"""
         row = len(model.vertices)
         poses = np.full((row, 3), np.zeros(3))
@@ -1130,7 +1314,9 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
         return np.array(poses)
 
-    def animate_uv_morphs(self, fno: int, model: PmxModel, uv_index: int, is_gl: bool = True) -> np.ndarray:
+    def animate_uv_morphs(
+        self, fno: int, model: PmxModel, uv_index: int, is_gl: bool = True
+    ) -> np.ndarray:
         row = len(model.vertices)
         poses = np.full((row, 4), np.zeros(4))
 
@@ -1174,17 +1360,30 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
         return bone_frames
 
-    def animate_bone_morph_frame(self, fno: int, model: PmxModel, bf: VmdBoneFrame, offset: BoneMorphOffset, ratio: float) -> VmdBoneFrame:
+    def animate_bone_morph_frame(
+        self,
+        fno: int,
+        model: PmxModel,
+        bf: VmdBoneFrame,
+        offset: BoneMorphOffset,
+        ratio: float,
+    ) -> VmdBoneFrame:
         bf.position += offset.position * ratio
         bf.local_position += offset.local_position * ratio
         bf.rotation *= MQuaternion.from_euler_degrees(offset.rotation.degrees * ratio)
-        bf.local_rotation *= MQuaternion.from_euler_degrees(offset.local_rotation.degrees * ratio)
+        bf.local_rotation *= MQuaternion.from_euler_degrees(
+            offset.local_rotation.degrees * ratio
+        )
         bf.scale += offset.scale * ratio
         bf.local_scale += offset.local_scale * ratio
         return bf
 
     def animate_group_morphs(
-        self, fno: int, model: PmxModel, materials: list[ShaderMaterial], is_gl: bool = True
+        self,
+        fno: int,
+        model: PmxModel,
+        materials: list[ShaderMaterial],
+        is_gl: bool = True,
     ) -> tuple[np.ndarray, VmdBoneFrames, list[ShaderMaterial]]:
         group_vertex_poses = np.full((len(model.vertices), 3), np.zeros(3))
         bone_frames = VmdBoneFrames()
@@ -1200,30 +1399,59 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
             # モーションによるボーンモーフ変動量
             for group_offset in morph.offsets:
-                if type(group_offset) is GroupMorphOffset and group_offset.morph_index in model.morphs:
+                if (
+                    type(group_offset) is GroupMorphOffset
+                    and group_offset.morph_index in model.morphs
+                ):
                     part_morph = model.morphs[group_offset.morph_index]
                     mf_factor = mf.ratio * group_offset.morph_factor
                     if not mf_factor:
                         continue
 
                     for offset in part_morph.offsets:
-                        if type(offset) is VertexMorphOffset and offset.vertex_index < group_vertex_poses.shape[0]:
+                        if (
+                            type(offset) is VertexMorphOffset
+                            and offset.vertex_index < group_vertex_poses.shape[0]
+                        ):
                             ratio_pos: MVector3D = offset.position * mf_factor
                             if is_gl:
-                                group_vertex_poses[offset.vertex_index] += ratio_pos.gl.vector
+                                group_vertex_poses[
+                                    offset.vertex_index
+                                ] += ratio_pos.gl.vector
                             else:
-                                group_vertex_poses[offset.vertex_index] += ratio_pos.vector
-                        elif type(offset) is BoneMorphOffset and offset.bone_index in model.bones:
+                                group_vertex_poses[
+                                    offset.vertex_index
+                                ] += ratio_pos.vector
+                        elif (
+                            type(offset) is BoneMorphOffset
+                            and offset.bone_index in model.bones
+                        ):
                             bf = bone_frames[model.bones[offset.bone_index].name][fno]
-                            bf = self.animate_bone_morph_frame(fno, model, bf, offset, mf_factor)
+                            bf = self.animate_bone_morph_frame(
+                                fno, model, bf, offset, mf_factor
+                            )
                             bone_frames[bf.name][fno] = bf
-                        elif type(offset) is MaterialMorphOffset and offset.material_index in model.materials:
-                            materials = self.animate_material_morph_frame(model, offset, mf_factor, materials, MShader.LIGHT_AMBIENT4)
+                        elif (
+                            type(offset) is MaterialMorphOffset
+                            and offset.material_index in model.materials
+                        ):
+                            materials = self.animate_material_morph_frame(
+                                model,
+                                offset,
+                                mf_factor,
+                                materials,
+                                MShader.LIGHT_AMBIENT4,
+                            )
 
         return group_vertex_poses, bone_frames, materials
 
     def animate_material_morph_frame(
-        self, model: PmxModel, offset: MaterialMorphOffset, ratio: float, materials: list[ShaderMaterial], light_ambient: MVector4D
+        self,
+        model: PmxModel,
+        offset: MaterialMorphOffset,
+        ratio: float,
+        materials: list[ShaderMaterial],
+        light_ambient: MVector4D,
     ) -> list[ShaderMaterial]:
         if 0 > offset.material_index:
             # 0の場合、全材質を対象とする
@@ -1232,7 +1460,10 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
             # 特定材質の場合、材質固定
             material_indexes = [offset.material_index]
         # 指定材質を対象として変動量を割り当てる
-        for target_calc_mode in [MaterialMorphCalcMode.MULTIPLICATION, MaterialMorphCalcMode.ADDITION]:
+        for target_calc_mode in [
+            MaterialMorphCalcMode.MULTIPLICATION,
+            MaterialMorphCalcMode.ADDITION,
+        ]:
             # 先に乗算を計算した後に加算を加味する
             for material_index in material_indexes:
                 # 元々の材質情報をコピー
@@ -1270,7 +1501,9 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
         return materials
 
-    def animate_material_morphs(self, fno: int, model: PmxModel) -> list[ShaderMaterial]:
+    def animate_material_morphs(
+        self, fno: int, model: PmxModel
+    ) -> list[ShaderMaterial]:
         # デフォルトの材質情報を保持（シェーダーに合わせて一部入れ替え）
         materials = [ShaderMaterial(m, MShader.LIGHT_AMBIENT4) for m in model.materials]
 
@@ -1284,8 +1517,13 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
 
             # モーションによる材質モーフ変動量
             for offset in morph.offsets:
-                if type(offset) is MaterialMorphOffset and (offset.material_index in model.materials or 0 > offset.material_index):
-                    materials = self.animate_material_morph_frame(model, offset, mf.ratio, materials, MShader.LIGHT_AMBIENT4)
+                if type(offset) is MaterialMorphOffset and (
+                    offset.material_index in model.materials
+                    or 0 > offset.material_index
+                ):
+                    materials = self.animate_material_morph_frame(
+                        model, offset, mf.ratio, materials, MShader.LIGHT_AMBIENT4
+                    )
 
         return materials
 
@@ -1422,7 +1660,16 @@ class VmdMotion(BaseHashModel):
 
     def animate(
         self, fno: int, model: PmxModel, is_gl: bool = True
-    ) -> tuple[int, np.ndarray, VmdBoneFrameTrees, np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[ShaderMaterial]]:
+    ) -> tuple[
+        int,
+        np.ndarray,
+        VmdBoneFrameTrees,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        list[ShaderMaterial],
+    ]:
         logger.debug(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 開始")
 
         # 頂点モーフ
@@ -1430,7 +1677,9 @@ class VmdMotion(BaseHashModel):
         logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 頂点モーフ")
 
         # ボーン変形後頂点モーフ
-        after_vertex_morph_poses = self.morphs.animate_after_vertex_morphs(fno, model, is_gl)
+        after_vertex_morph_poses = self.morphs.animate_after_vertex_morphs(
+            fno, model, is_gl
+        )
         logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン変形後頂点モーフ")
 
         # UVモーフ
@@ -1448,9 +1697,11 @@ class VmdMotion(BaseHashModel):
         logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 材質モーフ")
 
         # グループモーフ
-        group_vertex_morph_poses, group_morph_bone_frames, group_materials = self.morphs.animate_group_morphs(
-            fno, model, material_morphs, is_gl
-        )
+        (
+            group_vertex_morph_poses,
+            group_morph_bone_frames,
+            group_materials,
+        ) = self.morphs.animate_group_morphs(fno, model, material_morphs, is_gl)
         logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
         bone_matrixes = self.animate_bone([fno], model)
@@ -1494,7 +1745,13 @@ class VmdMotion(BaseHashModel):
 
         for fidx, fno in enumerate(fnos):
             if out_fno_log:
-                logger.count("キーフレ確認[{d}]", d=description, index=fidx, total_index_count=len(fnos), display_block=100)
+                logger.count(
+                    "キーフレ確認[{d}]",
+                    d=description,
+                    index=fidx,
+                    total_index_count=len(fnos),
+                    display_block=100,
+                )
 
             logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 開始")
 
@@ -1517,7 +1774,9 @@ class VmdMotion(BaseHashModel):
                 all_morph_bone_frames[bf.name][bf.index] = mbf + bf
 
             # グループモーフ
-            _, group_morph_bone_frames, _ = self.morphs.animate_group_morphs(fno, model, material_morphs)
+            _, group_morph_bone_frames, _ = self.morphs.animate_group_morphs(
+                fno, model, material_morphs
+            )
             logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
             for bfs in group_morph_bone_frames:
@@ -1535,7 +1794,13 @@ class VmdMotion(BaseHashModel):
 
         # ボーン変形行列操作
         bone_matrixes = self.bones.animate_bone_matrixes(
-            fnos, model, all_morph_bone_frames, bone_names, append_ik=append_ik, out_fno_log=out_fno_log, description=description
+            fnos,
+            model,
+            all_morph_bone_frames,
+            bone_names,
+            append_ik=append_ik,
+            out_fno_log=out_fno_log,
+            description=description,
         )
         logger.test(f"-- ボーンアニメーション[{model.name}]: ボーン変形行列操作")
 

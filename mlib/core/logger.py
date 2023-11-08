@@ -57,7 +57,9 @@ class MLogger:
         LINE = "line"
 
     DEFAULT_FORMAT = "%(message)s"
-    STREAM_FORMAT = "%(message)s [%(module)s:%(funcName)s][P-%(processName)s](%(asctime)s)"
+    STREAM_FORMAT = (
+        "%(message)s [%(module)s:%(funcName)s][P-%(processName)s](%(asctime)s)"
+    )
     FILE_FORMAT = "%(message)s [%(call_file)s:%(call_func)s:%(call_lno)s][P-%(processName)s](%(asctime)s)"
 
     # システム全体のロギングレベル
@@ -101,7 +103,12 @@ class MLogger:
         self.logger.setLevel(level)
 
     def get_extra(self, msg: str, func: Optional[str] = "", lno: Optional[int] = 0):
-        return {"original_msg": msg, "call_file": self.file_name, "call_func": func, "call_lno": str(lno)}
+        return {
+            "original_msg": msg,
+            "call_file": self.file_name,
+            "call_func": func,
+            "call_lno": str(lno),
+        }
 
     @log_yield
     def test(
@@ -169,12 +176,24 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        if 0 < total_index_count and 0 < index and (0 == index % display_block or index == total_index_count):
+        if (
+            0 < total_index_count
+            and 0 < index
+            and (0 == index % display_block or index == total_index_count)
+        ):
             add_mlogger_handler(self)
 
             percentage = (index / total_index_count) * 100
             log_msg = "-- " + self.get_text(msg) + " [{i} ({p:.2f}%)]"
-            count_msg = self.create_message(log_msg, logging.INFO, title, decoration, p=percentage, i=index, **kwargs)
+            count_msg = self.create_message(
+                log_msg,
+                logging.INFO,
+                title,
+                decoration,
+                p=percentage,
+                i=index,
+                **kwargs,
+            )
 
             self.logger.info(
                 count_msg,
@@ -228,7 +247,13 @@ class MLogger:
     ):
         add_mlogger_handler(self)
         self.logger.critical(
-            self.create_message(msg, logging.CRITICAL, title, decoration or MLogger.Decoration.BOX, **kwargs),
+            self.create_message(
+                msg,
+                logging.CRITICAL,
+                title,
+                decoration or MLogger.Decoration.BOX,
+                **kwargs,
+            ),
             exc_info=True,
             stack_info=True,
             extra=self.get_extra(msg, func, lno),
@@ -254,7 +279,11 @@ class MLogger:
                 messages = f.readlines()
 
             new_msg = self.re_break.sub("\\\\n", text)
-            added_msg_idxs = [n + 1 for n, inmsg in enumerate(messages) if "msgid" in inmsg and new_msg in inmsg]
+            added_msg_idxs = [
+                n + 1
+                for n, inmsg in enumerate(messages)
+                if "msgid" in inmsg and new_msg in inmsg
+            ]
 
             if not added_msg_idxs:
                 messages.append(f'\nmsgid "{new_msg}"\n')
@@ -262,7 +291,9 @@ class MLogger:
                 messages.append("\n")
                 self.logger.debug("add message: %s", new_msg)
 
-                with open(f"{self.lang_dir}/messages.pot", mode="w", encoding="utf-8") as f:
+                with open(
+                    f"{self.lang_dir}/messages.pot", mode="w", encoding="utf-8"
+                ) as f:
                     f.writelines(messages)
 
         # 翻訳結果を取得する
@@ -323,7 +354,9 @@ class MLogger:
         return "\n".join(msg_block)
 
     def create_line_message(self, msg, level, title=None) -> str:
-        msg_block = [f"■ {msg_line} --------------------" for msg_line in msg.split("\n")]
+        msg_block = [
+            f"■ {msg_line} --------------------" for msg_line in msg.split("\n")
+        ]
         return "\n".join(msg_block)
 
     def create_in_box_message(self, msg, level, title=None) -> str:
@@ -422,7 +455,7 @@ def get_file_encoding(file_path):
         f = open(file_path, "rb")
         fbytes = f.read()
         f.close()
-    except:
+    except Exception:
         raise MLibException("unknown encoding!")
 
     codes = ("utf-8", "shift-jis")
@@ -451,5 +484,5 @@ class ConsoleHandler(Handler):
             wx.CallAfter(self.text_ctrl.AppendText, msg + "\n")
         except (KeyboardInterrupt, SystemExit):
             raise
-        except:
+        except Exception:
             self.handleError(record)

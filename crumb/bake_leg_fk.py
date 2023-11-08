@@ -5,13 +5,13 @@ from winsound import SND_ALIAS, PlaySound
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from mlib.core.math import MQuaternion
-from mlib.pmx.pmx_collection import PmxModel
-from mlib.pmx.pmx_reader import PmxReader
-from mlib.vmd.vmd_collection import VmdMotion
-from mlib.vmd.vmd_part import VmdBoneFrame
-from mlib.vmd.vmd_reader import VmdReader
-from mlib.vmd.vmd_writer import VmdWriter
+from mlib.core.math import MQuaternion  # noqa: E402
+from mlib.pmx.pmx_collection import PmxModel  # noqa: E402
+from mlib.pmx.pmx_reader import PmxReader  # noqa: E402
+from mlib.vmd.vmd_collection import VmdMotion  # noqa: E402
+from mlib.vmd.vmd_part import VmdBoneFrame  # noqa: E402
+from mlib.vmd.vmd_reader import VmdReader  # noqa: E402
+from mlib.vmd.vmd_writer import VmdWriter  # noqa: E402
 
 vmd_reader = VmdReader()
 motion: VmdMotion = vmd_reader.read_by_filepath(
@@ -19,7 +19,9 @@ motion: VmdMotion = vmd_reader.read_by_filepath(
 )
 
 pmx_reader = PmxReader()
-model: PmxModel = pmx_reader.read_by_filepath("E:/MMD/Dressup/検証/20230819/AMikuSummerBody230819_Joint_20230819_211423.pmx")
+model: PmxModel = pmx_reader.read_by_filepath(
+    "E:/MMD/Dressup/検証/20230819/AMikuSummerBody230819_Joint_20230819_211423.pmx"
+)
 
 bone_names = [
     "下半身",
@@ -49,7 +51,9 @@ start_time = time.perf_counter()
 
 new_motion = VmdMotion()
 
-bone_matrixes = motion.animate_bone(list(range(145)), model, bone_names + fk_bone_names, out_fno_log=True)
+bone_matrixes = motion.animate_bone(
+    list(range(145)), model, bone_names + fk_bone_names, out_fno_log=True
+)
 
 for fno in range(145):
     for bone_name in fk_bone_names:
@@ -64,7 +68,11 @@ for fno in range(145):
 # 時間計測終了
 end_time = time.perf_counter()
 
-VmdWriter(new_motion, "D:/MMD/MikuMikuDance_v926x64/UserFile/Motion/運動/アラウンド・ザ・ワールド out 咲 枡/モデル ATW out FK.vmd", "あぴミク足焼き込み").save()
+VmdWriter(
+    new_motion,
+    "D:/MMD/MikuMikuDance_v926x64/UserFile/Motion/運動/アラウンド・ザ・ワールド out 咲 枡/モデル ATW out FK.vmd",
+    "あぴミク足焼き込み",
+).save()
 
 
 PlaySound("SystemAsterisk", SND_ALIAS)

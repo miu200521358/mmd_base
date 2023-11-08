@@ -5,11 +5,8 @@ from multiprocessing import freeze_support
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from mlib.core.math import MQuaternion, MVector3D
-from mlib.pmx.pmx_part import BoneMorphOffset, Morph, MorphType
-from mlib.pmx.pmx_reader import PmxReader
-from mlib.vmd.vmd_part import VmdMorphFrame
-from mlib.vmd.vmd_reader import VmdReader
+from mlib.pmx.pmx_reader import PmxReader  # noqa: E402
+from mlib.vmd.vmd_reader import VmdReader  # noqa: E402
 
 # 全体プロファイル
 # python -m cProfile -s cumtime crumb\profile.py
@@ -27,7 +24,9 @@ def main() -> None:
     model = PmxReader().read_by_filepath(
         "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/どっと式初音ミク_ハニーウィップ_ver.2.01/どっと式初音ミク_ハニーウィップ.pmx"
     )
-    motion = VmdReader().read_by_filepath("D:/MMD/MikuMikuDance_v926x64/UserFile/Motion/ダンス_1人/ドクヘビ mobiusP/ドクヘビLight.vmd")
+    motion = VmdReader().read_by_filepath(
+        "D:/MMD/MikuMikuDance_v926x64/UserFile/Motion/ダンス_1人/ドクヘビ mobiusP/ドクヘビLight.vmd"
+    )
 
     # # モーフ追加
     # morph = Morph(name="上半身")

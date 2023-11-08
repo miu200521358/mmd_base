@@ -110,7 +110,11 @@ class BaseWorker:
         if not self.killed:
             self.started = False
             self.killed = False
-            self.result_func(result=self.result, data=self.result_data, elapsed_time=show_worked_time(time() - self.start_time))
+            self.result_func(
+                result=self.result,
+                data=self.result_data,
+                elapsed_time=show_worked_time(time() - self.start_time),
+            )
 
     def stop(self) -> None:
         self.killed = True
@@ -140,7 +144,7 @@ class BaseWorker:
                 if logger.is_out_log or (not self.result and not self.killed):
                     # ログ出力
                     self.output_log()
-            except:
+            except Exception:
                 pass
             self.started = False
             self.killed = False

@@ -30,16 +30,25 @@ class FloatSliderCtrl:
         self._spin_increment = spin_increment
         self._change_event = change_event
         self._initial_value = value
-        i_value, i_min, i_max = [round(v / increment) for v in (value, min_value, max_value)]
+        i_value, i_min, i_max = [
+            round(v / increment) for v in (value, min_value, max_value)
+        ]
 
         self._value_ctrl = wx.TextCtrl(
-            parent, wx.ID_ANY, str(f"{value:.2f}"), wx.DefaultPosition, wx.Size(50, -1), style=wx.TE_PROCESS_ENTER
+            parent,
+            wx.ID_ANY,
+            str(f"{value:.2f}"),
+            wx.DefaultPosition,
+            wx.Size(50, -1),
+            style=wx.TE_PROCESS_ENTER,
         )
         self._value_ctrl.Bind(wx.EVT_TEXT_ENTER, self._on_change_value)
         if tooltip:
             self._value_ctrl.SetToolTip(tooltip + __("\nEnterキーを押下したタイミングで値が反映されます。"))
 
-        self._slider = wx.Slider(parent, wx.ID_ANY, i_value, i_min, i_max, position, size, wx.SL_HORIZONTAL)
+        self._slider = wx.Slider(
+            parent, wx.ID_ANY, i_value, i_min, i_max, position, size, wx.SL_HORIZONTAL
+        )
         self._slider.Bind(wx.EVT_SCROLL, self._on_scroll)
         self._slider.Bind(wx.EVT_SCROLL_THUMBRELEASE, self._on_scroll_release)
         self._slider.Bind(wx.EVT_MOUSEWHEEL, self._on_wheel_spin)
@@ -127,7 +136,7 @@ class FloatSliderCtrl:
         """範囲内に収まる数値を返す"""
         try:
             v = float(s)
-        except:
+        except Exception:
             v = self._initial_value
 
         v = max(self._min, min(self._max, v))
