@@ -131,7 +131,7 @@ class BaseWorker:
             self.result = False
         except MLibException as e:
             logger.error(
-                "[{v}]処理が継続できないため、中断しました\n----------------\n{m}",
+                "[{v}]\n処理が継続できないため、中断しました\n----------------\n{m}",
                 v=logger.version_name,
                 m=e.message,
                 decoration=MLogger.Decoration.BOX,
@@ -139,7 +139,7 @@ class BaseWorker:
             )
             self.result = False
         except Exception:
-            logger.critical("[{v}]予期せぬエラーが発生しました", v=logger.version_name)
+            logger.critical("[{v}]\n予期せぬエラーが発生しました", v=logger.version_name)
             self.result = False
         finally:
             try:
