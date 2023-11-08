@@ -919,15 +919,18 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # リンクボーンの角度を保持
                     link_bf = self[link_bone.name][fno]
-                    ik_qq = link_bf.ik_rotation or MQuaternion()
+                    actual_ik_qq = link_bf.ik_rotation or MQuaternion()
+                    ideal_ik_qq = (
+                        link_bf.ik_rotation or MQuaternion()
+                    ) * MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
 
                     if link_bone.has_fixed_axis:
-                        # 軸制限ありの場合、軸にそった回転量とする
-                        ik_qq *= MQuaternion.from_axis_angles(
+                        # 軸制限ありの場合、軸にそった理想回転量とする
+                        actual_ik_qq *= MQuaternion.from_axis_angles(
                             link_bone.corrected_fixed_axis, rotation_degree
                         )
                     elif ik_link.local_angle_limit:
-                        # ローカル軸角度制限が入っている場合、ローカル軸に合わせる
+                        # ローカル軸角度制限が入っている場合、ローカル軸に合わせて理想回転を求める
                         if (
                             ik_link.local_min_angle_limit.degrees.z
                             or ik_link.local_min_angle_limit.degrees.z
@@ -940,7 +943,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                                 ik_link.local_min_angle_limit.degrees.z,
                             )
 
-                            ik_qq *= MQuaternion.from_axis_angles(
+                            actual_ik_qq *= MQuaternion.from_axis_angles(
                                 link_bone.corrected_local_z_vector, rotation_degree
                             )
                         elif (
@@ -955,7 +958,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                                 ik_link.local_min_angle_limit.degrees.x,
                             )
 
-                            ik_qq *= MQuaternion.from_axis_angles(
+                            actual_ik_qq *= MQuaternion.from_axis_angles(
                                 link_bone.corrected_local_x_vector, rotation_degree
                             )
                         elif (
@@ -970,46 +973,62 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                                 ik_link.local_min_angle_limit.degrees.y,
                             )
 
-                            ik_qq *= MQuaternion.from_axis_angles(
+                            actual_ik_qq *= MQuaternion.from_axis_angles(
                                 link_bone.corrected_local_y_vector, rotation_degree
                             )
                     else:
-                        # 軸制限が無い場合の補正関節回転量
-                        ik_qq = (
+                        # 軸制限が無い場合の理想回転量
+                        actual_ik_qq = (
                             link_bf.ik_rotation or MQuaternion()
                         ) * MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
 
                         if ik_link.angle_limit:
                             # 角度制限が入ってる場合、オイラー角度に分解する
-                            euler_degrees = ik_qq.separate_euler_degrees()
+                            euler_degrees = actual_ik_qq.separate_euler_degrees()
 
                             euler_degrees.x = max(
                                 min(
                                     euler_degrees.x,
                                     ik_link.max_angle_limit.degrees.x,
                                 ),
-                                ik_link.max_angle_limit.degrees.x,
+                                ik_link.min_angle_limit.degrees.x,
                             )
                             euler_degrees.y = max(
                                 min(
                                     euler_degrees.y,
                                     ik_link.max_angle_limit.degrees.y,
                                 ),
-                                ik_link.max_angle_limit.degrees.y,
+                                ik_link.min_angle_limit.degrees.y,
                             )
                             euler_degrees.z = max(
                                 min(
                                     euler_degrees.z,
                                     ik_link.max_angle_limit.degrees.z,
                                 ),
-                                ik_link.max_angle_limit.degrees.z,
+                                ik_link.min_angle_limit.degrees.z,
                             )
 
-                            ik_qq = MQuaternion.from_euler_degrees(euler_degrees)
+                            actual_ik_qq = MQuaternion.from_euler_degrees(euler_degrees)
 
-                    link_bf.ik_rotation = ik_qq
+                    link_bf.ik_rotation = actual_ik_qq
                     # IK用なので最後に追加して補間曲線は分割しない
                     self[link_bf.name].append(link_bf)
+
+                    if (
+                        not np.isclose(actual_ik_qq.dot(ideal_ik_qq), 1)
+                        and lidx < len(ik_bone.ik.links) - 1
+                    ):
+                        parent_link_bone = model.bones[
+                            ik_bone.ik.links[lidx + 1].bone_index
+                        ]
+
+                        # 残存回転の計算
+                        remaining_qq = ideal_ik_qq * actual_ik_qq.inverse()
+
+                        # 残存回転をひとつ後のリンクボーンに渡す
+                        parent_link_bf = self[parent_link_bone.name][fno]
+                        parent_ik_qq = parent_link_bf.ik_rotation or MQuaternion()
+                        parent_link_bf.ik_rotation = parent_ik_qq * remaining_qq
 
                 if is_break:
                     break

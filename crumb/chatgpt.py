@@ -4,10 +4,12 @@ import openai
 
 with open("chatgpt_input.txt", "r", encoding="utf-8") as file:
     input_str = "\n".join(file.readlines())
-    print(input_str)
+    # print(input_str)
 
 try:
     openai.api_key = sys.argv[1]
+    print("■ START ■")
+
     response = openai.chat.completions.create(
         model="gpt-4-1106-preview",
         temperature=0,

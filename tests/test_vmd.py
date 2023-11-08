@@ -26,7 +26,9 @@ def test_read_by_filepath_ok_calc() -> None:
     from mlib.vmd.vmd_reader import VmdReader
 
     reader = VmdReader()
-    motion: VmdMotion = reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション.vmd"))
+    motion: VmdMotion = reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモーション.vmd")
+    )
     # cSpell:disable
     assert "日本 roco式 トレス用" == motion.model_name
     # cSpell:enable
@@ -200,10 +202,14 @@ def test_read_by_filepath_ok_matrix() -> None:
     from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
-    motion: VmdMotion = vmd_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション.vmd"))
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモーション.vmd")
+    )
 
     pmx_reader = PmxReader()
-    model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
 
     # キーフレ
     bone_matrixes = motion.animate_bone([10, 999], model, ["左人指３"])
@@ -399,8 +405,12 @@ def test_read_by_filepath_ok_matrix_animate() -> None:
     from mlib.pmx.pmx_reader import PmxReader
     from mlib.vmd.vmd_reader import VmdReader
 
-    motion = VmdReader().read_by_filepath("D:/MMD/MikuMikuDance_v926x64/UserFile/Motion/ダンス_1人/テレキャスタービーボーイ 粉ふきスティック/TeBeboy.vmd")
-    model = PmxReader().read_by_filepath("D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/ISAO式ミク/I_ミクv4/Miku_V4_準標準.pmx")
+    motion = VmdReader().read_by_filepath(
+        "D:/MMD/MikuMikuDance_v926x64/UserFile/Motion/ダンス_1人/テレキャスタービーボーイ 粉ふきスティック/TeBeboy.vmd"
+    )
+    model = PmxReader().read_by_filepath(
+        "D:/MMD/MikuMikuDance_v926x64/UserFile/Model/VOCALOID/初音ミク/ISAO式ミク/I_ミクv4/Miku_V4_準標準.pmx"
+    )
 
     # キーフレ
     _, gl_matrixes, _, _, _, _, _, _ = motion.animate(999, model)
@@ -421,10 +431,14 @@ def test_read_by_filepath_ok_matrix_morph() -> None:
     from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
-    motion: VmdMotion = vmd_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション.vmd"))
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモーション.vmd")
+    )
 
     pmx_reader = PmxReader()
-    model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
 
     # モーフ追加
     morph = Morph(name="底上げ")
@@ -555,15 +569,26 @@ def test_read_by_filepath_ok_matrix_local_morph() -> None:
     from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
-    motion: VmdMotion = vmd_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション.vmd"))
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモーション.vmd")
+    )
 
     pmx_reader = PmxReader()
-    model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
 
     # モーフ追加
     morph = Morph(name="底上げ")
     morph.morph_type = MorphType.BONE
-    morph.offsets.append(BoneMorphOffset(model.bones["センター"].index, MVector3D(), MQuaternion(), local_position=MVector3D(1, 0, 0)))
+    morph.offsets.append(
+        BoneMorphOffset(
+            model.bones["センター"].index,
+            MVector3D(),
+            MQuaternion(),
+            local_position=MVector3D(1, 0, 0),
+        )
+    )
     model.morphs.append(morph)
 
     motion.morphs["底上げ"].append(VmdMorphFrame(0, "底上げ", 1))
@@ -684,10 +709,14 @@ def test_read_by_filepath_ok_leg_ik1() -> None:
     from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
-    motion: VmdMotion = vmd_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション.vmd"))
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモーション.vmd")
+    )
 
     pmx_reader = PmxReader()
-    model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
 
     # キーフレ
     bone_matrixes = motion.animate_bone([29], model, ["左つま先"])
@@ -738,10 +767,14 @@ def test_read_by_filepath_ok_leg_ik2() -> None:
     from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
-    motion: VmdMotion = vmd_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション.vmd"))
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモーション.vmd")
+    )
 
     pmx_reader = PmxReader()
-    model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
 
     # キーフレ
     bone_matrixes = motion.animate_bone([3152], model)
@@ -792,10 +825,14 @@ def test_read_by_filepath_ok_leg_ik3() -> None:
     from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
-    motion: VmdMotion = vmd_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション2.vmd"))
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモーション2.vmd")
+    )
 
     pmx_reader = PmxReader()
-    model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
 
     # キーフレ
     bone_matrixes = motion.animate_bone([60], model)
@@ -859,10 +896,14 @@ def test_read_by_filepath_ok_leg_ik4() -> None:
 
     vmd_reader = VmdReader()
     # 好き雪 2794F
-    motion: VmdMotion = vmd_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション3.vmd"))
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモーション3.vmd")
+    )
 
     pmx_reader = PmxReader()
-    model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
 
     # キーフレ
     bone_matrixes = motion.animate_bone([0], model)
@@ -913,10 +954,14 @@ def test_read_by_filepath_ok_leg_ik5() -> None:
     from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
-    motion: VmdMotion = vmd_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション2.vmd"))
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモーション2.vmd")
+    )
 
     pmx_reader = PmxReader()
-    model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
 
     # キーフレ
     bone_matrixes = motion.animate_bone([7409], model)
@@ -967,10 +1012,14 @@ def test_read_by_filepath_ok_leg_ik6() -> None:
     from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
-    motion: VmdMotion = vmd_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション2.vmd"))
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモーション2.vmd")
+    )
 
     pmx_reader = PmxReader()
-    model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモデル.pmx"))
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
 
     # --------
     # IK ON
@@ -1013,6 +1062,64 @@ def test_read_by_filepath_ok_leg_ik6() -> None:
     ).all()
 
 
+def test_read_by_filepath_ok_leg_ik7() -> None:
+    import os
+
+    import numpy as np
+
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.vmd.vmd_collection import VmdMotion
+    from mlib.vmd.vmd_reader import VmdReader
+
+    vmd_reader = VmdReader()
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "唱(ダンスのみ)_0278F.vmd")
+    )
+
+    pmx_reader = PmxReader()
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
+
+    # キーフレ
+    bone_matrixes = motion.animate_bone([7409], model)
+
+    # --------
+    # 残存回転判定用
+
+    assert np.isclose(
+        np.array([0.721499, 11.767294, 1.638818]),
+        bone_matrixes[7409, "下半身"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.133304, 10.693992, 2.314730]),
+        bone_matrixes[7409, "右足"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-2.833401, 8.0174604, -0.100545]),
+        bone_matrixes[7409, "右ひざ"].position.vector,
+        rtol=0.3,
+        atol=0.3,
+    ).all()
+    assert np.isclose(
+        np.array([-0.409387, 5.341005, 3.524572]),
+        bone_matrixes[7409, "右足首"].position.vector,
+        rtol=0.3,
+        atol=0.3,
+    ).all()
+    assert np.isclose(
+        np.array([-0.578271, 2.874233, 3.669599]),
+        bone_matrixes[7409, "右つま先"].position.vector,
+        rtol=0.3,
+        atol=0.3,
+    ).all()
+
+
 def test_read_by_filepath_ok_arm_ik() -> None:
     import os
 
@@ -1024,10 +1131,14 @@ def test_read_by_filepath_ok_arm_ik() -> None:
     from mlib.vmd.vmd_reader import VmdReader
 
     vmd_reader = VmdReader()
-    motion: VmdMotion = vmd_reader.read_by_filepath(os.path.join("tests", "resources", "サンプルモーション.vmd"))
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモーション.vmd")
+    )
 
     pmx_reader = PmxReader()
-    model: PmxModel = pmx_reader.read_by_filepath(os.path.join("tests", "resources", "ボーンツリーテストモデル.pmx"))
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "ボーンツリーテストモデル.pmx")
+    )
 
     # キーフレ
     bone_matrixes = motion.animate_bone([10, 999], model)
