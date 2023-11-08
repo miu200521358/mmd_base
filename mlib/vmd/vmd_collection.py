@@ -1693,27 +1693,37 @@ class VmdMotion(BaseHashModel):
 
         # 頂点モーフ
         vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model, is_gl)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 頂点モーフ")
+        logger.test(
+            f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 頂点モーフ"
+        )
 
         # ボーン変形後頂点モーフ
         after_vertex_morph_poses = self.morphs.animate_after_vertex_morphs(
             fno, model, is_gl
         )
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン変形後頂点モーフ")
+        logger.test(
+            f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン変形後頂点モーフ"
+        )
 
         # UVモーフ
         uv_morph_poses = self.morphs.animate_uv_morphs(fno, model, 0, is_gl)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: UVモーフ")
+        logger.test(
+            f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: UVモーフ"
+        )
 
         # 追加UVモーフ1
         uv1_morph_poses = self.morphs.animate_uv_morphs(fno, model, 1, is_gl)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 追加UVモーフ1")
+        logger.test(
+            f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 追加UVモーフ1"
+        )
 
         # 追加UVモーフ2-4は無視
 
         # 材質モーフ
         material_morphs = self.morphs.animate_material_morphs(fno, model)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 材質モーフ")
+        logger.test(
+            f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 材質モーフ"
+        )
 
         # グループモーフ
         (
@@ -1721,7 +1731,9 @@ class VmdMotion(BaseHashModel):
             group_morph_bone_frames,
             group_materials,
         ) = self.morphs.animate_group_morphs(fno, model, material_morphs, is_gl)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
+        logger.test(
+            f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ"
+        )
 
         bone_matrixes = self.animate_bone([fno], model)
 
@@ -1734,7 +1746,9 @@ class VmdMotion(BaseHashModel):
         gl_matrixes[..., 1:3, 0] *= -1
         gl_matrixes[..., 3, 0] *= -1
 
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: OpenGL座標系変換")
+        logger.test(
+            f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: OpenGL座標系変換"
+        )
 
         return (
             fno,
@@ -1780,7 +1794,9 @@ class VmdMotion(BaseHashModel):
 
             # ボーンモーフ
             morph_bone_frames = self.morphs.animate_bone_morphs(fno, model)
-            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: ボーンモーフ")
+            logger.test(
+                f"-- ボーンアニメーション[{model.name}][{fno:04d}]: ボーンモーフ"
+            )
 
             for bfs in morph_bone_frames:
                 bf = bfs[fno]
@@ -1796,7 +1812,9 @@ class VmdMotion(BaseHashModel):
             _, group_morph_bone_frames, _ = self.morphs.animate_group_morphs(
                 fno, model, material_morphs
             )
-            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: グループモーフ")
+            logger.test(
+                f"-- ボーンアニメーション[{model.name}][{fno:04d}]: グループモーフ"
+            )
 
             for bfs in group_morph_bone_frames:
                 bf = bfs[fno]
@@ -1809,7 +1827,9 @@ class VmdMotion(BaseHashModel):
 
                 all_morph_bone_frames[bf.name][bf.index] = mbf + bf
 
-            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: モーフキーフレ加算")
+            logger.test(
+                f"-- ボーンアニメーション[{model.name}][{fno:04d}]: モーフキーフレ加算"
+            )
 
         # ボーン変形行列操作
         bone_matrixes = self.bones.animate_bone_matrixes(

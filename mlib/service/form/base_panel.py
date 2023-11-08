@@ -6,7 +6,9 @@ from mlib.service.form.base_frame import BaseFrame
 class BasePanel(wx.Panel):
     def __init__(self, frame: BaseFrame, *args, **kw) -> None:
         self.frame = frame
-        super().__init__(self.frame, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL)
+        super().__init__(
+            self.frame, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL
+        )
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
 
         self.active_background_color = wx.Colour("PINK")

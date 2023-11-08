@@ -10,7 +10,16 @@ from mlib.utils.file_utils import read_histories
 
 
 class NotebookFrame(BaseFrame):
-    def __init__(self, app: wx.App, title: str, history_keys: list[str], size: wx.Size, is_saving: bool, *args, **kw):
+    def __init__(
+        self,
+        app: wx.App,
+        title: str,
+        history_keys: list[str],
+        size: wx.Size,
+        is_saving: bool,
+        *args,
+        **kw,
+    ):
         super().__init__(app, title, size)
 
         self.is_saving = is_saving

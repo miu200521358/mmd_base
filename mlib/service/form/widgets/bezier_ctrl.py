@@ -13,7 +13,13 @@ __ = logger.get_text
 
 
 class BezierCtrl:
-    def __init__(self, frame: wx.Frame, parent: wx.Panel, size: wx.Size, change_event: Optional[Callable] = None):
+    def __init__(
+        self,
+        frame: wx.Frame,
+        parent: wx.Panel,
+        size: wx.Size,
+        change_event: Optional[Callable] = None,
+    ):
         super().__init__()
 
         self.frame = frame
@@ -30,33 +36,75 @@ class BezierCtrl:
         self.value_sizer = wx.GridBagSizer()
 
         # 開始X
-        self.start_x_title = wx.StaticText(self.parent, wx.ID_ANY, __("開始X: "), wx.DefaultPosition, wx.DefaultSize, 0)
+        self.start_x_title = wx.StaticText(
+            self.parent, wx.ID_ANY, __("開始X: "), wx.DefaultPosition, wx.DefaultSize, 0
+        )
         self.value_sizer.Add(self.start_x_title, (0, 0), (1, 1), wx.ALL, 3)
-        self.start_x_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="20", min=0, max=127, initial=20)
+        self.start_x_ctrl = wx.SpinCtrl(
+            self.parent,
+            id=wx.ID_ANY,
+            size=wx.Size(60, -1),
+            value="20",
+            min=0,
+            max=127,
+            initial=20,
+        )
         self.start_x_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
         self.value_sizer.Add(self.start_x_ctrl, (0, 1), (1, 1), wx.ALL, 0)
         # 開始Y
-        self.start_y_title = wx.StaticText(self.parent, wx.ID_ANY, __("開始Y: "), wx.DefaultPosition, wx.DefaultSize, 0)
+        self.start_y_title = wx.StaticText(
+            self.parent, wx.ID_ANY, __("開始Y: "), wx.DefaultPosition, wx.DefaultSize, 0
+        )
         self.value_sizer.Add(self.start_y_title, (1, 0), (1, 1), wx.ALL, 3)
-        self.start_y_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="20", min=0, max=127, initial=20)
+        self.start_y_ctrl = wx.SpinCtrl(
+            self.parent,
+            id=wx.ID_ANY,
+            size=wx.Size(60, -1),
+            value="20",
+            min=0,
+            max=127,
+            initial=20,
+        )
         self.start_y_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
         self.value_sizer.Add(self.start_y_ctrl, (1, 1), (1, 1), wx.ALL, 0)
         # 終了X
-        self.end_x_title = wx.StaticText(self.parent, wx.ID_ANY, __("終了X: "), wx.DefaultPosition, wx.DefaultSize, 0)
+        self.end_x_title = wx.StaticText(
+            self.parent, wx.ID_ANY, __("終了X: "), wx.DefaultPosition, wx.DefaultSize, 0
+        )
         self.value_sizer.Add(self.end_x_title, (2, 0), (1, 1), wx.ALL, 3)
-        self.end_x_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="107", min=0, max=127, initial=107)
+        self.end_x_ctrl = wx.SpinCtrl(
+            self.parent,
+            id=wx.ID_ANY,
+            size=wx.Size(60, -1),
+            value="107",
+            min=0,
+            max=127,
+            initial=107,
+        )
         self.end_x_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
         self.value_sizer.Add(self.end_x_ctrl, (2, 1), (1, 1), wx.ALL, 0)
         # 終了Y
-        self.end_y_title = wx.StaticText(self.parent, wx.ID_ANY, __("終了Y: "), wx.DefaultPosition, wx.DefaultSize, 0)
+        self.end_y_title = wx.StaticText(
+            self.parent, wx.ID_ANY, __("終了Y: "), wx.DefaultPosition, wx.DefaultSize, 0
+        )
         self.value_sizer.Add(self.end_y_title, (3, 0), (1, 1), wx.ALL, 3)
-        self.end_y_ctrl = wx.SpinCtrl(self.parent, id=wx.ID_ANY, size=wx.Size(60, -1), value="107", min=0, max=127, initial=107)
+        self.end_y_ctrl = wx.SpinCtrl(
+            self.parent,
+            id=wx.ID_ANY,
+            size=wx.Size(60, -1),
+            value="107",
+            min=0,
+            max=127,
+            initial=107,
+        )
         self.end_y_ctrl.Bind(wx.EVT_SPINCTRL, self.on_change)
         self.value_sizer.Add(self.end_y_ctrl, (3, 1), (1, 1), wx.ALL, 0)
 
         self.template_ctrl = wx_adv.BitmapComboBox(self.parent, style=wx.CB_READONLY)
         for i in range(1, 8):
-            self.template_ctrl.Append(f"{i:02d}", self.create_bitmap(f"mlib/resources/bezier/{i:02d}.png"))
+            self.template_ctrl.Append(
+                f"{i:02d}", self.create_bitmap(f"mlib/resources/bezier/{i:02d}.png")
+            )
         self.template_ctrl.Bind(wx.EVT_COMBOBOX, self.on_select)
         self.template_ctrl.SetToolTip(__("選択された補間曲線をパネルに設定します"))
         self.value_sizer.Add(self.template_ctrl, (4, 0), (1, 2), wx.ALL, 0)
@@ -137,8 +185,22 @@ class BezierCtrl:
 
         self.clear_bezier(dc)
         # self.draw_grid(m, dc)
-        self.draw_guide(target_point[0], target_point[1], self.start_x_ctrl, self.start_y_ctrl, mapper, dc)
-        self.draw_guide(target_point[2], target_point[3], self.end_x_ctrl, self.end_y_ctrl, mapper, dc)
+        self.draw_guide(
+            target_point[0],
+            target_point[1],
+            self.start_x_ctrl,
+            self.start_y_ctrl,
+            mapper,
+            dc,
+        )
+        self.draw_guide(
+            target_point[2],
+            target_point[3],
+            self.end_x_ctrl,
+            self.end_y_ctrl,
+            mapper,
+            dc,
+        )
         self.draw_bezier(target_point, mapper, dc)
         self.draw_bezier_error(mapper, dc)
 
@@ -146,12 +208,16 @@ class BezierCtrl:
         self.set_color(dc, "white")
         dc.DrawRectangle(0, 0, *self.panel.GetSize())
 
-    def draw_bezier(self, target_point: list[MVector2D], mapper: "Mapper", dc: wx.BufferedDC):
+    def draw_bezier(
+        self, target_point: list[MVector2D], mapper: "Mapper", dc: wx.BufferedDC
+    ):
         # draw bezier cupper_right ve
         self.set_color(dc, "blue")
         # dc.DrawPointList([m.to_client(x, y) for x, y in Bezier(target_ctrl)])
         lines = list(BezierLine(target_point))
-        dc.DrawLineList([mapper.fit(p) + mapper.fit(q) for p, q in zip(lines, lines[1:])])
+        dc.DrawLineList(
+            [mapper.fit(p) + mapper.fit(q) for p, q in zip(lines, lines[1:])]
+        )
 
     def draw_guide(
         self,
@@ -168,7 +234,12 @@ class BezierCtrl:
 
         # draw control points
         self.set_color(dc, "red")
-        pnt = BezierPoint(*mapper.fit(target_x_ctrl.GetValue(), target_y_ctrl.GetValue()), target_x_ctrl, target_y_ctrl, self.change_event)
+        pnt = BezierPoint(
+            *mapper.fit(target_x_ctrl.GetValue(), target_y_ctrl.GetValue()),
+            target_x_ctrl,
+            target_y_ctrl,
+            self.change_event,
+        )
         self.panel.append_point(pnt)
         pnt.draw(dc, True)
 
@@ -199,7 +270,9 @@ class BezierCtrl:
     def on_paint_bezier_mouse_left_down(self, event: wx.MouseEvent):
         """マウスの左ボタンが押された時の処理"""
         position = event.GetPosition()  # マウス座標を取得
-        bezier_point = self.find_bezier_point(position)  # マウス座標と重なってるオブジェクトを取得
+        bezier_point = self.find_bezier_point(
+            position
+        )  # マウス座標と重なってるオブジェクトを取得
         if bezier_point is not None:
             self.panel.drag_point = bezier_point  # ドラッグ移動するオブジェクトを記憶
             self.panel.drag_start_pos = position  # ドラッグ開始時のマウス座標を記録
@@ -271,7 +344,9 @@ class BezierLine:
 
 
 class Mapper:
-    def __init__(self, size: wx.Size, lower_left: MVector2D, upper_right: MVector2D) -> None:
+    def __init__(
+        self, size: wx.Size, lower_left: MVector2D, upper_right: MVector2D
+    ) -> None:
         self.size = size
         self.lower_left = lower_left.vector
         self.upper_right = upper_right.vector
@@ -322,7 +397,9 @@ class BezierPoint:
         rect = self.get_rect()  # 矩形領域を取得
 
         # 座標が矩形内に入ってるか調べる
-        return rect.x - 5 <= point.x < (rect.x + rect.width + 5) and rect.y - 5 <= point.y < (rect.y + rect.height + 5)
+        return rect.x - 5 <= point.x < (
+            rect.x + rect.width + 5
+        ) and rect.y - 5 <= point.y < (rect.y + rect.height + 5)
 
     def get_rect(self) -> wx.Rect:
         """矩形領域を返す"""
@@ -353,9 +430,17 @@ class BezierPoint:
 
 class BezierViewPanel(wx.Panel):
     def __init__(
-        self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.TAB_TRAVERSAL, name=wx.PanelNameStr
+        self,
+        parent,
+        id=wx.ID_ANY,
+        pos=wx.DefaultPosition,
+        size=wx.DefaultSize,
+        style=wx.TAB_TRAVERSAL,
+        name=wx.PanelNameStr,
     ) -> None:
-        super(BezierViewPanel, self).__init__(parent, id=id, pos=pos, size=size, style=style, name=name)
+        super(BezierViewPanel, self).__init__(
+            parent, id=id, pos=pos, size=size, style=style, name=name
+        )
         self.points: list[BezierPoint] = []
         self.drag_point: Optional[BezierPoint] = None
         self.drag_start_pos = MVector2D(0, 0)

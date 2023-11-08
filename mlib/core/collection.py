@@ -39,7 +39,9 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         self.append(self.create())
         return self.data[index]
 
-    def range(self, start: int = 0, stop: int = -1, step: int = 1) -> list[TBaseIndexModel]:
+    def range(
+        self, start: int = 0, stop: int = -1, step: int = 1
+    ) -> list[TBaseIndexModel]:
         if 0 > stop:
             # マイナス指定の場合、後ろからの順番に置き換える
             stop = len(self.data) + stop + 1
@@ -120,7 +122,12 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     def __setitem__(self, index: int, v: TBaseIndexNameModel) -> None:
         self.data[index] = v
 
-    def append(self, value: TBaseIndexNameModel, is_sort: bool = False, is_positive_index: bool = True) -> None:
+    def append(
+        self,
+        value: TBaseIndexNameModel,
+        is_sort: bool = False,
+        is_positive_index: bool = True,
+    ) -> None:
         if 0 > value.index and is_positive_index:
             value.index = len([k for k in self.data.keys() if k >= 0])
 
@@ -134,7 +141,9 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         else:
             self.indexes.append(value.index)
 
-    def remove(self, value: TBaseIndexNameModel, is_sort: bool = True) -> dict[int, int]:
+    def remove(
+        self, value: TBaseIndexNameModel, is_sort: bool = True
+    ) -> dict[int, int]:
         replaced_map: dict[int, int] = {-1: -1}
 
         if value.index not in self.data:
@@ -179,7 +188,12 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
 
         return replaced_map
 
-    def insert(self, value: TBaseIndexNameModel, is_sort: bool = True, is_positive_index: bool = True) -> dict[int, int]:
+    def insert(
+        self,
+        value: TBaseIndexNameModel,
+        is_sort: bool = True,
+        is_positive_index: bool = True,
+    ) -> dict[int, int]:
         if 0 > value.index and is_positive_index:
             value.index = len([k for k in self.data.keys() if k >= 0])
 
@@ -229,7 +243,9 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             return ""
         return self[-1].name
 
-    def range(self, start: int = 0, stop: int = -1, step: int = 1) -> list[TBaseIndexNameModel]:
+    def range(
+        self, start: int = 0, stop: int = -1, step: int = 1
+    ) -> list[TBaseIndexNameModel]:
         if 0 > stop:
             # マイナス指定の場合、後ろからの順番に置き換える
             stop = len(self.data) + stop + 1
@@ -275,7 +291,9 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     def sort_indexes(self, is_sort_name: bool = False) -> None:
         self.indexes = sorted(self.data.keys()) if self.data else []
         if is_sort_name:
-            self._names = dict([(self.data[index].name, index) for index in self.indexes])
+            self._names = dict(
+                [(self.data[index].name, index) for index in self.indexes]
+            )
 
     def __len__(self) -> int:
         return len(self.data)
@@ -291,7 +309,9 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     def __bool__(self) -> bool:
         return 0 < len(self.data)
 
-    def range_indexes(self, index: int, indexes: Optional[list[int]] = None) -> tuple[int, int, int]:
+    def range_indexes(
+        self, index: int, indexes: Optional[list[int]] = None
+    ) -> tuple[int, int, int]:
         """
         指定されたINDEXの前後を返す
 
@@ -335,7 +355,9 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         self.cache = {}
 
 
-TBaseIndexNameDictModel = TypeVar("TBaseIndexNameDictModel", bound=BaseIndexNameDictModel)
+TBaseIndexNameDictModel = TypeVar(
+    "TBaseIndexNameDictModel", bound=BaseIndexNameDictModel
+)
 
 
 class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel):
@@ -372,7 +394,9 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
     def __setitem__(self, v: TBaseIndexNameDictModel) -> None:
         self.data[v.name] = v
 
-    def append(self, value: TBaseIndexNameDictModel, name: Optional[str] = None) -> None:
+    def append(
+        self, value: TBaseIndexNameDictModel, name: Optional[str] = None
+    ) -> None:
         if not name:
             name = value.last_name
 
@@ -397,7 +421,9 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
         return 0 < len(self.data)
 
 
-TBaseIndexNameDictWrapperModel = TypeVar("TBaseIndexNameDictWrapperModel", bound=BaseIndexNameDictWrapperModel)
+TBaseIndexNameDictWrapperModel = TypeVar(
+    "TBaseIndexNameDictWrapperModel", bound=BaseIndexNameDictWrapperModel
+)
 
 
 class BaseHashModel(BaseModel):

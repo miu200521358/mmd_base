@@ -118,7 +118,9 @@ class VmdBoneFrameTree:
         if self.cache_frame_rotation is not None:
             return self.cache_frame_rotation
 
-        self.cache_frame_rotation = MMatrix4x4(self.frame_rotation_matrix_ary).to_quaternion()
+        self.cache_frame_rotation = MMatrix4x4(
+            self.frame_rotation_matrix_ary
+        ).to_quaternion()
         return self.cache_frame_rotation
 
     @property
@@ -126,7 +128,9 @@ class VmdBoneFrameTree:
         if self.cache_frame_ik_rotation is not None:
             return self.cache_frame_ik_rotation
 
-        self.cache_frame_ik_rotation = MMatrix4x4(self.frame_ik_rotation_matrix_ary).to_quaternion()
+        self.cache_frame_ik_rotation = MMatrix4x4(
+            self.frame_ik_rotation_matrix_ary
+        ).to_quaternion()
         return self.cache_frame_ik_rotation
 
 

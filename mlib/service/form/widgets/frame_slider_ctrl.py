@@ -26,16 +26,33 @@ class FrameSliderCtrl:
         self._change_event = change_event
         self._initial_value = 0
 
-        self._fno_ctrl = WheelSpinCtrl(parent, initial=0, min=0, max=10000, size=wx.Size(70, -1), change_event=self._on_change_value)
+        self._fno_ctrl = WheelSpinCtrl(
+            parent,
+            initial=0,
+            min=0,
+            max=10000,
+            size=wx.Size(70, -1),
+            change_event=self._on_change_value,
+        )
         if tooltip:
-            self._fno_ctrl.SetToolTip(tooltip + __("\nEnterキーを押下したタイミングで値が反映されます。"))
+            self._fno_ctrl.SetToolTip(
+                tooltip + __("\nEnterキーを押下したタイミングで値が反映されます。")
+            )
 
-        self._slider = wx.Slider(parent, wx.ID_ANY, 0, 0, self._max, position, size, wx.SL_HORIZONTAL)
+        self._slider = wx.Slider(
+            parent, wx.ID_ANY, 0, 0, self._max, position, size, wx.SL_HORIZONTAL
+        )
         self._slider.Bind(wx.EVT_SCROLL, self._on_scroll)
         self._slider.Bind(wx.EVT_SCROLL_THUMBRELEASE, self._on_scroll_release)
         self._slider.Bind(wx.EVT_MOUSEWHEEL, self._on_wheel_spin)
         if tooltip:
-            self._slider.SetToolTip(tooltip + "\n" + __("マウスホイールでのスクロールは変更のあったキーフレに次々に飛びます"))
+            self._slider.SetToolTip(
+                tooltip
+                + "\n"
+                + __(
+                    "マウスホイールでのスクロールは変更のあったキーフレに次々に飛びます"
+                )
+            )
 
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer.Add(self._fno_ctrl, 0, wx.LEFT | wx.TOP | wx.BOTTOM, border)

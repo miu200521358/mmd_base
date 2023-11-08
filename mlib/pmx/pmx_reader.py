@@ -76,7 +76,11 @@ class PmxReader(BaseReader[PmxModel]):
             "2.1",
         ]:
             # 整合性チェック
-            raise MParseException("PMX2.0/2.1形式外のデータです。signature: %s, version: %s ", model.signature, model.version)
+            raise MParseException(
+                "PMX2.0/2.1形式外のデータです。signature: %s, version: %s ",
+                model.signature,
+                model.version,
+            )
 
         # 後続するデータ列のバイトサイズ  PMX2.0は 8 で固定
         _ = self.read_byte()
@@ -110,14 +114,28 @@ class PmxReader(BaseReader[PmxModel]):
         logger.info("PMXモデルデータ読み取り開始")
 
         # モデルの各要素サイズから読み取り処理を設定
-        self.read_vertex_index, self.vertex_index_format = self.define_read_index(model.vertex_count, is_vertex=True)
-        self.read_texture_index, self.texture_index_format = self.define_read_index(model.texture_count)
-        self.read_material_index, self.material_index_format = self.define_read_index(model.material_count)
-        self.read_bone_index, self.bone_index_format = self.define_read_index(model.bone_count)
-        self.read_morph_index, self.morph_index_format = self.define_read_index(model.morph_count)
-        self.read_rigidbody_index, self.rigidbody_index_format = self.define_read_index(model.rigidbody_count)
+        self.read_vertex_index, self.vertex_index_format = self.define_read_index(
+            model.vertex_count, is_vertex=True
+        )
+        self.read_texture_index, self.texture_index_format = self.define_read_index(
+            model.texture_count
+        )
+        self.read_material_index, self.material_index_format = self.define_read_index(
+            model.material_count
+        )
+        self.read_bone_index, self.bone_index_format = self.define_read_index(
+            model.bone_count
+        )
+        self.read_morph_index, self.morph_index_format = self.define_read_index(
+            model.morph_count
+        )
+        self.read_rigidbody_index, self.rigidbody_index_format = self.define_read_index(
+            model.rigidbody_count
+        )
 
-        self.read_by_format[Vertex] = StructUnpackType(self.read_vertices, Struct(f"<{'fff' * 2}{'ff'}").unpack_from, 4 * 8)
+        self.read_by_format[Vertex] = StructUnpackType(
+            self.read_vertices, Struct(f"<{'fff' * 2}{'ff'}").unpack_from, 4 * 8
+        )
         self.read_by_format[Bdef2] = StructUnpackType(
             self.read_vertices,
             Struct(f"<{self.bone_index_format * 2}f").unpack_from,
@@ -224,7 +242,9 @@ class PmxReader(BaseReader[PmxModel]):
                 vertex.normal.z,
                 vertex.uv.x,
                 vertex.uv.y,
-            ) = self.unpack(self.read_by_format[Vertex].unpack, self.read_by_format[Vertex].size)
+            ) = self.unpack(
+                self.read_by_format[Vertex].unpack, self.read_by_format[Vertex].size
+            )
 
             for j in range(model.extended_uv_count):
                 vertex.extended_uvs.append(self.read_MVector4D())
@@ -273,7 +293,9 @@ class PmxReader(BaseReader[PmxModel]):
             model.vertex_count * faces_vertex_count,
         )
 
-        for i, (v0, v1, v2) in enumerate(zip(faces_vertices[:-2:3], faces_vertices[1:-1:3], faces_vertices[2::3])):
+        for i, (v0, v1, v2) in enumerate(
+            zip(faces_vertices[:-2:3], faces_vertices[1:-1:3], faces_vertices[2::3])
+        ):
             face = Face(i, v0, v1, v2)
             model.faces.append(face)
 
@@ -332,7 +354,9 @@ class PmxReader(BaseReader[PmxModel]):
                 material.sphere_texture_index,
                 material.sphere_mode,
                 material.toon_sharing_flg,
-            ) = self.unpack(self.read_by_format[Material].unpack, self.read_by_format[Material].size)
+            ) = self.unpack(
+                self.read_by_format[Material].unpack, self.read_by_format[Material].size
+            )
 
             material.draw_flg = DrawFlg(draw_flg)
 
@@ -432,9 +456,15 @@ class PmxReader(BaseReader[PmxModel]):
 
             for _ in range(self.read_int()):
                 if morph.morph_type == MorphType.GROUP:
-                    morph.offsets.append(GroupMorphOffset(self.read_morph_index(), self.read_float()))
+                    morph.offsets.append(
+                        GroupMorphOffset(self.read_morph_index(), self.read_float())
+                    )
                 elif morph.morph_type == MorphType.VERTEX:
-                    morph.offsets.append(VertexMorphOffset(self.read_vertex_index(), self.read_MVector3D()))
+                    morph.offsets.append(
+                        VertexMorphOffset(
+                            self.read_vertex_index(), self.read_MVector3D()
+                        )
+                    )
                 elif morph.morph_type == MorphType.BONE:
                     morph.offsets.append(
                         BoneMorphOffset(
@@ -450,7 +480,9 @@ class PmxReader(BaseReader[PmxModel]):
                     MorphType.EXTENDED_UV3,
                     MorphType.EXTENDED_UV4,
                 ]:
-                    morph.offsets.append(UvMorphOffset(self.read_vertex_index(), self.read_MVector4D()))
+                    morph.offsets.append(
+                        UvMorphOffset(self.read_vertex_index(), self.read_MVector4D())
+                    )
                 elif morph.morph_type == MorphType.MATERIAL:
                     morph.offsets.append(
                         MaterialMorphOffset(
@@ -492,10 +524,14 @@ class PmxReader(BaseReader[PmxModel]):
                 reference.display_type = DisplayType(self.read_byte())
                 if reference.display_type == DisplayType.BONE:
                     reference.display_index = self.read_bone_index()
-                    model.bones[reference.display_index].display_slot = display_slot.index
+                    model.bones[
+                        reference.display_index
+                    ].display_slot = display_slot.index
                 else:
                     reference.display_index = self.read_morph_index()
-                    model.morphs[reference.display_index].display_slot = display_slot.index
+                    model.morphs[
+                        reference.display_index
+                    ].display_slot = display_slot.index
                 display_slot.references.append(reference)
 
             model.display_slots.append(display_slot)

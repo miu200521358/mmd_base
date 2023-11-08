@@ -26,7 +26,9 @@ class Interpolation(BaseModel):
     def normalize(self, begin: MVector2D, finish: MVector2D) -> None:
         diff = finish - begin
         self.start = Interpolation.round_mmd((self.start - begin) / diff, MVector2D())
-        self.end = Interpolation.round_mmd((self.end - begin) / diff, MVector2D(IP_MAX, IP_MAX))
+        self.end = Interpolation.round_mmd(
+            (self.end - begin) / diff, MVector2D(IP_MAX, IP_MAX)
+        )
 
     @classmethod
     def round_mmd(cls, t: MVector2D, s: MVector2D) -> MVector2D:
@@ -57,7 +59,9 @@ class Interpolation(BaseModel):
         return f"[start={self.start}, end={self.end}]"
 
 
-def split_interpolation(interpolation: Interpolation, start: int, now: int, end: int) -> tuple[Interpolation, Interpolation]:
+def split_interpolation(
+    interpolation: Interpolation, start: int, now: int, end: int
+) -> tuple[Interpolation, Interpolation]:
     if (now - start) == 0 or (end - start) == 0:
         return Interpolation(), Interpolation()
 
@@ -100,7 +104,9 @@ def split_interpolation(interpolation: Interpolation, start: int, now: int, end:
 
 
 def get_infections(values: list[float], threshold: float) -> np.ndarray:
-    extract_idxs = get_threshold_infections(np.array(values, dtype=np.float64), threshold)
+    extract_idxs = get_threshold_infections(
+        np.array(values, dtype=np.float64), threshold
+    )
     if 2 > len(extract_idxs):
         return np.array([])
     extracts = np.array(values, dtype=np.float64)[extract_idxs]
@@ -110,7 +116,9 @@ def get_infections(values: list[float], threshold: float) -> np.ndarray:
 
 
 def get_fix_infections(values: list[float]) -> np.ndarray:
-    return np.where(np.diff(np.where(np.isclose(np.abs(np.diff(values)), 0.0))[0]) > 2)[0]
+    return np.where(np.diff(np.where(np.isclose(np.abs(np.diff(values)), 0.0))[0]) > 2)[
+        0
+    ]
 
 
 def get_threshold_infections(values: np.ndarray, threshold: float) -> np.ndarray:
@@ -167,7 +175,9 @@ def create_interpolation(values: list[float]):
     org_ip = Interpolation()
     org_ip.start = MVector2D(nodes[0, 1], nodes[1, 1])
     org_ip.end = MVector2D(nodes[0, 2], nodes[1, 2])
-    org_ip.normalize(MVector2D(nodes[0, 0], nodes[1, 0]), MVector2D(nodes[0, 3], nodes[1, 3]))
+    org_ip.normalize(
+        MVector2D(nodes[0, 0], nodes[1, 0]), MVector2D(nodes[0, 3], nodes[1, 3])
+    )
 
     return org_ip
 
@@ -176,7 +186,9 @@ def create_interpolation(values: list[float]):
 # https://shspage.hatenadiary.org/entry/20140625/1403702735
 # https://bezier.readthedocs.io/en/stable/python/reference/bezier.curve.html#bezier.curve.Curve.evaluate
 # https://edvakf.hatenadiary.org/entry/20111016/1318716097
-def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> tuple[float, float, float]:
+def evaluate(
+    interpolation: Interpolation, start: int, now: int, end: int
+) -> tuple[float, float, float]:
     """
     補間曲線を求める
 
@@ -204,7 +216,10 @@ def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> tu
     if 1 <= x:
         return 1.0, 1.0, 1.0
 
-    if interpolation.start.x == interpolation.start.y and interpolation.end.x == interpolation.end.y:
+    if (
+        interpolation.start.x == interpolation.start.y
+        and interpolation.end.x == interpolation.end.y
+    ):
         # 前後が同じ場合、必ず線形補間になる
         return x, x, x
 
@@ -217,7 +232,9 @@ def evaluate(interpolation: Interpolation, start: int, now: int, end: int) -> tu
 
 
 @lru_cache(maxsize=None)
-def cache_evaluate(x: float, x1: float, y1: float, x2: float, y2: float) -> tuple[float, float, float]:
+def cache_evaluate(
+    x: float, x1: float, y1: float, x2: float, y2: float
+) -> tuple[float, float, float]:
     t = newton(x1, x2, x)
     s = 1 - t
 
@@ -239,7 +256,9 @@ def newton(x1, x2, x, t0=0.5, eps=1e-10, error=1e-10) -> float:
     for _ in range(10):
         func_f_value = cached_func_f(x1, x2, x, t0)
         # 中心差分による微分値
-        func_df = (cached_func_f(x1, x2, x, t0 + eps) - cached_func_f(x1, x2, x, t0 - eps)) / derivative
+        func_df = (
+            cached_func_f(x1, x2, x, t0 + eps) - cached_func_f(x1, x2, x, t0 - eps)
+        ) / derivative
         if eps >= abs(func_df):
             break
         # 次の解を計算

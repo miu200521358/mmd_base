@@ -70,7 +70,15 @@ class MRect(BaseModel):
 
 @lru_cache(maxsize=None)
 def calc_v3_by_ratio(
-    prev_x: float, prev_y: float, prev_z: float, next_x: float, next_y: float, next_z: float, ratio_x: float, ratio_y: float, ratio_z: float
+    prev_x: float,
+    prev_y: float,
+    prev_z: float,
+    next_x: float,
+    next_y: float,
+    next_z: float,
+    ratio_x: float,
+    ratio_y: float,
+    ratio_z: float,
 ) -> np.ndarray:
     prev_v = np.array([prev_x, prev_y, prev_z], dtype=np.float64)
     next_v = np.array([next_x, next_y, next_z], dtype=np.float64)
@@ -114,7 +122,13 @@ class MVector(BaseModel):
 
     def effective(self: MVectorT, rtol: float = 1e-05, atol: float = 1e-08) -> MVectorT:
         vector = np.copy(self.vector)
-        vector[np.where(np.isinf(vector) | np.isnan(vector) | np.isclose(vector, 0, rtol=rtol, atol=atol))] = 0
+        vector[
+            np.where(
+                np.isinf(vector)
+                | np.isnan(vector)
+                | np.isclose(vector, 0, rtol=rtol, atol=atol)
+            )
+        ] = 0
         return self.__class__(*vector)
 
     def round(self: MVectorT, decimals: int) -> MVectorT:
@@ -334,7 +348,9 @@ class MVector(BaseModel):
         return self.vector[index]
 
     @classmethod
-    def std_mean(cls: Type[MVectorT], values: list[MVectorT], err: float = 1.5) -> MVectorT:
+    def std_mean(
+        cls: Type[MVectorT], values: list[MVectorT], err: float = 1.5
+    ) -> MVectorT:
         """標準偏差を加味したmean処理"""
         np_standard_vectors = np.array([v.vector for v in values])
         np_standard_lengths = np.array([v.length() for v in values])
@@ -344,7 +360,10 @@ class MVector(BaseModel):
         # 中央値から標準偏差の一定範囲までの値を取得
         filtered_standard_values = np_standard_vectors[
             (np_standard_lengths >= median_standard_values - err * std_standard_values)
-            & (np_standard_lengths <= median_standard_values + err * std_standard_values)
+            & (
+                np_standard_lengths
+                <= median_standard_values + err * std_standard_values
+            )
         ]
 
         return cls(*np.mean(filtered_standard_values, axis=0))
@@ -446,10 +465,14 @@ class MVector3D(MVector):
 
     @property
     def vector4(self) -> np.ndarray:
-        return np.array([self.vector[0], self.vector[1], self.vector[2], 0], dtype=np.float64)
+        return np.array(
+            [self.vector[0], self.vector[1], self.vector[2], 0], dtype=np.float64
+        )
 
     @staticmethod
-    def calc_by_ratio(prev_v: "MVector3D", next_v: "MVector3D", x: float, y: float, z: float) -> "MVector3D":
+    def calc_by_ratio(
+        prev_v: "MVector3D", next_v: "MVector3D", x: float, y: float, z: float
+    ) -> "MVector3D":
         return MVector3D(*calc_v3_by_ratio(*prev_v.vector, *next_v.vector, x, y, z))
 
     def to_local_matrix4x4(self) -> "MMatrix4x4":
@@ -656,7 +679,10 @@ class MVectorDict:
 
         # 近い方からチェックして同じ距離のキーを保持
         nearest_keys: list[int] = []
-        for nk, nv in zip(np.array(self.keys())[np.argsort(self.distances(v))], np.array(self.values())[np.argsort(self.distances(v))]):
+        for nk, nv in zip(
+            np.array(self.keys())[np.argsort(self.distances(v))],
+            np.array(self.values())[np.argsort(self.distances(v))],
+        ):
             if np.isclose(nv, nearest_value, atol=atol, rtol=rtol).all():
                 nearest_keys.append(int(nk))
             else:
@@ -730,7 +756,8 @@ class MVectorDict:
         """
         near_values = MVectorDict()
         for nk, nv in zip(
-            np.array(self.keys())[np.argsort(self.distances(v))[:count]], np.array(self.values())[np.argsort(self.distances(v))[:count]]
+            np.array(self.keys())[np.argsort(self.distances(v))[:count]],
+            np.array(self.values())[np.argsort(self.distances(v))[:count]],
         ):
             near_values.append(nk, v.__class__(*nv))
 
@@ -830,7 +857,10 @@ class MQuaternion(MVector):
         return qq_one != self.vector
 
     def __str__(self) -> str:
-        return f"[x={round(self.x, 5)}, y={round(self.y, 5)}, " + f"z={round(self.z, 5)}, scalar={round(self.scalar, 5)}]"
+        return (
+            f"[x={round(self.x, 5)}, y={round(self.y, 5)}, "
+            + f"z={round(self.z, 5)}, scalar={round(self.scalar, 5)}]"
+        )
 
     def effective(self, rtol: float = 1e-05, atol: float = 1e-08) -> "MQuaternion":
         vector = np.copy(self.vector.components)
@@ -906,7 +936,10 @@ class MQuaternion(MVector):
         lengthSquared = xx + yy + zz + self.scalar**2
 
         if not np.isclose([lengthSquared, lengthSquared - 1.0], 0).any():
-            xx, xy, xz, xw, yy, yz, yw, zz, zw = np.array([xx, xy, xz, xw, yy, yz, yw, zz, zw], dtype=np.float64) / lengthSquared
+            xx, xy, xz, xw, yy, yz, yw, zz, zw = (
+                np.array([xx, xy, xz, xw, yy, yz, yw, zz, zw], dtype=np.float64)
+                / lengthSquared
+            )
 
         pitch = np.arcsin(max(-1, min(1, -2.0 * (yz - xw))))
         yaw = 0
@@ -974,7 +1007,9 @@ class MQuaternion(MVector):
         mat4x4[:3, :3] = as_rotation_matrix(self.vector)
         return MMatrix4x4(mat4x4)
 
-    def to_matrix4x4_axis(self, local_x_axis: MVector3D, local_z_axis: MVector3D) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def to_matrix4x4_axis(
+        self, local_x_axis: MVector3D, local_z_axis: MVector3D
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         4x4回転行列から3軸の回転行列を生成する
 
@@ -1006,15 +1041,31 @@ class MQuaternion(MVector):
         z_axis = z_axis / norm(z_axis)
         # X = np.array([[1, 0, 0, 0], [0, y_axis[2], -y_axis[1], 0], [0, y_axis[1], y_axis[2], 0], [0, 0, 0, 1]])
         theta = np.arctan2(x_axis[1], x_axis[0])
-        RX = np.array([[1, 0, 0, 0], [0, np.cos(theta), np.sin(theta), 0], [0, -np.sin(theta), np.cos(theta), 0], [0, 0, 0, 1]])
+        RX = np.array(
+            [
+                [1, 0, 0, 0],
+                [0, np.cos(theta), np.sin(theta), 0],
+                [0, -np.sin(theta), np.cos(theta), 0],
+                [0, 0, 0, 1],
+            ]
+        )
 
         # Z軸回転行列を作成
         z_axis_X = np.dot(RX, np.concatenate((z_axis.tolist(), [0.0])))
         theta = np.arctan2(z_axis_X[1], z_axis_X[0])
-        RZ = np.array([[np.cos(theta), np.sin(theta), 0, 0], [-np.sin(theta), np.cos(theta), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+        RZ = np.array(
+            [
+                [np.cos(theta), np.sin(theta), 0, 0],
+                [-np.sin(theta), np.cos(theta), 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1],
+            ]
+        )
 
         # Y軸回転行列を作成
-        RY = np.dot(np.dot(np.linalg.inv(RX), np.linalg.inv(RZ)), np.dot(np.dot(R, RZ), RX))
+        RY = np.dot(
+            np.dot(np.linalg.inv(RX), np.linalg.inv(RZ)), np.dot(np.dot(R, RZ), RX)
+        )
 
         return RX, RY, RZ
 
@@ -1050,8 +1101,12 @@ class MQuaternion(MVector):
         """
         normalized_fixed_axis = fixed_axis.normalized()
         theta = acos(max(-1, min(1, normalized_fixed_axis.dot(self.xyz.normalized()))))
-        fixed_qq_axis: MVector3D = normalized_fixed_axis * (1 if theta < pi / 2 else -1) * self.xyz.length()
-        return MQuaternion(self.scalar, fixed_qq_axis.x, fixed_qq_axis.y, fixed_qq_axis.z).normalized()
+        fixed_qq_axis: MVector3D = (
+            normalized_fixed_axis * (1 if theta < pi / 2 else -1) * self.xyz.length()
+        )
+        return MQuaternion(
+            self.scalar, fixed_qq_axis.x, fixed_qq_axis.y, fixed_qq_axis.z
+        ).normalized()
 
     def to_other_axis_rotation(self, other_axis: MVector3D) -> "MQuaternion":
         """
@@ -1067,7 +1122,9 @@ class MQuaternion(MVector):
         MQuaternion
         """
         R = self.to_matrix4x4().vector
-        self_axis = MVector3D(R[2, 1] - R[1, 2], R[0, 2] - R[2, 0], R[1, 0] - R[0, 1]).normalized()
+        self_axis = MVector3D(
+            R[2, 1] - R[1, 2], R[0, 2] - R[2, 0], R[1, 0] - R[0, 1]
+        ).normalized()
 
         from_qq = MQuaternion.axis_to_quaternion(self_axis)
         to_qq = MQuaternion.axis_to_quaternion(other_axis)
@@ -1089,7 +1146,9 @@ class MQuaternion(MVector):
 
         return MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
 
-    def separate_euler_degrees_by_axis(self, local_x_axis: MVector3D, local_y_axis: MVector3D, local_z_axis: MVector3D) -> MVector3D:
+    def separate_euler_degrees_by_axis(
+        self, local_x_axis: MVector3D, local_y_axis: MVector3D, local_z_axis: MVector3D
+    ) -> MVector3D:
         """
         ローカル軸基準で オイラー角度を求める
         https://programming-surgeon.com/script/euler-python-script/
@@ -1109,16 +1168,22 @@ class MQuaternion(MVector):
         return degrees
 
     @staticmethod
-    def axis_to_quaternion(axis: MVector3D, target_axis: MVector3D = MVector3D(0, 0, 1)) -> "MQuaternion":
+    def axis_to_quaternion(
+        axis: MVector3D, target_axis: MVector3D = MVector3D(0, 0, 1)
+    ) -> "MQuaternion":
         norm_axis = axis.normalized()
         norm_target_axis = target_axis.normalized()
         cross_product = norm_axis.cross(norm_target_axis)
         dot_product = norm_axis.dot(norm_target_axis)
         radian = np.arccos(dot_product) / 2
-        return MQuaternion(cos(radian), *(cross_product.vector * np.sin(radian))).normalized()
+        return MQuaternion(
+            cos(radian), *(cross_product.vector * np.sin(radian))
+        ).normalized()
 
     @staticmethod
-    def from_euler_degrees(a: Union[int, float, MVector3D], b: float = 0.0, c: float = 0.0):
+    def from_euler_degrees(
+        a: Union[int, float, MVector3D], b: float = 0.0, c: float = 0.0
+    ):
         """
         オイラー角をクォータニオンに変換する
         """
@@ -1227,7 +1292,9 @@ class MQuaternion(MVector):
         if 0.0 > d:
             q2b = -q2b
 
-        return MQuaternion(*(q1.vector.components * (1.0 - t) + q2b.vector.components * t)).normalized()
+        return MQuaternion(
+            *(q1.vector.components * (1.0 - t) + q2b.vector.components * t)
+        ).normalized()
 
     @staticmethod
     def slerp(q1: "MQuaternion", q2: "MQuaternion", t: float):
@@ -1236,7 +1303,9 @@ class MQuaternion(MVector):
         """
         return MQuaternion(*cache_slerp_evaluate(q1.vector, q2.vector, t).components)
 
-    def separate_by_axis(self, global_axis: MVector3D) -> tuple["MQuaternion", "MQuaternion", "MQuaternion", "MQuaternion"]:
+    def separate_by_axis(
+        self, global_axis: MVector3D
+    ) -> tuple["MQuaternion", "MQuaternion", "MQuaternion", "MQuaternion"]:
         # ローカルZ軸ベースで求める場合
         local_z_axis = MVector3D(0, 0, 1)
         # X軸ベクトル
@@ -1639,7 +1708,9 @@ class MMatrix4x4List:
         vs : list[list[np.ndarray]]
             ベクトル(v.vector)
         """
-        vmat = self.vector[..., :3] * np.array([v2 for v1 in vs for v2 in v1], dtype=np.float64).reshape(self.row, self.col, 1, 3)
+        vmat = self.vector[..., :3] * np.array(
+            [v2 for v1 in vs for v2 in v1], dtype=np.float64
+        ).reshape(self.row, self.col, 1, 3)
         self.vector[..., 3] += np.sum(vmat, axis=-1)
 
     def rotate(self, qs: list[list[np.ndarray]]):
@@ -1652,7 +1723,9 @@ class MMatrix4x4List:
             クォータニオンの回転行列(qq.to_matrix4x4().vector)
         """
 
-        self.vector = self.vector @ np.array([q2 for q1 in qs for q2 in q1], dtype=np.float64).reshape(self.row, self.col, 4, 4)
+        self.vector = self.vector @ np.array(
+            [q2 for q1 in qs for q2 in q1], dtype=np.float64
+        ).reshape(self.row, self.col, 4, 4)
 
     def scale(self, vs: list[list[np.ndarray]]):
         """
@@ -1665,7 +1738,9 @@ class MMatrix4x4List:
         """
         # vec4に変換
         ones = np.ones((self.row, self.col, 1))
-        vs4: np.ndarray = np.concatenate((vs, ones.tolist()), axis=2).reshape(self.row, self.col, 4, 1)
+        vs4: np.ndarray = np.concatenate((vs, ones.tolist()), axis=2).reshape(
+            self.row, self.col, 4, 1
+        )
         # スケール行列に変換
         mat4 = np.full((self.row, self.col, 4, 4), np.eye(4)) * vs4
 
@@ -1718,13 +1793,19 @@ class MMatrix4x4List:
 
     def matmul_cols(self) -> "MMatrix4x4List":
         # colを 行列積 するため、ひとつ次元を増やす
-        tile_mats = np.tile(np.eye(4, dtype=np.float64), (self.row, self.col, self.col, 1, 1))
+        tile_mats = np.tile(
+            np.eye(4, dtype=np.float64), (self.row, self.col, self.col, 1, 1)
+        )
         # 斜めにセルを埋めていく
         for c in range(self.col):
-            tile_mats[:, c:, c, :, :] = np.tile(self.vector[:, c], (self.col - c, 1)).reshape(self.row, self.col - c, 4, 4)
+            tile_mats[:, c:, c, :, :] = np.tile(
+                self.vector[:, c], (self.col - c, 1)
+            ).reshape(self.row, self.col - c, 4, 4)
         # 行列積を求める
         result_mats = MMatrix4x4List(self.row, self.col)
-        result_mats.vector = np.tile(np.eye(4, dtype=np.float64), (self.row, self.col, 1, 1))
+        result_mats.vector = np.tile(
+            np.eye(4, dtype=np.float64), (self.row, self.col, 1, 1)
+        )
         result_mats.vector = tile_mats[:, :, 0]
         for c in range(1, self.col):
             result_mats.vector = np.matmul(result_mats.vector, tile_mats[:, :, c])
@@ -1769,7 +1850,12 @@ def operate_vector(v: MVectorT, other: Union[MVectorT, float, int], op) -> MVect
     return v2
 
 
-def intersect_line_plane(line_point: MVector3D, line_direction: MVector3D, plane_point: MVector3D, plane_normal: MVector3D) -> MVector3D:
+def intersect_line_plane(
+    line_point: MVector3D,
+    line_direction: MVector3D,
+    plane_point: MVector3D,
+    plane_normal: MVector3D,
+) -> MVector3D:
     """
     直線と平面の交点を求める処理
 
@@ -1814,7 +1900,9 @@ def intersect_line_point(M: MVector3D, N: MVector3D, P: MVector3D):
     perpendicular_vector = (P - M).vector
 
     # 直線A上での垂線の長さを計算
-    perpendicular_length = np.dot(perpendicular_vector, direction_vector) / np.dot(direction_vector, direction_vector)
+    perpendicular_length = np.dot(perpendicular_vector, direction_vector) / np.dot(
+        direction_vector, direction_vector
+    )
 
     # 直線A上の交点P'を計算
     intersection_point = M.vector + perpendicular_length * direction_vector
@@ -1858,7 +1946,9 @@ def align_triangle(
     local_b2_vec = local_b1_mat.inverse() * b2
 
     # A-1, A-2, B-1, B-2のローカルベクトルを作成
-    A2, A3, B2 = np.array([local_a2_vec.vector, local_a3_vec.vector, local_b2_vec.vector])
+    A2, A3, B2 = np.array(
+        [local_a2_vec.vector, local_a3_vec.vector, local_b2_vec.vector]
+    )
 
     # B-3'を求めるためのベクトルを計算
     v3_prime = A3 / norm(A2) * norm(B2)
@@ -1869,7 +1959,9 @@ def align_triangle(
     return B3_prime
 
 
-def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bone_end: MVector3D) -> np.ndarray:
+def calc_local_positions(
+    vertex_positions: np.ndarray, bone_start: MVector3D, bone_end: MVector3D
+) -> np.ndarray:
     """
     ボーンから見た頂点ローカル位置を求める
 
@@ -1893,7 +1985,10 @@ def calc_local_positions(vertex_positions: np.ndarray, bone_start: MVector3D, bo
     bone_direction = bone_vector.normalized().vector
 
     # 頂点位置からボーンの方向に向かって直交するベクトルの射影を求める
-    orthogonal_positions = np.dot(vertex_positions - bone_start.vector, bone_direction)[:, np.newaxis] * bone_direction
+    orthogonal_positions = (
+        np.dot(vertex_positions - bone_start.vector, bone_direction)[:, np.newaxis]
+        * bone_direction
+    )
 
     # ボーンの方向ベクトル上に存在する直交位置を求める
     orthogonal_positions += bone_start.vector
@@ -1922,13 +2017,16 @@ def filter_values(values: np.ndarray, err: float = 1.5) -> np.ndarray:
 
     # 中央値から標準偏差の一定範囲までの値を取得
     filtered_values = values[
-        (np.all(values >= median_values - (std_values * err), axis=1)) & (np.all(values <= median_values + (std_values * err), axis=1))
+        (np.all(values >= median_values - (std_values * err), axis=1))
+        & (np.all(values <= median_values + (std_values * err), axis=1))
     ]
 
     return filtered_values
 
 
-def transform_lattice(lattice: np.ndarray, transformation_matrix: np.ndarray) -> np.ndarray:
+def transform_lattice(
+    lattice: np.ndarray, transformation_matrix: np.ndarray
+) -> np.ndarray:
     """
     3次元ラティスを指定された変換行列で変形します。
 

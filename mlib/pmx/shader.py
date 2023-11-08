@@ -50,7 +50,9 @@ class Msaa:
         # カラーバッファと深度バッファをMSAAで使うテクスチャに割り当てる
         self.msaa_color_buffer = gl.glGenRenderbuffers(1)
         gl.glBindRenderbuffer(gl.GL_RENDERBUFFER, self.msaa_color_buffer)
-        gl.glRenderbufferStorageMultisample(gl.GL_RENDERBUFFER, self.msaa_samples, gl.GL_RGBA, self.width, self.height)
+        gl.glRenderbufferStorageMultisample(
+            gl.GL_RENDERBUFFER, self.msaa_samples, gl.GL_RGBA, self.width, self.height
+        )
         gl.glFramebufferRenderbuffer(
             gl.GL_FRAMEBUFFER,
             gl.GL_COLOR_ATTACHMENT0,
@@ -134,8 +136,12 @@ class MShader:
         self.far_plane = 100
 
         # light position
-        self.light_position = MVector3D(-20, self.INITIAL_CAMERA_POSITION_Y * 2, self.INITIAL_CAMERA_POSITION_Z * 2)
-        self.light_direction = (self.light_position * MVector3D(-1, -1, -1)).normalized()
+        self.light_position = MVector3D(
+            -20, self.INITIAL_CAMERA_POSITION_Y * 2, self.INITIAL_CAMERA_POSITION_Z * 2
+        )
+        self.light_direction = (
+            self.light_position * MVector3D(-1, -1, -1)
+        ).normalized()
 
         self.bone_matrix_texture_uniform: dict[int, Any] = {}
         self.bone_matrix_texture_id: dict[int, Any] = {}
@@ -204,7 +210,14 @@ class MShader:
 
         # フィット（両方）
         self.fit(
-            self.width, self.height, camera_position, camera_offset_position, camera_degrees, look_at_center, vertical_degrees, aspect_ratio
+            self.width,
+            self.height,
+            camera_position,
+            camera_offset_position,
+            camera_degrees,
+            look_at_center,
+            vertical_degrees,
+            aspect_ratio,
         )
 
     def __del__(self) -> None:
@@ -212,19 +225,25 @@ class MShader:
             try:
                 gl.glDeleteProgram(self.model_program)
             except Exception as e:
-                raise MViewerException(f"MShader glDeleteProgram Failure\n{self.model_program}", e)
+                raise MViewerException(
+                    f"MShader glDeleteProgram Failure\n{self.model_program}", e
+                )
 
         if self.edge_program:
             try:
                 gl.glDeleteProgram(self.edge_program)
             except Exception as e:
-                raise MViewerException(f"MShader glDeleteProgram Failure\n{self.edge_program}", e)
+                raise MViewerException(
+                    f"MShader glDeleteProgram Failure\n{self.edge_program}", e
+                )
 
         if self.bone_program:
             try:
                 gl.glDeleteProgram(self.bone_program)
             except Exception as e:
-                raise MViewerException(f"MShader glDeleteProgram Failure\n{self.bone_program}", e)
+                raise MViewerException(
+                    f"MShader glDeleteProgram Failure\n{self.bone_program}", e
+                )
 
     def load_shader(self, src: str, shader_type) -> int:
         shader = gl.glCreateShader(shader_type)
@@ -237,8 +256,16 @@ class MShader:
             raise Exception(info)
         return shader
 
-    def compile(self, program: Any, vertex_shader_name: str, fragments_shader_name: str, program_type: ProgramType) -> None:
-        vertex_shader_src = Path(os.path.join(os.path.dirname(__file__), "glsl", vertex_shader_name)).read_text(encoding="utf-8")
+    def compile(
+        self,
+        program: Any,
+        vertex_shader_name: str,
+        fragments_shader_name: str,
+        program_type: ProgramType,
+    ) -> None:
+        vertex_shader_src = Path(
+            os.path.join(os.path.dirname(__file__), "glsl", vertex_shader_name)
+        ).read_text(encoding="utf-8")
         if program_type in [ProgramType.MODEL, ProgramType.EDGE]:
             vertex_shader_src = vertex_shader_src % (
                 VsLayout.POSITION_ID.value,
@@ -254,7 +281,9 @@ class MShader:
                 VsLayout.MORPH_AFTER_POS_ID.value,
             )
 
-        fragments_shader_src = Path(os.path.join(os.path.dirname(__file__), "glsl", fragments_shader_name)).read_text(encoding="utf-8")
+        fragments_shader_src = Path(
+            os.path.join(os.path.dirname(__file__), "glsl", fragments_shader_name)
+        ).read_text(encoding="utf-8")
 
         vs = self.load_shader(vertex_shader_src, gl.GL_VERTEX_SHADER)
         if not vs:
@@ -282,18 +311,28 @@ class MShader:
         self.light_ambient4 = self.LIGHT_AMBIENT4
 
         # モデルビュー行列
-        self.model_view_matrix_uniform[program_type.value] = gl.glGetUniformLocation(program, "modelViewMatrix")
+        self.model_view_matrix_uniform[program_type.value] = gl.glGetUniformLocation(
+            program, "modelViewMatrix"
+        )
 
         # MVP行列
-        self.model_view_projection_matrix_uniform[program_type.value] = gl.glGetUniformLocation(program, "modelViewProjectionMatrix")
+        self.model_view_projection_matrix_uniform[
+            program_type.value
+        ] = gl.glGetUniformLocation(program, "modelViewProjectionMatrix")
 
         # ボーン変形行列用テクスチャ
 
         # テクスチャを作成する
         self.bone_matrix_texture_id[program_type.value] = gl.glGenTextures(1)
-        self.bone_matrix_texture_uniform[program_type.value] = gl.glGetUniformLocation(program, "boneMatrixTexture")
-        self.bone_matrix_texture_width[program_type.value] = gl.glGetUniformLocation(program, "boneMatrixWidth")
-        self.bone_matrix_texture_height[program_type.value] = gl.glGetUniformLocation(program, "boneMatrixHeight")
+        self.bone_matrix_texture_uniform[program_type.value] = gl.glGetUniformLocation(
+            program, "boneMatrixTexture"
+        )
+        self.bone_matrix_texture_width[program_type.value] = gl.glGetUniformLocation(
+            program, "boneMatrixWidth"
+        )
+        self.bone_matrix_texture_height[program_type.value] = gl.glGetUniformLocation(
+            program, "boneMatrixHeight"
+        )
 
         self.msaa = Msaa(self.width, self.height)
 
@@ -301,51 +340,98 @@ class MShader:
             # エッジシェーダーへの割り当て
 
             # エッジ設定
-            self.edge_color_uniform[program_type.value] = gl.glGetUniformLocation(program, "edgeColor")
-            self.edge_size_uniform[program_type.value] = gl.glGetUniformLocation(program, "edgeSize")
+            self.edge_color_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "edgeColor"
+            )
+            self.edge_size_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "edgeSize"
+            )
         if program_type == ProgramType.BONE:
             # 選択ボーン色
-            self.select_bone_color_uniform[program_type.value] = gl.glGetUniformLocation(program, "selectBoneColor")
+            self.select_bone_color_uniform[
+                program_type.value
+            ] = gl.glGetUniformLocation(program, "selectBoneColor")
             # 非選択ボーン色
-            self.unselect_bone_color_uniform[program_type.value] = gl.glGetUniformLocation(program, "unselectBoneColor")
-            self.bone_count_uniform[program_type.value] = gl.glGetUniformLocation(program, "boneCount")
+            self.unselect_bone_color_uniform[
+                program_type.value
+            ] = gl.glGetUniformLocation(program, "unselectBoneColor")
+            self.bone_count_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "boneCount"
+            )
         else:
             # モデルシェーダーへの割り当て
 
-            self.light_direction_uniform[program_type.value] = gl.glGetUniformLocation(program, "lightDirection")
-            gl.glUniform3f(self.light_direction_uniform[program_type.value], *self.light_direction.vector)
+            self.light_direction_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "lightDirection"
+            )
+            gl.glUniform3f(
+                self.light_direction_uniform[program_type.value],
+                *self.light_direction.vector,
+            )
 
             # カメラの位置
-            self.camera_vec_uniform[program_type.value] = gl.glGetUniformLocation(program, "cameraPos")
+            self.camera_vec_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "cameraPos"
+            )
 
             # --------
 
             # マテリアル設定
-            self.diffuse_uniform[program_type.value] = gl.glGetUniformLocation(program, "diffuse")
-            self.ambient_uniform[program_type.value] = gl.glGetUniformLocation(program, "ambient")
-            self.specular_uniform[program_type.value] = gl.glGetUniformLocation(program, "specular")
+            self.diffuse_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "diffuse"
+            )
+            self.ambient_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "ambient"
+            )
+            self.specular_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "specular"
+            )
 
             # --------
 
             # テクスチャの設定
-            self.use_texture_uniform[program_type.value] = gl.glGetUniformLocation(program, "useTexture")
-            self.texture_uniform[program_type.value] = gl.glGetUniformLocation(program, "textureSampler")
-            self.texture_factor_uniform[program_type.value] = gl.glGetUniformLocation(program, "textureFactor")
+            self.use_texture_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "useTexture"
+            )
+            self.texture_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "textureSampler"
+            )
+            self.texture_factor_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "textureFactor"
+            )
 
             # Toonの設定
-            self.use_toon_uniform[program_type.value] = gl.glGetUniformLocation(program, "useToon")
-            self.toon_uniform[program_type.value] = gl.glGetUniformLocation(program, "toonSampler")
-            self.toon_factor_uniform[program_type.value] = gl.glGetUniformLocation(program, "toonFactor")
+            self.use_toon_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "useToon"
+            )
+            self.toon_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "toonSampler"
+            )
+            self.toon_factor_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "toonFactor"
+            )
 
             # Sphereの設定
-            self.use_sphere_uniform[program_type.value] = gl.glGetUniformLocation(program, "useSphere")
-            self.sphere_mode_uniform[program_type.value] = gl.glGetUniformLocation(program, "sphereMode")
-            self.sphere_uniform[program_type.value] = gl.glGetUniformLocation(program, "sphereSampler")
-            self.sphere_factor_uniform[program_type.value] = gl.glGetUniformLocation(program, "sphereFactor")
+            self.use_sphere_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "useSphere"
+            )
+            self.sphere_mode_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "sphereMode"
+            )
+            self.sphere_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "sphereSampler"
+            )
+            self.sphere_factor_uniform[program_type.value] = gl.glGetUniformLocation(
+                program, "sphereFactor"
+            )
 
             # ウェイトの描写
-            self.is_show_bone_weight_uniform[program_type.value] = gl.glGetUniformLocation(program, "isShowBoneWeight")
-            self.show_bone_indexes_uniform[program_type.value] = gl.glGetUniformLocation(program, "showBoneIndexes")
+            self.is_show_bone_weight_uniform[
+                program_type.value
+            ] = gl.glGetUniformLocation(program, "isShowBoneWeight")
+            self.show_bone_indexes_uniform[
+                program_type.value
+            ] = gl.glGetUniformLocation(program, "showBoneIndexes")
 
     def update_camera(
         self,
@@ -367,7 +453,9 @@ class MShader:
             self.far_plane,
         )
 
-        self.projection_matrix = np.array(gl.glGetFloatv(gl.GL_PROJECTION_MATRIX), dtype=np.float32)
+        self.projection_matrix = np.array(
+            gl.glGetFloatv(gl.GL_PROJECTION_MATRIX), dtype=np.float32
+        )
         camera_rotation = MQuaternion.from_euler_degrees(camera_degrees)
 
         # カメラ位置
@@ -380,7 +468,9 @@ class MShader:
 
             # カメラの上方向
             look_at_right = (camera_rotation * MVector3D(1, 0, 0)).normalized()
-            look_at_up = look_at_right.cross(result_camera_position - look_at_center).normalized()
+            look_at_up = look_at_right.cross(
+                result_camera_position - look_at_center
+            ).normalized()
         else:
             look_at_right = MVector3D(1, 0, 0)
             look_at_up = MVector3D(0, 1, 0)
@@ -392,16 +482,25 @@ class MShader:
         # 視点位置の決定
         gl.glMatrixMode(gl.GL_MODELVIEW)
         gl.glLoadIdentity()
-        glu.gluLookAt(*result_camera_position.vector, *look_at_center.vector, *look_at_up.vector)
+        glu.gluLookAt(
+            *result_camera_position.vector, *look_at_center.vector, *look_at_up.vector
+        )
 
-        model_view_matrix = np.array(gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX), dtype=np.float32)
-        model_view_projection_matrix = np.matmul(model_view_matrix, self.projection_matrix)
+        model_view_matrix = np.array(
+            gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX), dtype=np.float32
+        )
+        model_view_projection_matrix = np.matmul(
+            model_view_matrix, self.projection_matrix
+        )
 
         for program_type in ProgramType:
             self.use(program_type)
 
             if result_camera_position is not None and program_type == ProgramType.MODEL:
-                gl.glUniform3f(self.camera_vec_uniform[program_type.value], *result_camera_position.vector)
+                gl.glUniform3f(
+                    self.camera_vec_uniform[program_type.value],
+                    *result_camera_position.vector,
+                )
 
             gl.glUniformMatrix4fv(
                 self.model_view_matrix_uniform[program_type.value],
@@ -439,7 +538,14 @@ class MShader:
         # ビューポートの設定
         gl.glViewport(0, 0, self.width, self.height)
 
-        self.update_camera(camera_position, camera_offset_position, camera_degrees, look_at_center, vertical_degrees, aspect_ratio)
+        self.update_camera(
+            camera_position,
+            camera_offset_position,
+            camera_degrees,
+            look_at_center,
+            vertical_degrees,
+            aspect_ratio,
+        )
 
     def use(self, program_type: ProgramType) -> None:
         if program_type == ProgramType.MODEL:

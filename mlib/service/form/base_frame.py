@@ -4,7 +4,15 @@ import wx
 
 
 class BaseFrame(wx.Frame):
-    def __init__(self, app: wx.App, title: str, size: wx.Size, *args, parent: Optional["BaseFrame"] = None, **kw):
+    def __init__(
+        self,
+        app: wx.App,
+        title: str,
+        size: wx.Size,
+        *args,
+        parent: Optional["BaseFrame"] = None,
+        **kw,
+    ):
         wx.Frame.__init__(
             self,
             None,

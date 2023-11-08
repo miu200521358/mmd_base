@@ -153,5 +153,7 @@ class BaseIndexNameModel(BaseModel):
     def __iadd__(self: TBaseIndexNameModel, v: TBaseIndexNameModel) -> None:
         raise NotImplementedError()
 
-    def __add__(self: TBaseIndexNameModel, v: TBaseIndexNameModel) -> TBaseIndexNameModel:
+    def __add__(
+        self: TBaseIndexNameModel, v: TBaseIndexNameModel
+    ) -> TBaseIndexNameModel:
         raise NotImplementedError()

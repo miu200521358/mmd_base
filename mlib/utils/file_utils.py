@@ -19,7 +19,9 @@ def get_root_dir() -> str:
     exeに固めた後のルートディレクトリパスも取得
     """
     exec_path = sys.argv[0]
-    root_path = Path(exec_path).parent if hasattr(sys, "frozen") else Path(__file__).parent
+    root_path = (
+        Path(exec_path).parent if hasattr(sys, "frozen") else Path(__file__).parent
+    )
 
     return str(root_path)
 
@@ -82,7 +84,9 @@ def save_histories(histories: dict[str, list[Any]]):
         with open(os.path.join(root_dir, "history.json"), "w", encoding="utf-8") as f:
             json.dump(limited_histories, f, ensure_ascii=False)
     except Exception as e:
-        logger.error("履歴ファイルの保存に失敗しました", e, decoration=MLogger.Decoration.BOX)
+        logger.error(
+            "履歴ファイルの保存に失敗しました", e, decoration=MLogger.Decoration.BOX
+        )
 
 
 def get_dir_path(path: str) -> str:
@@ -99,7 +103,10 @@ def get_dir_path(path: str) -> str:
         # ファイルパスをオブジェクトとして解決し、親を取得する
         return str(Path(file_paths[0]).resolve().parents[0])
     except Exception:
-        logger.error("ファイルパスの解析に失敗しました。\nパスに使えない文字がないか確認してください。\nファイルパス: {path}", path=path)
+        logger.error(
+            "ファイルパスの解析に失敗しました。\nパスに使えない文字がないか確認してください。\nファイルパス: {path}",
+            path=path,
+        )
         return ""
 
 
@@ -203,4 +210,8 @@ def escape_path(path: str):
 
 def get_clear_path(path: str):
     """ファイルパスに出力する用に出力出来ない文字を削除する"""
-    return re.sub(r"(\:|\;|\"|\'|\*|\+|\.|\?|\{|\}|\(|\)|\[|\]|\<|\>|\^|\$|\-|\||\/|\\)", r"", path)
+    return re.sub(
+        r"(\:|\;|\"|\'|\*|\+|\.|\?|\{|\}|\(|\)|\[|\]|\<|\>|\^|\$|\-|\||\/|\\)",
+        r"",
+        path,
+    )

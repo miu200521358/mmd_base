@@ -34,10 +34,16 @@ class BoneTree(BaseIndexNameDictModel[Bone]):
 
         return bone.position - self[bone.parent_index]
 
-    def filter(self, start_bone_name: str, end_bone_name: Optional[str] = None) -> "BoneTree":
-        start_index = [i for i, b in enumerate(self.data.values()) if b.name == start_bone_name][0]
+    def filter(
+        self, start_bone_name: str, end_bone_name: Optional[str] = None
+    ) -> "BoneTree":
+        start_index = [
+            i for i, b in enumerate(self.data.values()) if b.name == start_bone_name
+        ][0]
         if end_bone_name:
-            end_index = [i for i, b in enumerate(self.data.values()) if b.name == end_bone_name][0]
+            end_index = [
+                i for i, b in enumerate(self.data.values()) if b.name == end_bone_name
+            ][0]
         else:
             end_bone_name = self.last_name
             end_index = self.last_index
@@ -76,7 +82,9 @@ class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
         if name in STANDARD_BONE_NAMES:
             return True
 
-        for bone_tree in [bt for bt in self.data.values() if name in bt.names and name != bt.last_name]:
+        for bone_tree in [
+            bt for bt in self.data.values() if name in bt.names and name != bt.last_name
+        ]:
             bone_find_index = [i for i, b in enumerate(bone_tree) if b.name == name][0]
             is_parent_standard = False
             is_child_standard = False
@@ -100,7 +108,9 @@ class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
         if name in STANDARD_BONE_NAMES:
             return False
 
-        for bone_tree in [bt for bt in self.data.values() if name in bt.names and name != bt.last_name]:
+        for bone_tree in [
+            bt for bt in self.data.values() if name in bt.names and name != bt.last_name
+        ]:
             bone_find_index = [i for i, b in enumerate(bone_tree) if b.name == name][0]
             # 子系統に準標準ボーンが含まれている場合、TRUE
             for child_name in bone_tree.names[bone_find_index + 1 :]:
@@ -112,7 +122,9 @@ class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
     def get_standard_children(self, name: str) -> list[Bone]:
         """子ボーンの準標準ボーンを所得"""
         bones: list[Bone] = []
-        for bone_tree in [bt for bt in self.data.values() if name in bt.names and name != bt.last_name]:
+        for bone_tree in [
+            bt for bt in self.data.values() if name in bt.names and name != bt.last_name
+        ]:
             bone_find_index = [i for i, b in enumerate(bone_tree) if b.name == name][0]
             # 子系統に準標準ボーンが含まれている場合、TRUE
             for child_name in bone_tree.names[bone_find_index + 1 :]:
@@ -152,11 +164,19 @@ class BoneTrees(BaseIndexNameDictWrapperModel[BoneTree]):
         """指定されたボーンを親に持つ子ボーンリストの取得"""
         child_bone_names: list[str] = []
 
-        for bone_tree in [bt for bt in self.data.values() if bone_name in bt.names and bone_name != bt.last_name]:
-            bone_find_index = [i for i, b in enumerate(bone_tree) if b.name == bone_name][0]
+        for bone_tree in [
+            bt
+            for bt in self.data.values()
+            if bone_name in bt.names and bone_name != bt.last_name
+        ]:
+            bone_find_index = [
+                i for i, b in enumerate(bone_tree) if b.name == bone_name
+            ][0]
             # 自分を親に持つ子ボーン名のリストを保持
             for child_name in bone_tree.names[bone_find_index + 1 :]:
-                if (is_standard and child_name in STANDARD_BONE_NAMES) or not is_standard:
+                if (
+                    is_standard and child_name in STANDARD_BONE_NAMES
+                ) or not is_standard:
                     child_bone_names.append(child_name)
 
         return child_bone_names

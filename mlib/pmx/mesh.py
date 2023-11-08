@@ -22,12 +22,16 @@ class VAO:
             try:
                 self.sub_vao_id = gl.glGenVertexArrays(1)
             except Exception as e:
-                raise MViewerException(f"VBO glGenVertexArrays Failure\n{self.sub_vao_id}", e)
+                raise MViewerException(
+                    f"VBO glGenVertexArrays Failure\n{self.sub_vao_id}", e
+                )
         else:
             try:
                 self.vao_id = gl.glGenVertexArrays(1)
             except Exception as e:
-                raise MViewerException(f"VBO glGenVertexArrays Failure\n{self.vao_id}", e)
+                raise MViewerException(
+                    f"VBO glGenVertexArrays Failure\n{self.vao_id}", e
+                )
 
         error_code = gl.glGetError()
         if error_code != gl.GL_NO_ERROR:
@@ -47,21 +51,29 @@ class VAO:
             try:
                 gl.glDeleteVertexArrays(1, [self.vao_id])
             except Exception as e:
-                raise MViewerException(f"VBO glDeleteVertexArrays Failure\n{self.vao_id}", e)
+                raise MViewerException(
+                    f"VBO glDeleteVertexArrays Failure\n{self.vao_id}", e
+                )
 
             error_code = gl.glGetError()
             if error_code != gl.GL_NO_ERROR:
-                raise MViewerException(f"VAO glDeleteVertexArrays Failure\n{self.vao_id}: {error_code}")
+                raise MViewerException(
+                    f"VAO glDeleteVertexArrays Failure\n{self.vao_id}: {error_code}"
+                )
 
         if self.sub_vao_id:
             try:
                 gl.glDeleteVertexArrays(1, [self.sub_vao_id])
             except Exception as e:
-                raise MViewerException(f"VBO glDeleteVertexArrays Failure\n{self.sub_vao_id}", e)
+                raise MViewerException(
+                    f"VBO glDeleteVertexArrays Failure\n{self.sub_vao_id}", e
+                )
 
             error_code = gl.glGetError()
             if error_code != gl.GL_NO_ERROR:
-                raise MViewerException(f"VAO glDeleteVertexArrays Failure\n{self.sub_vao_id}: {error_code}")
+                raise MViewerException(
+                    f"VAO glDeleteVertexArrays Failure\n{self.sub_vao_id}: {error_code}"
+                )
 
 
 class VBO:
@@ -69,7 +81,9 @@ class VBO:
     VBO（Vertex Buffer Object）･･･ 頂点バッファオブジェクト
     """
 
-    def __init__(self, data: np.ndarray, components: dict[int, dict[str, int]], is_sub: bool) -> None:
+    def __init__(
+        self, data: np.ndarray, components: dict[int, dict[str, int]], is_sub: bool
+    ) -> None:
         self.vbo_id: Optional[Any] = None
         self.sub_vbo_id: Optional[Any] = None
 
@@ -112,24 +126,32 @@ class VBO:
 
             error_code = gl.glGetError()
             if error_code != gl.GL_NO_ERROR:
-                raise MViewerException(f"VBO glDeleteBuffers Failure\n{self.vbo_id}: {error_code}")
+                raise MViewerException(
+                    f"VBO glDeleteBuffers Failure\n{self.vbo_id}: {error_code}"
+                )
 
         if self.sub_vbo_id:
             try:
                 gl.glDeleteBuffers(1, [self.sub_vbo_id])
             except Exception as e:
-                raise MViewerException(f"VBO glDeleteBuffers Failure\n{self.sub_vbo_id}", e)
+                raise MViewerException(
+                    f"VBO glDeleteBuffers Failure\n{self.sub_vbo_id}", e
+                )
 
             error_code = gl.glGetError()
             if error_code != gl.GL_NO_ERROR:
-                raise MViewerException(f"VBO glDeleteBuffers Failure\n{self.sub_vbo_id}: {error_code}")
+                raise MViewerException(
+                    f"VBO glDeleteBuffers Failure\n{self.sub_vbo_id}: {error_code}"
+                )
 
     def bind(self, is_sub: bool) -> None:
         if is_sub:
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.sub_vbo_id)
         else:
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo_id)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, self.data.nbytes, self.data, gl.GL_STATIC_DRAW)
+        gl.glBufferData(
+            gl.GL_ARRAY_BUFFER, self.data.nbytes, self.data, gl.GL_STATIC_DRAW
+        )
 
     def unbind(self) -> None:
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
@@ -205,17 +227,23 @@ class IBO:
 
             error_code = gl.glGetError()
             if error_code != gl.GL_NO_ERROR:
-                raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.ibo_id}: {error_code}")
+                raise MViewerException(
+                    f"IBO glDeleteBuffers Failure\n{self.ibo_id}: {error_code}"
+                )
 
         if self.sub_ibo_id:
             try:
                 gl.glDeleteBuffers(1, [self.sub_ibo_id])
             except Exception as e:
-                raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.sub_ibo_id}", e)
+                raise MViewerException(
+                    f"IBO glDeleteBuffers Failure\n{self.sub_ibo_id}", e
+                )
 
             error_code = gl.glGetError()
             if error_code != gl.GL_NO_ERROR:
-                raise MViewerException(f"IBO glDeleteBuffers Failure\n{self.sub_ibo_id}: {error_code}")
+                raise MViewerException(
+                    f"IBO glDeleteBuffers Failure\n{self.sub_ibo_id}: {error_code}"
+                )
 
     def bind(self, is_sub: bool) -> None:
         if is_sub:
@@ -283,41 +311,83 @@ class Mesh(BaseIndexModel):
         # ------------------
         # 材質色設定
         # full.fx の AmbientColor相当
-        gl.glUniform4f(shader.diffuse_uniform[ProgramType.MODEL.value], *material_morphs.diffuse)
-        gl.glUniform3f(shader.ambient_uniform[ProgramType.MODEL.value], *material_morphs.ambient)
-        gl.glUniform4f(shader.specular_uniform[ProgramType.MODEL.value], *material_morphs.specular)
+        gl.glUniform4f(
+            shader.diffuse_uniform[ProgramType.MODEL.value], *material_morphs.diffuse
+        )
+        gl.glUniform3f(
+            shader.ambient_uniform[ProgramType.MODEL.value], *material_morphs.ambient
+        )
+        gl.glUniform4f(
+            shader.specular_uniform[ProgramType.MODEL.value], *material_morphs.specular
+        )
 
         # テクスチャ使用有無
-        gl.glUniform1i(shader.use_texture_uniform[ProgramType.MODEL.value], self.texture is not None and self.texture.valid)
+        gl.glUniform1i(
+            shader.use_texture_uniform[ProgramType.MODEL.value],
+            self.texture is not None and self.texture.valid,
+        )
         if self.texture and self.texture.valid:
             self.texture.bind(is_sub)
             if self.texture.texture_type:
-                gl.glUniform1i(shader.texture_uniform[ProgramType.MODEL.value], self.texture.texture_type.value)
-            gl.glUniform4f(shader.texture_factor_uniform[ProgramType.MODEL.value], *material_morphs.texture_factor)
+                gl.glUniform1i(
+                    shader.texture_uniform[ProgramType.MODEL.value],
+                    self.texture.texture_type.value,
+                )
+            gl.glUniform4f(
+                shader.texture_factor_uniform[ProgramType.MODEL.value],
+                *material_morphs.texture_factor,
+            )
 
         # Toon使用有無
-        gl.glUniform1i(shader.use_toon_uniform[ProgramType.MODEL.value], self.toon_texture is not None and self.toon_texture.valid)
+        gl.glUniform1i(
+            shader.use_toon_uniform[ProgramType.MODEL.value],
+            self.toon_texture is not None and self.toon_texture.valid,
+        )
         if self.toon_texture and self.toon_texture.valid:
             self.toon_texture.bind(is_sub)
             if self.toon_texture.texture_type:
-                gl.glUniform1i(shader.toon_uniform[ProgramType.MODEL.value], self.toon_texture.texture_type.value)
-            gl.glUniform4f(shader.toon_factor_uniform[ProgramType.MODEL.value], *material_morphs.toon_texture_factor)
+                gl.glUniform1i(
+                    shader.toon_uniform[ProgramType.MODEL.value],
+                    self.toon_texture.texture_type.value,
+                )
+            gl.glUniform4f(
+                shader.toon_factor_uniform[ProgramType.MODEL.value],
+                *material_morphs.toon_texture_factor,
+            )
 
         # Sphere使用有無
         gl.glUniform1i(
             shader.use_sphere_uniform[ProgramType.MODEL.value],
-            self.sphere_texture is not None and self.sphere_texture.valid and self.material.sphere_mode != SphereMode.INVALID,
+            self.sphere_texture is not None
+            and self.sphere_texture.valid
+            and self.material.sphere_mode != SphereMode.INVALID,
         )
         if self.sphere_texture and self.sphere_texture.valid:
             self.sphere_texture.bind(is_sub)
-            gl.glUniform1i(shader.sphere_mode_uniform[ProgramType.MODEL.value], self.material.sphere_mode)
+            gl.glUniform1i(
+                shader.sphere_mode_uniform[ProgramType.MODEL.value],
+                self.material.sphere_mode,
+            )
             if self.sphere_texture.texture_type:
-                gl.glUniform1i(shader.sphere_uniform[ProgramType.MODEL.value], self.sphere_texture.texture_type.value)
-            gl.glUniform4f(shader.sphere_factor_uniform[ProgramType.MODEL.value], *material_morphs.sphere_texture_factor)
+                gl.glUniform1i(
+                    shader.sphere_uniform[ProgramType.MODEL.value],
+                    self.sphere_texture.texture_type.value,
+                )
+            gl.glUniform4f(
+                shader.sphere_factor_uniform[ProgramType.MODEL.value],
+                *material_morphs.sphere_texture_factor,
+            )
 
         # ウェイト描写
-        gl.glUniform1i(shader.is_show_bone_weight_uniform[ProgramType.MODEL.value], int(is_show_bone_weight))
-        gl.glUniform1iv(shader.show_bone_indexes_uniform[ProgramType.MODEL.value], len(show_bone_indexes), show_bone_indexes)
+        gl.glUniform1i(
+            shader.is_show_bone_weight_uniform[ProgramType.MODEL.value],
+            int(is_show_bone_weight),
+        )
+        gl.glUniform1iv(
+            shader.show_bone_indexes_uniform[ProgramType.MODEL.value],
+            len(show_bone_indexes),
+            show_bone_indexes,
+        )
 
         try:
             gl.glDrawElements(
@@ -359,8 +429,13 @@ class Mesh(BaseIndexModel):
 
         # ------------------
         # エッジ設定
-        gl.glUniform4f(shader.edge_color_uniform[ProgramType.EDGE.value], *material_morphs.edge_color)
-        gl.glUniform1f(shader.edge_size_uniform[ProgramType.EDGE.value], material_morphs.edge_size)
+        gl.glUniform4f(
+            shader.edge_color_uniform[ProgramType.EDGE.value],
+            *material_morphs.edge_color,
+        )
+        gl.glUniform1f(
+            shader.edge_size_uniform[ProgramType.EDGE.value], material_morphs.edge_size
+        )
 
         try:
             gl.glDrawElements(
@@ -388,7 +463,9 @@ class Mesh(BaseIndexModel):
         gl.glActiveTexture(gl.GL_TEXTURE3)
 
         # テクスチャをバインドする
-        gl.glBindTexture(gl.GL_TEXTURE_2D, shader.bone_matrix_texture_id[program_type.value])
+        gl.glBindTexture(
+            gl.GL_TEXTURE_2D, shader.bone_matrix_texture_id[program_type.value]
+        )
 
         # テクスチャのパラメーターの設定
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAX_LEVEL, 0)

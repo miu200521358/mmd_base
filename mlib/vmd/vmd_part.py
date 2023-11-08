@@ -137,7 +137,9 @@ class BoneInterpolations(BaseModel):
             + f"translation_z[{self.translation_z}], rotation[{self.rotation}]"
         )
 
-    def evaluate(self, prev_index: int, index: int, next_index: int) -> tuple[float, float, float, float]:
+    def evaluate(
+        self, prev_index: int, index: int, next_index: int
+    ) -> tuple[float, float, float, float]:
         # 補間結果Yは、FKキーフレ内で計算する
         _, ry, _ = evaluate(self.rotation, prev_index, index, next_index)
         _, xy, _ = evaluate(self.translation_x, prev_index, index, next_index)
@@ -215,7 +217,9 @@ class BoneInterpolations(BaseModel):
         ]
 
     def __iter__(self) -> Iterator[Interpolation]:
-        return iter([self.translation_x, self.translation_y, self.translation_z, self.rotation])
+        return iter(
+            [self.translation_x, self.translation_y, self.translation_z, self.rotation]
+        )
 
     def __getitem__(self, index: int) -> Interpolation:
         if index == 0:

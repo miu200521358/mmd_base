@@ -44,7 +44,9 @@ class FloatSliderCtrl:
         )
         self._value_ctrl.Bind(wx.EVT_TEXT_ENTER, self._on_change_value)
         if tooltip:
-            self._value_ctrl.SetToolTip(tooltip + __("\nEnterキーを押下したタイミングで値が反映されます。"))
+            self._value_ctrl.SetToolTip(
+                tooltip + __("\nEnterキーを押下したタイミングで値が反映されます。")
+            )
 
         self._slider = wx.Slider(
             parent, wx.ID_ANY, i_value, i_min, i_max, position, size, wx.SL_HORIZONTAL

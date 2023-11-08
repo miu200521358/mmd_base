@@ -38,7 +38,9 @@ def verify_thread(callable: Callable):
     @wraps(callable)
     def f(self, *args, **kwargs):
         thread = current_thread()
-        if (isinstance(thread, SimpleThread) and thread.killed) or thread._kwargs.get("killed"):  # type: ignore
+        if (isinstance(thread, SimpleThread) and thread.killed) or thread._kwargs.get(
+            "killed"
+        ):  # type: ignore
             raise MKilledException
 
         return callable(self, *args, **kwargs)
@@ -133,7 +135,7 @@ class BaseWorker:
                 v=logger.version_name,
                 m=e.message,
                 decoration=MLogger.Decoration.BOX,
-                **e.kwargs
+                **e.kwargs,
             )
             self.result = False
         except Exception:

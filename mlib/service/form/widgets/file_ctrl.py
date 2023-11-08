@@ -68,7 +68,9 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         # ファイルタイトル
         self.title_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.title_ctrl = wx.StaticText(self.parent, wx.ID_ANY, self.title, wx.DefaultPosition, wx.Size(-1, -1), 0)
+        self.title_ctrl = wx.StaticText(
+            self.parent, wx.ID_ANY, self.title, wx.DefaultPosition, wx.Size(-1, -1), 0
+        )
         self.title_ctrl.SetToolTip(__(tooltip))
         self.title_sizer.Add(self.title_ctrl, 0, wx.ALL, 3)
         self.spacer_ctrl = None
@@ -78,7 +80,14 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         # モデル名等の表示
         if self.is_show_name and not self.is_save:
             if name_spacer:
-                self.spacer_ctrl = wx.StaticText(self.parent, wx.ID_ANY, " " * name_spacer, wx.DefaultPosition, wx.Size(-1, -1), 0)
+                self.spacer_ctrl = wx.StaticText(
+                    self.parent,
+                    wx.ID_ANY,
+                    " " * name_spacer,
+                    wx.DefaultPosition,
+                    wx.Size(-1, -1),
+                    0,
+                )
                 self.title_sizer.Add(self.spacer_ctrl, 0, wx.ALL, 3)
 
             self.name_ctrl = wx.TextCtrl(
@@ -89,12 +98,23 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
                 wx.Size(-1, -1),
                 wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS | wx.ALIGN_RIGHT,
             )
-            self.name_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
-            self.name_ctrl.SetToolTip(__("{t}に記録されているモデル名です。\n文字列は選択およびコピー可能です。", t=self.title))
+            self.name_ctrl.SetBackgroundColour(
+                wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
+            )
+            self.name_ctrl.SetToolTip(
+                __(
+                    "{t}に記録されているモデル名です。\n文字列は選択およびコピー可能です。",
+                    t=self.title,
+                )
+            )
             self.title_sizer.Add(self.name_ctrl, 1, wx.ALL, 3)
 
-            self.name_blank_ctrl = wx.StaticText(self.parent, wx.ID_ANY, "   ", wx.DefaultPosition, wx.Size(150, -1), 0)
-            self.name_blank_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
+            self.name_blank_ctrl = wx.StaticText(
+                self.parent, wx.ID_ANY, "   ", wx.DefaultPosition, wx.Size(150, -1), 0
+            )
+            self.name_blank_ctrl.SetBackgroundColour(
+                wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
+            )
             self.title_sizer.Add(self.name_blank_ctrl, 0, wx.ALL, 3)
 
         self.root_sizer.Add(self.title_sizer, 1, wx.EXPAND | wx.ALL, 3)
@@ -104,7 +124,11 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         self.file_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # 読み取りか保存かでスタイルを変える
-        file_ctrl_style = wx.FLP_DEFAULT_STYLE if not self.is_save else wx.FLP_OVERWRITE_PROMPT | wx.FLP_SAVE | wx.FLP_USE_TEXTCTRL
+        file_ctrl_style = (
+            wx.FLP_DEFAULT_STYLE
+            if not self.is_save
+            else wx.FLP_OVERWRITE_PROMPT | wx.FLP_SAVE | wx.FLP_USE_TEXTCTRL
+        )
         self.file_ctrl = wx.FilePickerCtrl(
             self.parent,
             wx.ID_ANY,
@@ -115,7 +139,9 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         self.file_ctrl.GetPickerCtrl().SetLabel(__("開く"))
         self.file_ctrl.SetToolTip(__(tooltip))
         if self.key and self.frame.histories[self.key]:
-            self.file_ctrl.SetInitialDirectory(os.path.dirname(self.frame.histories[self.key][0]))
+            self.file_ctrl.SetInitialDirectory(
+                os.path.dirname(self.frame.histories[self.key][0])
+            )
 
         self.file_sizer.Add(self.file_ctrl, 1, wx.GROW | wx.ALL, 3)
 
@@ -126,7 +152,12 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
                 wx.ID_ANY,
                 label=__("履歴"),
             )
-            self.history_ctrl.SetToolTip(__("これまでに指定された事のある{t}を再指定することができます。", t=self.title))
+            self.history_ctrl.SetToolTip(
+                __(
+                    "これまでに指定された事のある{t}を再指定することができます。",
+                    t=self.title,
+                )
+            )
             self.file_sizer.Add(self.history_ctrl, 0, wx.ALL, 3)
 
         self.root_sizer.Add(self.file_sizer, 0, wx.GROW | wx.ALL, 0)
@@ -150,10 +181,17 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
 
         with wx.SingleChoiceDialog(
             self.frame,
-            __("ファイルを選んでダブルクリック、またはOKボタンをクリックしてください。"),
+            __(
+                "ファイルを選んでダブルクリック、またはOKボタンをクリックしてください。"
+            ),
             caption=__("ファイル履歴選択"),
             choices=histories,
-            style=wx.CAPTION | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.OK | wx.CANCEL | wx.CENTRE,
+            style=wx.CAPTION
+            | wx.CLOSE_BOX
+            | wx.SYSTEM_MENU
+            | wx.OK
+            | wx.CANCEL
+            | wx.CENTRE,
         ) as choiceDialog:
             if choiceDialog.ShowModal() == wx.ID_CANCEL:
                 return
@@ -162,7 +200,9 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
             self.file_ctrl.SetPath(choiceDialog.GetStringSelection())
             self.file_change_event(wx.FileDirPickerEvent())
             self.file_ctrl.UpdatePickerFromTextCtrl()
-            self.file_ctrl.SetInitialDirectory(get_dir_path(choiceDialog.GetStringSelection()))
+            self.file_ctrl.SetInitialDirectory(
+                get_dir_path(choiceDialog.GetStringSelection())
+            )
 
     @property
     def path(self) -> str:
@@ -184,7 +224,9 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
         path = v if v else self.file_ctrl.GetPath()
         if not path.strip():
             return False
-        return (not self.is_save and validate_file(path, self.reader.file_type)) or (self.is_save and validate_save_file(path, self.title))
+        return (not self.is_save and validate_file(path, self.reader.file_type)) or (
+            self.is_save and validate_save_file(path, self.title)
+        )
 
     def unwrap(self) -> None:
         self.file_ctrl.SetPath(unwrapped_path(self.file_ctrl.GetPath()))
@@ -222,7 +264,11 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
 
     def read_digest(self) -> None:
         """リーダー対象オブジェクトのハッシュを読み取る"""
-        if self.is_show_name and not self.is_save and validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
+        if (
+            self.is_show_name
+            and not self.is_save
+            and validate_file(self.file_ctrl.GetPath(), self.reader.file_type)
+        ):
             digest = self.reader.read_hash_by_filepath(self.file_ctrl.GetPath())
             if self.original_data and self.original_data.digest != digest:
                 self.clear_data()
@@ -230,7 +276,9 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
     @property
     def digest(self) -> Optional[str]:
         """ハッシュを読み取る"""
-        if not self.is_save and validate_file(self.file_ctrl.GetPath(), self.reader.file_type):
+        if not self.is_save and validate_file(
+            self.file_ctrl.GetPath(), self.reader.file_type
+        ):
             return self.reader.read_hash_by_filepath(self.file_ctrl.GetPath())
         return None
 
@@ -336,7 +384,19 @@ class MPmxFilePickerCtrl(MFilePickerCtrl[PmxModel, PmxReader]):
         tooltip: str = "",
         file_change_event=None,
     ) -> None:
-        super().__init__(parent, frame, panel, PmxReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)
+        super().__init__(
+            parent,
+            frame,
+            panel,
+            PmxReader(),
+            title,
+            key,
+            is_show_name,
+            name_spacer,
+            is_save,
+            tooltip,
+            file_change_event,
+        )
 
 
 class MVmdFilePickerCtrl(MFilePickerCtrl[VmdMotion, VmdReader]):
@@ -353,7 +413,19 @@ class MVmdFilePickerCtrl(MFilePickerCtrl[VmdMotion, VmdReader]):
         tooltip: str = "",
         file_change_event=None,
     ) -> None:
-        super().__init__(parent, frame, panel, VmdReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)
+        super().__init__(
+            parent,
+            frame,
+            panel,
+            VmdReader(),
+            title,
+            key,
+            is_show_name,
+            name_spacer,
+            is_save,
+            tooltip,
+            file_change_event,
+        )
 
 
 class MImagePickerCtrl(MFilePickerCtrl[ImageModel, ImageReader]):
@@ -370,4 +442,16 @@ class MImagePickerCtrl(MFilePickerCtrl[ImageModel, ImageReader]):
         tooltip: str = "",
         file_change_event=None,
     ) -> None:
-        super().__init__(parent, frame, panel, ImageReader(), title, key, is_show_name, name_spacer, is_save, tooltip, file_change_event)
+        super().__init__(
+            parent,
+            frame,
+            panel,
+            ImageReader(),
+            title,
+            key,
+            is_show_name,
+            name_spacer,
+            is_save,
+            tooltip,
+            file_change_event,
+        )

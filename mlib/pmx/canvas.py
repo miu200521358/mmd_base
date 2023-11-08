@@ -28,7 +28,15 @@ __ = logger.get_text
 
 
 class CanvasPanel(NotebookPanel):
-    def __init__(self, frame: NotebookFrame, tab_idx: int, canvas_width_ratio: float, canvas_height_ratio: float, *args, **kw):
+    def __init__(
+        self,
+        frame: NotebookFrame,
+        tab_idx: int,
+        canvas_width_ratio: float,
+        canvas_height_ratio: float,
+        *args,
+        **kw,
+    ):
         super().__init__(frame, tab_idx)
         self.index = 0
         self.canvas_width_ratio = canvas_width_ratio
@@ -84,7 +92,13 @@ MODEL_BONE_UNSELECT_COLORS = [
 
 
 class ModelSet:
-    def __init__(self, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0, is_sub: bool = False):
+    def __init__(
+        self,
+        model: PmxModel,
+        motion: VmdMotion,
+        bone_alpha: float = 1.0,
+        is_sub: bool = False,
+    ):
         self.model = model
         self.motion = motion
         self.bone_alpha = bone_alpha
@@ -111,22 +125,36 @@ class MotionSet:
             self.fno = 0
             self.gl_matrixes = np.array([np.eye(4) for _ in range(len(model.bones))])
             self.bone_matrixes = VmdBoneFrameTrees()
-            self.vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])
-            self.after_vertex_morph_poses = np.array([np.zeros(3) for _ in range(len(model.vertices))])
-            self.uv_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
-            self.uv1_morph_poses = np.array([np.zeros(4) for _ in range(len(model.vertices))])
-            self.material_morphs = [ShaderMaterial(m, MShader.LIGHT_AMBIENT4) for m in model.materials]
+            self.vertex_morph_poses = np.array(
+                [np.zeros(3) for _ in range(len(model.vertices))]
+            )
+            self.after_vertex_morph_poses = np.array(
+                [np.zeros(3) for _ in range(len(model.vertices))]
+            )
+            self.uv_morph_poses = np.array(
+                [np.zeros(4) for _ in range(len(model.vertices))]
+            )
+            self.uv1_morph_poses = np.array(
+                [np.zeros(4) for _ in range(len(model.vertices))]
+            )
+            self.material_morphs = [
+                ShaderMaterial(m, MShader.LIGHT_AMBIENT4) for m in model.materials
+            ]
 
     def update_morphs(self, model: PmxModel, motion: VmdMotion, fno: int):
         self.vertex_morph_poses = motion.morphs.animate_vertex_morphs(fno, model)
-        self.after_vertex_morph_poses = motion.morphs.animate_after_vertex_morphs(fno, model)
+        self.after_vertex_morph_poses = motion.morphs.animate_after_vertex_morphs(
+            fno, model
+        )
         self.uv_morph_poses = motion.morphs.animate_uv_morphs(fno, model, 0)
         self.uv1_morph_poses = motion.morphs.animate_uv_morphs(fno, model, 1)
         self.material_morphs = motion.morphs.animate_material_morphs(fno, model)
 
-        group_vertex_morph_poses, group_morph_bone_frames, group_materials = motion.morphs.animate_group_morphs(
-            fno, model, self.material_morphs
-        )
+        (
+            group_vertex_morph_poses,
+            group_morph_bone_frames,
+            group_materials,
+        ) = motion.morphs.animate_group_morphs(fno, model, self.material_morphs)
         self.vertex_morph_poses += group_vertex_morph_poses
         self.material_morphs = group_materials
 
@@ -144,7 +172,9 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.is_sub = is_sub
         self.size = self.parent.get_canvas_size()
 
-        glcanvas.GLCanvas.__init__(self, parent, wx.ID_ANY, size=self.size, attribList=attribList)
+        glcanvas.GLCanvas.__init__(
+            self, parent, wx.ID_ANY, size=self.size, attribList=attribList
+        )
         self.context = glcanvas.GLContext(self)
         self.last_pos = wx.Point(0, 0)
         self.now_pos = wx.Point(0, 0)
@@ -270,7 +300,13 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.SetCurrent(self.context)
         logger.test(f"parent: {self.parent}, canvas: {self}, context: {self.context}")
 
-    def append_model_set(self, model: PmxModel, motion: VmdMotion, bone_alpha: float = 1.0, is_sub: bool = False):
+    def append_model_set(
+        self,
+        model: PmxModel,
+        motion: VmdMotion,
+        bone_alpha: float = 1.0,
+        is_sub: bool = False,
+    ):
         logger.test("append_model_set: model_sets")
         self.model_sets.append(ModelSet(model, motion, bone_alpha, is_sub))
         logger.test("append_model_set: animations")
@@ -344,7 +380,10 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.shader.msaa.unbind()
 
         for model_set, animation, select_color, unselect_color in zip(
-            self.model_sets, self.animations, MODEL_BONE_SELECT_COLORS, MODEL_BONE_UNSELECT_COLORS
+            self.model_sets,
+            self.animations,
+            MODEL_BONE_SELECT_COLORS,
+            MODEL_BONE_UNSELECT_COLORS,
         ):
             # ボーンを表示
             if model_set.model:
@@ -353,9 +392,16 @@ class PmxCanvas(glcanvas.GLCanvas):
                 model_set.model.draw_bone(
                     self.shader,
                     animation.gl_matrixes,
-                    select_color * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
-                    unselect_color * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
-                    np.array([(1 if bone_index in animation.selected_bone_indexes else 0) for bone_index in model_set.model.bones.indexes]),
+                    select_color
+                    * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
+                    unselect_color
+                    * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
+                    np.array(
+                        [
+                            (1 if bone_index in animation.selected_bone_indexes else 0)
+                            for bone_index in model_set.model.bones.indexes
+                        ]
+                    ),
                     self.is_sub,
                 )
 
@@ -377,22 +423,30 @@ class PmxCanvas(glcanvas.GLCanvas):
         self.parent.fno = max(0, self.parent.fno - 1)
         self.change_motion(event)
 
-    def change_motion(self, event: wx.Event, is_bone_deform: bool = True, model_index: int = -1):
+    def change_motion(
+        self, event: wx.Event, is_bone_deform: bool = True, model_index: int = -1
+    ):
         if is_bone_deform:
             if 0 > model_index:
                 animations: list[MotionSet] = []
                 for model_set in self.model_sets:
                     logger.test(f"change_motion: MotionSet: {model_set.model.name}")
-                    animations.append(MotionSet(model_set.model, model_set.motion, self.parent.fno))
+                    animations.append(
+                        MotionSet(model_set.model, model_set.motion, self.parent.fno)
+                    )
                 self.animations = animations
             else:
                 self.animations[model_index] = MotionSet(
-                    self.model_sets[model_index].model, self.model_sets[model_index].motion, self.parent.fno
+                    self.model_sets[model_index].model,
+                    self.model_sets[model_index].motion,
+                    self.parent.fno,
                 )
         else:
             for model_set, animation in zip(self.model_sets, self.animations):
                 logger.test(f"change_motion: update_morphs: {model_set.model.name}")
-                animation.update_morphs(model_set.model, model_set.motion, self.parent.fno)
+                animation.update_morphs(
+                    model_set.model, model_set.motion, self.parent.fno
+                )
 
         if self.playing and self.max_fno <= self.parent.fno:
             # 最後まで行ったら止まる
@@ -405,7 +459,9 @@ class PmxCanvas(glcanvas.GLCanvas):
         if self.playing:
             logger.test("on_play ----------------------------------------")
             self.parent.start_play()
-            self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
+            self.max_fno = max(
+                [model_set.motion.max_fno for model_set in self.model_sets]
+            )
             self.recording = record
             logger.test(f"on_play model_sets[{len(self.model_sets)}]")
             for n, model_set in enumerate(self.model_sets):
@@ -415,7 +471,12 @@ class PmxCanvas(glcanvas.GLCanvas):
                 self.processes.append(
                     MProcess(
                         target=animate,
-                        args=(self.queues[-1], self.parent.fno, self.max_fno, model_set),
+                        args=(
+                            self.queues[-1],
+                            self.parent.fno,
+                            self.max_fno,
+                            model_set,
+                        ),
                         name="CalcProcess",
                     )
                 )
@@ -486,7 +547,9 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.vertical_degrees = MShader.INITIAL_VERTICAL_DEGREES
             self.look_at_center = MShader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
             self.camera_degrees = MVector3D(-90, 0, 0)
-            self.camera_offset_position = MVector3D(0, MShader.INITIAL_CAMERA_POSITION_Y, 0)
+            self.camera_offset_position = MVector3D(
+                0, MShader.INITIAL_CAMERA_POSITION_Y, 0
+            )
         elif keycode in [wx.WXK_NUMPAD2, wx.WXK_ESCAPE]:
             # 真正面から(=リセット)
             self.vertical_degrees = MShader.INITIAL_VERTICAL_DEGREES
@@ -517,7 +580,9 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.vertical_degrees = MShader.INITIAL_VERTICAL_DEGREES
             self.look_at_center = MShader.INITIAL_LOOK_AT_CENTER_POSITION.copy()
             self.camera_degrees = MVector3D(90, 0, 0)
-            self.camera_offset_position = MVector3D(0, MShader.INITIAL_CAMERA_POSITION_Y, -MShader.INITIAL_CAMERA_POSITION_Y)
+            self.camera_offset_position = MVector3D(
+                0, MShader.INITIAL_CAMERA_POSITION_Y, -MShader.INITIAL_CAMERA_POSITION_Y
+            )
         elif keycode in [
             wx.WXK_NUMPAD9,
             wx.WXK_RIGHT,
@@ -564,7 +629,9 @@ class PmxCanvas(glcanvas.GLCanvas):
         pil_image.frombytes(bytes(bitmap.ConvertToImage().GetData()))
 
         # ImageをPNGファイルとして保存する
-        file_path = os.path.join(get_root_dir(), "capture", f"{self.parent.fno:06d}.png")
+        file_path = os.path.join(
+            get_root_dir(), "capture", f"{self.parent.fno:06d}.png"
+        )
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
         # 画像をファイルに保存
@@ -610,7 +677,9 @@ class PmxCanvas(glcanvas.GLCanvas):
             x = (self.now_pos.x - self.last_pos.x) * 0.02
             y = (self.now_pos.y - self.last_pos.y) * 0.02
             if event.MiddleIsDown():
-                self.look_at_center += MQuaternion.from_euler_degrees(self.camera_degrees) * MVector3D(x, y, 0)
+                self.look_at_center += MQuaternion.from_euler_degrees(
+                    self.camera_degrees
+                ) * MVector3D(x, y, 0)
 
                 self.camera_offset_position.x += x
                 self.camera_offset_position.y += y
@@ -644,7 +713,9 @@ class SyncSubCanvasWindow(BaseFrame):
         **kw,
     ):
         super().__init__(parent.app, title, size, *args, parent=parent, **kw)
-        self.panel = SyncSubCanvasPanel(self, parent_canvas, look_at_model_names, look_at_bone_names)
+        self.panel = SyncSubCanvasPanel(
+            self, parent_canvas, look_at_model_names, look_at_bone_names
+        )
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
@@ -680,7 +751,9 @@ class SyncSubCanvasPanel(BasePanel):
         self.root_sizer.Add(self.canvas, 0, wx.ALL, 0)
 
         self.canvas.clear_model_set()
-        for model_set, animation in zip(self.parent_canvas.model_sets, self.parent_canvas.animations):
+        for model_set, animation in zip(
+            self.parent_canvas.model_sets, self.parent_canvas.animations
+        ):
             self.canvas.append_model_set(model_set.model, model_set.motion, 0.0, True)
             self.canvas.animations[-1] = animation
 
@@ -720,7 +793,9 @@ class SyncSubCanvasPanel(BasePanel):
         self.look_at_bone_choice.Clear()
         self.look_at_bone_choice.AppendItems(self.look_at_bone_names[model_idx])
 
-        initial_idxs = [i for i, n in enumerate(self.look_at_bone_names[model_idx]) if n == "頭"]
+        initial_idxs = [
+            i for i, n in enumerate(self.look_at_bone_names[model_idx]) if n == "頭"
+        ]
         self.look_at_bone_choice.SetSelection(initial_idxs[0] if initial_idxs else 0)
         self.on_choice_bone(event)
 
@@ -739,11 +814,17 @@ class SyncSubCanvasPanel(BasePanel):
                 if animation.fno != self.fno or force:
                     bone_name = self.look_at_bone_choice.GetStringSelection()
                     self.canvas.camera_degrees = (
-                        animation.bone_matrixes[animation.fno, bone_name].global_matrix.inverse().to_quaternion().to_euler_degrees()
+                        animation.bone_matrixes[animation.fno, bone_name]
+                        .global_matrix.inverse()
+                        .to_quaternion()
+                        .to_euler_degrees()
                     )
-                    self.canvas.look_at_center = (animation.bone_matrixes[animation.fno, bone_name].position).gl
+                    self.canvas.look_at_center = (
+                        animation.bone_matrixes[animation.fno, bone_name].position
+                    ).gl
                     self.canvas.result_camera_position = (
-                        animation.bone_matrixes[animation.fno, bone_name].global_matrix * MVector3D(0, 0, -30)
+                        animation.bone_matrixes[animation.fno, bone_name].global_matrix
+                        * MVector3D(0, 0, -30)
                     ).gl
                     self.fno = animation.fno
                     self.canvas.Refresh()
@@ -838,7 +919,9 @@ class AsyncSubCanvasPanel(BasePanel):
         self.look_at_bone_choice.Clear()
         self.look_at_bone_choice.AppendItems(self.look_at_bone_names[model_idx])
 
-        initial_idxs = [i for i, n in enumerate(self.look_at_bone_names[model_idx]) if n == "頭"]
+        initial_idxs = [
+            i for i, n in enumerate(self.look_at_bone_names[model_idx]) if n == "頭"
+        ]
         self.look_at_bone_choice.SetSelection(initial_idxs[0] if initial_idxs else 0)
         self.on_choice_bone(event)
 
@@ -848,11 +931,17 @@ class AsyncSubCanvasPanel(BasePanel):
                 animation: MotionSet = self.canvas.animations[midx]
                 bone_name = self.look_at_bone_choice.GetStringSelection()
                 self.canvas.camera_degrees = (
-                    animation.bone_matrixes[animation.fno, bone_name].global_matrix.inverse().to_quaternion().to_euler_degrees()
+                    animation.bone_matrixes[animation.fno, bone_name]
+                    .global_matrix.inverse()
+                    .to_quaternion()
+                    .to_euler_degrees()
                 )
-                self.canvas.look_at_center = (animation.bone_matrixes[animation.fno, bone_name].position).gl
+                self.canvas.look_at_center = (
+                    animation.bone_matrixes[animation.fno, bone_name].position
+                ).gl
                 self.canvas.result_camera_position = (
-                    animation.bone_matrixes[animation.fno, bone_name].global_matrix * MVector3D(0, 0, -30)
+                    animation.bone_matrixes[animation.fno, bone_name].global_matrix
+                    * MVector3D(0, 0, -30)
                 ).gl
                 self.fno = animation.fno
                 self.canvas.Refresh()

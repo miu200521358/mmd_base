@@ -34,12 +34,22 @@ class MorphChoiceCtrl:
             wx.DefaultPosition,
             wx.Size(20, -1),
         )
-        self.left_ctrl.SetToolTip(__(f"{target_name}のプルダウンの選択肢を上方向に移動できます。"))
+        self.left_ctrl.SetToolTip(
+            __(f"{target_name}のプルダウンの選択肢を上方向に移動できます。")
+        )
         self.left_ctrl.Bind(wx.EVT_BUTTON, self.on_change_morph_left)
         self.sizer.Add(self.left_ctrl, 0, wx.ALL, 3)
 
-        self.choice_ctrl = wx.Choice(self.window, wx.ID_ANY, wx.DefaultPosition, wx.Size(choice_width, -1), choices=[])
-        self.choice_ctrl.SetToolTip(__(f"調整対象となる{target_name}の選択肢\n{choice_tooltip}"))
+        self.choice_ctrl = wx.Choice(
+            self.window,
+            wx.ID_ANY,
+            wx.DefaultPosition,
+            wx.Size(choice_width, -1),
+            choices=[],
+        )
+        self.choice_ctrl.SetToolTip(
+            __(f"調整対象となる{target_name}の選択肢\n{choice_tooltip}")
+        )
         self.choice_ctrl.Bind(wx.EVT_CHOICE, self.on_change_morph)
         self.sizer.Add(self.choice_ctrl, 1, wx.ALL, 3)
 
@@ -50,7 +60,9 @@ class MorphChoiceCtrl:
             wx.DefaultPosition,
             wx.Size(20, -1),
         )
-        self.right_ctrl.SetToolTip(__(f"{target_name}のプルダウンの選択肢を下方向に移動できます。"))
+        self.right_ctrl.SetToolTip(
+            __(f"{target_name}のプルダウンの選択肢を下方向に移動できます。")
+        )
         self.right_ctrl.Bind(wx.EVT_BUTTON, self.on_change_morph_right)
         self.sizer.Add(self.right_ctrl, 0, wx.ALL, 3)
 

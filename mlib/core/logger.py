@@ -462,7 +462,9 @@ def get_file_encoding(file_path):
 
     for encoding in codes:
         try:
-            fstr = fbytes.decode(encoding)  # bytes文字列から指定文字コードの文字列に変換
+            fstr = fbytes.decode(
+                encoding
+            )  # bytes文字列から指定文字コードの文字列に変換
             fbytes = fstr.encode("utf-8")  # uft-8文字列に変換
             # 問題なく変換できたらエンコードを返す
             return encoding
