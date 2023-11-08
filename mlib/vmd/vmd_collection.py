@@ -456,8 +456,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         if append_ik:
             # IK回転を事前に求めておく
-            for fno in fnos:
-                self.calc_ik_rotations(fno, model, target_bone_names)
+            self.calc_ik_rotations(fnos, model, target_bone_names)
 
         total_count = len(fnos) * len(target_bone_names)
 
@@ -631,57 +630,62 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         )
 
     def calc_ik_rotations(
-        self, fno: int, model: PmxModel, target_bone_names: Iterable[str]
+        self, fnos: list[int], model: PmxModel, target_bone_names: Iterable[str]
     ):
         """IK関連ボーンの事前計算"""
-        ik_target_names = [
-            model.bone_trees[target_bone_name].last_name
+        ik_bone_names = [
+            target_bone_name
             for target_bone_name in target_bone_names
             if model.bones[target_bone_name].is_ik
+            and model.bones[target_bone_name].ik.links
         ]
-        if not ik_target_names:
-            # IK計算対象がない場合はそのまま終了
+        if not ik_bone_names:
+            # IKボーンがない場合はそのまま終了
             return
 
-        ik_relative_bone_names = [
-            model.bones[bone_index].name
-            for bone_index in sorted(
-                set(
-                    [
-                        relative_bone_index
-                        for ik_target_name in ik_target_names
-                        for relative_bone_index in model.bones[
-                            ik_target_name
-                        ].relative_bone_indexes
-                    ]
-                )
-            )
+        ik_link_bone_names = [
+            model.bones[link.bone_index].name
+            for ik_bone_name in ik_bone_names
+            for link in model.bones[ik_bone_name].ik.links
+            if link.bone_index in model.bones
         ]
+        if not ik_link_bone_names:
+            # IKリンクボーンがない場合はそのまま終了
+            return
 
-        # モーション内のキーフレリストから前の変化キーフレと次の変化キーフレを抽出する
-        prev_frame_indexes: set[int] = {0}
-        next_frame_indexes: set[int] = {self.max_fno}
-        for relative_bone_name in ik_relative_bone_names:
-            if relative_bone_name not in self:
-                continue
-            (prev_fno, _, next_fno) = self[relative_bone_name].range_indexes(fno)
-            if prev_fno != fno:
-                prev_frame_indexes |= {prev_fno}
-            if next_fno != fno:
-                next_frame_indexes |= {next_fno}
+        # モーション内に存在しているIKに関するボーンのキーフレ
+        ik_fnos = sorted(
+            set(
+                [
+                    fno
+                    for bone_name in ik_link_bone_names + ik_bone_names
+                    for fno in self[bone_name].indexes
+                ]
+            )
+        )
 
-        for fno in (max(prev_frame_indexes), min(next_frame_indexes)):
-            fno_qqs: dict[int, MQuaternion] = {}
-            fno_ik_qqs: dict[int, Optional[MQuaternion]] = {}
+        # 処理対象キーフレより小さくて、登録されている中で最も大きなキーフレ
+        min_fno = min(fnos)
+        min_ik_link_fno = max((fno for fno in ik_fnos if fno < min_fno), default=0)
 
-            for relative_bone_name in ik_relative_bone_names:
-                bone = model.bones[relative_bone_name]
-                bf = self[relative_bone_name][fno]
-                fno_qqs[bone.index] = bf.rotation
-                fno_ik_qqs[bone.index] = bf.ik_rotation
+        # 処理対象キーフレより大きくて、登録されている中で最も小さなキーフレ
+        max_fno = max(fnos)
+        max_ik_link_fno = min(
+            (fno for fno in ik_fnos if fno > max_fno), default=max(ik_fnos)
+        )
 
-            for relative_bone_name in ik_relative_bone_names:
-                self.get_rotation(fno, model, bone, append_ik=True)
+        # IKで計算範囲内のキーフレ
+        target_ik_link_fnos = (
+            fno for fno in ik_fnos if min_ik_link_fno <= fno <= max_ik_link_fno
+        )
+
+        for ik_target_bone in (
+            model.bones[model.bones[ik_bone_name].ik.bone_index]
+            for ik_bone_name in ik_bone_names
+        ):
+            for fno in target_ik_link_fnos:
+                # IKターゲットのボーンに対してIK計算を行う
+                self.get_rotation(fno, model, ik_target_bone, append_ik=True)
 
     def get_scale(
         self, fno: int, model: PmxModel, bone: Bone, scale: MVector3D, loop: int = 0
@@ -1693,37 +1697,27 @@ class VmdMotion(BaseHashModel):
 
         # 頂点モーフ
         vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model, is_gl)
-        logger.test(
-            f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 頂点モーフ"
-        )
+        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 頂点モーフ")
 
         # ボーン変形後頂点モーフ
         after_vertex_morph_poses = self.morphs.animate_after_vertex_morphs(
             fno, model, is_gl
         )
-        logger.test(
-            f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン変形後頂点モーフ"
-        )
+        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン変形後頂点モーフ")
 
         # UVモーフ
         uv_morph_poses = self.morphs.animate_uv_morphs(fno, model, 0, is_gl)
-        logger.test(
-            f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: UVモーフ"
-        )
+        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: UVモーフ")
 
         # 追加UVモーフ1
         uv1_morph_poses = self.morphs.animate_uv_morphs(fno, model, 1, is_gl)
-        logger.test(
-            f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 追加UVモーフ1"
-        )
+        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 追加UVモーフ1")
 
         # 追加UVモーフ2-4は無視
 
         # 材質モーフ
         material_morphs = self.morphs.animate_material_morphs(fno, model)
-        logger.test(
-            f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 材質モーフ"
-        )
+        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 材質モーフ")
 
         # グループモーフ
         (
@@ -1731,9 +1725,7 @@ class VmdMotion(BaseHashModel):
             group_morph_bone_frames,
             group_materials,
         ) = self.morphs.animate_group_morphs(fno, model, material_morphs, is_gl)
-        logger.test(
-            f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ"
-        )
+        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
         bone_matrixes = self.animate_bone([fno], model)
 
@@ -1746,9 +1738,7 @@ class VmdMotion(BaseHashModel):
         gl_matrixes[..., 1:3, 0] *= -1
         gl_matrixes[..., 3, 0] *= -1
 
-        logger.test(
-            f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: OpenGL座標系変換"
-        )
+        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: OpenGL座標系変換")
 
         return (
             fno,
@@ -1794,9 +1784,7 @@ class VmdMotion(BaseHashModel):
 
             # ボーンモーフ
             morph_bone_frames = self.morphs.animate_bone_morphs(fno, model)
-            logger.test(
-                f"-- ボーンアニメーション[{model.name}][{fno:04d}]: ボーンモーフ"
-            )
+            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: ボーンモーフ")
 
             for bfs in morph_bone_frames:
                 bf = bfs[fno]
@@ -1812,9 +1800,7 @@ class VmdMotion(BaseHashModel):
             _, group_morph_bone_frames, _ = self.morphs.animate_group_morphs(
                 fno, model, material_morphs
             )
-            logger.test(
-                f"-- ボーンアニメーション[{model.name}][{fno:04d}]: グループモーフ"
-            )
+            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
             for bfs in group_morph_bone_frames:
                 bf = bfs[fno]
@@ -1827,9 +1813,7 @@ class VmdMotion(BaseHashModel):
 
                 all_morph_bone_frames[bf.name][bf.index] = mbf + bf
 
-            logger.test(
-                f"-- ボーンアニメーション[{model.name}][{fno:04d}]: モーフキーフレ加算"
-            )
+            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: モーフキーフレ加算")
 
         # ボーン変形行列操作
         bone_matrixes = self.bones.animate_bone_matrixes(

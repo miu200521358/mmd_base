@@ -1083,38 +1083,96 @@ def test_read_by_filepath_ok_leg_ik7() -> None:
     )
 
     # キーフレ
-    bone_matrixes = motion.animate_bone([7409], model)
+    bone_matrixes = motion.animate_bone([278], model)
 
     # --------
     # 残存回転判定用
 
     assert np.isclose(
         np.array([0.721499, 11.767294, 1.638818]),
-        bone_matrixes[7409, "下半身"].position.vector,
+        bone_matrixes[278, "下半身"].position.vector,
         rtol=0.01,
         atol=0.01,
     ).all()
     assert np.isclose(
         np.array([-0.133304, 10.693992, 2.314730]),
-        bone_matrixes[7409, "右足"].position.vector,
+        bone_matrixes[278, "右足"].position.vector,
         rtol=0.01,
         atol=0.01,
     ).all()
     assert np.isclose(
         np.array([-2.833401, 8.0174604, -0.100545]),
-        bone_matrixes[7409, "右ひざ"].position.vector,
+        bone_matrixes[278, "右ひざ"].position.vector,
         rtol=0.3,
         atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-0.409387, 5.341005, 3.524572]),
-        bone_matrixes[7409, "右足首"].position.vector,
+        bone_matrixes[278, "右足首"].position.vector,
         rtol=0.3,
         atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-0.578271, 2.874233, 3.669599]),
-        bone_matrixes[7409, "右つま先"].position.vector,
+        bone_matrixes[278, "右つま先"].position.vector,
+        rtol=0.3,
+        atol=0.3,
+    ).all()
+
+
+def test_read_by_filepath_ok_leg_ik8() -> None:
+    import os
+
+    import numpy as np
+
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.vmd.vmd_collection import VmdMotion
+    from mlib.vmd.vmd_reader import VmdReader
+
+    vmd_reader = VmdReader()
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "唱(ダンスのみ)_0-300F.vmd")
+    )
+
+    pmx_reader = PmxReader()
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
+
+    # キーフレ
+    bone_matrixes = motion.animate_bone([278], model)
+
+    # --------
+    # 残存回転判定用
+
+    assert np.isclose(
+        np.array([0.721499, 11.767294, 1.638818]),
+        bone_matrixes[278, "下半身"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.133304, 10.693992, 2.314730]),
+        bone_matrixes[278, "右足"].position.vector,
+        rtol=0.01,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-2.833401, 8.0174604, -0.100545]),
+        bone_matrixes[278, "右ひざ"].position.vector,
+        rtol=0.3,
+        atol=0.3,
+    ).all()
+    assert np.isclose(
+        np.array([-0.409387, 5.341005, 3.524572]),
+        bone_matrixes[278, "右足首"].position.vector,
+        rtol=0.3,
+        atol=0.3,
+    ).all()
+    assert np.isclose(
+        np.array([-0.578271, 2.874233, 3.669599]),
+        bone_matrixes[278, "右つま先"].position.vector,
         rtol=0.3,
         atol=0.3,
     ).all()
