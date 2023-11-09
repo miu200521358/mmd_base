@@ -456,7 +456,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         if append_ik:
             # IK回転を事前に求めておく
-            self.calc_ik_rotations(fnos, model, target_bone_names)
+            self.calc_ik_rotations(
+                fnos, model, target_bone_names, out_fno_log, description
+            )
 
         total_count = len(fnos) * len(target_bone_names)
 
@@ -630,7 +632,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         )
 
     def calc_ik_rotations(
-        self, fnos: list[int], model: PmxModel, target_bone_names: Iterable[str]
+        self,
+        fnos: list[int],
+        model: PmxModel,
+        target_bone_names: Iterable[str],
+        out_fno_log: bool = False,
+        description: str = "",
     ):
         """IK関連ボーンの事前計算"""
         ik_bone_names = [
@@ -681,13 +688,26 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             ]
         )
 
+        total_index_count = len(ik_bone_names) * len(target_ik_link_fnos)
+        n = 0
+
         for ik_target_bone in (
             model.bones[model.bones[ik_bone_name].ik.links[0].bone_index]
             for ik_bone_name in ik_bone_names
         ):
             for fno in target_ik_link_fnos:
+                if out_fno_log:
+                    logger.count(
+                        "IK事前計算[{d}]",
+                        d=description,
+                        index=n,
+                        total_index_count=total_index_count,
+                        display_block=1000,
+                    )
+
                 # IKターゲットのボーンに対してIK計算を行う
                 self.get_rotation(fno, model, ik_target_bone, append_ik=True)
+                n += 1
 
     def get_scale(
         self, fno: int, model: PmxModel, bone: Bone, scale: MVector3D, loop: int = 0
@@ -1034,7 +1054,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         parent_link_bf.ik_rotation = (
                             parent_ik_qq * ideal_ik_qq.inverse() * actual_ik_qq
                         )
-                        self[parent_link_bf.name].append(link_bf)
+                        self[parent_link_bone.name].append(parent_link_bf)
 
                 if is_break:
                     break
