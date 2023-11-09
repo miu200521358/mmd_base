@@ -654,14 +654,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             return
 
         # モーション内に存在しているIKに関するボーンのキーフレ
-        ik_fnos = sorted(
-            set(
-                [
-                    fno
-                    for bone_name in ik_link_bone_names + ik_bone_names
-                    for fno in self[bone_name].indexes
-                ]
-            )
+        ik_fnos = set(
+            [
+                fno
+                for bone_name in ik_link_bone_names + ik_bone_names
+                for fno in self[bone_name].indexes
+            ]
         )
 
         # 処理対象キーフレより小さくて、登録されている中で最も大きなキーフレ
@@ -675,12 +673,16 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         )
 
         # IKで計算範囲内のキーフレ
-        target_ik_link_fnos = (
-            fno for fno in ik_fnos if min_ik_link_fno <= fno <= max_ik_link_fno
+        target_ik_link_fnos = sorted(
+            [
+                fno
+                for fno in ik_fnos | set(fnos)
+                if min_ik_link_fno <= fno <= max_ik_link_fno
+            ]
         )
 
         for ik_target_bone in (
-            model.bones[model.bones[ik_bone_name].ik.bone_index]
+            model.bones[model.bones[ik_bone_name].ik.links[0].bone_index]
             for ik_bone_name in ik_bone_names
         ):
             for fno in target_ik_link_fnos:
@@ -982,9 +984,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             )
                     else:
                         # 軸制限が無い場合の理想回転量
-                        actual_ik_qq = (
-                            link_bf.ik_rotation or MQuaternion()
-                        ) * MQuaternion.from_axis_angles(rotation_axis, rotation_degree)
+                        actual_ik_qq *= MQuaternion.from_axis_angles(
+                            rotation_axis, rotation_degree
+                        )
 
                         if ik_link.angle_limit:
                             # 角度制限が入ってる場合、オイラー角度に分解する
@@ -1019,20 +1021,20 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     self[link_bf.name].append(link_bf)
 
                     if (
-                        not np.isclose(actual_ik_qq.dot(ideal_ik_qq), 1)
+                        not np.isclose(abs(actual_ik_qq.dot(ideal_ik_qq)), 1)
                         and lidx < len(ik_bone.ik.links) - 1
                     ):
                         parent_link_bone = model.bones[
                             ik_bone.ik.links[lidx + 1].bone_index
                         ]
 
-                        # 残存回転の計算
-                        remaining_qq = ideal_ik_qq * actual_ik_qq.inverse()
-
                         # 残存回転をひとつ後のリンクボーンに渡す
                         parent_link_bf = self[parent_link_bone.name][fno]
                         parent_ik_qq = parent_link_bf.ik_rotation or MQuaternion()
-                        parent_link_bf.ik_rotation = parent_ik_qq * remaining_qq
+                        parent_link_bf.ik_rotation = (
+                            parent_ik_qq * ideal_ik_qq.inverse() * actual_ik_qq
+                        )
+                        self[parent_link_bf.name].append(link_bf)
 
                 if is_break:
                     break
