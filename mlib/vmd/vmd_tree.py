@@ -133,16 +133,6 @@ class VmdBoneFrameTree:
         ).to_quaternion()
         return self.cache_frame_ik_rotation
 
-    @property
-    def frame_all_rotation(self) -> MQuaternion:
-        if (
-            self.cache_frame_rotation is not None
-            and self.cache_frame_ik_rotation is not None
-        ):
-            return self.cache_frame_rotation * self.cache_frame_ik_rotation
-
-        return self.frame_rotation * self.frame_ik_rotation
-
 
 class VmdBoneFrameTrees:
     __slots__ = (
