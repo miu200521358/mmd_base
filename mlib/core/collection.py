@@ -310,7 +310,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         return 0 < len(self.data)
 
     def range_indexes(
-        self, index: int, indexes: Optional[list[int]] = None
+        self, index: int, off_flg: bool = False, indexes: Optional[list[int]] = None
     ) -> tuple[int, int, int]:
         """
         指定されたINDEXの前後を返す
@@ -330,17 +330,21 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         """
         if not indexes:
             indexes = self.indexes
-        if not indexes or index in self.data:
+        if not off_flg and (not indexes or index in self.data):
             return index, index, index
 
         # index がない場合、前後のINDEXを取得する
 
         idx = bisect_left(indexes, index)
+
         if 0 == idx:
             prev_index = 0
         else:
             prev_index = indexes[idx - 1]
-        if idx == len(indexes):
+
+        if 0 == idx:
+            next_index = index
+        elif idx == len(indexes):
             next_index = max(indexes)
         else:
             next_index = indexes[idx]
