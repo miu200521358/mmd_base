@@ -5,9 +5,13 @@ from typing import Optional, Type, TypeVar, Union
 
 import numpy as np
 from numpy.linalg import inv, norm
-from quaternion import as_rotation_matrix, from_rotation_matrix
+from quaternion import (
+    as_rotation_matrix,
+    from_rotation_matrix,
+    quaternion,
+    slerp_evaluate,
+)
 from quaternion import one as qq_one
-from quaternion import quaternion, slerp_evaluate
 
 from .base import BaseModel
 
@@ -1130,23 +1134,31 @@ class MQuaternion(MVector):
         to_qq = MQuaternion.axis_to_quaternion(other_axis)
         return from_qq.inverse() * self * to_qq
 
-    def separate_euler_degrees(self) -> MVector3D:
+    def to_euler_degrees_by_ZXY(self) -> MVector3D:
         """
         ZXYの回転順序でオイラー角度を求める
         https://programming-surgeon.com/script/euler-python-script/
 
         Returns
         -------
-        ZXYグローバル軸別のオイラー角度
+        グローバル軸別のオイラー角度
         """
         mat = self.normalized().to_matrix4x4()
         z_radian = atan2(-mat[0, 1], mat[0, 0])
         x_radian = atan2(mat[2, 1] * cos(z_radian), mat[1, 1])
         y_radian = atan2(-mat[2, 0], mat[2, 2])
 
-        return MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
+        euler = self.to_euler_degrees()
+        euler_zxy = MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
 
-    def separate_euler_degrees_by_axis(
+        # 符号が反転している場合、ジンバルロックなので符号を合わせる
+        euler_zxy.vector[
+            np.where(np.sign(euler.vector) != np.sign(euler_zxy.vector))
+        ] *= -1
+
+        return euler_zxy
+
+    def to_euler_degrees_by_axis(
         self, local_x_axis: MVector3D, local_y_axis: MVector3D, local_z_axis: MVector3D
     ) -> MVector3D:
         """
@@ -1185,24 +1197,27 @@ class MQuaternion(MVector):
         a: Union[int, float, MVector3D], b: float = 0.0, c: float = 0.0
     ):
         """
-        オイラー角をクォータニオンに変換する
+        ZXYのオイラー角をクォータニオンに変換する
         """
         euler = np.zeros(3)
         if isinstance(a, (int, float)):
-            euler = np.radians([a, b, c], dtype=np.double)
+            euler = np.radians([c, a, b], dtype=np.double)
         else:
-            euler = np.radians([a.x, a.y, a.z], dtype=np.double)
+            euler = np.radians([a.z, a.x, a.y], dtype=np.double)
 
-        euler *= 0.5
+        c1, c2, c3 = np.cos(euler)
+        s1, s2, s3 = np.sin(euler)
 
-        c1, c2, c3 = np.cos([euler[1], euler[2], euler[0]])
-        s1, s2, s3 = np.sin([euler[1], euler[2], euler[0]])
-        w = c1 * c2 * c3 + s1 * s2 * s3
-        x = c1 * c2 * s3 + s1 * s2 * c3
-        y = s1 * c2 * c3 - c1 * s2 * s3
-        z = c1 * s2 * c3 - s1 * c2 * s3
+        mat = MMatrix4x4()
+        mat.vector[:3, :3] = np.array(
+            [
+                [c1 * c3 - s1 * s2 * s3, -c2 * s1, c1 * s3 + c3 * s1 * s2],
+                [c3 * s1 + c1 * s2 * s3, c1 * c2, s1 * s3 - c1 * c3 * s2],
+                [-c2 * s3, s2, c2 * c3],
+            ]
+        )
 
-        return MQuaternion(w, x, y, z)
+        return mat.to_quaternion()
 
     @staticmethod
     def from_axis_angles(v: MVector3D, degree: float):
@@ -1432,11 +1447,10 @@ class MMatrix4x4(MVector):
         """
         self.vector = self.vector @ q.to_matrix4x4().vector
 
-    def rotate_x(self, q: MQuaternion) -> None:
+    def rotate_x(self, theta: float) -> None:
         """
         X軸周りの回転行列
         """
-        theta = q.theta
         yy = cos(theta)
         yz = -sin(theta)
         zy = sin(theta)
@@ -1459,11 +1473,10 @@ class MMatrix4x4(MVector):
 
         self.vector = self.vector @ mat
 
-    def rotate_y(self, q: MQuaternion) -> None:
+    def rotate_y(self, theta: float) -> None:
         """
         Y軸周りの回転行列
         """
-        theta = q.theta
         xx = cos(theta)
         xz = sin(theta)
         zx = -sin(theta)
@@ -1486,11 +1499,10 @@ class MMatrix4x4(MVector):
 
         self.vector = self.vector @ mat
 
-    def rotate_z(self, q: MQuaternion) -> None:
+    def rotate_z(self, theta: float) -> None:
         """
         Z軸周りの回転行列
         """
-        theta = q.theta
         xx = cos(theta)
         xy = -sin(theta)
         yx = sin(theta)

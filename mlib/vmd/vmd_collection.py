@@ -15,7 +15,12 @@ from mlib.core.collection import (
 )
 from mlib.core.interpolation import split_interpolation
 from mlib.core.logger import MLogger
-from mlib.core.math import MQuaternion, MVector3D, MVector4D, calc_list_by_ratio
+from mlib.core.math import (
+    MQuaternion,
+    MVector3D,
+    MVector4D,
+    calc_list_by_ratio,
+)
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import (
     Bone,
@@ -472,6 +477,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             self.calc_ik_rotations(
                 fnos, model, target_bone_names, out_fno_log, description
             )
+            pass
 
         total_count = len(fnos) * len(target_bone_names)
 
@@ -678,11 +684,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # モーション内に存在しているIKに関するボーンのキーフレ
         ik_fnos = {min_fno, max_fno} | set(
-            [
-                fno
-                for bone_name in ik_link_bone_names + ik_bone_names
-                for fno in self[bone_name].indexes
-            ]
+            fno
+            for bone_name in ik_link_bone_names + ik_bone_names
+            for fno in self[bone_name].indexes
         )
 
         # 処理対象キーフレより小さくて、登録されている中で最も大きなキーフレ
@@ -1021,7 +1025,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                         if ik_link.angle_limit:
                             # 角度制限が入ってる場合、オイラー角度に分解する
-                            euler_degrees = actual_ik_qq.separate_euler_degrees()
+                            euler_degrees = actual_ik_qq.to_euler_degrees_by_ZXY()
 
                             euler_degrees.x = max(
                                 min(
