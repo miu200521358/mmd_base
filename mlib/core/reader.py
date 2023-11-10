@@ -150,11 +150,12 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
         model: TBaseHashModel = self.create_model(path)
 
         if not (
-            os.path.exists(path) and os.path.isfile(path) and self.file_ext in path
+            path
+            and os.path.exists(path)
+            and os.path.isfile(path)
+            and self.file_ext.lower() in path.lower()
         ):
-            raise MParseException(
-                __("指定されたパスに読み取り対象がいないため、処理を中断します")
-            )
+            raise MParseException(__("指定されたパスに読み取り対象がいないため、処理を中断します {p}"), p=path)
 
         # バイナリを解凍してモデルに展開
         self.offset = 0
