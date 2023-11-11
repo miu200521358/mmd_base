@@ -921,7 +921,7 @@ class MQuaternion(MVector):
     def dot(self, v: "MQuaternion") -> float:
         return np.sum(self.vector.components * v.vector.components)
 
-    def to_euler_degrees(self) -> MVector3D:
+    def to_euler_degrees_XYZ(self) -> MVector3D:
         """
         クォータニオンをオイラー角に変換する
         """
@@ -1159,7 +1159,7 @@ class MQuaternion(MVector):
         to_qq = MQuaternion.axis_to_quaternion(other_axis)
         return from_qq.inverse() * self * to_qq
 
-    def to_euler_degrees_by_ZXY(self) -> MVector3D:
+    def to_euler_degrees_ZXY(self) -> MVector3D:
         """
         ZXYの回転順序でオイラー角度を求める
         https://programming-surgeon.com/script/euler-python-script/
@@ -1183,7 +1183,7 @@ class MQuaternion(MVector):
 
         return euler_zxy
 
-    def to_euler_degrees_by_YXZ(self) -> MVector3D:
+    def to_euler_degrees(self) -> MVector3D:
         """
         YXZの回転順序でオイラー角度を求める
         https://programming-surgeon.com/script/euler-python-script/
@@ -1198,13 +1198,13 @@ class MQuaternion(MVector):
         x_radian = np.arctan(-mat[1, 2] * cos(y_radian) / mat[2, 2])
         z_radian = np.arctan(mat[1, 0] / mat[1, 1])
 
-        euler = self.to_euler_degrees()
+        # euler_xyz = self.to_euler_degrees_XYZ()
         euler_yxz = MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
 
-        # 符号が反転している場合、ジンバルロックなので符号を合わせる
-        euler_yxz.vector[
-            np.where(np.sign(euler.vector) != np.sign(euler_yxz.vector))
-        ] *= -1
+        # # 符号が反転している場合、ジンバルロックなので符号を合わせる
+        # euler_yxz.vector[
+        #     np.where(np.sign(euler_xyz.vector) != np.sign(euler_yxz.vector))
+        # ] *= -1
 
         return euler_yxz
 
@@ -1757,6 +1757,22 @@ class MMatrix4x4(MVector):
 
     def copy(self) -> "MMatrix4x4":
         return self.__class__(self.vector)
+
+    def normalized(self) -> "MMatrix4x4":
+        """
+        正規化行列
+        """
+        norms = np.linalg.norm(self.vector[:3, :3], axis=0)
+        mat = MMatrix4x4()
+        mat.vector[:3, :3] = self.vector[:3, :3] / norms
+        return mat
+
+    def normalize(self) -> None:
+        """
+        自分自身の正規化
+        """
+        norms = np.linalg.norm(self.vector[:3, :3], axis=0)
+        self.vector[:3, :3] /= norms
 
     @staticmethod
     def from_axis_angles(axis: MVector3D, degree: float) -> "MMatrix4x4":

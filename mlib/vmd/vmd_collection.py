@@ -16,6 +16,7 @@ from mlib.core.collection import (
 from mlib.core.interpolation import split_interpolation
 from mlib.core.logger import MLogger
 from mlib.core.math import (
+    MMatrix4x4,
     MQuaternion,
     MVector3D,
     MVector4D,
@@ -558,9 +559,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     local_poses[fidx, bone.index] = local_pos_mat
 
                 # FK(捩り) > IK(捩り) > 付与親(捩り)
-                qq, ik_qq = self.get_rotation(fno, model, bone, append_ik=append_ik)
-                qqs[fidx, bone.index] = qq.to_matrix4x4().vector
-                ik_qqs[fidx, bone.index] = ik_qq.to_matrix4x4().vector
+                qqs[fidx, bone.index], ik_qqs[fidx, bone.index] = self.get_rotation(
+                    fno, model, bone, append_ik=append_ik
+                )
 
                 # ローカル回転
                 if is_valid_local_rot:
@@ -798,9 +799,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         fno: int,
         model: PmxModel,
         bone: Bone,
-        append_ik: bool = False,
+        append_ik: bool,
         loop: int = 0,
-    ) -> tuple[MQuaternion, MQuaternion]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         該当キーフレにおけるボーンの相対位置
         append_ik : IKを計算するか(循環してしまう場合があるので、デフォルトFalse)
@@ -817,21 +818,27 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         fk_qq = self.get_axis_rotation(bone, qq)
 
         # IKを加味した回転
-        ik_qq = self.get_ik_rotation(fno, model, bone, fk_qq) if append_ik else fk_qq
+        ik_qq = self.get_ik_rotation(fno, model, bone) if append_ik else MQuaternion()
 
         # 付与親を加味した回転
-        effect_qq = self.get_effect_rotation(fno, model, bone, ik_qq, loop=loop + 1)
+        effect_qq = self.get_effect_rotation(fno, model, bone, loop=loop + 1)
 
-        return effect_qq, ik_qq
+        ik_qq_mat = fk_qq.to_matrix4x4() @ ik_qq.to_matrix4x4()
+        ik_qq_mat.normalize()
+
+        qq_mat = ik_qq_mat @ effect_qq.to_matrix4x4()
+        qq_mat.normalize()
+
+        return qq_mat.vector, ik_qq_mat.vector
 
     def get_effect_rotation(
-        self, fno: int, model: PmxModel, bone: Bone, qq: MQuaternion, loop: int = 0
+        self, fno: int, model: PmxModel, bone: Bone, loop: int = 0
     ) -> MQuaternion:
         """
         付与親を加味した回転を求める
         """
         if not (bone.is_external_rotation and bone.effect_index in model.bones):
-            return qq
+            return MQuaternion()
 
         if 0 == bone.effect_factor or loop > 20:
             # 付与率が0の場合、常に0になる
@@ -840,27 +847,24 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        effect_qq, _ = self.get_rotation(fno, model, effect_bone, loop=loop + 1)
-        if 0 < bone.effect_factor:
+        effect_qq_mat, _ = self.get_rotation(
+            fno, model, effect_bone, append_ik=False, loop=loop + 1
+        )
+        effect_qq = MMatrix4x4(effect_qq_mat).to_quaternion()
+        if 0 <= bone.effect_factor:
             # 正の付与親
-            qq *= effect_qq.multiply_factor(bone.effect_factor)
-            qq.normalize()
+            return effect_qq.multiply_factor(bone.effect_factor)
         else:
             # 負の付与親の場合、逆回転
-            qq *= (effect_qq.multiply_factor(abs(bone.effect_factor))).inverse()
-            qq.normalize()
+            return (effect_qq.multiply_factor(abs(bone.effect_factor))).inverse()
 
-        return qq
-
-    def get_ik_rotation(
-        self, fno: int, model: PmxModel, bone: Bone, qq: MQuaternion
-    ) -> MQuaternion:
+    def get_ik_rotation(self, fno: int, model: PmxModel, bone: Bone) -> MQuaternion:
         """
         IKを加味した回転を求める
         """
 
         if not bone.ik_link_indexes:
-            return qq
+            return MQuaternion()
 
         for ik_target_bone_idx in bone.ik_link_indexes:
             # IKボーン自身の位置
@@ -1039,7 +1043,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             )
 
                             # ZXYの順番でオイラー角度に分解する
-                            euler_degrees = ideal_ik_qq.to_euler_degrees_by_ZXY()
+                            euler_degrees = ideal_ik_qq.to_euler_degrees_ZXY()
 
                             # if (
                             #     0 > ik_link.max_angle_limit.degrees.x
@@ -1124,7 +1128,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # IKの計算結果の回転を加味して返す
         bf = self[bone.name][fno]
-        qq = bf.rotation * (bf.ik_rotation or MQuaternion())
+        qq = bf.ik_rotation or MQuaternion()
 
         if bone.local_angle_limit:
             if (
