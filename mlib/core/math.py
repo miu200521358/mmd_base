@@ -928,41 +928,68 @@ class MQuaternion(MVector):
         if not self:
             return MVector3D()
 
-        xx = self.x * self.x
-        xy = self.x * self.y
-        xz = self.x * self.z
-        xw = self.x * self.scalar
-        yy = self.y * self.y
-        yz = self.y * self.z
-        yw = self.y * self.scalar
-        zz = self.z * self.z
-        zw = self.z * self.scalar
-        lengthSquared = xx + yy + zz + self.scalar**2
+        x = self.x
+        y = self.y
+        z = self.z
+        w = self.scalar
 
-        if not np.isclose([lengthSquared, lengthSquared - 1.0], 0).any():
-            xx, xy, xz, xw, yy, yz, yw, zz, zw = (
-                np.array([xx, xy, xz, xw, yy, yz, yw, zz, zw], dtype=np.float64)
-                / lengthSquared
-            )
+        # ロール (X軸回り)
+        sin_r_cos_p = 2 * (w * x + y * z)
+        cos_r_cos_p = 1 - 2 * (x * x + y * y)
+        roll = np.arctan2(sin_r_cos_p, cos_r_cos_p)
 
-        pitch = np.arcsin(max(-1, min(1, -2.0 * (yz - xw))))
-        yaw = 0
-        roll = 0
-
-        if pitch < (np.pi / 2):
-            if pitch > -(np.pi / 2):
-                yaw = np.arctan2(2.0 * (xz + yw), 1.0 - 2.0 * (xx + yy))
-                roll = np.arctan2(2.0 * (xy + zw), 1.0 - 2.0 * (xx + zz))
-            else:
-                # not a unique solution
-                roll = 0
-                yaw = -np.arctan2(-2.0 * (xy - zw), 1.0 - 2.0 * (yy + zz))
+        # ピッチ (Y軸回り)
+        sin_p = 2 * (w * y - z * x)
+        if abs(sin_p) >= 1:
+            pitch = np.pi / 2 * np.sign(sin_p)  # 北極または南極に使用
         else:
-            # not a unique solution
-            roll = 0
-            yaw = np.arctan2(-2.0 * (xy - zw), 1.0 - 2.0 * (yy + zz))
+            pitch = np.arcsin(sin_p)
 
-        return MVector3D(*np.degrees([pitch, yaw, roll]))
+        # ヨー (Z軸回り)
+        sin_y_cos_p = 2 * (w * z + x * y)
+        cos_y_cos_p = 1 - 2 * (y * y + z * z)
+        yaw = np.arctan2(sin_y_cos_p, cos_y_cos_p)
+
+        # # オイラー角を度単位に変換
+        # roll_deg = np.degrees(roll)
+        # pitch_deg = np.degrees(pitch)
+        # yaw_deg = np.degrees(yaw)
+
+        # xx = self.x * self.x
+        # xy = self.x * self.y
+        # xz = self.x * self.z
+        # xw = self.x * self.scalar
+        # yy = self.y * self.y
+        # yz = self.y * self.z
+        # yw = self.y * self.scalar
+        # zz = self.z * self.z
+        # zw = self.z * self.scalar
+        # lengthSquared = xx + yy + zz + self.scalar**2
+
+        # if not np.isclose([lengthSquared, lengthSquared - 1.0], 0).any():
+        #     xx, xy, xz, xw, yy, yz, yw, zz, zw = (
+        #         np.array([xx, xy, xz, xw, yy, yz, yw, zz, zw], dtype=np.float64)
+        #         / lengthSquared
+        #     )
+
+        # pitch = np.arcsin(max(-1, min(1, -2.0 * (yz - xw))))
+        # yaw = 0
+        # roll = 0
+
+        # if pitch < (np.pi / 2):
+        #     if pitch > -(np.pi / 2):
+        #         yaw = np.arctan2(2.0 * (xz + yw), 1.0 - 2.0 * (xx + yy))
+        #         roll = np.arctan2(2.0 * (xy + zw), 1.0 - 2.0 * (xx + zz))
+        #     else:
+        #         # not a unique solution
+        #         roll = 0
+        #         yaw = -np.arctan2(-2.0 * (xy - zw), 1.0 - 2.0 * (yy + zz))
+        # else:
+        #     # not a unique solution
+        #     roll = 0
+        #     yaw = np.arctan2(-2.0 * (xy - zw), 1.0 - 2.0 * (yy + zz))
+
+        return MVector3D(*np.degrees([roll, pitch, yaw]))
 
     def to_euler_degrees_mmd(self) -> MVector3D:
         """
@@ -1078,9 +1105,7 @@ class MQuaternion(MVector):
             # quaternion と vec3 のかけ算は vec3 を返す
             return self.to_matrix4x4() * other
         elif isinstance(other, MQuaternion):
-            mat = MMatrix4x4(self.to_matrix4x4().vector)
-            mat.rotate(other)
-
+            mat = self.to_matrix4x4() @ other.to_matrix4x4()
             return mat.to_quaternion()
 
         return MQuaternion(*(self.vector.components * other))
@@ -1276,15 +1301,10 @@ class MQuaternion(MVector):
         """
         軸と角度からクォータニオンに変換する
         """
-        vv = v.normalized()
-        length = sqrt(vv.x**2 + vv.y**2 + vv.z**2)
+        xyz = v.normalized().vector
 
-        xyz = vv.vector
-        if not np.isclose([length - 1.0, length], 0).any():
-            xyz /= length
-
-        radian = radians(degree / 2.0)
-        return MQuaternion(cos(radian), *(xyz * sin(radian))).normalized()
+        rad = radians(degree)
+        return MQuaternion(cos(rad / 2), *(xyz * sin(rad / 2))).normalized()
 
     @staticmethod
     def from_direction(direction: MVector3D, up: MVector3D) -> "MQuaternion":
@@ -1737,6 +1757,32 @@ class MMatrix4x4(MVector):
 
     def copy(self) -> "MMatrix4x4":
         return self.__class__(self.vector)
+
+    @staticmethod
+    def from_axis_angles(axis: MVector3D, degree: float) -> "MMatrix4x4":
+        """
+        軸と角度から回転行列を計算する
+
+        :param axis: 回転軸
+        :param angle: 回転角度
+        :return: 回転行列
+        """
+        angle = radians(degree)
+        c = np.cos(angle)
+        s = np.sin(angle)
+        t = 1 - c
+        x, y, z = axis
+
+        mat = MMatrix4x4()
+        mat.vector[:3, :3] = np.array(
+            [
+                [t * x * x + c, t * x * y - s * z, t * x * z + s * y],
+                [t * x * y + s * z, t * y * y + c, t * y * z - s * x],
+                [t * x * z - s * y, t * y * z + s * x, t * z * z + c],
+            ]
+        )
+
+        return mat
 
 
 class MMatrix4x4List:

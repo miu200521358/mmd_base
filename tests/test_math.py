@@ -338,22 +338,22 @@ def test_MQuaternion_from_euler_degrees():
 
     assert np.isclose(
         np.array([1, 0, 0, 0]),
-        MQuaternion.from_euler_degrees_ZXY(MVector3D()).vector.components,
+        MQuaternion.from_euler_degrees(MVector3D()).vector.components,
     ).all()
 
     assert np.isclose(
         np.array([0.9961946980917455, 0.08715574274765817, 0.0, 0.0]),
-        MQuaternion.from_euler_degrees_ZXY(MVector3D(10, 0, 0)).vector.components,
+        MQuaternion.from_euler_degrees(MVector3D(10, 0, 0)).vector.components,
     ).all()
 
     assert np.isclose(
-        np.array([0.94371436, 0.03813458, 0.18930786, 0.26853582]),
-        MQuaternion.from_euler_degrees_ZXY(MVector3D(10, 20, 30)).vector.components,
+        np.array([0.95154852, 0.12767944, 0.14487813, 0.23929834]),
+        MQuaternion.from_euler_degrees(MVector3D(10, 20, 30)).vector.components,
     ).all()
 
     assert np.isclose(
-        np.array([0.59752575, 0.28053845, -0.43171173, -0.61472444]),
-        MQuaternion.from_euler_degrees_ZXY(60, -20, -80).vector.components,
+        np.array([0.70914465, 0.47386805, 0.20131049, -0.48170221]),
+        MQuaternion.from_euler_degrees(60, -20, -80).vector.components,
     ).all()
 
 
@@ -376,25 +376,15 @@ def test_MQuaternion_to_euler_degrees():
 
     assert np.isclose(
         np.array([10, 20, 30]),
-        MQuaternion(
-            0.9515485246437885,
-            0.12767944069578063,
-            0.14487812541736916,
-            0.2392983377447303,
-        )
-        .to_euler_degrees()
+        MQuaternion(0.95154852, 0.12767944, 0.14487813, 0.23929834)
+        .to_euler_degrees_by_YXZ()
         .vector,
     ).all()
 
     assert np.isclose(
         np.array([60, -20, -80]),
-        MQuaternion(
-            0.7091446481376844,
-            0.4738680537545347,
-            0.20131048764138487,
-            -0.48170221425083437,
-        )
-        .to_euler_degrees()
+        MQuaternion(0.70914465, 0.47386805, 0.20131049, -0.48170221)
+        .to_euler_degrees_by_YXZ()
         .vector,
     ).all()
 
@@ -818,9 +808,9 @@ def test_MQuaternion_separate_local_axis_x_x():
 
     from mlib.core.math import MQuaternion, MVector3D
 
-    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees_ZXY(
-        10, 0, 0
-    ).separate_by_axis(MVector3D(1, 0, 0))
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(
+        MVector3D(1, 0, 0)
+    )
 
     assert np.isclose(
         np.array(
@@ -861,9 +851,9 @@ def test_MQuaternion_separate_local_axis_y_x():
 
     from mlib.core.math import MQuaternion, MVector3D
 
-    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees_ZXY(
-        0, 10, 0
-    ).separate_by_axis(MVector3D(1, 0, 0))
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(0, 10, 0).separate_by_axis(
+        MVector3D(1, 0, 0)
+    )
 
     assert np.isclose(
         np.array(
@@ -904,9 +894,9 @@ def test_MQuaternion_separate_local_axis_z_x():
 
     from mlib.core.math import MQuaternion, MVector3D
 
-    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees_ZXY(
-        0, 0, 10
-    ).separate_by_axis(MVector3D(1, 0, 0))
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(0, 0, 10).separate_by_axis(
+        MVector3D(1, 0, 0)
+    )
 
     assert np.isclose(
         np.array(
@@ -947,9 +937,9 @@ def test_MQuaternion_separate_local_axis_x_y():
 
     from mlib.core.math import MQuaternion, MVector3D
 
-    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees_ZXY(
-        10, 0, 0
-    ).separate_by_axis(MVector3D(0, 1, 0))
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(
+        MVector3D(0, 1, 0)
+    )
 
     assert np.isclose(
         np.array(
@@ -990,9 +980,9 @@ def test_MQuaternion_separate_local_axis_x_z():
 
     from mlib.core.math import MQuaternion, MVector3D
 
-    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees_ZXY(
-        10, 0, 0
-    ).separate_by_axis(MVector3D(0, 0, 1))
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(
+        MVector3D(0, 0, 1)
+    )
 
     assert np.isclose(
         np.array(
@@ -1033,9 +1023,9 @@ def test_MQuaternion_separate_local_axis_x_xy():
 
     from mlib.core.math import MQuaternion, MVector3D
 
-    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees_ZXY(
-        10, 0, 0
-    ).separate_by_axis(MVector3D(1, 1, 0))
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(
+        MVector3D(1, 1, 0)
+    )
 
     assert np.isclose(
         np.array([4.96246607, 4.98060393, 1.08639405]),
@@ -1070,7 +1060,7 @@ def test_MQuaternion_to_euler_degrees_by_axis():
 
     from mlib.core.math import MQuaternion, MVector3D
 
-    degrees = MQuaternion.from_euler_degrees_ZXY(10, 0, 0).to_euler_degrees_by_axis(
+    degrees = MQuaternion.from_euler_degrees(10, 0, 0).to_euler_degrees_by_axis(
         MVector3D(1, 0, 0), MVector3D(0, 1, 0), MVector3D(0, 0, 1)
     )
 
@@ -1079,7 +1069,7 @@ def test_MQuaternion_to_euler_degrees_by_axis():
         degrees.vector,
     ).all()
 
-    degrees = MQuaternion.from_euler_degrees_ZXY(10, 0, 0).to_euler_degrees_by_axis(
+    degrees = MQuaternion.from_euler_degrees(10, 0, 0).to_euler_degrees_by_axis(
         MVector3D(1, 1, 0),
         MVector3D(1, 1, 0).cross(MVector3D(0, 0, -1)),
         MVector3D(0, 0, -1),
@@ -1090,7 +1080,7 @@ def test_MQuaternion_to_euler_degrees_by_axis():
         degrees.vector,
     ).all()
 
-    degrees = MQuaternion.from_euler_degrees_ZXY(10, 0, 0).to_euler_degrees_by_axis(
+    degrees = MQuaternion.from_euler_degrees(10, 0, 0).to_euler_degrees_by_axis(
         MVector3D(0, 1, 1),
         MVector3D(0, 1, 1).cross(MVector3D(0, 0, -1)),
         MVector3D(0, 0, -1),
@@ -1234,7 +1224,7 @@ def test_MMatrix4x4_rotate():
         )
     )
 
-    m.rotate(MQuaternion.from_euler_degrees_ZXY(10, 20, 30))
+    m.rotate(MQuaternion.from_euler_degrees(10, 20, 30))
     assert np.isclose(
         np.array(
             [
@@ -1247,7 +1237,7 @@ def test_MMatrix4x4_rotate():
         m.vector,
     ).all()
 
-    m.rotate(MQuaternion.from_euler_degrees_ZXY(-40, 20, -32))
+    m.rotate(MQuaternion.from_euler_degrees(-40, 20, -32))
     assert np.isclose(
         np.array(
             [
@@ -1311,7 +1301,7 @@ def test_MMatrix4x4_scale():
 
     m = MMatrix4x4()
 
-    m.rotate(MQuaternion.from_euler_degrees_ZXY(10, 20, 30))
+    m.rotate(MQuaternion.from_euler_degrees(10, 20, 30))
     assert np.isclose(
         np.array(
             [
@@ -1705,48 +1695,24 @@ def test_MMatrix4x4List_rotate():
     ms = MMatrix4x4List(4, 3)
     qs = [
         [
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(1, 2, 3))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(4, 5, 6))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(7, 8, 9))
-            .to_matrix4x4()
-            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(1, 2, 3)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(4, 5, 6)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(7, 8, 9)).to_matrix4x4().vector,
         ],
         [
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(10, 11, 12))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(13, 14, 15))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(16, 17, 18))
-            .to_matrix4x4()
-            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(10, 11, 12)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(13, 14, 15)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(16, 17, 18)).to_matrix4x4().vector,
         ],
         [
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(19, 20, 21))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(22, 23, 24))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(25, 26, 27))
-            .to_matrix4x4()
-            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(19, 20, 21)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(22, 23, 24)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(25, 26, 27)).to_matrix4x4().vector,
         ],
         [
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(28, 29, 30))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(31, 32, 33))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(34, 35, 36))
-            .to_matrix4x4()
-            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(28, 29, 30)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(31, 32, 33)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(34, 35, 36)).to_matrix4x4().vector,
         ],
     ]
     ms.rotate(qs)
@@ -1849,26 +1815,14 @@ def test_MMatrix4x4List_scale():
 
     qs = [
         [
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(1, 2, 3))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(4, 5, 6))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(7, 8, 9))
-            .to_matrix4x4()
-            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(1, 2, 3)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(4, 5, 6)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(7, 8, 9)).to_matrix4x4().vector,
         ],
         [
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(10, 11, 12))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(13, 14, 15))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(16, 17, 18))
-            .to_matrix4x4()
-            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(10, 11, 12)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(13, 14, 15)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(16, 17, 18)).to_matrix4x4().vector,
         ],
     ]
     ms.rotate(qs)
@@ -2337,26 +2291,14 @@ def test_MMatrix4x4List_matmul_cols():
 
     qs1 = [
         [
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(1, 2, 3))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(4, 5, 6))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(7, 8, 9))
-            .to_matrix4x4()
-            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(1, 2, 3)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(4, 5, 6)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(7, 8, 9)).to_matrix4x4().vector,
         ],
         [
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(10, 11, 12))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(13, 14, 15))
-            .to_matrix4x4()
-            .vector,
-            MQuaternion.from_euler_degrees_ZXY(MVector3D(16, 17, 18))
-            .to_matrix4x4()
-            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(10, 11, 12)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(13, 14, 15)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(16, 17, 18)).to_matrix4x4().vector,
         ],
     ]
     ms.rotate(qs1)

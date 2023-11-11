@@ -916,10 +916,10 @@ class PmxModel(BaseHashModel):
         #     relative_bone_indexes |= {bone.ik.bone_index}
         #     for link in bone.ik.links:
         #         relative_bone_indexes |= {link.bone_index}
-        if bone.ik_link_indexes:
-            relative_bone_indexes |= set(bone.ik_link_indexes)
-        if bone.ik_target_indexes:
-            relative_bone_indexes |= set(bone.ik_target_indexes)
+        # if bone.ik_link_indexes:
+        #     relative_bone_indexes |= set(bone.ik_link_indexes)
+        # if bone.ik_target_indexes:
+        #     relative_bone_indexes |= set(bone.ik_target_indexes)
 
         tree_relative_bone_indexes: set[int] = set([])
         if recursive:
@@ -950,7 +950,7 @@ class PmxModel(BaseHashModel):
         # オフセット行列は自身の位置を原点に戻す行列
         bone.offset_matrix[:3, 3] = -bone.position.vector
 
-        # 逆オフセット行列は親ボーンからの相対位置分を戻す
+        # 逆オフセット行列は親ボーンからの相対位置分
         bone.parent_revert_matrix[:3, 3] = bone.parent_relative_position.vector
 
     def remove_bone(self, bone_name: str) -> None:
