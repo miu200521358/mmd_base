@@ -1220,7 +1220,7 @@ class MQuaternion(MVector):
     @staticmethod
     def from_euler_degrees_ZXY(
         a: Union[int, float, MVector3D], b: float = 0.0, c: float = 0.0
-    ):
+    ) -> "MQuaternion":
         """
         ZXYのオイラー角をクォータニオンに変換する
         """
@@ -1247,7 +1247,7 @@ class MQuaternion(MVector):
     @staticmethod
     def from_euler_degrees(
         a: Union[int, float, MVector3D], b: float = 0.0, c: float = 0.0
-    ):
+    ) -> "MQuaternion":
         """
         YXZのオイラー角をクォータニオンに変換する
         """
@@ -1272,7 +1272,7 @@ class MQuaternion(MVector):
         return mat.to_quaternion()
 
     @staticmethod
-    def from_axis_angles(v: MVector3D, degree: float):
+    def from_axis_angles(v: MVector3D, degree: float) -> "MQuaternion":
         """
         軸と角度からクォータニオンに変換する
         """
@@ -1287,7 +1287,7 @@ class MQuaternion(MVector):
         return MQuaternion(cos(radian), *(xyz * sin(radian))).normalized()
 
     @staticmethod
-    def from_direction(direction: MVector3D, up: MVector3D):
+    def from_direction(direction: MVector3D, up: MVector3D) -> "MQuaternion":
         """
         軸と角度からクォータニオンに変換する
         """
@@ -1306,7 +1306,7 @@ class MQuaternion(MVector):
         return MQuaternion.from_axes(x_axis, y_axis, z_axis)
 
     @staticmethod
-    def rotate(from_v: MVector3D, to_v: MVector3D):
+    def rotate(from_v: MVector3D, to_v: MVector3D) -> "MQuaternion":
         """
         fromベクトルからtoベクトルまでの回転量
         """
@@ -1328,7 +1328,9 @@ class MQuaternion(MVector):
         return MQuaternion(d * 0.5, axis.x, axis.y, axis.z).normalized()
 
     @staticmethod
-    def from_axes(x_axis: MVector3D, y_axis: MVector3D, z_axis: MVector3D):
+    def from_axes(
+        x_axis: MVector3D, y_axis: MVector3D, z_axis: MVector3D
+    ) -> "MQuaternion":
         return MQuaternion(
             *from_rotation_matrix(
                 np.array(
@@ -1343,7 +1345,7 @@ class MQuaternion(MVector):
         )
 
     @staticmethod
-    def nlerp(q1: "MQuaternion", q2: "MQuaternion", t: float):
+    def nlerp(q1: "MQuaternion", q2: "MQuaternion", t: float) -> "MQuaternion":
         """
         線形補間
         """
@@ -1364,7 +1366,7 @@ class MQuaternion(MVector):
         ).normalized()
 
     @staticmethod
-    def slerp(q1: "MQuaternion", q2: "MQuaternion", t: float):
+    def slerp(q1: "MQuaternion", q2: "MQuaternion", t: float) -> "MQuaternion":
         """
         球形補間
         """
