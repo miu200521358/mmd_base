@@ -1158,6 +1158,31 @@ class MQuaternion(MVector):
 
         return euler_zxy
 
+    def to_euler_degrees_by_YXZ(self) -> MVector3D:
+        """
+        YXZの回転順序でオイラー角度を求める
+        https://programming-surgeon.com/script/euler-python-script/
+        https://site.nicovideo.jp/ch/userblomaga_thanks/archive/ar805999
+
+        Returns
+        -------
+        グローバル軸別のオイラー角度
+        """
+        mat = self.normalized().to_matrix4x4()
+        y_radian = np.arctan(mat[0, 2] / mat[2, 2])
+        x_radian = np.arctan(-mat[1, 2] * cos(y_radian) / mat[2, 2])
+        z_radian = np.arctan(mat[1, 0] / mat[1, 1])
+
+        euler = self.to_euler_degrees()
+        euler_yxz = MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
+
+        # 符号が反転している場合、ジンバルロックなので符号を合わせる
+        euler_yxz.vector[
+            np.where(np.sign(euler.vector) != np.sign(euler_yxz.vector))
+        ] *= -1
+
+        return euler_yxz
+
     def to_euler_degrees_by_axis(
         self, local_x_axis: MVector3D, local_y_axis: MVector3D, local_z_axis: MVector3D
     ) -> MVector3D:
@@ -1193,7 +1218,7 @@ class MQuaternion(MVector):
         ).normalized()
 
     @staticmethod
-    def from_euler_degrees(
+    def from_euler_degrees_ZXY(
         a: Union[int, float, MVector3D], b: float = 0.0, c: float = 0.0
     ):
         """
@@ -1214,6 +1239,33 @@ class MQuaternion(MVector):
                 [c1 * c3 - s1 * s2 * s3, -c2 * s1, c1 * s3 + c3 * s1 * s2],
                 [c3 * s1 + c1 * s2 * s3, c1 * c2, s1 * s3 - c1 * c3 * s2],
                 [-c2 * s3, s2, c2 * c3],
+            ]
+        )
+
+        return mat.to_quaternion()
+
+    @staticmethod
+    def from_euler_degrees(
+        a: Union[int, float, MVector3D], b: float = 0.0, c: float = 0.0
+    ):
+        """
+        YXZのオイラー角をクォータニオンに変換する
+        """
+        euler = np.zeros(3)
+        if isinstance(a, (int, float)):
+            euler = np.radians([b, a, c], dtype=np.double)
+        else:
+            euler = np.radians([a.y, a.x, a.z], dtype=np.double)
+
+        c1, c2, c3 = np.cos(euler)
+        s1, s2, s3 = np.sin(euler)
+
+        mat = MMatrix4x4()
+        mat.vector[:3, :3] = np.array(
+            [
+                [c1 * c3 + s1 * s2 * s3, c3 * s1 * s2 - c1 * s3, c2 * s1],
+                [c2 * s3, c2 * c3, -s2],
+                [c1 * s2 * s3 - c3 * s1, c1 * c3 * s2 + s1 * s3, c1 * c2],
             ]
         )
 

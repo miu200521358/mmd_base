@@ -1010,7 +1010,6 @@ def test_read_by_filepath_ok_leg_ik7() -> None:
     assert np.isclose(
         np.array([-2.833401, 8.0174604, -0.100545]),
         bone_matrixes[0, "右ひざ"].position.vector,
-        rtol=0.6,
         atol=0.05,
     ).all()
     assert np.isclose(
@@ -1064,7 +1063,6 @@ def test_read_by_filepath_ok_leg_ik8() -> None:
     assert np.isclose(
         np.array([-2.833401, 8.0174604, -0.100545]),
         bone_matrixes[278, "右ひざ"].position.vector,
-        rtol=0.4,
         atol=0.05,
     ).all()
     assert np.isclose(

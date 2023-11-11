@@ -281,7 +281,9 @@ class PmxCanvas(glcanvas.GLCanvas):
             self.draw()
             self.SwapBuffers()
         except MViewerException:
-            error_msg = "ビューワーの描画に失敗しました。\n一度ツールを立ち上げ直して再度実行していただき、それでも解決しなかった場合、作者にご連絡下さい。"
+            error_msg = (
+                "ビューワーの描画に失敗しました。\n一度ツールを立ち上げ直して再度実行していただき、それでも解決しなかった場合、作者にご連絡下さい。"
+            )
             logger.critical(error_msg)
 
             self.clear_model_set()
