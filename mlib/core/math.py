@@ -8,6 +8,7 @@ from numpy.linalg import inv, norm
 from quaternion import (
     as_rotation_matrix,
     from_rotation_matrix,
+    from_rotation_vector,
     quaternion,
     slerp_evaluate,
 )
@@ -1275,10 +1276,10 @@ class MQuaternion(MVector):
         # 角度をラジアンに変換
         rad = radians(degree)
 
-        # クォータニオンを生成
-        c = cos(rad / 2)
-        s = sin(rad / 2)
-        return MQuaternion(c, v.x * s, v.y * s, v.z * s).normalized()
+        qq = MQuaternion()
+        qq.vector = from_rotation_vector(v.vector * rad)
+
+        return qq
 
     @staticmethod
     def from_direction(direction: MVector3D, up: MVector3D) -> "MQuaternion":

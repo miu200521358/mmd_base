@@ -2,7 +2,7 @@ import os
 from bisect import bisect_left
 from functools import lru_cache
 from itertools import product
-from math import acos, degrees
+from math import degrees
 from typing import Iterable, Optional
 
 import numpy as np
@@ -942,24 +942,25 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         is_break = True
                         break
 
-                    #  (1) 基準関節→エフェクタ位置への方向ベクトル
-                    norm_effector_pos = local_effector_pos.normalized()
-                    #  (2) 基準関節→目標位置への方向ベクトル
-                    norm_target_pos = local_target_pos.normalized()
-
                     # ベクトル (1) を (2) に一致させるための最短回転量（Axis-Angle）
                     # 回転角
-                    rotation_dot = norm_effector_pos.dot(norm_target_pos)
-
-                    if np.isclose(abs(rotation_dot), 1):
-                        is_break = True
-                        break
-
-                    # 回転角度
-                    rotation_radian = acos(max(-1, min(1, rotation_dot)))
+                    rotation_radian = np.arccos(
+                        np.clip(
+                            local_effector_pos.dot(local_target_pos)
+                            / (local_effector_pos.length() * local_target_pos.length()),
+                            -1,
+                            1,
+                        )
+                    )
 
                     # 回転軸
-                    rotation_axis = norm_effector_pos.cross(norm_target_pos)
+                    rotation_axis = local_effector_pos.cross(
+                        local_target_pos
+                    ).normalized()
+
+                    if 1e-6 > rotation_axis.length_squared():
+                        is_break = True
+                        break
 
                     # 回転角度
                     original_rotation_degree = degrees(rotation_radian)
