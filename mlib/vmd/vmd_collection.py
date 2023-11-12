@@ -1112,7 +1112,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     motion.append_bone_frame(ideal_bf)
                     VmdWriter(
                         motion,
-                        f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{link_bone.name}_{loop:02d}_1ideal.vmd",
+                        f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{link_bone.name}_{fno:04d}_{loop:02d}_1ideal.vmd",
                         model_name="Test Model",
                     ).save()
                     ik_fno += 1
@@ -1132,7 +1132,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     motion.append_bone_frame(actual_bf)
                     VmdWriter(
                         motion,
-                        f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{link_bone.name}_{loop:02d}_2actual.vmd",
+                        f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{link_bone.name}_{fno:04d}_{loop:02d}_2actual.vmd",
                         model_name="Test Model",
                     ).save()
                     ik_fno += 1
@@ -1206,7 +1206,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         motion.append_bone_frame(remaining_bf)
                         VmdWriter(
                             motion,
-                            f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{parent_link_bone.name}_{loop:02d}_3remaining.vmd",
+                            f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{parent_link_bone.name}_{fno:04d}_{loop:02d}_3remaining.vmd",
                             model_name="Test Model",
                         ).save()
                         ik_fno += 1
