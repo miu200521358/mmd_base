@@ -2,7 +2,6 @@ import os
 from bisect import bisect_left
 from functools import lru_cache
 from itertools import product
-from math import degrees
 from typing import Iterable, Optional
 
 import numpy as np
@@ -944,7 +943,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # ベクトル (1) を (2) に一致させるための最短回転量（Axis-Angle）
                     # 回転角
-                    rotation_radian = np.arccos(
+                    original_rotation_radian = np.arccos(
                         np.clip(
                             local_effector_pos.dot(local_target_pos)
                             / (local_effector_pos.length() * local_target_pos.length()),
@@ -962,16 +961,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         is_break = True
                         break
 
-                    # 回転角度
-                    original_rotation_degree = degrees(rotation_radian)
-
                     # 制限角で最大変位量を制限する
-                    if 0 < loop < loop_limit:
-                        rotation_degree = min(
-                            original_rotation_degree, ik_bone.ik.unit_rotation.degrees.x
+                    if 0 < loop:
+                        rotation_radian = min(
+                            original_rotation_radian,
+                            ik_bone.ik.unit_rotation.radians.x * (loop + 1),
                         )
                     else:
-                        rotation_degree = original_rotation_degree
+                        rotation_radian = original_rotation_radian
 
                     # リンクボーンの角度を保持
                     link_bf = self[link_bone.name][fno]
@@ -979,7 +976,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     if link_bone.has_fixed_axis:
                         # 軸制限ありの場合、軸にそった理想回転量とする
                         actual_ik_qq = ideal_ik_qq = MQuaternion.from_axis_angles(
-                            link_bone.corrected_fixed_axis, rotation_degree
+                            link_bone.corrected_fixed_axis, rotation_radian
                         )
                     elif ik_link.local_angle_limit:
                         # ローカル軸角度制限が入っている場合、ローカル軸に合わせて理想回転を求める
@@ -987,46 +984,46 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             ik_link.local_min_angle_limit.degrees.z
                             or ik_link.local_min_angle_limit.degrees.z
                         ):
-                            rotation_degree = max(
+                            rotation_radian = max(
                                 min(
-                                    rotation_degree,
+                                    rotation_radian,
                                     ik_link.local_max_angle_limit.degrees.z,
                                 ),
                                 ik_link.local_min_angle_limit.degrees.z,
                             )
 
                             actual_ik_qq *= MQuaternion.from_axis_angles(
-                                link_bone.corrected_local_z_vector, rotation_degree
+                                link_bone.corrected_local_z_vector, rotation_radian
                             )
                         elif (
                             ik_link.local_min_angle_limit.degrees.x
                             or ik_link.local_min_angle_limit.degrees.x
                         ):
-                            rotation_degree = max(
+                            rotation_radian = max(
                                 min(
-                                    rotation_degree,
+                                    rotation_radian,
                                     ik_link.local_max_angle_limit.degrees.x,
                                 ),
                                 ik_link.local_min_angle_limit.degrees.x,
                             )
 
                             actual_ik_qq *= MQuaternion.from_axis_angles(
-                                link_bone.corrected_local_x_vector, rotation_degree
+                                link_bone.corrected_local_x_vector, rotation_radian
                             )
                         elif (
                             ik_link.local_min_angle_limit.degrees.y
                             or ik_link.local_min_angle_limit.degrees.y
                         ):
-                            rotation_degree = max(
+                            rotation_radian = max(
                                 min(
-                                    rotation_degree,
+                                    rotation_radian,
                                     ik_link.local_max_angle_limit.degrees.y,
                                 ),
                                 ik_link.local_min_angle_limit.degrees.y,
                             )
 
                             actual_ik_qq *= MQuaternion.from_axis_angles(
-                                link_bone.corrected_local_y_vector, rotation_degree
+                                link_bone.corrected_local_y_vector, rotation_radian
                             )
                     elif ik_link.angle_limit:
                         # 角度制限が入ってる場合
@@ -1038,7 +1035,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                             # 理想回転
                             ideal_ik_qq = MQuaternion.from_axis_angles(
-                                rotation_axis, rotation_degree
+                                rotation_axis, rotation_radian
                             )
 
                             # ZXYの順番でオイラー角度に分解する
@@ -1070,12 +1067,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         else:
                             # TODO: Y軸制限、Z軸制限
                             ideal_ik_qq = actual_ik_qq = MQuaternion.from_axis_angles(
-                                rotation_axis, rotation_degree
+                                rotation_axis, rotation_radian
                             )
                     else:
                         # 角度制限がない場合、そのまま計算
                         ideal_ik_qq = actual_ik_qq = MQuaternion.from_axis_angles(
-                            rotation_axis, rotation_degree
+                            rotation_axis, rotation_radian
                         )
 
                     link_bf.ik_rotation = (

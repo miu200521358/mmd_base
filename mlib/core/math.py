@@ -1268,13 +1268,10 @@ class MQuaternion(MVector):
         return mat.to_quaternion()
 
     @staticmethod
-    def from_axis_angles(v: MVector3D, degree: float) -> "MQuaternion":
+    def from_axis_angles(v: MVector3D, rad: float) -> "MQuaternion":
         """
-        軸と角度からクォータニオンに変換する
+        軸とラジアン角度からクォータニオンに変換する
         """
-
-        # 角度をラジアンに変換
-        rad = radians(degree)
 
         qq = MQuaternion()
         qq.vector = from_rotation_vector(v.vector * rad)

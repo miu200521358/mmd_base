@@ -81,7 +81,7 @@ def test_read_by_filepath_ok_calc() -> None:
     ).all()
     assert np.isclose(
         np.array([-6.270921156, -26.96361355, 0.63172903]),
-        upper_bf.rotation.to_euler_degrees_mmd().vector,
+        upper_bf.rotation.to_euler_degrees().mmd.vector,
     ).all()
     assert np.isclose(
         np.array([20, 20]),
@@ -100,7 +100,7 @@ def test_read_by_filepath_ok_calc() -> None:
     ).all()
     assert np.isclose(
         np.array([22.20309405, 6.80959631, 2.583712695]),
-        right_leg_ik_bf.rotation.to_euler_degrees_mmd().vector,
+        right_leg_ik_bf.rotation.to_euler_degrees().mmd.vector,
     ).all()
     assert np.isclose(
         np.array([64, 0]),
@@ -145,7 +145,7 @@ def test_read_by_filepath_ok_calc() -> None:
     ).all()
     assert np.isclose(
         np.array([-1.4, 6.7, -5.2]),
-        left_leg_ik_bf.rotation.to_euler_degrees_mmd().vector,
+        left_leg_ik_bf.rotation.to_euler_degrees().mmd.vector,
         atol=0.1,
     ).all()
 
@@ -158,7 +158,7 @@ def test_read_by_filepath_ok_calc() -> None:
     ).all()
     assert np.isclose(
         np.array([-41.9, -1.6, 1.0]),
-        left_leg_ik_bf.rotation.to_euler_degrees_mmd().vector,
+        left_leg_ik_bf.rotation.to_euler_degrees().mmd.vector,
         atol=0.1,
     ).all()
 
@@ -171,7 +171,7 @@ def test_read_by_filepath_ok_calc() -> None:
     ).all()
     assert np.isclose(
         np.array([43.1, 0.0, 0.0]),
-        left_leg_ik_bf.rotation.to_euler_degrees_mmd().vector,
+        left_leg_ik_bf.rotation.to_euler_degrees().mmd.vector,
         atol=0.1,
     ).all()
 
@@ -179,7 +179,7 @@ def test_read_by_filepath_ok_calc() -> None:
     assert 384 == left_arm_bf.index
     assert np.isclose(
         np.array([13.5, -4.3, 27.0]),
-        left_arm_bf.rotation.to_euler_degrees_mmd().vector,
+        left_arm_bf.rotation.to_euler_degrees().mmd.vector,
         atol=0.1,
     ).all()
 
