@@ -1179,6 +1179,12 @@ class MQuaternion(MVector):
 
         return euler_yxz
 
+    def to_euler_degrees_mmd(self) -> MVector3D:
+        """
+        MMDの法則に合わせたオイラー角
+        """
+        return self.to_euler_degrees().mmd
+
     def to_euler_degrees_by_axis(
         self, local_x_axis: MVector3D, local_y_axis: MVector3D, local_z_axis: MVector3D
     ) -> MVector3D:

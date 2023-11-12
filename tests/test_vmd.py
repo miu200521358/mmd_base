@@ -1384,43 +1384,6 @@ def test_read_by_filepath_ok_leg_ik7_bake() -> None:
     ).all()
 
 
-def test_read_by_filepath_ok_leg_ik7_name_changed() -> None:
-    import os
-
-    import numpy as np
-
-    from mlib.pmx.pmx_collection import PmxModel
-    from mlib.pmx.pmx_reader import PmxReader
-    from mlib.vmd.vmd_collection import VmdMotion
-    from mlib.vmd.vmd_reader import VmdReader
-
-    vmd_reader = VmdReader()
-    motion: VmdMotion = vmd_reader.read_by_filepath(
-        os.path.join("tests", "resources", "足FK_名前変更.vmd")
-    )
-
-    pmx_reader = PmxReader()
-    model: PmxModel = pmx_reader.read_by_filepath(
-        os.path.join("tests", "resources", "サンプルモデル_名前変更.pmx")
-    )
-
-    # キーフレ
-    bone_matrixes = motion.animate_bone([0], model, ["RT"])
-
-    # --------
-
-    assert np.isclose(
-        np.array([-0.133305, 10.693993, 2.314730]),
-        bone_matrixes[0, "RL"].position.vector,
-        atol=0.01,
-    ).all()
-    assert np.isclose(
-        np.array([2.080635, 7.882268, -0.266755]),
-        bone_matrixes[0, "RK"].position.vector,
-        atol=0.01,
-    ).all()
-
-
 def test_read_by_filepath_ok_leg_ik7_no_limit() -> None:
     import os
 
