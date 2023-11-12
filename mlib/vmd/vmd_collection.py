@@ -918,24 +918,24 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 現在のIKターゲットボーンのグローバル位置を取得
                     global_effector_pos = ik_matrixes[fno, effector_bone.name].position
 
-                    # 注目ノード（実際に動かすボーン）
-                    global_link_pos = ik_matrixes[fno, link_bone.name].position
-
-                    # 注目ノードを起点とした、エフェクタのローカル位置
-                    local_effector_pos = global_effector_pos - global_link_pos
-                    # 注目ノードを起点とした、IK目標のローカル位置
-                    local_target_pos = global_target_pos - global_link_pos
-
                     # # 注目ノード（実際に動かすボーン）
-                    # link_matrix = ik_matrixes[fno, link_bone.name].global_matrix
-
-                    # # ワールド座標系から注目ノードの局所座標系への変換
-                    # link_inverse_matrix = link_matrix.inverse()
+                    # global_link_pos = ik_matrixes[fno, link_bone.name].position
 
                     # # 注目ノードを起点とした、エフェクタのローカル位置
-                    # local_effector_pos = link_inverse_matrix * global_effector_pos
+                    # local_effector_pos = global_effector_pos - global_link_pos
                     # # 注目ノードを起点とした、IK目標のローカル位置
-                    # local_target_pos = link_inverse_matrix * global_target_pos
+                    # local_target_pos = global_target_pos - global_link_pos
+
+                    # 注目ノード（実際に動かすボーン）
+                    link_matrix = ik_matrixes[fno, link_bone.name].global_matrix
+
+                    # ワールド座標系から注目ノードの局所座標系への変換
+                    link_inverse_matrix = link_matrix.inverse()
+
+                    # 注目ノードを起点とした、エフェクタのローカル位置
+                    local_effector_pos = link_inverse_matrix * global_effector_pos
+                    # 注目ノードを起点とした、IK目標のローカル位置
+                    local_target_pos = link_inverse_matrix * global_target_pos
 
                     if 1e-6 > (local_effector_pos - local_target_pos).length_squared():
                         # 位置の差がほとんどない場合、スルー

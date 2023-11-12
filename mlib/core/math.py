@@ -409,6 +409,10 @@ class MVector2D(MVector):
     def gl(self) -> "MVector2D":
         return MVector2D(-self.x, self.y)
 
+    @property
+    def mmd(self) -> "MVector2D":
+        return MVector2D(self.x, -self.y)
+
 
 class MVector3D(MVector):
     """
@@ -466,6 +470,10 @@ class MVector3D(MVector):
     @property
     def gl(self) -> "MVector3D":
         return MVector3D(-self.x, self.y, self.z)
+
+    @property
+    def mmd(self) -> "MVector3D":
+        return MVector3D(self.x, -self.y, -self.z)
 
     @property
     def vector4(self) -> np.ndarray:
@@ -571,6 +579,10 @@ class MVector4D(MVector):
     @property
     def gl(self) -> "MVector4D":
         return MVector4D(-self.x, self.y, self.z, self.w)
+
+    @property
+    def mmd(self) -> "MVector4D":
+        return MVector4D(self.x, -self.y, -self.z, self.w)
 
     @property
     def xy(self) -> "MVector2D":
@@ -857,6 +869,10 @@ class MQuaternion(MVector):
     def gl(self) -> "MQuaternion":
         return MQuaternion(-self.scalar, -self.x, self.y, self.z)
 
+    @property
+    def mmd(self) -> "MQuaternion":
+        return MQuaternion(self.scalar, self.x, -self.y, -self.z)
+
     def __bool__(self) -> bool:
         return qq_one != self.vector
 
@@ -950,53 +966,7 @@ class MQuaternion(MVector):
         cos_y_cos_p = 1 - 2 * (y * y + z * z)
         yaw = np.arctan2(sin_y_cos_p, cos_y_cos_p)
 
-        # # オイラー角を度単位に変換
-        # roll_deg = np.degrees(roll)
-        # pitch_deg = np.degrees(pitch)
-        # yaw_deg = np.degrees(yaw)
-
-        # xx = self.x * self.x
-        # xy = self.x * self.y
-        # xz = self.x * self.z
-        # xw = self.x * self.scalar
-        # yy = self.y * self.y
-        # yz = self.y * self.z
-        # yw = self.y * self.scalar
-        # zz = self.z * self.z
-        # zw = self.z * self.scalar
-        # lengthSquared = xx + yy + zz + self.scalar**2
-
-        # if not np.isclose([lengthSquared, lengthSquared - 1.0], 0).any():
-        #     xx, xy, xz, xw, yy, yz, yw, zz, zw = (
-        #         np.array([xx, xy, xz, xw, yy, yz, yw, zz, zw], dtype=np.float64)
-        #         / lengthSquared
-        #     )
-
-        # pitch = np.arcsin(max(-1, min(1, -2.0 * (yz - xw))))
-        # yaw = 0
-        # roll = 0
-
-        # if pitch < (np.pi / 2):
-        #     if pitch > -(np.pi / 2):
-        #         yaw = np.arctan2(2.0 * (xz + yw), 1.0 - 2.0 * (xx + yy))
-        #         roll = np.arctan2(2.0 * (xy + zw), 1.0 - 2.0 * (xx + zz))
-        #     else:
-        #         # not a unique solution
-        #         roll = 0
-        #         yaw = -np.arctan2(-2.0 * (xy - zw), 1.0 - 2.0 * (yy + zz))
-        # else:
-        #     # not a unique solution
-        #     roll = 0
-        #     yaw = np.arctan2(-2.0 * (xy - zw), 1.0 - 2.0 * (yy + zz))
-
         return MVector3D(*np.degrees([roll, pitch, yaw]))
-
-    def to_euler_degrees_mmd(self) -> MVector3D:
-        """
-        MMDの表記に合わせたオイラー角
-        """
-        euler = self.to_euler_degrees()
-        return MVector3D(euler.x, -euler.y, -euler.z)
 
     def to_degrees(self) -> float:
         """
@@ -1300,10 +1270,7 @@ class MQuaternion(MVector):
     def from_axis_angles(v: MVector3D, degree: float) -> "MQuaternion":
         """
         軸と角度からクォータニオンに変換する
-        MMDの座標系と回転方向に合わせて修正
         """
-        # MMDの座標系に合わせて軸を調整
-        adjusted_axis = MVector3D(v.x, -v.y, -v.z).normalized()
 
         # 角度をラジアンに変換
         rad = radians(degree)
@@ -1311,30 +1278,7 @@ class MQuaternion(MVector):
         # クォータニオンを生成
         c = cos(rad / 2)
         s = sin(rad / 2)
-        return MQuaternion(
-            c, adjusted_axis.x * s, adjusted_axis.y * s, adjusted_axis.z * s
-        ).normalized()
-
-    # @staticmethod
-    # def from_axis_angles(v: MVector3D, degree: float) -> "MQuaternion":
-    #     """
-    #     軸と角度からクォータニオンに変換する
-    #     """
-    #     # xyz = v.normalized().vector
-
-    #     # rad = radians(degree)
-    #     # return MQuaternion(cos(rad / 2), *(xyz * sin(rad / 2))).normalized()
-
-    #     # 各軸の角度をラジアンに変換
-    #     rad_x, rad_y, rad_z = np.radians(v.normalized().vector * degree)
-
-    #     # Y, X, Z 軸のクォータニオンを計算
-    #     qy = MQuaternion(cos(rad_y / 2), 0, sin(rad_y / 2), 0)
-    #     qx = MQuaternion(cos(rad_x / 2), sin(rad_x / 2), 0, 0)
-    #     qz = MQuaternion(cos(rad_z / 2), 0, 0, sin(rad_z / 2))
-
-    #     # YZX の順でクォータニオンを乗算
-    #     return (qy * qz * qx).normalized()
+        return MQuaternion(c, v.x * s, v.y * s, v.z * s).normalized()
 
     @staticmethod
     def from_direction(direction: MVector3D, up: MVector3D) -> "MQuaternion":
