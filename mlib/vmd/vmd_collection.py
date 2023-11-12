@@ -1,5 +1,4 @@
 import os
-from bisect import bisect_left
 from functools import lru_cache
 from itertools import product
 from math import degrees
@@ -37,7 +36,6 @@ from mlib.pmx.pmx_part import (
 )
 from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_part import (
-    BoneInterpolations,
     VmdBoneFrame,
     VmdCameraFrame,
     VmdLightFrame,
@@ -173,36 +171,36 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             else VmdBoneFrame(name=self.name, index=next_index)
         )
 
-        slice_idx = bisect_left(self._ik_indexes, index)
-        prev_ik_indexes = self._ik_indexes[:slice_idx]
-        next_ik_indexes = self._ik_indexes[slice_idx:]
+        # slice_idx = bisect_left(self._ik_indexes, index)
+        # prev_ik_indexes = self._ik_indexes[:slice_idx]
+        # next_ik_indexes = self._ik_indexes[slice_idx:]
 
-        prev_ik_index = prev_ik_indexes[-1] if prev_ik_indexes else prev_index
-        prev_ik_rotation = (
-            self.data[prev_ik_index].ik_rotation or MQuaternion()
-            if prev_ik_index in self.data
-            else MQuaternion()
-        )
+        # prev_ik_index = prev_ik_indexes[-1] if prev_ik_indexes else prev_index
+        # prev_ik_rotation = (
+        #     self.data[prev_ik_index].ik_rotation or MQuaternion()
+        #     if prev_ik_index in self.data
+        #     else MQuaternion()
+        # )
 
-        next_ik_index = next_ik_indexes[0] if next_ik_indexes else next_index
-        next_ik_rotation = (
-            self.data[next_ik_index].ik_rotation or prev_ik_rotation
-            if next_ik_index in self.data
-            else prev_ik_rotation
-        )
+        # next_ik_index = next_ik_indexes[0] if next_ik_indexes else next_index
+        # next_ik_rotation = (
+        #     self.data[next_ik_index].ik_rotation or prev_ik_rotation
+        #     if next_ik_index in self.data
+        #     else prev_ik_rotation
+        # )
 
-        # 補間結果Yは、FKキーフレ内で計算する
-        if next_ik_index in self.data:
-            iry, _, _, _ = self.data[next_ik_index].interpolations.evaluate(
-                prev_ik_index, index, next_ik_index
-            )
-        else:
-            iry, _, _, _ = BoneInterpolations().evaluate(
-                prev_ik_index, index, next_ik_index
-            )
+        # # 補間結果Yは、FKキーフレ内で計算する
+        # if next_ik_index in self.data:
+        #     iry, _, _, _ = self.data[next_ik_index].interpolations.evaluate(
+        #         prev_ik_index, index, next_ik_index
+        #     )
+        # else:
+        #     iry, _, _, _ = BoneInterpolations().evaluate(
+        #         prev_ik_index, index, next_ik_index
+        #     )
 
-        # IK用回転
-        bf.ik_rotation = MQuaternion.slerp(prev_ik_rotation, next_ik_rotation, iry)
+        # # IK用回転
+        # bf.ik_rotation = MQuaternion.slerp(prev_ik_rotation, next_ik_rotation, iry)
 
         # 補間結果Yは、FKキーフレ内で計算する
         ry, xy, yy, zy = next_bf.interpolations.evaluate(prev_index, index, next_index)
@@ -473,11 +471,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_qqs = np.full((row, col, 4, 4), np.eye(4))
         local_scales = np.full((row, col, 4, 4), np.eye(4))
 
-        if append_ik:
-            # IK回転を事前に求めておく
-            self.calc_ik_rotations(
-                fnos, model, target_bone_names, out_fno_log, description
-            )
+        # if append_ik:
+        #     # IK回転を事前に求めておく
+        #     self.calc_ik_rotations(
+        #         fnos, model, target_bone_names, out_fno_log, description
+        #     )
 
         total_count = len(fnos) * len(target_bone_names)
 
