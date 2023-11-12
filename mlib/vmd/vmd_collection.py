@@ -1,5 +1,6 @@
 import os
 from bisect import bisect_left
+from datetime import datetime
 from functools import lru_cache
 from itertools import product
 from math import degrees
@@ -863,6 +864,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         if not bone.ik_link_indexes:
             return MQuaternion()
 
+        ik_fno = 1
         for ik_target_bone_idx in bone.ik_link_indexes:
             # IKボーン自身の位置
             ik_bone = model.bones[ik_target_bone_idx]
@@ -1095,48 +1097,48 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             rotation_axis, rotation_radian
                         )
 
-                    # # -----------------
-                    # from mlib.vmd.vmd_writer import VmdWriter
+                    # -----------------
+                    from mlib.vmd.vmd_writer import VmdWriter
 
-                    # original_bf = self[link_bone.name][fno]
+                    original_bf = self[link_bone.name][fno]
 
-                    # ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
-                    # ideal_bf.rotation = (
-                    #     original_bf.rotation
-                    #     * (original_bf.ik_rotation or MQuaternion())
-                    #     * ideal_ik_qq
-                    # )
+                    ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
+                    ideal_bf.rotation = (
+                        original_bf.rotation
+                        * (original_bf.ik_rotation or MQuaternion())
+                        * ideal_ik_qq
+                    )
 
-                    # motion = VmdMotion()
-                    # motion.append_bone_frame(ideal_bf)
-                    # VmdWriter(
-                    #     motion,
-                    #     f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{link_bone.name}_{loop:02d}_1ideal.vmd",
-                    #     model_name="Test Model",
-                    # ).save()
-                    # ik_fno += 1
+                    motion = VmdMotion()
+                    motion.append_bone_frame(ideal_bf)
+                    VmdWriter(
+                        motion,
+                        f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{link_bone.name}_{loop:02d}_1ideal.vmd",
+                        model_name="Test Model",
+                    ).save()
+                    ik_fno += 1
 
-                    # actual_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
-                    # actual_bf.rotation = (
-                    #     total_ik_qq
-                    #     if total_ik_qq
-                    #     else (
-                    #         original_bf.rotation
-                    #         * (original_bf.ik_rotation or MQuaternion())
-                    #         * actual_ik_qq
-                    #     )
-                    # )
+                    actual_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
+                    actual_bf.rotation = (
+                        total_ik_qq
+                        if total_ik_qq
+                        else (
+                            original_bf.rotation
+                            * (original_bf.ik_rotation or MQuaternion())
+                            * actual_ik_qq
+                        )
+                    )
 
-                    # motion = VmdMotion()
-                    # motion.append_bone_frame(actual_bf)
-                    # VmdWriter(
-                    #     motion,
-                    #     f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{link_bone.name}_{loop:02d}_2actual.vmd",
-                    #     model_name="Test Model",
-                    # ).save()
-                    # ik_fno += 1
+                    motion = VmdMotion()
+                    motion.append_bone_frame(actual_bf)
+                    VmdWriter(
+                        motion,
+                        f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{link_bone.name}_{loop:02d}_2actual.vmd",
+                        model_name="Test Model",
+                    ).save()
+                    ik_fno += 1
 
-                    # # -----------------
+                    # -----------------
 
                     link_bf.ik_rotation = (
                         total_ik_qq
@@ -1162,29 +1164,32 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             total_ideal_ik_qq * total_ik_qq.inverse()
                         )
 
+                        # FIXME: YZを除去した方が良いか要確認
+
                         # 残存回転をひとつ後のリンクボーンに渡す
                         parent_link_bf = self[parent_link_bone.name][fno]
                         parent_ik_qq = parent_link_bf.ik_rotation or MQuaternion()
                         parent_link_bf.ik_rotation = parent_ik_qq * remaining_qq
                         self[parent_link_bf.name].append(parent_link_bf)
 
-                        # original_bf = self[parent_link_bone.name][fno]
+                        # ------------
+                        original_bf = self[parent_link_bone.name][fno]
 
-                        # remaining_bf = VmdBoneFrame(
-                        #     ik_fno, parent_link_bone.name, register=True
-                        # )
-                        # remaining_bf.rotation = original_bf.rotation * (
-                        #     original_bf.ik_rotation or MQuaternion()
-                        # )
+                        remaining_bf = VmdBoneFrame(
+                            ik_fno, parent_link_bone.name, register=True
+                        )
+                        remaining_bf.rotation = original_bf.rotation * (
+                            original_bf.ik_rotation or MQuaternion()
+                        )
 
-                        # motion = VmdMotion()
-                        # motion.append_bone_frame(remaining_bf)
-                        # VmdWriter(
-                        #     motion,
-                        #     f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{parent_link_bone.name}_{loop:02d}_3remaining.vmd",
-                        #     model_name="Test Model",
-                        # ).save()
-                        # ik_fno += 1
+                        motion = VmdMotion()
+                        motion.append_bone_frame(remaining_bf)
+                        VmdWriter(
+                            motion,
+                            f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{parent_link_bone.name}_{loop:02d}_3remaining.vmd",
+                            model_name="Test Model",
+                        ).save()
+                        ik_fno += 1
 
                 if is_break:
                     break

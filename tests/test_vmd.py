@@ -829,7 +829,7 @@ def test_read_by_filepath_ok_leg_ik4() -> None:
     )
 
     # キーフレ
-    bone_matrixes = motion.animate_bone([0], model)
+    bone_matrixes = motion.animate_bone([0], model, ["右つま先"])
 
     # --------
     # キーフレがある場合
