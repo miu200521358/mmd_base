@@ -1182,6 +1182,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             actual_remaining_qq = MQuaternion.from_axis_angles(
                                 MVector3D(1, 0, 0), limit_radians.x
                             )
+
+                            # YZを少しだけ取り入れるため、slerp
+                            remaining_qq = MQuaternion.slerp(
+                                actual_remaining_qq, ideal_remaining_qq, 0.5
+                            )
                         else:
                             pass
                             # YZも同様に再計算
@@ -1189,7 +1194,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         # 残存回転をひとつ後のリンクボーンに渡す
                         parent_link_bf = self[parent_link_bone.name][fno]
                         parent_ik_qq = parent_link_bf.ik_rotation or MQuaternion()
-                        parent_link_bf.ik_rotation = parent_ik_qq * actual_remaining_qq
+                        parent_link_bf.ik_rotation = parent_ik_qq * remaining_qq
                         self[parent_link_bf.name].append(parent_link_bf)
 
                         # ------------
