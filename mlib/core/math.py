@@ -1252,7 +1252,7 @@ class MQuaternion(MVector):
         if isinstance(a, (int, float)):
             rad = np.radians([b, a, c], dtype=np.double)
         else:
-            rad = np.radians([a.x, a.y, a.z], dtype=np.double)
+            rad = np.radians([a.y, a.x, a.z], dtype=np.double)
 
         c1, c2, c3 = np.cos(rad)
         s1, s2, s3 = np.sin(rad)
