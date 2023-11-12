@@ -1053,10 +1053,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                                 * ideal_ik_qq
                             )
 
-                            # ZXYの順番で全ての角度をオイラー角度に分解する
+                            # ZXYの順番で全ての角度をラジアン角度に分解する
                             limit_radians = total_ideal_ik_qq.to_radians_ZXY().mmd
 
-                            is_not_gimbal = True
                             if np.isclose(limit_radians.x, 0, atol=1e-6):
                                 # Xがほぼ0の場合、YXZで取り直す
                                 limit_radians.x = limit_radians.y
@@ -1071,7 +1070,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                             # 実際回転
                             actual_ik_qq = MQuaternion.from_axis_angles(
-                                MVector3D(1 * is_not_gimbal, 0, 0), limit_x_radian
+                                MVector3D(1, 0, 0), limit_x_radian
                             )
 
                             # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
@@ -1159,17 +1158,38 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             ik_bone.ik.links[lidx + 1].bone_index
                         ]
 
-                        # 残存回転の計算
-                        remaining_qq: MQuaternion = (
+                        # 理想残存回転の計算
+                        ideal_remaining_qq: MQuaternion = (
                             total_ideal_ik_qq * total_ik_qq.inverse()
                         )
 
-                        # FIXME: YZを除去した方が良いか要確認
+                        if (
+                            ik_link.min_angle_limit.radians.x
+                            or ik_link.max_angle_limit.radians.x
+                        ):
+                            # X軸に角度制限が入っている場合（ひざ等）
+
+                            # ZXYの順番でラジアン角度に分解する
+                            limit_radians = ideal_remaining_qq.to_radians_ZXY().mmd
+
+                            if np.isclose(limit_radians.x, 0, atol=1e-6):
+                                # Xがほぼ0の場合、YXZで取り直す
+                                limit_radians.x = limit_radians.y
+                                # 軸を反転する
+                                limit_radians.x *= -1
+
+                            # 実際回転
+                            actual_remaining_qq = MQuaternion.from_axis_angles(
+                                MVector3D(1, 0, 0), limit_radians.x
+                            )
+                        else:
+                            pass
+                            # YZも同様に再計算
 
                         # 残存回転をひとつ後のリンクボーンに渡す
                         parent_link_bf = self[parent_link_bone.name][fno]
                         parent_ik_qq = parent_link_bf.ik_rotation or MQuaternion()
-                        parent_link_bf.ik_rotation = parent_ik_qq * remaining_qq
+                        parent_link_bf.ik_rotation = parent_ik_qq * actual_remaining_qq
                         self[parent_link_bf.name].append(parent_link_bf)
 
                         # ------------
