@@ -1130,29 +1130,34 @@ class MQuaternion(MVector):
         to_qq = MQuaternion.axis_to_quaternion(other_axis)
         return from_qq.inverse() * self * to_qq
 
-    def to_euler_degrees_ZXY(self) -> MVector3D:
+    def to_radians_ZXY(self) -> MVector3D:
         """
-        ZXYの回転順序でオイラー角度を求める
+        ZXYの回転順序でラジアン角度を求める
         https://programming-surgeon.com/script/euler-python-script/
+        """
+        mat = self.normalized().to_matrix4x4()
+        x_radian = atan2(-mat[0, 1], mat[0, 0])
+        y_radian = atan2(mat[2, 1] * cos(x_radian), mat[1, 1])
+        z_radian = atan2(-mat[2, 0], mat[2, 2])
+
+        return MVector3D(x_radian, y_radian, z_radian)
+
+    def to_radians(self) -> MVector3D:
+        """
+        YXZの回転順序でラジアン角度を求める
+        https://programming-surgeon.com/script/euler-python-script/
+        https://site.nicovideo.jp/ch/userblomaga_thanks/archive/ar805999
 
         Returns
         -------
-        グローバル軸別のオイラー角度
+        グローバル軸別のラジアン角度
         """
         mat = self.normalized().to_matrix4x4()
-        z_radian = atan2(-mat[0, 1], mat[0, 0])
-        x_radian = atan2(mat[2, 1] * cos(z_radian), mat[1, 1])
-        y_radian = atan2(-mat[2, 0], mat[2, 2])
+        y_radian = np.arctan(mat[0, 2] / mat[2, 2])
+        x_radian = np.arctan(-mat[1, 2] * cos(y_radian) / mat[2, 2])
+        z_radian = np.arctan(mat[1, 0] / mat[1, 1])
 
-        euler = self.to_euler_degrees()
-        euler_zxy = MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
-
-        # 符号が反転している場合、ジンバルロックなので符号を合わせる
-        euler_zxy.vector[
-            np.where(np.sign(euler.vector) != np.sign(euler_zxy.vector))
-        ] *= -1
-
-        return euler_zxy
+        return MVector3D(x_radian, y_radian, z_radian)
 
     def to_euler_degrees(self) -> MVector3D:
         """
@@ -1164,18 +1169,8 @@ class MQuaternion(MVector):
         -------
         グローバル軸別のオイラー角度
         """
-        mat = self.normalized().to_matrix4x4()
-        y_radian = np.arctan(mat[0, 2] / mat[2, 2])
-        x_radian = np.arctan(-mat[1, 2] * cos(y_radian) / mat[2, 2])
-        z_radian = np.arctan(mat[1, 0] / mat[1, 1])
-
-        # euler_xyz = self.to_euler_degrees_XYZ()
-        euler_yxz = MVector3D(*np.degrees([x_radian, y_radian, z_radian]).tolist())
-
-        # # 符号が反転している場合、ジンバルロックなので符号を合わせる
-        # euler_yxz.vector[
-        #     np.where(np.sign(euler_xyz.vector) != np.sign(euler_yxz.vector))
-        # ] *= -1
+        rad = self.to_radians()
+        euler_yxz = MVector3D(*np.degrees(rad.vector).tolist())
 
         return euler_yxz
 
@@ -1253,14 +1248,41 @@ class MQuaternion(MVector):
         """
         YXZのオイラー角をクォータニオンに変換する
         """
-        euler = np.zeros(3)
+        rad = np.zeros(3)
         if isinstance(a, (int, float)):
-            euler = np.radians([b, a, c], dtype=np.double)
+            rad = np.radians([b, a, c], dtype=np.double)
         else:
-            euler = np.radians([a.y, a.x, a.z], dtype=np.double)
+            rad = np.radians([a.x, a.y, a.z], dtype=np.double)
 
-        c1, c2, c3 = np.cos(euler)
-        s1, s2, s3 = np.sin(euler)
+        c1, c2, c3 = np.cos(rad)
+        s1, s2, s3 = np.sin(rad)
+
+        mat = MMatrix4x4()
+        mat.vector[:3, :3] = np.array(
+            [
+                [c1 * c3 + s1 * s2 * s3, c3 * s1 * s2 - c1 * s3, c2 * s1],
+                [c2 * s3, c2 * c3, -s2],
+                [c1 * s2 * s3 - c3 * s1, c1 * c3 * s2 + s1 * s3, c1 * c2],
+            ]
+        )
+
+        return mat.to_quaternion()
+
+    @staticmethod
+    def from_radians(
+        a: Union[int, float, MVector3D], b: float = 0.0, c: float = 0.0
+    ) -> "MQuaternion":
+        """
+        YXZのラジアン角をクォータニオンに変換する
+        """
+        rad = np.zeros(3)
+        if isinstance(a, (int, float)):
+            rad = np.array([b, a, c], dtype=np.double)
+        else:
+            rad = np.array([a.x, a.y, a.z], dtype=np.double)
+
+        c1, c2, c3 = np.cos(rad)
+        s1, s2, s3 = np.sin(rad)
 
         mat = MMatrix4x4()
         mat.vector[:3, :3] = np.array(
