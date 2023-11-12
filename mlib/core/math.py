@@ -1300,11 +1300,41 @@ class MQuaternion(MVector):
     def from_axis_angles(v: MVector3D, degree: float) -> "MQuaternion":
         """
         軸と角度からクォータニオンに変換する
+        MMDの座標系と回転方向に合わせて修正
         """
-        xyz = v.normalized().vector
+        # MMDの座標系に合わせて軸を調整
+        adjusted_axis = MVector3D(v.x, -v.y, -v.z).normalized()
 
+        # 角度をラジアンに変換
         rad = radians(degree)
-        return MQuaternion(cos(rad / 2), *(xyz * sin(rad / 2))).normalized()
+
+        # クォータニオンを生成
+        c = cos(rad / 2)
+        s = sin(rad / 2)
+        return MQuaternion(
+            c, adjusted_axis.x * s, adjusted_axis.y * s, adjusted_axis.z * s
+        ).normalized()
+
+    # @staticmethod
+    # def from_axis_angles(v: MVector3D, degree: float) -> "MQuaternion":
+    #     """
+    #     軸と角度からクォータニオンに変換する
+    #     """
+    #     # xyz = v.normalized().vector
+
+    #     # rad = radians(degree)
+    #     # return MQuaternion(cos(rad / 2), *(xyz * sin(rad / 2))).normalized()
+
+    #     # 各軸の角度をラジアンに変換
+    #     rad_x, rad_y, rad_z = np.radians(v.normalized().vector * degree)
+
+    #     # Y, X, Z 軸のクォータニオンを計算
+    #     qy = MQuaternion(cos(rad_y / 2), 0, sin(rad_y / 2), 0)
+    #     qx = MQuaternion(cos(rad_x / 2), sin(rad_x / 2), 0, 0)
+    #     qz = MQuaternion(cos(rad_z / 2), 0, 0, sin(rad_z / 2))
+
+    #     # YZX の順でクォータニオンを乗算
+    #     return (qy * qz * qx).normalized()
 
     @staticmethod
     def from_direction(direction: MVector3D, up: MVector3D) -> "MQuaternion":

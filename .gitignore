@@ -140,5 +140,6 @@ history.json
 
 chatgpt.bat
 chatgpt_input.txt
-chatgpt_output.txt
+chatgpt_output*.txt
+chatgpt/
 .ruff_cache

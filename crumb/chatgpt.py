@@ -1,8 +1,9 @@
 import sys
+from datetime import datetime
 
 import openai
 
-with open("chatgpt_input.txt", "r", encoding="utf-8") as file:
+with open("../chatgpt/chatgpt_input.txt", "r", encoding="utf-8") as file:
     input_str = "\n".join(file.readlines())
     # print(input_str)
 
@@ -16,7 +17,8 @@ try:
         messages=[
             {
                 "role": "system",
-                "content": "You are a very talented Python engineer who has been working with 3DCG in Python for over 10 years",
+                # あなたは特に3DCGに詳しい、非常に優秀かつ親切なPythonエンジニアで、私の頼れる先輩です。常にコードの修正箇所と修正内容を答えてくれます。あなたは私に日本語で話しかけてくれます。私はあなたにコードと質問を提示します。その際にコードにFIXMEとコメントされている箇所を重視してください。
+                "content": "You are a very talented and kind Python engineer, especially familiar with 3DCG, and a reliable senior of mine. You always answer me where and what to fix in the code. You speak to me in Japanese. I present the code and questions to you. At that time, please focus on the part of the code that is commented FIXME.",
             },
             {"role": "user", "content": input_str},
         ],
@@ -24,7 +26,11 @@ try:
     result = response.choices[0].message.content
 
     # 結果をファイルに保存する
-    with open("chatgpt_output.txt", "w", encoding="utf-8") as file:
+    with open(
+        f"../chatgpt/chatgpt_output_{datetime.now():%Y%m%d_%H%M%S}.txt",
+        "w",
+        encoding="utf-8",
+    ) as file:
         file.write(str(result))
 
     print("■ FINISH ■")
