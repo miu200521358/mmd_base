@@ -73,16 +73,18 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             return VmdBoneFrame(name=key, index=0)
 
         # キーフレがない場合、生成したのを返す（保持はしない）
-        prev_index, middle_index, next_index = self.range_indexes(
-            key, indexes=self.register_indexes, off_flg=True
-        )
+        prev_index, middle_index, next_index = self.range_indexes(key)
+
+        if key in self.data:
+            bf = self.get_by_index(key)
+            bf.ik_rotation = self.calc_ik(prev_index, middle_index, next_index)
+            return bf
 
         # prevとnextの範囲内である場合、補間曲線ベースで求め直す
         return self.calc(
             prev_index,
             middle_index,
             next_index,
-            force_flg=(key in self.data),
         )
 
     def cache_clear(self) -> None:
@@ -130,18 +132,56 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
 
         return replaced_map
 
-    def calc(
-        self, prev_index: int, index: int, next_index: int, force_flg: bool
-    ) -> VmdBoneFrame:
+    def calc_ik(
+        self,
+        prev_index: int,
+        index: int,
+        next_index: int,
+    ) -> MQuaternion:
+        # IK回転情報
+        slice_idx = bisect_left(self._ik_indexes, index)
+        prev_ik_indexes = self._ik_indexes[:slice_idx]
+        next_ik_indexes = self._ik_indexes[slice_idx:]
+
+        prev_ik_index = prev_ik_indexes[-1] if prev_ik_indexes else prev_index
+        prev_ik_rotation = (
+            self.data[prev_ik_index].ik_rotation or MQuaternion()
+            if prev_ik_index in self.data
+            else MQuaternion()
+        )
+
+        next_ik_index = next_ik_indexes[0] if next_ik_indexes else next_index
+        next_ik_rotation = (
+            self.data[next_ik_index].ik_rotation or prev_ik_rotation
+            if next_ik_index in self.data
+            else prev_ik_rotation
+        )
+
+        if next_ik_index in self.data:
+            iry, _, _, _ = self.data[next_ik_index].interpolations.evaluate(
+                prev_ik_index, index, next_ik_index
+            )
+        else:
+            iry, _, _, _ = BoneInterpolations().evaluate(
+                prev_ik_index, index, next_ik_index
+            )
+
+        # IK用回転
+        return MQuaternion.slerp(prev_ik_rotation, next_ik_rotation, iry)
+
+    def calc(self, prev_index: int, index: int, next_index: int) -> VmdBoneFrame:
         if index in self.data:
-            bf = self.data[index].copy()
-        elif index in self.cache:
+            bf = self.data[index]
+            bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
+            return bf
+
+        if index in self.cache:
             bf = self.cache[index]
         else:
             bf = VmdBoneFrame(name=self.name, index=index)
             self.cache[index] = bf
 
-        if prev_index == next_index and not force_flg:
+        if prev_index == next_index:
             if next_index == index:
                 # 全くキーフレがない場合、そのまま返す
                 return bf
@@ -173,40 +213,11 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             else VmdBoneFrame(name=self.name, index=next_index)
         )
 
-        # IK回転情報
-        slice_idx = bisect_left(self._ik_indexes, index)
-        prev_ik_indexes = self._ik_indexes[:slice_idx]
-        next_ik_indexes = self._ik_indexes[slice_idx:]
-
-        prev_ik_index = prev_ik_indexes[-1] if prev_ik_indexes else prev_index
-        prev_ik_rotation = (
-            self.data[prev_ik_index].ik_rotation or MQuaternion()
-            if prev_ik_index in self.data
-            else MQuaternion()
-        )
-
-        next_ik_index = next_ik_indexes[0] if next_ik_indexes else next_index
-        next_ik_rotation = (
-            self.data[next_ik_index].ik_rotation or prev_ik_rotation
-            if next_ik_index in self.data
-            else prev_ik_rotation
-        )
-
-        # 補間結果Yは、FKキーフレ内で計算する
-        if next_ik_index in self.data:
-            iry, _, _, _ = self.data[next_ik_index].interpolations.evaluate(
-                prev_ik_index, index, next_ik_index
-            )
-        else:
-            iry, _, _, _ = BoneInterpolations().evaluate(
-                prev_ik_index, index, next_ik_index
-            )
-
-        # IK用回転
-        bf.ik_rotation = MQuaternion.slerp(prev_ik_rotation, next_ik_rotation, iry)
-
         # 補間結果Yは、FKキーフレ内で計算する
         ry, xy, yy, zy = next_bf.interpolations.evaluate(prev_index, index, next_index)
+
+        # IK用回転
+        bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
 
         # FK用回転
         bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
