@@ -8,6 +8,9 @@ import numpy as np
 import wx
 import wx.lib.agw.cubecolourdialog as CCD
 
+from mlib.core.math import MVector3D
+from mlib.vmd.vmd_part import VmdMorphFrame
+
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
@@ -15,7 +18,16 @@ from mlib.core.exception import MApplicationException  # noqa: E402
 from mlib.core.logger import MLogger  # noqa: E402
 from mlib.pmx.canvas import PmxCanvas, SyncSubCanvasWindow  # noqa: E402
 from mlib.pmx.pmx_collection import PmxModel  # noqa: E402
-from mlib.pmx.pmx_part import Bone, Face, SphereMode, Texture, ToonSharing  # noqa: E402
+from mlib.pmx.pmx_part import (  # noqa: E402
+    Bone,
+    BoneMorphOffset,
+    Face,
+    Morph,
+    MorphType,
+    SphereMode,
+    Texture,
+    ToonSharing,
+)
 from mlib.pmx.pmx_writer import PmxWriter  # noqa: E402
 from mlib.service.base_worker import BaseWorker  # noqa: E402
 from mlib.service.form.notebook_frame import NotebookFrame  # noqa: E402
@@ -854,14 +866,20 @@ class TestFrame(NotebookFrame):
         # bf.local_scale = MVector3D(0, 1, 1)
         # dress_motion.bones["頭"].append(bf)
 
-        # # モーフ追加
-        # morph = Morph(name="左足")
-        # morph.morph_type = MorphType.BONE
-        # offset = BoneMorphOffset(dress.bones["左足"].index, local_scale=MVector3D(0, 1, 1))
-        # morph.offsets.append(offset)
-        # dress.morphs.append(morph)
+        # モーフ追加
+        morph = Morph(name="左腕")
+        morph.morph_type = MorphType.BONE
+        offset1 = BoneMorphOffset(
+            dress.bones["左腕"].index, local_scale=MVector3D(1, 0, 0)
+        )
+        morph.offsets.append(offset1)
+        # offset2 = BoneMorphOffset(
+        #     dress.bones["左腕捩"].index, local_scale=MVector3D(1, 0, 0)
+        # )
+        # morph.offsets.append(offset2)
+        dress.morphs.append(morph)
 
-        # dress_motion.morphs["左足"].append(VmdMorphFrame(0, "左足", 1))
+        dress_motion.morphs["左腕"].append(VmdMorphFrame(0, "左腕", 1))
 
         # dress.update_vertices_by_bone()
 

@@ -1572,10 +1572,8 @@ class VmdMorphFrames(BaseIndexNameDictWrapperModel[VmdMorphNameFrames]):
     ) -> VmdBoneFrame:
         bf.position += offset.position * ratio
         bf.local_position += offset.local_position * ratio
-        bf.rotation *= MQuaternion.from_euler_degrees_ZXY(
-            offset.rotation.degrees * ratio
-        )
-        bf.local_rotation *= MQuaternion.from_euler_degrees_ZXY(
+        bf.rotation *= MQuaternion.from_euler_degrees(offset.rotation.degrees * ratio)
+        bf.local_rotation *= MQuaternion.from_euler_degrees(
             offset.local_rotation.degrees * ratio
         )
         bf.scale += offset.scale * ratio
