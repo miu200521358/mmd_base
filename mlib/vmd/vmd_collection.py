@@ -1224,7 +1224,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                                 MVector3D(1, 0, 0), limit_radians.x
                             )
 
-                            # 一定以上離れている場合、理想回転をそのまま採用
+                            # 一定以上離れている場合、理想残存回転をそのまま採用
                             remaining_qq = (
                                 actual_remaining_qq
                                 if 0.5 < actual_remaining_qq.dot(ideal_remaining_qq)
