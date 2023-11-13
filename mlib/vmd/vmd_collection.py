@@ -483,6 +483,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         total_count = len(fnos) * len(target_bone_names)
 
+        # if append_ik and is_animate:
+        #     # IK回転を事前に求めておく
+        #     self.calc_ik_rotations(
+        #         fnos, model, target_bone_names, out_fno_log, description
+        #     )
+
         for fidx, fno in enumerate(fnos):
             fno_poses: dict[int, MVector3D] = {}
             fno_scales: dict[int, MVector3D] = {}
@@ -792,7 +798,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     )
 
                 # IKターゲットのボーンに対してIK計算を行う
-                self.get_rotation(fno, model, ik_target_bone, append_ik=True)
+                self.get_rotation(
+                    fno, model, ik_target_bone, append_ik=True, is_animate=True
+                )
                 n += 1
 
     def get_rotation(
