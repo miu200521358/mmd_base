@@ -1018,9 +1018,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # リンクボーンの角度を保持
                     link_bf = self[link_bone.name][fno]
-                    if fno not in self[link_bone.name] and not is_animate:
-                        # アニメーションではなく、キーフレそのものが無い場合、IK回転情報は一旦クリア
-                        link_bf.ik_rotation = None
+                    # if 0 == loop and not is_animate:
+                    #     link_bf.ik_rotation = None
                     total_ideal_ik_qq = total_ik_qq = None
 
                     if link_bone.has_fixed_axis:
@@ -1225,9 +1224,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                                 MVector3D(1, 0, 0), limit_radians.x
                             )
 
-                            # YZを少しだけ取り入れるため、slerp
-                            remaining_qq = MQuaternion.slerp(
-                                actual_remaining_qq, ideal_remaining_qq, 0.5
+                            # 一定以上離れている場合、理想回転をそのまま採用
+                            remaining_qq = (
+                                actual_remaining_qq
+                                if 0.5 < actual_remaining_qq.dot(ideal_remaining_qq)
+                                else MQuaternion.slerp(
+                                    actual_remaining_qq, ideal_remaining_qq, 0.5
+                                )
+                                if 0.0 < actual_remaining_qq.dot(ideal_remaining_qq)
+                                else ideal_remaining_qq
                             )
                         else:
                             pass
