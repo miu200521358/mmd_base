@@ -427,8 +427,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     display_block=100,
                 )
 
-            for bone_name in target_bone_names:
-                bone = model.bones[bone_name]
+            for bone in model.bones:
                 bone_matrixes.append(
                     fno,
                     bone.index,
