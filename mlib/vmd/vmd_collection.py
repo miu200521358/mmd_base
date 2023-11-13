@@ -1,4 +1,5 @@
 import os
+from bisect import bisect_left
 from functools import lru_cache
 from itertools import product
 from math import degrees
@@ -36,6 +37,7 @@ from mlib.pmx.pmx_part import (
 )
 from mlib.pmx.shader import MShader
 from mlib.vmd.vmd_part import (
+    BoneInterpolations,
     VmdBoneFrame,
     VmdCameraFrame,
     VmdLightFrame,
@@ -171,36 +173,37 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             else VmdBoneFrame(name=self.name, index=next_index)
         )
 
-        # slice_idx = bisect_left(self._ik_indexes, index)
-        # prev_ik_indexes = self._ik_indexes[:slice_idx]
-        # next_ik_indexes = self._ik_indexes[slice_idx:]
+        # IK回転情報
+        slice_idx = bisect_left(self._ik_indexes, index)
+        prev_ik_indexes = self._ik_indexes[:slice_idx]
+        next_ik_indexes = self._ik_indexes[slice_idx:]
 
-        # prev_ik_index = prev_ik_indexes[-1] if prev_ik_indexes else prev_index
-        # prev_ik_rotation = (
-        #     self.data[prev_ik_index].ik_rotation or MQuaternion()
-        #     if prev_ik_index in self.data
-        #     else MQuaternion()
-        # )
+        prev_ik_index = prev_ik_indexes[-1] if prev_ik_indexes else prev_index
+        prev_ik_rotation = (
+            self.data[prev_ik_index].ik_rotation or MQuaternion()
+            if prev_ik_index in self.data
+            else MQuaternion()
+        )
 
-        # next_ik_index = next_ik_indexes[0] if next_ik_indexes else next_index
-        # next_ik_rotation = (
-        #     self.data[next_ik_index].ik_rotation or prev_ik_rotation
-        #     if next_ik_index in self.data
-        #     else prev_ik_rotation
-        # )
+        next_ik_index = next_ik_indexes[0] if next_ik_indexes else next_index
+        next_ik_rotation = (
+            self.data[next_ik_index].ik_rotation or prev_ik_rotation
+            if next_ik_index in self.data
+            else prev_ik_rotation
+        )
 
-        # # 補間結果Yは、FKキーフレ内で計算する
-        # if next_ik_index in self.data:
-        #     iry, _, _, _ = self.data[next_ik_index].interpolations.evaluate(
-        #         prev_ik_index, index, next_ik_index
-        #     )
-        # else:
-        #     iry, _, _, _ = BoneInterpolations().evaluate(
-        #         prev_ik_index, index, next_ik_index
-        #     )
+        # 補間結果Yは、FKキーフレ内で計算する
+        if next_ik_index in self.data:
+            iry, _, _, _ = self.data[next_ik_index].interpolations.evaluate(
+                prev_ik_index, index, next_ik_index
+            )
+        else:
+            iry, _, _, _ = BoneInterpolations().evaluate(
+                prev_ik_index, index, next_ik_index
+            )
 
-        # # IK用回転
-        # bf.ik_rotation = MQuaternion.slerp(prev_ik_rotation, next_ik_rotation, iry)
+        # IK用回転
+        bf.ik_rotation = MQuaternion.slerp(prev_ik_rotation, next_ik_rotation, iry)
 
         # 補間結果Yは、FKキーフレ内で計算する
         ry, xy, yy, zy = next_bf.interpolations.evaluate(prev_index, index, next_index)
@@ -273,6 +276,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone_names: Iterable[str] = [],
         append_ik: bool = True,
         out_fno_log: bool = False,
+        is_animate: bool = False,
         description: str = "",
     ) -> VmdBoneFrameTrees:
         if not bone_names:
@@ -314,7 +318,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 morph_bone_local_scales,
                 morph_bone_ik_qqs,
             ) = morph_bone_frames.get_bone_matrixes(
-                fnos, model, target_bone_names, append_ik=False, out_fno_log=False
+                fnos,
+                model,
+                target_bone_names,
+                append_ik=False,
+                out_fno_log=False,
+                is_animate=is_animate,
             )
         else:
             morph_row = len(fnos)
@@ -344,6 +353,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             target_bone_names,
             append_ik=append_ik,
             out_fno_log=out_fno_log,
+            is_animate=is_animate,
             description=description,
         )
 
@@ -448,6 +458,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         target_bone_names: list[str],
         append_ik: bool = True,
         out_fno_log: bool = False,
+        is_animate: bool = False,
         description: str = "",
     ) -> tuple[
         np.ndarray,
@@ -469,12 +480,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_poses = np.full((row, col, 4, 4), np.eye(4))
         local_qqs = np.full((row, col, 4, 4), np.eye(4))
         local_scales = np.full((row, col, 4, 4), np.eye(4))
-
-        # if append_ik:
-        #     # IK回転を事前に求めておく
-        #     self.calc_ik_rotations(
-        #         fnos, model, target_bone_names, out_fno_log, description
-        #     )
 
         total_count = len(fnos) * len(target_bone_names)
 
@@ -556,7 +561,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                 # FK(捩り) > IK(捩り) > 付与親(捩り)
                 qqs[fidx, bone.index], ik_qqs[fidx, bone.index] = self.get_rotation(
-                    fno, model, bone, append_ik=append_ik
+                    fno, model, bone, append_ik=append_ik, is_animate=is_animate
                 )
 
                 # ローカル回転
@@ -647,6 +652,70 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             tuple(parent_local_axises),
         )
 
+    def get_scale(
+        self, fno: int, model: PmxModel, bone: Bone, scale: MVector3D, loop: int = 0
+    ) -> np.ndarray:
+        """
+        該当キーフレにおけるボーンの縮尺
+        """
+
+        # 自身のスケール
+        scale_mat = np.eye(4)
+        scale_mat[:3, :3] += np.diag(np.where(scale.vector < -1, -1, scale.vector))
+
+        # 付与親を加味して返す
+        return self.get_effect_scale(fno, model, bone, scale_mat, loop=loop + 1)
+
+    def get_effect_scale(
+        self,
+        fno: int,
+        model: PmxModel,
+        bone: Bone,
+        scale_mat: np.ndarray,
+        loop: int = 0,
+    ) -> np.ndarray:
+        """
+        付与親を加味した縮尺を求める
+        """
+        if not (bone.is_external_translation and bone.effect_index in model.bones):
+            return scale_mat
+
+        if 0 == bone.effect_factor or 20 < loop:
+            # 付与率が0の場合、常に1になる
+            return np.eye(4)
+
+        # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
+        effect_bone = model.bones[bone.effect_index]
+        effect_bf = self[effect_bone.name][fno]
+        effect_scale_mat = self.get_scale(
+            fno, model, effect_bone, effect_bf.scale, loop=loop + 1
+        )
+
+        return scale_mat @ effect_scale_mat
+
+    def get_local_scale(
+        self,
+        bone: Bone,
+        fno_local_scales: dict[int, MVector3D],
+        is_parent_bone_not_local_cancels: Iterable[bool],
+        parent_local_scales: Iterable[MVector3D],
+        parent_local_axises: Iterable[MVector3D],
+    ) -> np.ndarray:
+        """
+        該当キーフレにおけるボーンのローカル縮尺
+        """
+        # 自身のローカルスケール
+        local_scale = fno_local_scales[bone.index]
+
+        return calc_local_scale(
+            local_scale,
+            bone.is_not_local_cancel,
+            bone.local_axis,
+            tuple(is_parent_bone_not_local_cancels),
+            tuple(parent_local_scales),
+            tuple(parent_local_axises),
+        )
+
     def calc_ik_rotations(
         self,
         fnos: list[int],
@@ -726,76 +795,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 self.get_rotation(fno, model, ik_target_bone, append_ik=True)
                 n += 1
 
-    def get_scale(
-        self, fno: int, model: PmxModel, bone: Bone, scale: MVector3D, loop: int = 0
-    ) -> np.ndarray:
-        """
-        該当キーフレにおけるボーンの縮尺
-        """
-
-        # 自身のスケール
-        scale_mat = np.eye(4)
-        scale_mat[:3, :3] += np.diag(np.where(scale.vector < -1, -1, scale.vector))
-
-        # 付与親を加味して返す
-        return self.get_effect_scale(fno, model, bone, scale_mat, loop=loop + 1)
-
-    def get_effect_scale(
-        self,
-        fno: int,
-        model: PmxModel,
-        bone: Bone,
-        scale_mat: np.ndarray,
-        loop: int = 0,
-    ) -> np.ndarray:
-        """
-        付与親を加味した縮尺を求める
-        """
-        if not (bone.is_external_translation and bone.effect_index in model.bones):
-            return scale_mat
-
-        if 0 == bone.effect_factor or 20 < loop:
-            # 付与率が0の場合、常に1になる
-            return np.eye(4)
-
-        # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
-        effect_bone = model.bones[bone.effect_index]
-        effect_bf = self[effect_bone.name][fno]
-        effect_scale_mat = self.get_scale(
-            fno, model, effect_bone, effect_bf.scale, loop=loop + 1
-        )
-
-        return scale_mat @ effect_scale_mat
-
-    def get_local_scale(
-        self,
-        bone: Bone,
-        fno_local_scales: dict[int, MVector3D],
-        is_parent_bone_not_local_cancels: Iterable[bool],
-        parent_local_scales: Iterable[MVector3D],
-        parent_local_axises: Iterable[MVector3D],
-    ) -> np.ndarray:
-        """
-        該当キーフレにおけるボーンのローカル縮尺
-        """
-        # 自身のローカルスケール
-        local_scale = fno_local_scales[bone.index]
-
-        return calc_local_scale(
-            local_scale,
-            bone.is_not_local_cancel,
-            bone.local_axis,
-            tuple(is_parent_bone_not_local_cancels),
-            tuple(parent_local_scales),
-            tuple(parent_local_axises),
-        )
-
     def get_rotation(
         self,
         fno: int,
         model: PmxModel,
         bone: Bone,
         append_ik: bool,
+        is_animate: bool,
         loop: int = 0,
     ) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -805,7 +811,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         if append_ik and bone.ik_link_indexes:
             # IK結果回転
-            ik_qq = self.get_ik_rotation(fno, model, bone)
+            ik_qq = self.get_ik_rotation(fno, model, bone, is_animate)
         else:
             # FK(捩り) > IK(捩り) > 付与親(捩り)
             bf = self[bone.name][fno]
@@ -819,14 +825,21 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             ik_qq = self.get_axis_rotation(bone, qq)
 
         # 付与親を加味した回転
-        effect_qq = self.get_effect_rotation(fno, model, bone, loop=loop + 1)
+        effect_qq = self.get_effect_rotation(
+            fno, model, bone, loop=loop + 1, is_animate=is_animate
+        )
 
         return (
             ik_qq * effect_qq
         ).normalized().to_matrix4x4().vector, ik_qq.to_matrix4x4().vector
 
     def get_effect_rotation(
-        self, fno: int, model: PmxModel, bone: Bone, loop: int = 0
+        self,
+        fno: int,
+        model: PmxModel,
+        bone: Bone,
+        loop: int = 0,
+        is_animate: bool = False,
     ) -> MQuaternion:
         """
         付与親を加味した回転を求める
@@ -842,7 +855,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
         effect_qq_mat, _ = self.get_rotation(
-            fno, model, effect_bone, append_ik=False, loop=loop + 1
+            fno,
+            model,
+            effect_bone,
+            append_ik=False,
+            is_animate=is_animate,
+            loop=loop + 1,
         )
         effect_qq = MMatrix4x4(effect_qq_mat).to_quaternion()
         if 0 <= bone.effect_factor:
@@ -852,7 +870,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             # 負の付与親の場合、逆回転
             return (effect_qq.multiply_factor(abs(bone.effect_factor))).inverse()
 
-    def get_ik_rotation(self, fno: int, model: PmxModel, bone: Bone) -> MQuaternion:
+    def get_ik_rotation(
+        self,
+        fno: int,
+        model: PmxModel,
+        bone: Bone,
+        is_animate: bool = False,
+    ) -> MQuaternion:
         """
         IKを加味した回転を求める
         """
@@ -975,6 +999,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # リンクボーンの角度を保持
                     link_bf = self[link_bone.name][fno]
+                    if fno not in self[link_bone.name] and not is_animate:
+                        # アニメーションではなく、キーフレそのものが無い場合、IK回転情報は一旦クリア
+                        link_bf.ik_rotation = None
                     total_ideal_ik_qq = total_ik_qq = None
 
                     if link_bone.has_fixed_axis:
@@ -2001,6 +2028,7 @@ class VmdMotion(BaseHashModel):
             bone_names,
             append_ik=append_ik,
             out_fno_log=out_fno_log,
+            is_animate=True,
             description=description,
         )
         logger.test(f"-- ボーンアニメーション[{model.name}]: ボーン変形行列操作")
