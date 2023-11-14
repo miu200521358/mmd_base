@@ -320,7 +320,7 @@ class PmxCanvas(glcanvas.GLCanvas):
         logger.test("append_model_set: model_sets")
         self.model_sets.append(ModelSet(model, motion, bone_alpha, is_sub))
         logger.test("append_model_set: animations")
-        self.animations.append(MotionSet(model, motion, 0))
+        self.animations.append(MotionSet(model, motion, 0, self.parent.is_calc_ik))
         logger.test("append_model_set: max_fno")
         self.max_fno = max([model_set.motion.max_fno for model_set in self.model_sets])
 
@@ -447,7 +447,12 @@ class PmxCanvas(glcanvas.GLCanvas):
                 for model_set in self.model_sets:
                     logger.test(f"change_motion: MotionSet: {model_set.model.name}")
                     animations.append(
-                        MotionSet(model_set.model, model_set.motion, self.parent.fno)
+                        MotionSet(
+                            model_set.model,
+                            model_set.motion,
+                            self.parent.fno,
+                            self.parent.is_calc_ik,
+                        )
                     )
                 self.animations = animations
             else:
@@ -455,6 +460,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                     self.model_sets[model_index].model,
                     self.model_sets[model_index].motion,
                     self.parent.fno,
+                    self.parent.is_calc_ik,
                 )
         else:
             for model_set, animation in zip(self.model_sets, self.animations):
