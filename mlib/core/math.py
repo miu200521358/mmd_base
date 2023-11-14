@@ -1671,7 +1671,37 @@ class MMatrix4x4(MVector):
 
     def to_quaternion(self) -> "MQuaternion":
         q = MQuaternion()
-        q.vector = from_rotation_matrix(self.vector[:3, :3])
+        v = self.vector
+
+        # I removed + 1
+        trace = v[0, 0] + v[1, 1] + v[2, 2]
+        # I changed M_EPSILON to 0
+        if 0 < trace:
+            s = 0.5 / sqrt(trace + 1)
+            q.scalar = 0.25 / s
+            q.x = (v[2, 1] - v[1, 2]) * s
+            q.y = (v[0, 2] - v[2, 0]) * s
+            q.z = (v[1, 0] - v[0, 1]) * s
+        else:
+            if v[0, 0] > v[1, 1] and v[0, 0] > v[2, 2]:
+                s = 2 * sqrt(1 + v[0, 0] - v[1, 1] - v[2, 2])
+                q.scalar = (v[2, 1] - v[1, 2]) / s
+                q.x = 0.25 * s
+                q.y = (v[0, 1] + v[1, 0]) / s
+                q.z = (v[0, 2] + v[2, 0]) / s
+            elif v[1, 1] > v[2, 2]:
+                s = 2 * sqrt(1 + v[1, 1] - v[0, 0] - v[2, 2])
+                q.scalar = (v[0, 2] - v[2, 0]) / s
+                q.x = (v[0, 1] + v[1, 0]) / s
+                q.y = 0.25 * s
+                q.z = (v[1, 2] + v[2, 1]) / s
+            else:
+                s = 2 * sqrt(1 + v[2, 2] - v[0, 0] - v[1, 1])
+                q.scalar = (v[1, 0] - v[0, 1]) / s
+                q.x = (v[0, 2] + v[2, 0]) / s
+                q.y = (v[1, 2] + v[2, 1]) / s
+                q.z = 0.25 * s
+
         q.normalize()
 
         return q
