@@ -381,31 +381,36 @@ class PmxCanvas(glcanvas.GLCanvas):
                 )
         self.shader.msaa.unbind()
 
-        for model_set, animation, select_color, unselect_color in zip(
-            self.model_sets,
-            self.animations,
-            MODEL_BONE_SELECT_COLORS,
-            MODEL_BONE_UNSELECT_COLORS,
-        ):
-            # ボーンを表示
-            if model_set.model:
-                logger.test(f"-- ボーン描画: {model_set.model.name}")
+        if not self.playing:
+            # 再生中でなければボーン表示
+            for model_set, animation, select_color, unselect_color in zip(
+                self.model_sets,
+                self.animations,
+                MODEL_BONE_SELECT_COLORS,
+                MODEL_BONE_UNSELECT_COLORS,
+            ):
+                if model_set.model:
+                    logger.test(f"-- ボーン描画: {model_set.model.name}")
 
-                model_set.model.draw_bone(
-                    self.shader,
-                    animation.gl_matrixes,
-                    select_color
-                    * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
-                    unselect_color
-                    * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
-                    np.array(
-                        [
-                            (1 if bone_index in animation.selected_bone_indexes else 0)
-                            for bone_index in model_set.model.bones.indexes
-                        ]
-                    ),
-                    self.is_sub,
-                )
+                    model_set.model.draw_bone(
+                        self.shader,
+                        animation.gl_matrixes,
+                        select_color
+                        * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
+                        unselect_color
+                        * np.array([1, 1, 1, model_set.bone_alpha], dtype=np.float32),
+                        np.array(
+                            [
+                                (
+                                    1
+                                    if bone_index in animation.selected_bone_indexes
+                                    else 0
+                                )
+                                for bone_index in model_set.model.bones.indexes
+                            ]
+                        ),
+                        self.is_sub,
+                    )
 
     def draw_ground(self) -> None:
         """平面を描画する"""

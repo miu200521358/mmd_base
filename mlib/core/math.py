@@ -971,7 +971,7 @@ class MQuaternion(MVector):
 
     def to_degrees(self) -> float:
         """
-        角度(-180 ～ 180)に変換
+        角度に変換
         """
 
         return MQuaternion.scalar_to_degrees(self.normalized().scalar)
@@ -1451,7 +1451,7 @@ class MQuaternion(MVector):
     @staticmethod
     def scalar_to_degrees(scalar: float) -> float:
         """
-        与えられたscalarから角度(-180 ～ 180)に変換
+        与えられたscalarから角度に変換
         """
 
         # 角度を計算
@@ -1459,16 +1459,12 @@ class MQuaternion(MVector):
         # ラジアンから度に変換
         angle = degrees(radian)
 
-        # 角度を -180 ～ 180 の範囲に変換
-        if angle > 180:
-            angle -= 360
-
         return angle
 
     @staticmethod
     def vector_to_degrees(a: MVector3D, b: MVector3D) -> float:
         """
-        与えられた2つのベクトルから角度(-180 ～ 180)に変換
+        与えられた2つのベクトルから角度に変換
         """
         p = a.dot(b)
         norm_a = float(np.linalg.norm(a.vector))
@@ -1479,10 +1475,6 @@ class MQuaternion(MVector):
         radian = acos(min(1, max(-1, cos_angle)))
         # ラジアンから度に変換
         angle = degrees(radian)
-
-        # 角度を -180 ～ 180 の範囲に変換
-        if angle > 180:
-            angle -= 360
 
         return angle
 
@@ -1679,37 +1671,7 @@ class MMatrix4x4(MVector):
 
     def to_quaternion(self) -> "MQuaternion":
         q = MQuaternion()
-        v = self.vector
-
-        # I removed + 1
-        trace = v[0, 0] + v[1, 1] + v[2, 2]
-        # I changed M_EPSILON to 0
-        if 0 < trace:
-            s = 0.5 / sqrt(trace + 1)
-            q.scalar = 0.25 / s
-            q.x = (v[2, 1] - v[1, 2]) * s
-            q.y = (v[0, 2] - v[2, 0]) * s
-            q.z = (v[1, 0] - v[0, 1]) * s
-        else:
-            if v[0, 0] > v[1, 1] and v[0, 0] > v[2, 2]:
-                s = 2 * sqrt(1 + v[0, 0] - v[1, 1] - v[2, 2])
-                q.scalar = (v[2, 1] - v[1, 2]) / s
-                q.x = 0.25 * s
-                q.y = (v[0, 1] + v[1, 0]) / s
-                q.z = (v[0, 2] + v[2, 0]) / s
-            elif v[1, 1] > v[2, 2]:
-                s = 2 * sqrt(1 + v[1, 1] - v[0, 0] - v[2, 2])
-                q.scalar = (v[0, 2] - v[2, 0]) / s
-                q.x = (v[0, 1] + v[1, 0]) / s
-                q.y = 0.25 * s
-                q.z = (v[1, 2] + v[2, 1]) / s
-            else:
-                s = 2 * sqrt(1 + v[2, 2] - v[0, 0] - v[1, 1])
-                q.scalar = (v[1, 0] - v[0, 1]) / s
-                q.x = (v[0, 2] + v[2, 0]) / s
-                q.y = (v[1, 2] + v[2, 1]) / s
-                q.z = 0.25 * s
-
+        q.vector = from_rotation_matrix(self.vector[:3, :3])
         q.normalize()
 
         return q

@@ -1225,13 +1225,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             )
 
                             # 一定以上離れている場合、理想残存回転をそのまま採用
+                            remaining_dot = actual_remaining_qq.dot(ideal_remaining_qq)
                             remaining_qq = (
                                 actual_remaining_qq
-                                if 0.5 < actual_remaining_qq.dot(ideal_remaining_qq)
+                                if 0.5 < remaining_dot
                                 else MQuaternion.slerp(
                                     actual_remaining_qq, ideal_remaining_qq, 0.5
                                 )
-                                if 0.0 < actual_remaining_qq.dot(ideal_remaining_qq)
+                                if 0.0 < remaining_dot
                                 else ideal_remaining_qq
                             )
                         else:
