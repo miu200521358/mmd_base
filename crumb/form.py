@@ -7,15 +7,14 @@ from typing import Any, Optional
 import numpy as np
 import wx
 import wx.lib.agw.cubecolourdialog as CCD
-
-from mlib.core.math import MVector3D
-from mlib.vmd.vmd_part import VmdMorphFrame
+import yappi
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
 from mlib.core.exception import MApplicationException  # noqa: E402
 from mlib.core.logger import MLogger  # noqa: E402
+from mlib.core.math import MVector3D  # noqa: E402
 from mlib.pmx.canvas import PmxCanvas, SyncSubCanvasWindow  # noqa: E402
 from mlib.pmx.pmx_collection import PmxModel  # noqa: E402
 from mlib.pmx.pmx_part import (  # noqa: E402
@@ -50,6 +49,7 @@ from mlib.service.form.widgets.spin_ctrl import (  # noqa: E402
 )
 from mlib.utils.file_utils import save_histories, separate_path  # noqa: E402
 from mlib.vmd.vmd_collection import VmdMotion  # noqa: E402
+from mlib.vmd.vmd_part import VmdMorphFrame  # noqa: E402
 
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
@@ -711,8 +711,40 @@ class ConfigPanel(NotebookPanel):
         self.color_panel.Refresh()
 
     def on_play(self, event: wx.Event) -> None:
+        if self.canvas.playing:
+            self.stop_play()
+            yappi.stop()
+
+            columns = {
+                0: ("name", 100),
+                1: ("ncall", 10),
+                2: ("tsub", 8),
+                3: ("ttot", 8),
+                4: ("tavg", 8),
+            }
+
+            threads = yappi.get_thread_stats()
+            for thread in threads:
+                print(
+                    "Function stats for (%s) (%d)" % (thread.name, thread.id)
+                )  # it is the Thread.__class__.__name__
+
+                yappi.get_func_stats(ctx_id=thread.id).sort("ttot").print_all(
+                    columns=columns
+                )
+
+                print("--------------------------")
+
+                yappi.get_func_stats(ctx_id=thread.id).sort("tavg").print_all(
+                    columns=columns
+                )
+
+        else:
+            yappi.set_clock_type("cpu")
+            yappi.start()
+
+            self.start_play()
         self.canvas.on_play(event)
-        self.play_btn.SetLabel("Stop" if self.canvas.playing else "Play")
 
     @property
     def fno(self) -> int:

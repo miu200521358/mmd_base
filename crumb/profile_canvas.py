@@ -1,9 +1,9 @@
+import cProfile
 import os
 import sys
 from multiprocessing import freeze_support
 
 import wx
-import yappi
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -19,9 +19,20 @@ from mlib.vmd.vmd_reader import VmdReader  # noqa: E402
 logger = MLogger(os.path.basename(__file__))
 __ = logger.get_text
 
+import line_profiler
+
+profile = line_profiler.LineProfiler()
 
 # 全体プロファイル
-# python crumb\profile_canvas.py
+# python -m cProfile -s cumtime crumb\profile_canvas.py
+#
+# 行プロファイル
+#
+# import line_profiler
+# profile = line_profiler.LineProfiler()
+#
+# kernprof -l crumb\profile_canvas.py
+# python -m line_profiler profile_canvas.py.lprof
 
 
 class ConfigPanel(NotebookPanel):
@@ -33,6 +44,9 @@ class ConfigPanel(NotebookPanel):
 
         self._initialize_ui()
         self._initialize_event()
+
+        self.profiler = cProfile.Profile()
+        self.profiler.enable()
 
     def get_canvas_size(self) -> wx.Size:
         w, h = self.frame.GetClientSize()
@@ -90,6 +104,17 @@ class ConfigPanel(NotebookPanel):
         )
         self.btn_sizer.Add(self.frame_slider.sizer, 0, wx.ALL, 0)
 
+        # Close
+        self.close_btn = wx.Button(
+            self.scrolled_window,
+            wx.ID_ANY,
+            "Close",
+            wx.DefaultPosition,
+            wx.Size(100, 50),
+        )
+        self.btn_sizer.Add(self.close_btn, 0, wx.ALL, 5)
+
+        self.scrolled_window.SetSizer(self.btn_sizer)
         self.config_sizer.Add(
             self.scrolled_window, 1, wx.ALL | wx.EXPAND | wx.FIXED_MINSIZE, 0
         )
@@ -103,10 +128,39 @@ class ConfigPanel(NotebookPanel):
 
     def _initialize_event(self) -> None:
         self.play_btn.Bind(wx.EVT_BUTTON, self.on_play)
+        self.close_btn.Bind(wx.EVT_BUTTON, self.on_close)
+
+    def on_close(self, event: wx.Event) -> None:
+        self.profiler.disable()
+        self.profiler.dump_stats("profile_canvas.prof")
+        self.frame.Close()
 
     def on_play(self, event: wx.Event) -> None:
+        if self.canvas.playing:
+            self.stop_play()
+            # yappi.stop()
+
+            # columns = {
+            #     0: ("name", 100),
+            #     1: ("ncall", 10),
+            #     2: ("tsub", 8),
+            #     3: ("ttot", 8),
+            #     4: ("tavg", 8),
+            # }
+
+            # threads = yappi.get_thread_stats()
+            # for thread in threads:
+            #     print(
+            #         "Function stats for (%s) (%d)" % (thread.name, thread.id)
+            #     )  # it is the Thread.__class__.__name__
+            #     yappi.get_func_stats(ctx_id=thread.id).sort("tavg").print_all(
+            #         columns=columns
+            #     )
+        else:
+            # yappi.set_clock_type("cpu")  # Use set_clock_type("wall") for wall time
+            # yappi.start()
+            self.start_play()
         self.canvas.on_play(event)
-        self.play_btn.SetLabel("Stop" if self.canvas.playing else "Play")
 
     @property
     def fno(self) -> int:
@@ -115,28 +169,6 @@ class ConfigPanel(NotebookPanel):
     @fno.setter
     def fno(self, v: int) -> None:
         self.frame_ctrl.SetValue(v)
-        if v > 100:
-            yappi.stop()
-
-            columns = {
-                0: ("name", 100),
-                1: ("ncall", 10),
-                2: ("tsub", 8),
-                3: ("ttot", 8),
-                4: ("tavg", 8),
-            }
-
-            threads = yappi.get_thread_stats()
-            for thread in threads:
-                print(
-                    "Function stats for (%s) (%d)" % (thread.name, thread.id)
-                )  # it is the Thread.__class__.__name__
-                yappi.get_func_stats(ctx_id=thread.id).sort("tavg").print_all(
-                    columns=columns
-                )
-
-            self.frame.Destroy()
-            sys.exit(-1)
 
     def start_play(self) -> None:
         pass
@@ -189,8 +221,6 @@ class ProfileFrame(NotebookFrame):
                 0.2,
             )
             self.config_panel.canvas.Refresh()
-
-            self.config_panel.on_play(wx.EVT_MOUSEWHEEL)
         except Exception:
             logger.critical("モデル描画初期化処理失敗")
 
@@ -205,9 +235,6 @@ class MuApp(wx.App):
 
 
 if __name__ == "__main__":
-    yappi.set_clock_type("cpu")  # Use set_clock_type("wall") for wall time
-    yappi.start()
-
     freeze_support()
 
     MLogger.initialize(

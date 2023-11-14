@@ -43,8 +43,7 @@ def main() -> None:
     # 時間計測開始
     start_time = time.perf_counter()
 
-    for fno in range(1000, 1100):
-        motion.animate(fno, model)
+    motion.animate_bone(list(range(1000, 1010)), model, out_fno_log=True)
 
     # # キーフレ
     # bone_trees = model.bone_trees.gets(["左手首", "右手首"])

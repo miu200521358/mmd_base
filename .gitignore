@@ -143,3 +143,4 @@ chatgpt_input.txt
 chatgpt_output*.txt
 chatgpt/
 .ruff_cache
+*.prof

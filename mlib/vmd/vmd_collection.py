@@ -2,7 +2,6 @@ import os
 from bisect import bisect_left
 from functools import lru_cache
 from itertools import product
-from math import degrees
 from typing import Iterable, Optional
 
 import numpy as np
@@ -290,30 +289,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         is_animate: bool = False,
         description: str = "",
     ) -> VmdBoneFrameTrees:
-        if not bone_names:
-            target_bone_names = model.bones.names
-        else:
-            target_bone_names = [
-                model.bones[bone_index].name
-                for bone_index in sorted(
-                    set(
-                        [
-                            bone_index
-                            for bone_name in bone_names
-                            for bone_index in model.bones[
-                                bone_name
-                            ].relative_bone_indexes
-                        ]
-                    )
-                )
-            ]
+        # 処理対象ボーン名取得
+        target_bone_names = self.get_animate_bone_names(model, bone_names)
 
-        bone_offset_mats: list[tuple[int, np.ndarray]] = []
-        bone_pos_mats = np.full((1, len(model.bones.indexes), 4, 4), np.eye(4))
-        for bone_name in target_bone_names:
-            bone = model.bones[bone_name]
-            bone_pos_mats[0, bone.index, :3, 3] = bone.position.vector
-            bone_offset_mats.append((bone.index, bone.offset_matrix))
+        # 処理対象ボーンの行列取得
+        bone_offset_mats, bone_pos_mats = self.create_bone_matrixes(
+            model, target_bone_names
+        )
 
         if out_fno_log:
             logger.info("ボーンモーフ計算[{d}]", d=description)
@@ -385,6 +367,78 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             matrixes = matrixes @ morph_bone_scales
         if 0 < np.count_nonzero(morph_bone_local_scales - eye_mat):
             matrixes = matrixes @ morph_bone_local_scales
+
+        return self.calc_bone_matrixes(
+            fnos,
+            model,
+            bone_offset_mats,
+            bone_pos_mats,
+            motion_bone_poses,
+            motion_bone_qqs,
+            motion_bone_scales,
+            motion_bone_local_poses,
+            motion_bone_local_qqs,
+            motion_bone_local_scales,
+            motion_bone_ik_qqs,
+            matrixes,
+            out_fno_log,
+            description,
+        )
+
+    def get_animate_bone_names(
+        self, model: PmxModel, bone_names: list[str]
+    ) -> list[str]:
+        if not bone_names:
+            return model.bones.names
+        else:
+            return [
+                model.bones[bone_index].name
+                for bone_index in sorted(
+                    set(
+                        [
+                            bone_index
+                            for bone_name in bone_names
+                            for bone_index in model.bones[
+                                bone_name
+                            ].relative_bone_indexes
+                        ]
+                    )
+                )
+            ]
+
+    def create_bone_matrixes(
+        self,
+        model: PmxModel,
+        target_bone_names: list[str],
+    ) -> tuple[list[tuple[int, np.ndarray]], np.ndarray]:
+        bone_offset_mats: list[tuple[int, np.ndarray]] = []
+        bone_pos_mats = np.full((1, len(model.bones.indexes), 4, 4), np.eye(4))
+        for bone_name in target_bone_names:
+            bone = model.bones[bone_name]
+            bone_pos_mats[0, bone.index, :3, 3] = bone.position.vector
+            bone_offset_mats.append((bone.index, bone.offset_matrix))
+        return bone_offset_mats, bone_pos_mats
+
+    def calc_bone_matrixes(
+        self,
+        fnos: list[int],
+        model: PmxModel,
+        bone_offset_mats: list[tuple[int, np.ndarray]],
+        bone_pos_mats: np.ndarray,
+        motion_bone_poses: np.ndarray,
+        motion_bone_qqs: np.ndarray,
+        motion_bone_scales: np.ndarray,
+        motion_bone_local_poses: np.ndarray,
+        motion_bone_local_qqs: np.ndarray,
+        motion_bone_local_scales: np.ndarray,
+        motion_bone_ik_qqs: np.ndarray,
+        matrixes: np.ndarray = None,
+        out_fno_log: bool = False,
+        description: str = "",
+    ) -> VmdBoneFrameTrees:
+        if matrixes is None:
+            matrixes = np.full(motion_bone_poses.shape, np.eye(4))
+        eye_mat = np.eye(4)
 
         # モーションの適用
         if 0 < np.count_nonzero(motion_bone_poses - eye_mat):
@@ -911,8 +965,42 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             if ik_target_bone_idx not in model.bones or not ik_bone.ik:
                 continue
 
+            # IK関連の行列を一括計算
+            ik_matrixes = self.animate_bone_matrixes(
+                [fno],
+                model,
+                bone_names=[ik_bone.name],
+                append_ik=False,
+            )
+
             # IKターゲットボーン
             effector_bone = model.bones[ik_bone.ik.bone_index]
+
+            # 処理対象ボーン名取得
+            target_bone_names = self.get_animate_bone_names(model, [effector_bone.name])
+
+            # 処理対象ボーンの行列取得
+            bone_offset_mats, bone_pos_mats = self.create_bone_matrixes(
+                model, target_bone_names
+            )
+
+            # モーションボーンの初期値を取得
+            (
+                motion_bone_poses,
+                motion_bone_qqs,
+                motion_bone_scales,
+                motion_bone_local_poses,
+                motion_bone_local_qqs,
+                motion_bone_local_scales,
+                motion_bone_ik_qqs,
+            ) = self.get_bone_matrixes(
+                [fno],
+                model,
+                target_bone_names,
+                append_ik=False,
+                out_fno_log=False,
+                is_animate=is_animate,
+            )
 
             is_break = False
             for loop in range(ik_bone.ik.loop_count):
@@ -929,31 +1017,39 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     if (
                         ik_link.angle_limit
-                        and np.isclose(ik_link.min_angle_limit.radians.length(), 0)
-                        and np.isclose(ik_link.max_angle_limit.radians.length(), 0)
-                        and np.isclose(
-                            ik_link.local_min_angle_limit.radians.length(), 0
-                        )
-                        and np.isclose(
-                            ik_link.local_max_angle_limit.radians.length(), 0
-                        )
+                        and not ik_link.min_angle_limit.radians
+                        and not ik_link.max_angle_limit.radians
+                        and not ik_link.local_min_angle_limit.radians
+                        and not ik_link.local_max_angle_limit.radians
                     ):
                         # 角度制限があってまったく動かない場合、IK計算しないで次に行く
                         continue
 
-                    # IK関連の行列を一括計算
-                    ik_matrixes = self.animate_bone_matrixes(
+                    # IK関連の行列を取得
+                    effector_matrixes = self.calc_bone_matrixes(
                         [fno],
                         model,
-                        bone_names=[ik_bone.name, effector_bone.name, link_bone.name],
-                        append_ik=False,
+                        bone_offset_mats,
+                        bone_pos_mats,
+                        motion_bone_poses,
+                        motion_bone_qqs,
+                        motion_bone_scales,
+                        motion_bone_local_poses,
+                        motion_bone_local_qqs,
+                        motion_bone_local_scales,
+                        motion_bone_ik_qqs,
+                        matrixes=None,
+                        out_fno_log=False,
+                        description="",
                     )
 
                     # IKボーンのグローバル位置
                     global_target_pos = ik_matrixes[fno, ik_bone.name].position
 
                     # 現在のIKターゲットボーンのグローバル位置を取得
-                    global_effector_pos = ik_matrixes[fno, effector_bone.name].position
+                    global_effector_pos = effector_matrixes[
+                        fno, effector_bone.name
+                    ].position
 
                     # # 注目ノード（実際に動かすボーン）
                     # global_link_pos = ik_matrixes[fno, link_bone.name].position
@@ -964,7 +1060,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # local_target_pos = global_target_pos - global_link_pos
 
                     # 注目ノード（実際に動かすボーン）
-                    link_matrix = ik_matrixes[fno, link_bone.name].global_matrix
+                    link_matrix = effector_matrixes[fno, link_bone.name].global_matrix
 
                     # ワールド座標系から注目ノードの局所座標系への変換
                     link_inverse_matrix = link_matrix.inverse()
@@ -995,9 +1091,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         local_target_pos
                     ).normalized()
 
-                    logger.test(
-                        f"Axis[{fno}][{loop}][{link_bone.name}][{rotation_axis}]"
-                    )
+                    # logger.test(
+                    #     f"Axis[{fno}][{loop}][{link_bone.name}][{rotation_axis}]"
+                    # )
 
                     if 1e-6 > rotation_axis.length_squared():
                         is_break = True
@@ -1012,9 +1108,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     else:
                         rotation_radian = original_rotation_radian
 
-                    logger.test(
-                        f"Angle[{fno}][{loop}][{link_bone.name}][{rotation_radian:.4f}({degrees(rotation_radian):.4f})]"
-                    )
+                    # logger.test(
+                    #     f"Angle[{fno}][{loop}][{link_bone.name}][{rotation_radian:.4f}({degrees(rotation_radian):.4f})]"
+                    # )
 
                     # リンクボーンの角度を保持
                     link_bf = self[link_bone.name][fno]
@@ -1088,11 +1184,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             )
 
                             # 理想回転をすべて加算した場合の回転量
-                            total_ideal_ik_qq: MQuaternion = (
-                                link_bf.rotation
-                                * (link_bf.ik_rotation or MQuaternion())
-                                * ideal_ik_qq
-                            )
+                            if link_bf.ik_rotation:
+                                total_ideal_ik_qq: MQuaternion = (
+                                    link_bf.rotation * link_bf.ik_rotation * ideal_ik_qq
+                                )
+                            else:
+                                total_ideal_ik_qq: MQuaternion = (
+                                    link_bf.rotation * ideal_ik_qq
+                                )
 
                             # ZXYの順番で全ての角度をラジアン角度に分解する
                             limit_radians = total_ideal_ik_qq.to_radians_ZXY().mmd
@@ -1117,13 +1216,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
                             total_ik_qq = actual_ik_qq
 
-                            logger.test("--------------------------")
-                            logger.test(
-                                f"Ideal[{fno}][{loop}][{link_bone.name}][{limit_radians}({ideal_ik_qq.to_euler_degrees().mmd})]"
-                            )
-                            logger.test(
-                                f"Actual[{fno}][{loop}][{link_bone.name}][{limit_x_radian:.4f}({actual_ik_qq.to_euler_degrees().mmd})]"
-                            )
+                            # logger.test("--------------------------")
+                            # logger.test(
+                            #     f"Ideal[{fno}][{loop}][{link_bone.name}][{limit_radians}({ideal_ik_qq.to_euler_degrees().mmd})]"
+                            # )
+                            # logger.test(
+                            #     f"Actual[{fno}][{loop}][{link_bone.name}][{limit_x_radian:.4f}({actual_ik_qq.to_euler_degrees().mmd})]"
+                            # )
 
                             pass
                         else:
@@ -1180,14 +1279,27 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # # -----------------
 
-                    link_bf.ik_rotation = (
-                        total_ik_qq
-                        if total_ik_qq
-                        else (link_bf.ik_rotation or MQuaternion()) * actual_ik_qq
-                    )
+                    if link_bf.ik_rotation:
+                        link_bf.ik_rotation = (
+                            total_ik_qq
+                            if total_ik_qq
+                            else link_bf.ik_rotation * actual_ik_qq
+                        )
+                    else:
+                        link_bf.ik_rotation = (
+                            total_ik_qq if total_ik_qq else actual_ik_qq
+                        )
 
                     # IK用なので最後に追加して補間曲線は分割しない
                     self[link_bf.name].append(link_bf)
+
+                    # IKの結果を更新
+                    (
+                        motion_bone_qqs[0, link_bone.index],
+                        motion_bone_ik_qqs[0, link_bone.index],
+                    ) = self.get_rotation(
+                        fno, model, link_bone, append_ik=False, is_animate=is_animate
+                    )
 
                     if (
                         total_ideal_ik_qq
@@ -1241,9 +1353,25 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                         # 残存回転をひとつ後のリンクボーンに渡す
                         parent_link_bf = self[parent_link_bone.name][fno]
-                        parent_ik_qq = parent_link_bf.ik_rotation or MQuaternion()
+                        parent_ik_qq = (
+                            parent_link_bf.ik_rotation
+                            if parent_link_bf.ik_rotation
+                            else MQuaternion()
+                        )
                         parent_link_bf.ik_rotation = parent_ik_qq * remaining_qq
                         self[parent_link_bf.name].append(parent_link_bf)
+
+                        # 残存回転の結果を更新
+                        (
+                            motion_bone_qqs[0, parent_link_bone.index],
+                            motion_bone_ik_qqs[0, parent_link_bone.index],
+                        ) = self.get_rotation(
+                            fno,
+                            model,
+                            parent_link_bone,
+                            append_ik=False,
+                            is_animate=is_animate,
+                        )
 
                         # # ------------
                         # original_bf = self[parent_link_bone.name][fno]
@@ -1271,7 +1399,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # IKの計算結果の回転を加味して返す
         bf = self[bone.name][fno]
-        qq = bf.rotation * (bf.ik_rotation or MQuaternion())
+        qq = bf.rotation * bf.ik_rotation if bf.ik_rotation else bf.rotation
 
         if bone.local_angle_limit:
             if (
@@ -1927,27 +2055,27 @@ class VmdMotion(BaseHashModel):
 
         # 頂点モーフ
         vertex_morph_poses = self.morphs.animate_vertex_morphs(fno, model, is_gl)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 頂点モーフ")
+        # logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 頂点モーフ")
 
         # ボーン変形後頂点モーフ
         after_vertex_morph_poses = self.morphs.animate_after_vertex_morphs(
             fno, model, is_gl
         )
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン変形後頂点モーフ")
+        # logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: ボーン変形後頂点モーフ")
 
         # UVモーフ
         uv_morph_poses = self.morphs.animate_uv_morphs(fno, model, 0, is_gl)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: UVモーフ")
+        # logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: UVモーフ")
 
         # 追加UVモーフ1
         uv1_morph_poses = self.morphs.animate_uv_morphs(fno, model, 1, is_gl)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 追加UVモーフ1")
+        # logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 追加UVモーフ1")
 
         # 追加UVモーフ2-4は無視
 
         # 材質モーフ
         material_morphs = self.morphs.animate_material_morphs(fno, model)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 材質モーフ")
+        # logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: 材質モーフ")
 
         # グループモーフ
         (
@@ -1955,7 +2083,7 @@ class VmdMotion(BaseHashModel):
             group_morph_bone_frames,
             group_materials,
         ) = self.morphs.animate_group_morphs(fno, model, material_morphs, is_gl)
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
+        # logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
         bone_matrixes = self.animate_bone([fno], model)
 
@@ -1968,7 +2096,7 @@ class VmdMotion(BaseHashModel):
         gl_matrixes[..., 1:3, 0] *= -1
         gl_matrixes[..., 3, 0] *= -1
 
-        logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: OpenGL座標系変換")
+        # logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: OpenGL座標系変換")
 
         return (
             fno,
@@ -2006,15 +2134,15 @@ class VmdMotion(BaseHashModel):
                     display_block=100,
                 )
 
-            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 開始")
+            # logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 開始")
 
             # 材質モーフ
             material_morphs = self.morphs.animate_material_morphs(fno, model)
-            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 材質モーフ")
+            # logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 材質モーフ")
 
             # ボーンモーフ
             morph_bone_frames = self.morphs.animate_bone_morphs(fno, model)
-            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: ボーンモーフ")
+            # logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: ボーンモーフ")
 
             for bfs in morph_bone_frames:
                 bf = bfs[fno]
@@ -2030,7 +2158,7 @@ class VmdMotion(BaseHashModel):
             _, group_morph_bone_frames, _ = self.morphs.animate_group_morphs(
                 fno, model, material_morphs
             )
-            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: グループモーフ")
+            # logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
             for bfs in group_morph_bone_frames:
                 bf = bfs[fno]
@@ -2043,7 +2171,7 @@ class VmdMotion(BaseHashModel):
 
                 all_morph_bone_frames[bf.name][bf.index] = mbf + bf
 
-            logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: モーフキーフレ加算")
+            # logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: モーフキーフレ加算")
 
         # ボーン変形行列操作
         bone_matrixes = self.bones.animate_bone_matrixes(
@@ -2056,6 +2184,6 @@ class VmdMotion(BaseHashModel):
             is_animate=True,
             description=description,
         )
-        logger.test(f"-- ボーンアニメーション[{model.name}]: ボーン変形行列操作")
+        # logger.test(f"-- ボーンアニメーション[{model.name}]: ボーン変形行列操作")
 
         return bone_matrixes

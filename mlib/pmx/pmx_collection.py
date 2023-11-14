@@ -732,9 +732,7 @@ class PmxModel(BaseHashModel):
                 self.insert_bone(neck_root_bone)
 
                 # 肩根元を追加
-                right_shoulder_root = Bone(
-                    name="右肩根元", index=neck_root_bone.index + 1
-                )
+                right_shoulder_root = Bone(name="右肩根元", index=neck_root_bone.index + 1)
                 right_shoulder_root.parent_index = neck_root_bone.index
                 right_shoulder_root.is_system = True
                 right_shoulder_root.position = neck_root_position.copy()
@@ -751,9 +749,7 @@ class PmxModel(BaseHashModel):
                     ) = MVector3D(-1, 0, 0)
                 self.insert_bone(right_shoulder_root)
 
-                left_shoulder_root = Bone(
-                    name="左肩根元", index=neck_root_bone.index + 1
-                )
+                left_shoulder_root = Bone(name="左肩根元", index=neck_root_bone.index + 1)
                 left_shoulder_root.parent_index = neck_root_bone.index
                 left_shoulder_root.is_system = True
                 left_shoulder_root.position = neck_root_position.copy()
@@ -1255,9 +1251,7 @@ class PmxModel(BaseHashModel):
             bone.position = MVector3D()
         elif "グルーブ" == bone.name and "センター" in self.bones:
             bone.position = bone_matrixes[0, "センター"].position * 1.025
-        elif (bone.is_leg_d or "肩P" == bone.name[-2:]) and bone.name[
-            :-1
-        ] in self.bones:
+        elif (bone.is_leg_d or "肩P" == bone.name[-2:]) and bone.name[:-1] in self.bones:
             bone.position = bone_matrixes[0, bone.name[:-1]].position.copy()
         elif "肩C" in bone.name and f"{direction}腕" in self.bones:
             bone.position = bone_matrixes[0, f"{direction}腕"].position.copy()
@@ -1268,12 +1262,10 @@ class PmxModel(BaseHashModel):
             bone.position.y = 0
         elif "腰" == bone.name and "下半身" in self.bones and "足中心" in self.bones:
             bone.position = (
-                bone_matrixes[0, "下半身"].position
-                + bone_matrixes[0, "足中心"].position
+                bone_matrixes[0, "下半身"].position + bone_matrixes[0, "足中心"].position
             ) / 2
             bone.local_x_vector = (
-                bone_matrixes[0, "足中心"].position
-                - bone_matrixes[0, "下半身"].position
+                bone_matrixes[0, "足中心"].position - bone_matrixes[0, "下半身"].position
             ).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
@@ -1293,15 +1285,10 @@ class PmxModel(BaseHashModel):
             ).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
-        elif (
-            "上半身3" == bone.name
-            and "上半身2" in self.bones
-            and "上半身" in self.bones
-        ):
+        elif "上半身3" == bone.name and "上半身2" in self.bones and "上半身" in self.bones:
             if "首" in self.bones:
                 bone.position = (
-                    bone_matrixes[0, "上半身2"].position
-                    + bone_matrixes[0, "首"].position
+                    bone_matrixes[0, "上半身2"].position + bone_matrixes[0, "首"].position
                 ) / 2
                 bone.position.z += (
                     abs(
@@ -1311,8 +1298,7 @@ class PmxModel(BaseHashModel):
                     * 0.5
                 )
                 bone.local_x_vector = (
-                    bone_matrixes[0, "首"].position
-                    - bone_matrixes[0, "上半身2"].position
+                    bone_matrixes[0, "首"].position - bone_matrixes[0, "上半身2"].position
                 ).normalized()
             else:
                 bone.position = bone_matrixes[0, "上半身"].position + (
@@ -1330,8 +1316,7 @@ class PmxModel(BaseHashModel):
                     * 0.5
                 )
                 bone.local_x_vector = (
-                    bone_matrixes[0, "上半身2"].position
-                    - bone_matrixes[0, "上半身"].position
+                    bone_matrixes[0, "上半身2"].position - bone_matrixes[0, "上半身"].position
                 ).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
@@ -1393,9 +1378,7 @@ class PmxModel(BaseHashModel):
             and f"{direction}つま先ＩＫ" in self.bones
             and self.bones[f"{direction}つま先ＩＫ"].ik
         ):
-            toe_target_bone = self.bones[
-                self.bones[f"{direction}つま先ＩＫ"].ik.bone_index
-            ]
+            toe_target_bone = self.bones[self.bones[f"{direction}つま先ＩＫ"].ik.bone_index]
             bone.position = MVector3D(
                 *np.average(
                     [
@@ -1603,11 +1586,7 @@ class PmxModel(BaseHashModel):
 
         if "上半身2" in bone_names and self.bones.exists(("上半身", "上半身2")):
             tail_bone_name = (
-                "上半身3"
-                if "上半身3" in self.bones
-                else "首"
-                if "首" in self.bones
-                else None
+                "上半身3" if "上半身3" in self.bones else "首" if "首" in self.bones else None
             )
             if tail_bone_name:
                 to_tail_y = (
@@ -1633,14 +1612,10 @@ class PmxModel(BaseHashModel):
                     ("上半身", "上半身2"),
                     to_tail_pos=MVector3D(0, 1, 0),
                 )
-        if "上半身3" in bone_names and self.bones.exists(
-            ("上半身", "上半身2", "上半身3")
-        ):
+        if "上半身3" in bone_names and self.bones.exists(("上半身", "上半身2", "上半身3")):
             self.update_vertices_by_bone()
             if "首" in self.bones:
-                to_tail_y = (
-                    self.bones["首"].position.y - self.bones["上半身3"].position.y
-                )
+                to_tail_y = self.bones["首"].position.y - self.bones["上半身3"].position.y
                 self.separate_weights(
                     "上半身2",
                     "上半身3",
@@ -1660,12 +1635,8 @@ class PmxModel(BaseHashModel):
                     ("上半身2", "上半身3"),
                     to_tail_pos=MVector3D(0, 1, 0),
                 )
-        if "右足先EX" in bone_names and self.bones.exists(
-            ("右足首", "右足首D", "右足先EX")
-        ):
-            to_tail_z = (
-                self.bones["右足先EX"].position.z - self.bones["右足首"].position.z
-            )
+        if "右足先EX" in bone_names and self.bones.exists(("右足首", "右足首D", "右足先EX")):
+            to_tail_z = self.bones["右足先EX"].position.z - self.bones["右足首"].position.z
             self.separate_weights(
                 "右足首",
                 "右足先EX",
@@ -1675,12 +1646,8 @@ class PmxModel(BaseHashModel):
                 ("右足首", "右足首D", "右足先EX"),
                 to_tail_pos=MVector3D(0, 0, to_tail_z),
             )
-        if "左足先EX" in bone_names and self.bones.exists(
-            ("左足首", "左足首D", "左足先EX")
-        ):
-            to_tail_z = (
-                self.bones["左足先EX"].position.z - self.bones["左足首"].position.z
-            )
+        if "左足先EX" in bone_names and self.bones.exists(("左足首", "左足首D", "左足先EX")):
+            to_tail_z = self.bones["左足先EX"].position.z - self.bones["左足首"].position.z
             self.separate_weights(
                 "左足首",
                 "左足先EX",
@@ -1690,9 +1657,7 @@ class PmxModel(BaseHashModel):
                 ("左足首", "左足首D", "左足先EX"),
                 to_tail_pos=MVector3D(0, 0, to_tail_z),
             )
-        if "右肩" in bone_names and self.bones.exists(
-            ("上半身", "上半身2", "右肩", "右腕")
-        ):
+        if "右肩" in bone_names and self.bones.exists(("上半身", "上半身2", "右肩", "右腕")):
             self.separate_weights(
                 "上半身2",
                 "右肩",
@@ -1702,9 +1667,7 @@ class PmxModel(BaseHashModel):
                 ("上半身2", "右肩"),
                 is_shoulder=True,
             )
-        if "左肩" in bone_names and self.bones.exists(
-            ("上半身", "上半身2", "左肩", "左腕")
-        ):
+        if "左肩" in bone_names and self.bones.exists(("上半身", "上半身2", "左肩", "左腕")):
             self.separate_weights(
                 "上半身2",
                 "左肩",
@@ -1714,9 +1677,7 @@ class PmxModel(BaseHashModel):
                 ("上半身2", "左肩"),
                 is_shoulder=True,
             )
-        if "右親指０" in bone_names and self.bones.exists(
-            ("右手首", "右親指０", "右親指１")
-        ):
+        if "右親指０" in bone_names and self.bones.exists(("右手首", "右親指０", "右親指１")):
             self.separate_weights(
                 "右手首",
                 "右親指０",
@@ -1726,9 +1687,7 @@ class PmxModel(BaseHashModel):
                 ("右手首", "右親指１"),
                 is_thumb=True,
             )
-        if "左親指０" in bone_names and self.bones.exists(
-            ("左手首", "左親指０", "左親指１")
-        ):
+        if "左親指０" in bone_names and self.bones.exists(("左手首", "左親指０", "左親指１")):
             self.separate_weights(
                 "左手首",
                 "左親指０",
