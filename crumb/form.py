@@ -859,7 +859,7 @@ class TestFrame(NotebookFrame):
         # dress_motion.bones["右腕"].append(bf)
 
         # dress_motion.bones.clear()
-        # dress_matrixes = dress_motion.bones.get_matrix_by_indexes([0], ["左肩"], dress, append_ik=False)
+        # dress_matrixes = dress_motion.bones.get_matrix_by_indexes([0], ["左肩"], dress, is_calc_ik=False)
         # left_shoulder_position = dress_matrixes[0, "左肩"].position
 
         # bf2 = VmdBoneFrame(0, "右肩")
@@ -867,7 +867,7 @@ class TestFrame(NotebookFrame):
         # dress_motion.bones["右肩"].append(bf2)
 
         # dress_motion.bones.clear()
-        # dress_scaled_matrixes = dress_motion.bones.get_matrix_by_indexes([0], ["左肩"], dress, append_ik=False)
+        # dress_scaled_matrixes = dress_motion.bones.get_matrix_by_indexes([0], ["左肩"], dress, is_calc_ik=False)
         # scaled_left_shoulder_position = dress_scaled_matrixes[0, "左肩"].position
         # scale_diff = left_shoulder_position - scaled_left_shoulder_position
 

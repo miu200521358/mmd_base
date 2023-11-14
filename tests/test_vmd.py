@@ -421,7 +421,7 @@ def test_read_by_filepath_ok_matrix_morph() -> None:
     motion.morphs["底上げ"].append(VmdMorphFrame(0, "底上げ", 1))
 
     # キーフレ
-    bone_matrixes = motion.animate_bone([10, 999], model, append_ik=False)
+    bone_matrixes = motion.animate_bone([10, 999], model, is_calc_ik=False)
 
     # キーフレがない場合
     assert np.isclose(
@@ -957,7 +957,7 @@ def test_read_by_filepath_ok_leg_ik6() -> None:
     # IK OFF
 
     # キーフレ
-    bone_off_matrixes = motion.animate_bone([0], model, append_ik=False, clear_ik=True)
+    bone_off_matrixes = motion.animate_bone([0], model, is_calc_ik=False, clear_ik=True)
 
     assert np.isclose(
         np.array([1.622245, 6.632885, 0.713205]),
@@ -1331,7 +1331,7 @@ def test_read_by_filepath_ok_leg_ik7_fk() -> None:
     )
 
     # キーフレ
-    bone_matrixes = motion.animate_bone([0], model, ["右つま先"], append_ik=False)
+    bone_matrixes = motion.animate_bone([0], model, ["右つま先"], is_calc_ik=False)
 
     # --------
 
@@ -1368,7 +1368,7 @@ def test_read_by_filepath_ok_leg_ik7_bake() -> None:
     )
 
     # キーフレ
-    bone_matrixes = motion.animate_bone([0], model, ["右つま先"], append_ik=False)
+    bone_matrixes = motion.animate_bone([0], model, ["右つま先"], is_calc_ik=False)
 
     # --------
 

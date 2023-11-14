@@ -51,6 +51,10 @@ class CanvasPanel(NotebookPanel):
     def fno(self, v: int) -> None:
         self.index = v
 
+    @property
+    def is_calc_ik(self) -> bool:
+        return True
+
     def stop_play(self) -> None:
         pass
 
@@ -70,10 +74,12 @@ class CanvasPanel(NotebookPanel):
         pass
 
 
-def animate(queue: Queue, fno: int, max_fno: int, model_set: "ModelSet"):
+def animate(
+    queue: Queue, fno: int, max_fno: int, is_calc_ik: bool, model_set: "ModelSet"
+):
     while fno < max_fno:
         fno += 1
-        queue.put(MotionSet(model_set.model, model_set.motion, fno))
+        queue.put(MotionSet(model_set.model, model_set.motion, fno, is_calc_ik))
     queue.put(None)
 
 
@@ -106,7 +112,9 @@ class ModelSet:
 
 
 class MotionSet:
-    def __init__(self, model: PmxModel, motion: VmdMotion, fno: int) -> None:
+    def __init__(
+        self, model: PmxModel, motion: VmdMotion, fno: int, is_calc_ik: bool
+    ) -> None:
         self.selected_bone_indexes: list[int] = []
         self.is_show_bone_weight: bool = False
 
@@ -120,7 +128,7 @@ class MotionSet:
                 self.uv_morph_poses,
                 self.uv1_morph_poses,
                 self.material_morphs,
-            ) = motion.animate(fno, model)
+            ) = motion.animate(fno, model, is_calc_ik)
         else:
             self.fno = 0
             self.gl_matrixes = np.array([np.eye(4) for _ in range(len(model.bones))])
@@ -482,6 +490,7 @@ class PmxCanvas(glcanvas.GLCanvas):
                             self.queues[-1],
                             self.parent.fno,
                             self.max_fno,
+                            self.parent.is_calc_ik,
                             model_set,
                         ),
                         name="CalcProcess",
