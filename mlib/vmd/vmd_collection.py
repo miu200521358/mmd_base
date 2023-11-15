@@ -882,29 +882,48 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         is_calc_ik : IKを計算するか(循環してしまう場合があるので、デフォルトFalse)
         """
 
+        # FK(捩り) > IK(捩り) > 付与親(捩り)
+        bf = self[bone.name][fno]
+        fk_qq = bf.rotation.copy()
+
+        if bf.ik_rotation is not None:
+            # IK用回転を持っている場合、追加
+            fk_qq *= bf.ik_rotation
+
+        # if bone.ik_target_indexes:
+        #     # IKのターゲットである場合、IK角度を合算する
+        #     ik_target_qq_mat, _ = self.get_rotation(
+        #         fno,
+        #         model,
+        #         model.bones[bone.ik_target_indexes[0]],
+        #         is_calc_ik=False,
+        #         is_animate=is_animate,
+        #     )
+        #     fk_qq *= MMatrix4x4(ik_target_qq_mat).to_quaternion()
+
         if is_calc_ik and bone.ik_link_indexes:
             # IK結果回転
             ik_qq = self.get_ik_rotation(fno, model, bone, is_animate)
         else:
-            # FK(捩り) > IK(捩り) > 付与親(捩り)
-            bf = self[bone.name][fno]
-            qq = bf.rotation.copy()
-
-            if bf.ik_rotation is not None:
-                # IK用回転を持っている場合、追加
-                qq *= bf.ik_rotation
-
             # IKを加味した回転を必要があれば軸に沿わせる
-            ik_qq = self.get_axis_rotation(bone, qq)
+            ik_qq = self.get_axis_rotation(bone, fk_qq)
+
+        ik_qq_mat = ik_qq.to_matrix4x4().vector
 
         # 付与親を加味した回転
-        effect_qq = self.get_effect_rotation(
-            fno, model, bone, loop=loop + 1, is_animate=is_animate
-        )
+        if bone.is_external_rotation and bone.effect_index in model.bones:
+            effect_qq = self.get_effect_rotation(
+                fno, model, bone, loop=loop + 1, is_animate=is_animate
+            )
 
-        return (
-            ik_qq * effect_qq
-        ).normalized().to_matrix4x4().vector, ik_qq.to_matrix4x4().vector
+            return (
+                self.get_axis_rotation(bone, (ik_qq * effect_qq).normalized())
+                .to_matrix4x4()
+                .vector,
+                ik_qq_mat,
+            )
+
+        return ik_qq_mat, ik_qq_mat
 
     def get_effect_rotation(
         self,
@@ -917,9 +936,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         """
         付与親を加味した回転を求める
         """
-        if not (bone.is_external_rotation and bone.effect_index in model.bones):
-            return MQuaternion()
-
         if 0 == bone.effect_factor or loop > 20:
             # 付与率が0の場合、常に0になる
             # MMDエンジン対策で無限ループを避ける
@@ -953,9 +969,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         """
         IKを加味した回転を求める
         """
-
-        if not bone.ik_link_indexes:
-            return MQuaternion()
 
         # ik_fno = 1
         for ik_target_bone_idx in bone.ik_link_indexes:
@@ -2089,7 +2102,7 @@ class VmdMotion(BaseHashModel):
         # logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
         bone_matrixes = self.animate_bone(
-            [fno], model, is_calc_ik=is_calc_ik, is_animate=True
+            [fno], model, is_calc_ik=is_calc_ik, is_animate=False
         )
 
         # OpenGL座標系に変換
