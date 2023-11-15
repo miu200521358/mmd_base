@@ -754,6 +754,10 @@ class ConfigPanel(NotebookPanel):
     def fno(self, v: int) -> None:
         self.frame_ctrl.SetValue(v)
 
+    @property
+    def is_calc_ik(self) -> bool:
+        return True
+
     def start_play(self) -> None:
         pass
 

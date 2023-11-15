@@ -1302,11 +1302,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     )
 
                     if (
-                        total_ideal_ik_qq
+                        not is_animate
+                        and total_ideal_ik_qq
                         and total_ik_qq
                         and not np.isclose(total_ideal_ik_qq.dot(total_ik_qq), 1)
                         and lidx < len(ik_bone.ik.links) - 1
                     ):
+                        # アニメーション描画の時は残存回転の計算を行わない
+                        # 通常の計算の場合、理想回転と実際回転が離れていたら残存回転の計算を行う
                         parent_link_bone = model.bones[
                             ik_bone.ik.links[lidx + 1].bone_index
                         ]
@@ -2085,7 +2088,9 @@ class VmdMotion(BaseHashModel):
         ) = self.morphs.animate_group_morphs(fno, model, material_morphs, is_gl)
         # logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
-        bone_matrixes = self.animate_bone([fno], model, is_calc_ik=is_calc_ik)
+        bone_matrixes = self.animate_bone(
+            [fno], model, is_calc_ik=is_calc_ik, is_animate=True
+        )
 
         # OpenGL座標系に変換
 
@@ -2117,6 +2122,7 @@ class VmdMotion(BaseHashModel):
         is_calc_ik: bool = True,
         clear_ik: bool = False,
         out_fno_log: bool = False,
+        is_animate: bool = False,
         description: str = "",
     ) -> VmdBoneFrameTrees:
         all_morph_bone_frames = VmdBoneFrames()
@@ -2181,7 +2187,7 @@ class VmdMotion(BaseHashModel):
             bone_names,
             is_calc_ik=is_calc_ik,
             out_fno_log=out_fno_log,
-            is_animate=True,
+            is_animate=is_animate,
             description=description,
         )
         # logger.test(f"-- ボーンアニメーション[{model.name}]: ボーン変形行列操作")
