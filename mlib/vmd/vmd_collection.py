@@ -2102,7 +2102,7 @@ class VmdMotion(BaseHashModel):
         # logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
         bone_matrixes = self.animate_bone(
-            [fno], model, is_calc_ik=is_calc_ik, is_animate=False
+            [fno], model, is_calc_ik=is_calc_ik, is_animate=True
         )
 
         # OpenGL座標系に変換
