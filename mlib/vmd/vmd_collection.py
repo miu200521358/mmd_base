@@ -1,5 +1,12 @@
 import os
 from bisect import bisect_left
+from concurrent.futures import (
+    FIRST_EXCEPTION,
+    Future,
+    ThreadPoolExecutor,
+    as_completed,
+    wait,
+)
 from functools import lru_cache
 from itertools import product
 from typing import Iterable, Optional
@@ -76,7 +83,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
 
         if key in self.data:
             bf = self.get_by_index(key)
-            bf.ik_rotation = self.calc_ik(prev_index, middle_index, next_index)
+            # bf.ik_rotation = self.calc_ik(prev_index, middle_index, next_index)
             return bf
 
         # prevとnextの範囲内である場合、補間曲線ベースで求め直す
@@ -171,7 +178,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
     def calc(self, prev_index: int, index: int, next_index: int) -> VmdBoneFrame:
         if index in self.data:
             bf = self.data[index]
-            bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
+            # bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
             return bf
 
         if index in self.cache:
@@ -215,8 +222,8 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         # 補間結果Yは、FKキーフレ内で計算する
         ry, xy, yy, zy = next_bf.interpolations.evaluate(prev_index, index, next_index)
 
-        # IK用回転
-        bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
+        # # IK用回転
+        # bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
 
         # FK用回転
         bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
@@ -288,6 +295,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         out_fno_log: bool = False,
         is_animate: bool = False,
         description: str = "",
+        max_worker: int = 1,
     ) -> VmdBoneFrameTrees:
         # 処理対象ボーン名取得
         target_bone_names = self.get_animate_bone_names(model, bone_names)
@@ -317,6 +325,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 is_calc_ik=False,
                 out_fno_log=False,
                 is_animate=is_animate,
+                max_worker=max_worker,
             )
         else:
             morph_row = len(fnos)
@@ -348,6 +357,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             out_fno_log=out_fno_log,
             is_animate=is_animate,
             description=description,
+            max_worker=max_worker,
         )
 
         # ボーン変形行列
@@ -525,6 +535,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         out_fno_log: bool = False,
         is_animate: bool = False,
         description: str = "",
+        max_worker: int = 1,
     ) -> tuple[
         np.ndarray,
         np.ndarray,
@@ -546,122 +557,180 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_qqs = np.full((row, col, 4, 4), np.eye(4))
         local_scales = np.full((row, col, 4, 4), np.eye(4))
 
-        total_count = len(fnos) * len(target_bone_names)
+        with ThreadPoolExecutor(
+            thread_name_prefix="bone_matrix", max_workers=max_worker
+        ) as executor:
+            futures: list[Future] = []
 
-        # if is_calc_ik and is_animate:
-        #     # IK回転を事前に求めておく
-        #     self.calc_ik_rotations(
-        #         fnos, model, target_bone_names, out_fno_log, description
-        #     )
-
-        for fidx, fno in enumerate(fnos):
-            fno_poses: dict[int, MVector3D] = {}
-            fno_scales: dict[int, MVector3D] = {}
-            fno_local_poses: dict[int, MVector3D] = {}
-            fno_local_qqs: dict[int, MQuaternion] = {}
-            fno_local_scales: dict[int, MVector3D] = {}
-
-            is_valid_local_pos = False
-            is_valid_local_rot = False
-            is_valid_local_scale = False
-
-            for bidx, bone_name in enumerate(target_bone_names):
-                if out_fno_log:
-                    logger.count(
-                        "ボーン計算[{d}]",
-                        d=description,
-                        index=fidx * len(target_bone_names) + bidx,
-                        total_index_count=total_count,
-                        display_block=100,
+            for fidx, fno in enumerate(fnos):
+                futures.append(
+                    executor.submit(
+                        self.get_bone_matrix_frame,
+                        fidx,
+                        fno,
+                        model,
+                        target_bone_names,
+                        is_calc_ik,
+                        out_fno_log,
+                        is_animate,
+                        description,
                     )
-
-                bone = model.bones[bone_name]
-                if bone.index in fno_local_poses:
-                    continue
-                bf = self[bone.name][fno]
-                fno_poses[bone.index] = bf.position
-                fno_scales[bone.index] = bf.scale
-                fno_local_poses[bone.index] = bf.local_position
-                fno_local_qqs[bone.index] = bf.local_rotation
-                fno_local_scales[bone.index] = bf.local_scale
-
-                is_valid_local_pos = is_valid_local_pos or bool(bf.local_position)
-                is_valid_local_rot = is_valid_local_rot or bool(bf.local_rotation)
-                is_valid_local_scale = is_valid_local_scale or bool(bf.local_scale)
-
-            for bone_name in target_bone_names:
-                bone = model.bones[bone_name]
-
-                is_parent_bone_not_local_cancels: list[bool] = []
-                parent_local_poses: list[MVector3D] = []
-                parent_local_qqs: list[MQuaternion] = []
-                parent_local_scales: list[MVector3D] = []
-                parent_local_axises: list[MVector3D] = []
-
-                for parent_index in bone.tree_indexes[:-1]:
-                    parent_bone = model.bones[parent_index]
-                    if parent_bone.index not in fno_local_poses:
-                        parent_bf = self[parent_bone.name][fno]
-                        fno_local_poses[parent_bone.index] = parent_bf.local_position
-                        fno_local_qqs[parent_bone.index] = parent_bf.local_rotation
-                        fno_local_scales[parent_bone.index] = parent_bf.local_scale
-                    is_parent_bone_not_local_cancels.append(
-                        model.bones.is_bone_not_local_cancels[parent_bone.index]
-                    )
-                    parent_local_axises.append(
-                        model.bones.local_axises[parent_bone.index]
-                    )
-                    parent_local_poses.append(fno_local_poses[parent_bone.index])
-                    parent_local_qqs.append(fno_local_qqs[parent_bone.index])
-                    parent_local_scales.append(fno_local_scales[parent_bone.index])
-
-                poses[fidx, bone.index] = self.get_position(
-                    fno, model, bone, fno_poses[bone.index]
                 )
 
-                # モーションによるローカル移動量
-                if is_valid_local_pos:
-                    local_pos_mat = self.get_local_position(
-                        bone,
-                        fno_local_poses,
-                        is_parent_bone_not_local_cancels,
-                        parent_local_poses,
-                        parent_local_axises,
-                    )
-                    local_poses[fidx, bone.index] = local_pos_mat
+        wait(futures, return_when=FIRST_EXCEPTION)
 
-                # FK(捩り) > IK(捩り) > 付与親(捩り)
-                qqs[fidx, bone.index], ik_qqs[fidx, bone.index] = self.get_rotation(
-                    fno, model, bone, is_calc_ik=is_calc_ik, is_animate=is_animate
-                )
-
-                # ローカル回転
-                if is_valid_local_rot:
-                    local_rot_mat = self.get_local_rotation(
-                        bone,
-                        fno_local_qqs,
-                        is_parent_bone_not_local_cancels,
-                        parent_local_qqs,
-                        parent_local_axises,
-                    )
-                    local_qqs[fidx, bone.index] = local_rot_mat
-
-                # モーションによるスケール変化
-                scale_mat = self.get_scale(fno, model, bone, fno_scales[bone.index])
-                scales[fidx, bone.index] = scale_mat
-
-                # ローカルスケール
-                if is_valid_local_scale:
-                    local_scale_mat = self.get_local_scale(
-                        bone,
-                        fno_local_scales,
-                        is_parent_bone_not_local_cancels,
-                        parent_local_scales,
-                        parent_local_axises,
-                    )
-                    local_scales[fidx, bone.index] = local_scale_mat
+        for future in as_completed(futures):
+            if future.exception():
+                raise future.exception()
+            (
+                fidx,
+                frame_poses,
+                frame_qqs,
+                frame_ik_qqs,
+                frame_scales,
+                frame_local_poses,
+                frame_local_qqs,
+                frame_local_scales,
+            ) = future.result()
+            poses[fidx] = frame_poses
+            qqs[fidx] = frame_qqs
+            ik_qqs[fidx] = frame_ik_qqs
+            scales[fidx] = frame_scales
+            local_poses[fidx] = frame_local_poses
+            local_qqs[fidx] = frame_local_qqs
+            local_scales[fidx] = frame_local_scales
 
         return poses, qqs, scales, local_poses, local_qqs, local_scales, ik_qqs
+
+    def get_bone_matrix_frame(
+        self,
+        fidx: int,
+        fno: int,
+        model: PmxModel,
+        target_bone_names: list[str],
+        is_calc_ik: bool = True,
+        out_fno_log: bool = False,
+        is_animate: bool = False,
+        description: str = "",
+    ) -> tuple[
+        int,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+    ]:
+        """1F内のボーン変形行列を求める"""
+        if out_fno_log and fidx % 100 == 0:
+            logger.info("-- ボーン計算[{d}]", d=description)
+
+        col = len(model.bones)
+        poses = np.full((1, col, 4, 4), np.eye(4))
+        qqs = np.full((1, col, 4, 4), np.eye(4))
+        ik_qqs = np.full((1, col, 4, 4), np.eye(4))
+        scales = np.full((1, col, 4, 4), np.eye(4))
+        local_poses = np.full((1, col, 4, 4), np.eye(4))
+        local_qqs = np.full((1, col, 4, 4), np.eye(4))
+        local_scales = np.full((1, col, 4, 4), np.eye(4))
+
+        fno_poses: dict[int, MVector3D] = {}
+        fno_scales: dict[int, MVector3D] = {}
+        fno_local_poses: dict[int, MVector3D] = {}
+        fno_local_qqs: dict[int, MQuaternion] = {}
+        fno_local_scales: dict[int, MVector3D] = {}
+
+        is_valid_local_pos = False
+        is_valid_local_rot = False
+        is_valid_local_scale = False
+
+        for bidx, bone_name in enumerate(target_bone_names):
+            bone = model.bones[bone_name]
+            if bone.index in fno_local_poses:
+                continue
+            bf = self[bone.name][fno]
+            fno_poses[bone.index] = bf.position
+            fno_scales[bone.index] = bf.scale
+            fno_local_poses[bone.index] = bf.local_position
+            fno_local_qqs[bone.index] = bf.local_rotation
+            fno_local_scales[bone.index] = bf.local_scale
+
+            is_valid_local_pos = is_valid_local_pos or bool(bf.local_position)
+            is_valid_local_rot = is_valid_local_rot or bool(bf.local_rotation)
+            is_valid_local_scale = is_valid_local_scale or bool(bf.local_scale)
+
+        for bone_name in target_bone_names:
+            bone = model.bones[bone_name]
+
+            is_parent_bone_not_local_cancels: list[bool] = []
+            parent_local_poses: list[MVector3D] = []
+            parent_local_qqs: list[MQuaternion] = []
+            parent_local_scales: list[MVector3D] = []
+            parent_local_axises: list[MVector3D] = []
+
+            for parent_index in bone.tree_indexes[:-1]:
+                parent_bone = model.bones[parent_index]
+                if parent_bone.index not in fno_local_poses:
+                    parent_bf = self[parent_bone.name][fno]
+                    fno_local_poses[parent_bone.index] = parent_bf.local_position
+                    fno_local_qqs[parent_bone.index] = parent_bf.local_rotation
+                    fno_local_scales[parent_bone.index] = parent_bf.local_scale
+                is_parent_bone_not_local_cancels.append(
+                    model.bones.is_bone_not_local_cancels[parent_bone.index]
+                )
+                parent_local_axises.append(model.bones.local_axises[parent_bone.index])
+                parent_local_poses.append(fno_local_poses[parent_bone.index])
+                parent_local_qqs.append(fno_local_qqs[parent_bone.index])
+                parent_local_scales.append(fno_local_scales[parent_bone.index])
+
+            poses[0, bone.index] = self.get_position(
+                fno, model, bone, fno_poses[bone.index]
+            )
+
+            # モーションによるローカル移動量
+            if is_valid_local_pos:
+                local_pos_mat = self.get_local_position(
+                    bone,
+                    fno_local_poses,
+                    is_parent_bone_not_local_cancels,
+                    parent_local_poses,
+                    parent_local_axises,
+                )
+                local_poses[0, bone.index] = local_pos_mat
+
+            # FK(捩り) > IK(捩り) > 付与親(捩り)
+            qqs[0, bone.index], ik_qqs[0, bone.index] = self.get_rotation(
+                fno, model, bone, is_calc_ik=is_calc_ik, is_animate=is_animate
+            )
+
+            # ローカル回転
+            if is_valid_local_rot:
+                local_rot_mat = self.get_local_rotation(
+                    bone,
+                    fno_local_qqs,
+                    is_parent_bone_not_local_cancels,
+                    parent_local_qqs,
+                    parent_local_axises,
+                )
+                local_qqs[0, bone.index] = local_rot_mat
+
+            # モーションによるスケール変化
+            scale_mat = self.get_scale(fno, model, bone, fno_scales[bone.index])
+            scales[0, bone.index] = scale_mat
+
+            # ローカルスケール
+            if is_valid_local_scale:
+                local_scale_mat = self.get_local_scale(
+                    bone,
+                    fno_local_scales,
+                    is_parent_bone_not_local_cancels,
+                    parent_local_scales,
+                    parent_local_axises,
+                )
+                local_scales[0, bone.index] = local_scale_mat
+
+        return fidx, poses, qqs, ik_qqs, scales, local_poses, local_qqs, local_scales
 
     def get_position(
         self, fno: int, model: PmxModel, bone: Bone, position: MVector3D, loop: int = 0
@@ -984,6 +1053,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 model,
                 bone_names=[ik_bone.name],
                 is_calc_ik=False,
+                max_worker=1,
             )
 
             # IKターゲットボーン
@@ -2056,7 +2126,12 @@ class VmdMotion(BaseHashModel):
         self.morphs[mf.name].insert(mf)
 
     def animate(
-        self, fno: int, model: PmxModel, is_calc_ik: bool = True, is_gl: bool = True
+        self,
+        fno: int,
+        model: PmxModel,
+        is_calc_ik: bool = True,
+        is_gl: bool = True,
+        max_worker: int = 1,
     ) -> tuple[
         int,
         np.ndarray,
@@ -2102,7 +2177,11 @@ class VmdMotion(BaseHashModel):
         # logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
         bone_matrixes = self.animate_bone(
-            [fno], model, is_calc_ik=is_calc_ik, is_animate=True
+            [fno],
+            model,
+            is_calc_ik=is_calc_ik,
+            is_animate=True,
+            max_worker=max_worker,
         )
 
         # OpenGL座標系に変換
@@ -2137,6 +2216,7 @@ class VmdMotion(BaseHashModel):
         out_fno_log: bool = False,
         is_animate: bool = False,
         description: str = "",
+        max_worker: int = 1,
     ) -> VmdBoneFrameTrees:
         all_morph_bone_frames = VmdBoneFrames()
 
@@ -2202,6 +2282,7 @@ class VmdMotion(BaseHashModel):
             out_fno_log=out_fno_log,
             is_animate=is_animate,
             description=description,
+            max_worker=max_worker,
         )
         # logger.test(f"-- ボーンアニメーション[{model.name}]: ボーン変形行列操作")
 
