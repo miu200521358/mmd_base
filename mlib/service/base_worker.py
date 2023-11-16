@@ -102,6 +102,11 @@ class BaseWorker:
         self.result: bool = True
         self.result_data: Optional[Any] = None
         self.result_func = result_func
+        self.max_worker = (
+            1
+            if frame.is_saving
+            else max(1, int(min(32, (os.cpu_count() or 0) + 4) / 2))
+        )
 
     def start(self) -> None:
         self.started = True
