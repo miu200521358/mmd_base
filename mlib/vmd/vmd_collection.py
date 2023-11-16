@@ -623,7 +623,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         np.ndarray,
     ]:
         """1F内のボーン変形行列を求める"""
-        if out_fno_log and fidx % 100 == 0:
+        if out_fno_log and fidx % 10 == 0:
             logger.info("-- ボーン計算[{d}]", d=description)
 
         col = len(model.bones)
