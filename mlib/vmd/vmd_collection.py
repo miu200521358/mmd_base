@@ -76,7 +76,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
 
         if key in self.data:
             bf = self.get_by_index(key)
-            bf.ik_rotation = self.calc_ik(prev_index, middle_index, next_index)
+            # bf.ik_rotation = self.calc_ik(prev_index, middle_index, next_index)
             return bf
 
         # prevとnextの範囲内である場合、補間曲線ベースで求め直す
@@ -171,7 +171,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
     def calc(self, prev_index: int, index: int, next_index: int) -> VmdBoneFrame:
         if index in self.data:
             bf = self.data[index]
-            bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
+            # bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
             return bf
 
         if index in self.cache:
@@ -215,8 +215,8 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         # 補間結果Yは、FKキーフレ内で計算する
         ry, xy, yy, zy = next_bf.interpolations.evaluate(prev_index, index, next_index)
 
-        # IK用回転
-        bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
+        # # IK用回転
+        # bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
 
         # FK用回転
         bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
@@ -286,7 +286,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone_names: Iterable[str] = [],
         is_calc_ik: bool = True,
         out_fno_log: bool = False,
-        is_animate: bool = False,
         description: str = "",
     ) -> VmdBoneFrameTrees:
         # 処理対象ボーン名取得
@@ -316,7 +315,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 target_bone_names,
                 is_calc_ik=False,
                 out_fno_log=False,
-                is_animate=is_animate,
             )
         else:
             morph_row = len(fnos)
@@ -330,6 +328,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         if out_fno_log:
             logger.info("ボーンモーション計算[{d}]", d=description)
+
+        if is_calc_ik:
+            # IK計算
+            self.calc_ik_rotations(
+                fnos, model, target_bone_names, out_fno_log, description
+            )
 
         # モーションボーン操作
         (
@@ -346,7 +350,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             target_bone_names,
             is_calc_ik=is_calc_ik,
             out_fno_log=out_fno_log,
-            is_animate=is_animate,
             description=description,
         )
 
@@ -523,7 +526,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         target_bone_names: list[str],
         is_calc_ik: bool = True,
         out_fno_log: bool = False,
-        is_animate: bool = False,
         description: str = "",
     ) -> tuple[
         np.ndarray,
@@ -547,12 +549,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_scales = np.full((row, col, 4, 4), np.eye(4))
 
         total_count = len(fnos) * len(target_bone_names)
-
-        # if is_calc_ik and is_animate:
-        #     # IK回転を事前に求めておく
-        #     self.calc_ik_rotations(
-        #         fnos, model, target_bone_names, out_fno_log, description
-        #     )
 
         for fidx, fno in enumerate(fnos):
             fno_poses: dict[int, MVector3D] = {}
@@ -631,8 +627,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     local_poses[fidx, bone.index] = local_pos_mat
 
                 # FK(捩り) > IK(捩り) > 付与親(捩り)
+                # ここではもうIKの回転結果は求まってるのでIK計算を追加では行わない
                 qqs[fidx, bone.index], ik_qqs[fidx, bone.index] = self.get_rotation(
-                    fno, model, bone, is_calc_ik=is_calc_ik, is_animate=is_animate
+                    fno, model, bone, is_calc_ik=False
                 )
 
                 # ローカル回転
@@ -801,6 +798,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             for target_bone_name in target_bone_names
             if model.bones[target_bone_name].is_ik
             and model.bones[target_bone_name].ik.links
+        ] + [
+            model.bones[ik_target_bone_name].name
+            for target_bone_name in target_bone_names
+            for ik_target_bone_name in model.bones[target_bone_name].ik_target_indexes
+            if model.bones[ik_target_bone_name].is_ik
+            and model.bones[ik_target_bone_name].ik.links
         ]
         if not ik_bone_names:
             # IKボーンがない場合はそのまま終了
@@ -816,43 +819,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             # IKリンクボーンがない場合はそのまま終了
             return
 
-        min_fno = min(fnos)
-        max_fno = max(fnos)
-
-        # モーション内に存在しているIKに関するボーンのキーフレ
-        ik_fnos = {min_fno, max_fno} | set(
-            fno
-            for bone_name in ik_link_bone_names + ik_bone_names
-            for fno in self[bone_name].indexes
-        )
-
-        # 処理対象キーフレより小さくて、登録されている中で最も大きなキーフレ
-        min_ik_link_fno = max(
-            (fno for fno in ik_fnos if fno < min_fno), default=min_fno
-        )
-
-        # 処理対象キーフレより大きくて、登録されている中で最も小さなキーフレ
-        max_ik_link_fno = min(
-            (fno for fno in ik_fnos if fno > max_fno), default=max_fno
-        )
-
-        # IKで計算範囲内のキーフレ
-        target_ik_link_fnos = sorted(
-            [
-                fno
-                for fno in ik_fnos | set(fnos)
-                if min_ik_link_fno <= fno <= max_ik_link_fno
-            ]
-        )
-
-        total_index_count = len(ik_bone_names) * len(target_ik_link_fnos)
+        total_index_count = len(ik_bone_names) * len(fnos)
         n = 0
 
         for ik_target_bone in (
             model.bones[model.bones[ik_bone_name].ik.links[0].bone_index]
             for ik_bone_name in ik_bone_names
         ):
-            for fno in target_ik_link_fnos:
+            for fno in fnos:
                 if out_fno_log:
                     logger.count(
                         "IK事前計算[{d}]",
@@ -861,12 +835,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         total_index_count=total_index_count,
                         display_block=10,
                     )
-
                 # IKターゲットのボーンに対してIK計算を行う
-                self.get_rotation(
-                    fno, model, ik_target_bone, is_calc_ik=True, is_animate=True
-                )
-                n += 1
+                self.get_rotation(fno, model, ik_target_bone, is_calc_ik=True)
+
+                n + 1
 
     def get_rotation(
         self,
@@ -874,7 +846,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         model: PmxModel,
         bone: Bone,
         is_calc_ik: bool,
-        is_animate: bool,
         loop: int = 0,
     ) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -890,20 +861,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             # IK用回転を持っている場合、追加
             fk_qq *= bf.ik_rotation
 
-        # if bone.ik_target_indexes:
-        #     # IKのターゲットである場合、IK角度を合算する
-        #     ik_target_qq_mat, _ = self.get_rotation(
-        #         fno,
-        #         model,
-        #         model.bones[bone.ik_target_indexes[0]],
-        #         is_calc_ik=False,
-        #         is_animate=is_animate,
-        #     )
-        #     fk_qq *= MMatrix4x4(ik_target_qq_mat).to_quaternion()
-
         if is_calc_ik and bone.ik_link_indexes:
             # IK結果回転
-            ik_qq = self.get_ik_rotation(fno, model, bone, is_animate)
+            ik_qq = self.get_ik_rotation(fno, model, bone)
         else:
             # IKを加味した回転を必要があれば軸に沿わせる
             ik_qq = self.get_axis_rotation(bone, fk_qq)
@@ -912,9 +872,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 付与親を加味した回転
         if bone.is_external_rotation and bone.effect_index in model.bones:
-            effect_qq = self.get_effect_rotation(
-                fno, model, bone, loop=loop + 1, is_animate=is_animate
-            )
+            effect_qq = self.get_effect_rotation(fno, model, bone, loop=loop + 1)
 
             return (
                 self.get_axis_rotation(bone, (ik_qq * effect_qq).normalized())
@@ -931,7 +889,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         model: PmxModel,
         bone: Bone,
         loop: int = 0,
-        is_animate: bool = False,
     ) -> MQuaternion:
         """
         付与親を加味した回転を求める
@@ -948,7 +905,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             model,
             effect_bone,
             is_calc_ik=False,
-            is_animate=is_animate,
             loop=loop + 1,
         )
         effect_qq = MMatrix4x4(effect_qq_mat).to_quaternion()
@@ -964,13 +920,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         fno: int,
         model: PmxModel,
         bone: Bone,
-        is_animate: bool = False,
     ) -> MQuaternion:
         """
         IKを加味した回転を求める
         """
 
-        # ik_fno = 1
+        ik_fno = 1
         for ik_target_bone_idx in bone.ik_link_indexes:
             # IKボーン自身の位置
             ik_bone = model.bones[ik_target_bone_idx]
@@ -1012,7 +967,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 target_bone_names,
                 is_calc_ik=False,
                 out_fno_log=False,
-                is_animate=is_animate,
             )
 
             is_break = False
@@ -1127,8 +1081,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # リンクボーンの角度を保持
                     link_bf = self[link_bone.name][fno]
-                    # if 0 == loop and not is_animate:
-                    #     link_bf.ik_rotation = None
                     total_ideal_ik_qq = total_ik_qq = None
 
                     if link_bone.has_fixed_axis:
@@ -1310,13 +1262,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     (
                         motion_bone_qqs[0, link_bone.index],
                         motion_bone_ik_qqs[0, link_bone.index],
-                    ) = self.get_rotation(
-                        fno, model, link_bone, is_calc_ik=False, is_animate=is_animate
-                    )
+                    ) = self.get_rotation(fno, model, link_bone, is_calc_ik=False)
 
                     if (
-                        not is_animate
-                        and total_ideal_ik_qq
+                        total_ideal_ik_qq
                         and total_ik_qq
                         and not np.isclose(total_ideal_ik_qq.dot(total_ik_qq), 1)
                         and lidx < len(ik_bone.ik.links) - 1
@@ -1386,18 +1335,17 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             model,
                             parent_link_bone,
                             is_calc_ik=False,
-                            is_animate=is_animate,
                         )
 
-                        # # ------------
-                        # original_bf = self[parent_link_bone.name][fno]
+                        # ------------
+                        original_bf = self[parent_link_bone.name][fno]
 
-                        # remaining_bf = VmdBoneFrame(
-                        #     ik_fno, parent_link_bone.name, register=True
-                        # )
-                        # remaining_bf.rotation = original_bf.rotation * (
-                        #     original_bf.ik_rotation or MQuaternion()
-                        # )
+                        remaining_bf = VmdBoneFrame(
+                            ik_fno, parent_link_bone.name, register=True
+                        )
+                        remaining_bf.rotation = original_bf.rotation * (
+                            original_bf.ik_rotation or MQuaternion()
+                        )
 
                         # motion = VmdMotion()
                         # motion.append_bone_frame(remaining_bf)
@@ -2101,9 +2049,7 @@ class VmdMotion(BaseHashModel):
         ) = self.morphs.animate_group_morphs(fno, model, material_morphs, is_gl)
         # logger.test(f"-- スキンメッシュアニメーション[{model.name}][{fno:04d}]: グループモーフ")
 
-        bone_matrixes = self.animate_bone(
-            [fno], model, is_calc_ik=is_calc_ik, is_animate=True
-        )
+        bone_matrixes = self.animate_bone([fno], model, is_calc_ik=is_calc_ik)
 
         # OpenGL座標系に変換
 
@@ -2135,7 +2081,6 @@ class VmdMotion(BaseHashModel):
         is_calc_ik: bool = True,
         clear_ik: bool = False,
         out_fno_log: bool = False,
-        is_animate: bool = False,
         description: str = "",
     ) -> VmdBoneFrameTrees:
         all_morph_bone_frames = VmdBoneFrames()
@@ -2200,7 +2145,6 @@ class VmdMotion(BaseHashModel):
             bone_names,
             is_calc_ik=is_calc_ik,
             out_fno_log=out_fno_log,
-            is_animate=is_animate,
             description=description,
         )
         # logger.test(f"-- ボーンアニメーション[{model.name}]: ボーン変形行列操作")

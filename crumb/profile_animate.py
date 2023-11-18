@@ -9,7 +9,7 @@ from mlib.pmx.pmx_reader import PmxReader  # noqa: E402
 from mlib.vmd.vmd_reader import VmdReader  # noqa: E402
 
 # 全体プロファイル
-# python -m cProfile -s cumtime crumb\profile.py
+# python -m cProfile -s cumtime crumb\profile_animate.py
 # 行プロファイル
 # kernprof -l crumb\profile.py
 # python -m line_profiler profile.py.lprof

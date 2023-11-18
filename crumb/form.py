@@ -185,7 +185,7 @@ class PmxLoadWorker(BaseWorker):
         super().__init__(panel, result_event)
 
     def thread_execute(self) -> None:
-        file_panel: FilePanel = self.frame
+        file_panel: FilePanel = self.panel
         model: Optional[PmxModel] = None
         dress: Optional[PmxModel] = None
         motion: Optional[VmdMotion] = None
@@ -216,7 +216,7 @@ class PmxLoadWorker(BaseWorker):
         self.result_data = (model, dress, motion)
 
     def load_model(self) -> PmxModel:
-        file_panel: FilePanel = self.frame
+        file_panel: FilePanel = self.panel
         model: Optional[PmxModel] = None
 
         if not file_panel.model_ctrl.data and file_panel.model_ctrl.valid():
@@ -245,7 +245,7 @@ class SaveWorker(BaseWorker):
         pass
 
     def thread_execute(self):
-        file_panel: FilePanel = self.frame
+        file_panel: FilePanel = self.panel
 
         if not (file_panel.model_ctrl.data and file_panel.dress_ctrl.data):
             return
