@@ -973,15 +973,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             is_break = False
             limit_loop_count = ik_bone.ik.loop_count / 2
             for loop in range(ik_bone.ik.loop_count):
-                # # 角度制限がある場合、二回ループするためにリンクリストを生成する
-                # ik_links = [
-                #     (lidx, ik_link) for lidx, ik_link in enumerate(ik_bone.ik.links)
-                # ] + [
-                #     (lidx, ik_link)
-                #     for lidx, ik_link in enumerate(ik_bone.ik.links)
-                #     if ik_link.angle_limit or ik_link.local_angle_limit
-                # ]
-
                 for lidx, ik_link in enumerate(ik_bone.ik.links):
                     # ikLink は末端から並んでる
                     if ik_link.bone_index not in model.bones:
@@ -1029,14 +1020,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         fno, effector_bone.name
                     ].position
 
-                    # # 注目ノード（実際に動かすボーン）
-                    # global_link_pos = ik_matrixes[fno, link_bone.name].position
-
-                    # # 注目ノードを起点とした、エフェクタのローカル位置
-                    # local_effector_pos = global_effector_pos - global_link_pos
-                    # # 注目ノードを起点とした、IK目標のローカル位置
-                    # local_target_pos = global_target_pos - global_link_pos
-
                     # 注目ノード（実際に動かすボーン）
                     link_matrix = effector_matrixes[fno, link_bone.name].global_matrix
 
@@ -1071,10 +1054,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         .normalized()
                     )
 
-                    # logger.test(
-                    #     f"Axis[{fno}][{loop}][{link_bone.name}][{rotation_axis}]"
-                    # )
-
                     if 1e-6 > rotation_axis.length_squared():
                         is_break = True
                         break
@@ -1087,10 +1066,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         )
                     else:
                         rotation_radian = original_rotation_radian
-
-                    # logger.test(
-                    #     f"Angle[{fno}][{loop}][{link_bone.name}][{rotation_radian:.4f}({degrees(rotation_radian):.4f})]"
-                    # )
 
                     # リンクボーンの角度を保持
                     link_ik_qq, _ = self.get_rotation(fno, model, link_bone)
@@ -1184,16 +1159,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                             # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
                             total_ik_qq = MQuaternion.from_radians(limit_x_radian, 0, 0)
-
-                            # logger.test("--------------------------")
-                            # logger.test(
-                            #     f"Ideal[{fno}][{loop}][{link_bone.name}][{limit_radians}({ideal_ik_qq.to_euler_degrees().mmd})]"
-                            # )
-                            # logger.test(
-                            #     f"Actual[{fno}][{loop}][{link_bone.name}][{limit_x_radian:.4f}({actual_ik_qq.to_euler_degrees().mmd})]"
-                            # )
-
-                            pass
                         else:
                             # TODO: Y軸制限、Z軸制限
                             ideal_ik_qq = MQuaternion.from_axis_angles(
