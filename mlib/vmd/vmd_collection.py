@@ -76,7 +76,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
 
         if key in self.data:
             bf = self.get_by_index(key)
-            # bf.ik_rotation = self.calc_ik(prev_index, middle_index, next_index)
+            bf.ik_rotation = self.calc_ik(prev_index, middle_index, next_index)
             return bf
 
         # prevとnextの範囲内である場合、補間曲線ベースで求め直す
@@ -171,7 +171,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
     def calc(self, prev_index: int, index: int, next_index: int) -> VmdBoneFrame:
         if index in self.data:
             bf = self.data[index]
-            # bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
+            bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
             return bf
 
         if index in self.cache:
@@ -216,7 +216,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         ry, xy, yy, zy = next_bf.interpolations.evaluate(prev_index, index, next_index)
 
         # # IK用回転
-        # bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
+        bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
 
         # FK用回転
         bf.rotation = MQuaternion.slerp(prev_bf.rotation, next_bf.rotation, ry)
