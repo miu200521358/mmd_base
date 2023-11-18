@@ -5,7 +5,7 @@ root_py_dir = "C:/MMD/mmd_base/mlib/**/*.py"
 root_vert_dir = "C:/MMD/mmd_base/mlib/**/*.vert"
 root_frag_dir = "C:/MMD/mmd_base/mlib/**/*.frag"
 
-with open("C:/MMD/mmd_base/chatgpt/3dcg_mentor.txt", "w", encoding="utf-8") as f:
+with open("C:/MMD/mmd_base/chatgpt/3dcg_mentor/mlib.txt", "w", encoding="utf-8") as f:
     f.write("このファイルには mlib ライブラリのPythonコードをまとめて記載しています\n\n")
 
     for file_path in (
