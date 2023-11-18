@@ -844,7 +844,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 # IKターゲットのボーンに対してIK計算を行う
                 self.get_rotation(fno, model, ik_target_bone, is_calc_ik=True)
 
-                n + 1
+                n += 1
 
     def get_rotation(
         self,
@@ -927,7 +927,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         IKを加味した回転を求める
         """
 
-        ik_fno = 1
+        # ik_fno = 1
         for ik_target_bone_idx in bone.ik_link_indexes:
             # IKボーン自身の位置
             ik_bone = model.bones[ik_target_bone_idx]
