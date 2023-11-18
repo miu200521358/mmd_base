@@ -9,7 +9,7 @@ from PIL import Image, ImageOps
 
 from mlib.core.base import BaseModel
 from mlib.core.exception import MViewerException
-from mlib.core.math import MQuaternion, MVector2D, MVector3D, MVector4D
+from mlib.core.math import MMatrix4x4, MQuaternion, MVector2D, MVector3D, MVector4D
 from mlib.core.part import BaseIndexModel, BaseIndexNameModel, BaseRotationModel, Switch
 from mlib.pmx.bone_setting import STANDARD_BONE_NAMES, BoneFlg
 
@@ -785,6 +785,7 @@ class Bone(BaseIndexNameModel):
         "corrected_local_z_vector",
         "corrected_local_x_vector",
         "local_axis",
+        "local_matrix",
         "ik_link_indexes",
         "ik_target_indexes",
         "parent_relative_position",
@@ -850,6 +851,7 @@ class Bone(BaseIndexNameModel):
         self.parent_relative_position = MVector3D()
         self.tail_relative_position = MVector3D()
         self.local_axis = MVector3D(1, 0, 0)
+        self.local_matrix = MMatrix4x4()
 
         self.tree_indexes: list[int] = []
         self.offset_matrix = np.eye(4)

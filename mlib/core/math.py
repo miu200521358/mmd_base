@@ -1,11 +1,13 @@
 import operator
+from enum import IntEnum, auto
 from functools import lru_cache
-from math import acos, atan2, cos, degrees, pi, radians, sin, sqrt
+from math import acos, cos, degrees, pi, radians, sin, sqrt
 from typing import Optional, Type, TypeVar, Union
 
 import numpy as np
 from numpy.linalg import inv, norm
 from quaternion import (
+    as_euler_angles,
     as_rotation_matrix,
     from_rotation_matrix,
     from_rotation_vector,
@@ -812,6 +814,15 @@ def cache_slerp_evaluate(q1: quaternion, q2: quaternion, t: float) -> quaternion
     return slerp_evaluate(q1, q2, t)
 
 
+class MQuaternionOrder(IntEnum):
+    XYZ = auto()
+    XZY = auto()
+    YXZ = auto()
+    YZX = auto()
+    ZXY = auto()
+    ZYX = auto()
+
+
 class MQuaternion(MVector):
     """
     クォータニオンクラス
@@ -937,37 +948,6 @@ class MQuaternion(MVector):
 
     def dot(self, v: "MQuaternion") -> float:
         return np.sum(self.vector.components * v.vector.components)
-
-    def to_euler_degrees_XYZ(self) -> MVector3D:
-        """
-        クォータニオンをオイラー角に変換する
-        """
-        if not self:
-            return MVector3D()
-
-        x = self.x
-        y = self.y
-        z = self.z
-        w = self.scalar
-
-        # ロール (X軸回り)
-        sin_r_cos_p = 2 * (w * x + y * z)
-        cos_r_cos_p = 1 - 2 * (x * x + y * y)
-        roll = np.arctan2(sin_r_cos_p, cos_r_cos_p)
-
-        # ピッチ (Y軸回り)
-        sin_p = 2 * (w * y - z * x)
-        if abs(sin_p) >= 1:
-            pitch = np.pi / 2 * np.sign(sin_p)  # 北極または南極に使用
-        else:
-            pitch = np.arcsin(sin_p)
-
-        # ヨー (Z軸回り)
-        sin_y_cos_p = 2 * (w * z + x * y)
-        cos_y_cos_p = 1 - 2 * (y * y + z * z)
-        yaw = np.arctan2(sin_y_cos_p, cos_y_cos_p)
-
-        return MVector3D(*np.degrees([roll, pitch, yaw]))
 
     def to_degrees(self) -> float:
         """
@@ -1130,55 +1110,98 @@ class MQuaternion(MVector):
         to_qq = MQuaternion.axis_to_quaternion(other_axis)
         return from_qq.inverse() * self * to_qq
 
-    def to_radians_ZXY(self) -> MVector3D:
+    def as_euler_degrees(
+        self, order: MQuaternionOrder = MQuaternionOrder.YXZ
+    ) -> MVector3D:
         """
-        ZXYの回転順序でラジアン角度を求める
-        https://programming-surgeon.com/script/euler-python-script/
+        クォータニオンをオイラー角に変換する(ライブラリ使用)
         """
-        mat = self.normalized().to_matrix4x4()
-        x_radian = atan2(-mat[0, 1], mat[0, 0])
-        y_radian = atan2(mat[2, 1] * cos(x_radian), mat[1, 1])
-        z_radian = atan2(-mat[2, 0], mat[2, 2])
+        if not self:
+            return MVector3D()
 
-        return MVector3D(x_radian, y_radian, z_radian)
+        return MVector3D(*np.degrees(self.as_radians(order).vector))
 
-    def to_radians(self) -> MVector3D:
+    def to_euler_degrees(
+        self, order: MQuaternionOrder = MQuaternionOrder.YXZ
+    ) -> MVector3D:
         """
-        YXZの回転順序でラジアン角度を求める
-        https://programming-surgeon.com/script/euler-python-script/
-        https://site.nicovideo.jp/ch/userblomaga_thanks/archive/ar805999
-
-        Returns
-        -------
-        グローバル軸別のラジアン角度
-        """
-        mat = self.normalized().to_matrix4x4()
-        y_radian = np.arctan(mat[0, 2] / mat[2, 2])
-        x_radian = np.arctan(-mat[1, 2] * cos(y_radian) / mat[2, 2])
-        z_radian = np.arctan(mat[1, 0] / mat[1, 1])
-
-        return MVector3D(x_radian, y_radian, z_radian)
-
-    def to_euler_degrees(self) -> MVector3D:
-        """
-        YXZの回転順序でオイラー角度を求める
+        クォータニオンをオイラー角に変換する
         https://programming-surgeon.com/script/euler-python-script/
         https://site.nicovideo.jp/ch/userblomaga_thanks/archive/ar805999
-
-        Returns
-        -------
-        グローバル軸別のオイラー角度
         """
-        rad = self.to_radians()
-        euler_yxz = MVector3D(*np.degrees(rad.vector).tolist())
+        if not self:
+            return MVector3D()
 
-        return euler_yxz
+        return MVector3D(*np.degrees(self.to_radians(order).vector))
 
-    def to_euler_degrees_mmd(self) -> MVector3D:
+    def to_radians(self, order: MQuaternionOrder = MQuaternionOrder.YXZ) -> MVector3D:
         """
-        MMDの法則に合わせたオイラー角
+        クォータニオンをラジアン角に変換する
+        https://programming-surgeon.com/script/euler-python-script/
+        https://site.nicovideo.jp/ch/userblomaga_thanks/archive/ar805999
         """
-        return self.to_euler_degrees().mmd
+        if not self:
+            return MVector3D()
+
+        (
+            (r11, r12, r13, _),
+            (r21, r22, r23, _),
+            (r31, r32, r33, _),
+            (_, _, _, _),
+        ) = self.to_matrix4x4().vector
+
+        if order == MQuaternionOrder.XYZ:
+            x_rad = np.arctan(-r23 / r33)
+            y_rad = np.arctan(r13 * np.cos(x_rad) / r33)
+            z_rad = np.arctan(-r12 / r11)
+        elif order == MQuaternionOrder.XZY:
+            x_rad = np.arctan(r32 / r22)
+            z_rad = np.arctan(-r12 * np.cos(x_rad) / r22)
+            y_rad = np.arctan(r13 / r11)
+        elif order == MQuaternionOrder.YXZ:
+            y_rad = np.arctan(r13 / r33)
+            x_rad = np.arctan(-r23 * np.cos(y_rad) / r33)
+            z_rad = np.arctan(r21 / r22)
+        elif order == MQuaternionOrder.YZX:
+            y_rad = np.arctan(-r31 / r11)
+            z_rad = np.arctan(r21 * np.cos(y_rad) / r11)
+            x_rad = np.arctan(-r23 / r22)
+        elif order == MQuaternionOrder.ZXY:
+            z_rad = np.arctan(-r12 / r22)
+            x_rad = np.arctan(r32 * np.cos(z_rad) / r22)
+            y_rad = np.arctan(-r31 / r33)
+        elif order == MQuaternionOrder.ZYX:
+            z_rad = np.arctan(r21 / r11)
+            y_rad = np.arctan(-r31 * np.cos(z_rad) / r11)
+            x_rad = np.arctan(r32 / r33)
+
+        return MVector3D(x_rad, y_rad, z_rad)
+
+    def as_radians(self, order: MQuaternionOrder = MQuaternionOrder.YXZ) -> MVector3D:
+        """
+        クォータニオンをラジアン角に変換する(quaternionライブラリを使用)
+        https://programming-surgeon.com/script/euler-python-script/
+        https://site.nicovideo.jp/ch/userblomaga_thanks/archive/ar805999
+        """
+        if not self:
+            return MVector3D()
+
+        rad = as_euler_angles(self.vector)
+
+        if order == MQuaternionOrder.XYZ:
+            return MVector3D(*rad)
+        elif order == MQuaternionOrder.XZY:
+            return MVector3D(rad[0], rad[2], rad[1])
+        elif order == MQuaternionOrder.YXZ:
+            return MVector3D(rad[1], rad[0], rad[2])
+        elif order == MQuaternionOrder.YZX:
+            return MVector3D(rad[1], rad[2], rad[0])
+        elif order == MQuaternionOrder.ZXY:
+            return MVector3D(rad[2], rad[0], rad[1])
+        elif order == MQuaternionOrder.ZYX:
+            return MVector3D(rad[2], rad[1], rad[0])
+
+        return MVector3D()
 
     def to_euler_degrees_by_axis(
         self, local_x_axis: MVector3D, local_y_axis: MVector3D, local_z_axis: MVector3D
@@ -1215,85 +1238,101 @@ class MQuaternion(MVector):
         ).normalized()
 
     @staticmethod
-    def from_euler_degrees_ZXY(
-        a: Union[int, float, MVector3D], b: float = 0.0, c: float = 0.0
-    ) -> "MQuaternion":
-        """
-        ZXYのオイラー角をクォータニオンに変換する
-        """
-        euler = np.zeros(3)
-        if isinstance(a, (int, float)):
-            euler = np.radians([c, a, b], dtype=np.double)
-        else:
-            euler = np.radians([a.z, a.x, a.y], dtype=np.double)
-
-        c1, c2, c3 = np.cos(euler)
-        s1, s2, s3 = np.sin(euler)
-
-        mat = MMatrix4x4()
-        mat.vector[:3, :3] = np.array(
-            [
-                [c1 * c3 - s1 * s2 * s3, -c2 * s1, c1 * s3 + c3 * s1 * s2],
-                [c3 * s1 + c1 * s2 * s3, c1 * c2, s1 * s3 - c1 * c3 * s2],
-                [-c2 * s3, s2, c2 * c3],
-            ]
-        )
-
-        return mat.to_quaternion()
-
-    @staticmethod
     def from_euler_degrees(
-        a: Union[int, float, MVector3D], b: float = 0.0, c: float = 0.0
+        a: Union[int, float, MVector3D],
+        b: float = 0.0,
+        c: float = 0.0,
+        order: MQuaternionOrder = MQuaternionOrder.XYZ,
     ) -> "MQuaternion":
         """
-        YXZのオイラー角をクォータニオンに変換する
+        オイラー角をクォータニオンに変換する
         """
-        rad = np.zeros(3)
         if isinstance(a, (int, float)):
-            rad = np.radians([b, a, c], dtype=np.double)
+            rad1, rad2, rad3 = np.radians([a, b, c], dtype=np.float64)
         else:
-            rad = np.radians([a.y, a.x, a.z], dtype=np.double)
+            rad1, rad2, rad3 = np.radians(a.vector, dtype=np.float64)
 
-        c1, c2, c3 = np.cos(rad)
-        s1, s2, s3 = np.sin(rad)
-
-        mat = MMatrix4x4()
-        mat.vector[:3, :3] = np.array(
-            [
-                [c1 * c3 + s1 * s2 * s3, c3 * s1 * s2 - c1 * s3, c2 * s1],
-                [c2 * s3, c2 * c3, -s2],
-                [c1 * s2 * s3 - c3 * s1, c1 * c3 * s2 + s1 * s3, c1 * c2],
-            ]
-        )
-
-        return mat.to_quaternion()
+        return MQuaternion.from_radians(rad1, rad2, rad3, order)
 
     @staticmethod
     def from_radians(
-        a: Union[int, float, MVector3D], b: float = 0.0, c: float = 0.0
+        a: Union[int, float, MVector3D],
+        b: float = 0.0,
+        c: float = 0.0,
+        order: MQuaternionOrder = MQuaternionOrder.XYZ,
     ) -> "MQuaternion":
         """
-        YXZのラジアン角をクォータニオンに変換する
+        ラジアン角をクォータニオンに変換する
         """
-        rad = np.zeros(3)
         if isinstance(a, (int, float)):
-            rad = np.array([b, a, c], dtype=np.double)
+            theta1, theta2, theta3 = a, b, c
         else:
-            rad = np.array([a.x, a.y, a.z], dtype=np.double)
+            theta1, theta2, theta3 = a.vector
 
-        c1, c2, c3 = np.cos(rad)
-        s1, s2, s3 = np.sin(rad)
+        c1 = np.cos(theta1)
+        s1 = np.sin(theta1)
+        c2 = np.cos(theta2)
+        s2 = np.sin(theta2)
+        c3 = np.cos(theta3)
+        s3 = np.sin(theta3)
 
-        mat = MMatrix4x4()
-        mat.vector[:3, :3] = np.array(
-            [
-                [c1 * c3 + s1 * s2 * s3, c3 * s1 * s2 - c1 * s3, c2 * s1],
-                [c2 * s3, c2 * c3, -s2],
-                [c1 * s2 * s3 - c3 * s1, c1 * c3 * s2 + s1 * s3, c1 * c2],
-            ]
-        )
+        if order == MQuaternionOrder.XYZ:
+            matrix = np.array(
+                [
+                    [c2 * c3, -c2 * s3, s2],
+                    [c1 * s3 + c3 * s1 * s2, c1 * c3 - s1 * s2 * s3, -c2 * s1],
+                    [s1 * s3 - c1 * c3 * s2, c3 * s1 + c1 * s2 * s3, c1 * c2],
+                ]
+            )
 
-        return mat.to_quaternion()
+        elif order == MQuaternionOrder.XZY:
+            matrix = np.array(
+                [
+                    [c2 * c3, -s2, c2 * s3],
+                    [s1 * s3 + c1 * c3 * s2, c1 * c2, c1 * s2 * s3 - c3 * s1],
+                    [c3 * s1 * s2 - c1 * s3, c2 * s1, c1 * c3 + s1 * s2 * s3],
+                ]
+            )
+
+        elif order == MQuaternionOrder.YXZ:
+            matrix = np.array(
+                [
+                    [c1 * c3 + s1 * s2 * s3, c3 * s1 * s2 - c1 * s3, c2 * s1],
+                    [c2 * s3, c2 * c3, -s2],
+                    [c1 * s2 * s3 - c3 * s1, c1 * c3 * s2 + s1 * s3, c1 * c2],
+                ]
+            )
+
+        elif order == MQuaternionOrder.YZX:
+            matrix = np.array(
+                [
+                    [c1 * c2, s1 * s3 - c1 * c3 * s2, c3 * s1 + c1 * s2 * s3],
+                    [s2, c2 * c3, -c2 * s3],
+                    [-c2 * s1, c1 * s3 + c3 * s1 * s2, c1 * c3 - s1 * s2 * s3],
+                ]
+            )
+
+        elif order == MQuaternionOrder.ZXY:
+            matrix = np.array(
+                [
+                    [c1 * c3 - s1 * s2 * s3, -c2 * s1, c1 * s3 + c3 * s1 * s2],
+                    [c3 * s1 + c1 * s2 * s3, c1 * c2, s1 * s3 - c1 * c3 * s2],
+                    [-c2 * s3, s2, c2 * c3],
+                ]
+            )
+        elif order == MQuaternionOrder.ZYX:
+            matrix = np.array(
+                [
+                    [c1 * c2, c1 * s2 * s3 - c3 * s1, s1 * s3 + c1 * c3 * s2],
+                    [c2 * s1, c1 * c3 + s1 * s2 * s3, c3 * s1 * s2 - c1 * s3],
+                    [-s2, c2 * s3, c2 * c3],
+                ]
+            )
+
+        qq = MQuaternion()
+        qq.vector = from_rotation_matrix(matrix)
+
+        return qq
 
     @staticmethod
     def from_axis_angles(v: MVector3D, rad: float) -> "MQuaternion":

@@ -938,6 +938,7 @@ class PmxModel(BaseHashModel):
         bone.tail_relative_position = self.bones.get_tail_relative_position(bone.index)
         # 各ボーンのローカル軸
         bone.local_axis = bone.tail_relative_position.normalized()
+        bone.local_matrix = bone.local_axis.to_local_matrix4x4()
         if bone.has_fixed_axis:
             bone.correct_local_vector(bone.fixed_axis.normalized())
         else:
