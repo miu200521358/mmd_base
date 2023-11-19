@@ -928,6 +928,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         """
 
         # ik_fno = 1
+        # bake_motion = VmdMotion()
+
         for ik_target_bone_idx in bone.ik_link_indexes:
             # IKボーン自身の位置
             ik_bone = model.bones[ik_target_bone_idx]
@@ -935,16 +937,40 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             if ik_target_bone_idx not in model.bones or not ik_bone.ik:
                 continue
 
+            # Ikリンクルートボーン
+            ik_link_root_bone = model.bones[ik_bone.ik.links[-1].bone_index]
+            # IKターゲットボーン
+            effector_bone = model.bones[ik_bone.ik.bone_index]
+
             # IK関連の行列を一括計算
             ik_matrixes = self.animate_bone_matrixes(
                 [fno],
                 model,
-                bone_names=[ik_bone.name],
+                bone_names=[ik_bone.name, ik_link_root_bone.name],
                 is_calc_ik=False,
             )
 
-            # IKターゲットボーン
-            effector_bone = model.bones[ik_bone.ik.bone_index]
+            ik_local_position = (
+                ik_matrixes[fno, ik_bone.name].position
+                - ik_matrixes[fno, ik_link_root_bone.name].position
+            )
+            ik_bone_indexes = list(
+                reversed(
+                    [effector_bone.index]
+                    + [ik_link.bone_index for ik_link in ik_bone.ik.links]
+                )
+            )
+            # IKボーンの距離
+            bone_distances = [
+                model.bones[parent_bone_index].position.distance(
+                    model.bones[child_bone_index].position
+                )
+                for parent_bone_index, child_bone_index in zip(
+                    ik_bone_indexes, ik_bone_indexes[1:]
+                )
+            ]
+            # IKボーンの位置がIK関連ボーンの長さより長い場合、IKオーバーと見なす
+            is_ik_over = sum(bone_distances) < ik_local_position.length()
 
             # 処理対象ボーン名取得
             target_bone_names = self.get_animate_bone_names(model, [effector_bone.name])
@@ -969,6 +995,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 target_bone_names,
                 out_fno_log=False,
             )
+
+            if is_ik_over:
+                for ik_link in ik_bone.ik.links:
+                    motion_bone_qqs[0, ik_link.bone_index] = motion_bone_ik_qqs[
+                        0, ik_link.bone_index
+                    ] = (MQuaternion().to_matrix4x4().vector)
 
             is_break = False
             limit_loop_count = ik_bone.ik.loop_count / 2
@@ -1068,7 +1100,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         rotation_radian = original_rotation_radian
 
                     # リンクボーンの角度を保持
-                    link_ik_qq, _ = self.get_rotation(fno, model, link_bone)
+                    if loop == 0 and is_ik_over:
+                        # IKのターゲットがオーバーしている場合、初回はクリアする
+                        link_ik_qq = MQuaternion()
+                    else:
+                        link_ik_qq, _ = self.get_rotation(fno, model, link_bone)
                     total_ideal_ik_qq = total_ik_qq = None
 
                     if link_bone.has_fixed_axis:
@@ -1173,48 +1209,23 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         total_ik_qq = total_ideal_ik_qq = link_ik_qq * ideal_ik_qq
 
                     # # -----------------
-                    # from datetime import datetime
-
-                    # from mlib.vmd.vmd_writer import VmdWriter
-
                     # original_link_bf = VmdBoneFrame(
                     #     ik_fno, link_bone.name, register=True
                     # )
                     # original_link_bf.rotation, _ = self.get_rotation(
                     #     fno, model, link_bone
                     # )
-
-                    # motion = VmdMotion()
-                    # motion.append_bone_frame(original_link_bf)
-                    # VmdWriter(
-                    #     motion,
-                    #     f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{link_bone.name}_{fno:04d}_{loop:02d}_{ik_fno:04d}_1link.vmd",
-                    #     model_name="Test Model",
-                    # ).save()
+                    # bake_motion.append_bone_frame(original_link_bf)
                     # ik_fno += 1
 
                     # ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
                     # ideal_bf.rotation = total_ideal_ik_qq
-
-                    # motion = VmdMotion()
-                    # motion.append_bone_frame(ideal_bf)
-                    # VmdWriter(
-                    #     motion,
-                    #     f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{link_bone.name}_{fno:04d}_{loop:02d}_{ik_fno:04d}_2ideal.vmd",
-                    #     model_name="Test Model",
-                    # ).save()
+                    # bake_motion.append_bone_frame(ideal_bf)
                     # ik_fno += 1
 
                     # actual_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
                     # actual_bf.rotation = total_ik_qq
-
-                    # motion = VmdMotion()
-                    # motion.append_bone_frame(actual_bf)
-                    # VmdWriter(
-                    #     motion,
-                    #     f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{link_bone.name}_{fno:04d}_{loop:02d}_{ik_fno:04d}_3actual.vmd",
-                    #     model_name="Test Model",
-                    # ).save()
+                    # bake_motion.append_bone_frame(actual_bf)
                     # ik_fno += 1
                     # # -----------------
 
@@ -1303,27 +1314,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         #     ik_fno, parent_link_bone.name, register=True
                         # )
                         # original_parent_bf.rotation = parent_link_qq
-
-                        # motion = VmdMotion()
-                        # motion.append_bone_frame(original_parent_bf)
-                        # VmdWriter(
-                        #     motion,
-                        #     f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{parent_link_bone.name}_{fno:04d}_{loop:02d}_{ik_fno:04d}_4parent.vmd",
-                        #     model_name="Test Model",
-                        # ).save()
+                        # bake_motion.append_bone_frame(original_parent_bf)
                         # ik_fno += 1
 
                         # remaining_bf = VmdBoneFrame(
                         #     ik_fno, parent_link_bone.name, register=True
                         # )
                         # remaining_bf.rotation = parent_link_bf.ik_rotation
-                        # motion = VmdMotion()
-                        # motion.append_bone_frame(remaining_bf)
-                        # VmdWriter(
-                        #     motion,
-                        #     f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{parent_link_bone.name}_{fno:04d}_{loop:02d}_{ik_fno:04d}_5remaining.vmd",
-                        #     model_name="Test Model",
-                        # ).save()
+                        # bake_motion.append_bone_frame(remaining_bf)
                         # ik_fno += 1
                         # # -------------
 
@@ -1331,6 +1329,18 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     break
             if is_break:
                 break
+
+        # # --------------
+        # from datetime import datetime
+
+        # from mlib.vmd.vmd_writer import VmdWriter
+
+        # VmdWriter(
+        #     bake_motion,
+        #     f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{ik_bone.name}_{fno:04d}.vmd",
+        #     model_name="Test Model",
+        # ).save()
+        # # --------------
 
         # IKの計算結果の回転を加味して返す
         bf = self[bone.name][fno]
