@@ -997,10 +997,45 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             )
 
             if is_ik_over:
-                for ik_link in ik_bone.ik.links:
-                    motion_bone_qqs[0, ik_link.bone_index] = motion_bone_ik_qqs[
-                        0, ik_link.bone_index
-                    ] = (MQuaternion().to_matrix4x4().vector)
+                # IKリンクルートの軸の向きをIKターゲットの向きにする
+                ik_link_root_cross_position = ik_matrixes[
+                    fno, ik_link_root_bone.name
+                ].global_matrix * MVector3D(0, 0, -1)
+
+                over_offset_qq = MQuaternion.rotate(
+                    (
+                        ik_link_root_cross_position
+                        - ik_matrixes[fno, ik_link_root_bone.name].position
+                    ).normalized(),
+                    ik_local_position.normalized(),
+                )
+
+                ik_link_root_bf = self[ik_link_root_bone.name][fno]
+                ik_link_root_bf.ik_rotation = ik_link_root_bf.rotation * over_offset_qq
+                self[ik_link_root_bone.name].append(ik_link_root_bf)
+
+                motion_bone_qqs[0, ik_link_root_bone.index] = motion_bone_ik_qqs[
+                    0, ik_link_root_bone.index
+                ] = ik_link_root_bf.ik_rotation.to_matrix4x4().vector
+
+                # # --------------
+                # ik_link_root_offset_bf = VmdBoneFrame(
+                #     ik_fno, ik_link_root_bone.name, register=True
+                # )
+                # ik_link_root_offset_bf.rotation = over_offset_qq
+                # bake_motion.append_bone_frame(ik_link_root_offset_bf)
+                # ik_fno += 1
+
+                # ik_link_root_bake_bf = VmdBoneFrame(
+                #     ik_fno, ik_link_root_bone.name, register=True
+                # )
+                # ik_link_root_bake_bf.rotation = ik_link_root_bf.ik_rotation
+                # bake_motion.append_bone_frame(ik_link_root_bake_bf)
+                # ik_fno += 1
+                # # --------------
+
+            else:
+                over_offset_qq = MQuaternion()
 
             is_break = False
             limit_loop_count = ik_bone.ik.loop_count / 2
@@ -1100,11 +1135,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         rotation_radian = original_rotation_radian
 
                     # リンクボーンの角度を保持
-                    if loop == 0 and is_ik_over:
-                        # IKのターゲットがオーバーしている場合、初回はクリアする
-                        link_ik_qq = MQuaternion()
-                    else:
-                        link_ik_qq, _ = self.get_rotation(fno, model, link_bone)
+                    link_ik_qq, _ = self.get_rotation(fno, model, link_bone)
                     total_ideal_ik_qq = total_ik_qq = None
 
                     if link_bone.has_fixed_axis:
