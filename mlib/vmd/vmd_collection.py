@@ -870,7 +870,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         if is_calc_ik and bone.ik_link_indexes:
             # IK結果回転
-            ik_qq = self.get_ik_rotation(fno, model, bone)
+            ik_qq = self.get_ik_rotation(fno, model, bone, fk_qq)
         else:
             # IKを加味した回転を必要があれば軸に沿わせる
             ik_qq = self.get_axis_rotation(bone, fk_qq)
@@ -922,6 +922,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         fno: int,
         model: PmxModel,
         bone: Bone,
+        fk_qq: MQuaternion,
     ) -> MQuaternion:
         """
         IKを加味した回転を求める
@@ -970,7 +971,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 )
             ]
             # IKボーンの位置がIK関連ボーンの長さより長い場合、IKオーバーと見なす
-            is_ik_over = sum(bone_distances) * 1.1 < ik_local_position.length()
+            is_ik_over = sum(bone_distances) < ik_local_position.length()
+            if is_ik_over:
+                # IKオーバーしていたらIK計算しないでMMDに任せる
+                return fk_qq
 
             # 処理対象ボーン名取得
             target_bone_names = self.get_animate_bone_names(model, [effector_bone.name])
@@ -996,43 +1000,43 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 out_fno_log=False,
             )
 
-            if is_ik_over:
-                # IKリンクルートの軸の向きをIKターゲットの向きにする
-                ik_link_root_cross_position = ik_matrixes[
-                    fno, ik_link_root_bone.name
-                ].global_matrix * MVector3D(0, 0, -1)
+            # if is_ik_over:
+            #     # IKリンクルートの軸の向きをIKターゲットの向きにする
+            #     ik_link_root_cross_position = ik_matrixes[
+            #         fno, ik_link_root_bone.name
+            #     ].global_matrix * MVector3D(0, 0, -1)
 
-                over_offset_qq = MQuaternion.rotate(
-                    (
-                        ik_link_root_cross_position
-                        - ik_matrixes[fno, ik_link_root_bone.name].position
-                    ).normalized(),
-                    ik_local_position.normalized(),
-                )
+            #     over_offset_qq = MQuaternion.rotate(
+            #         (
+            #             ik_link_root_cross_position
+            #             - ik_matrixes[fno, ik_link_root_bone.name].position
+            #         ).normalized(),
+            #         ik_local_position.normalized(),
+            #     )
 
-                ik_link_root_bf = self[ik_link_root_bone.name][fno]
-                ik_link_root_bf.ik_rotation = ik_link_root_bf.rotation * over_offset_qq
-                self[ik_link_root_bone.name].append(ik_link_root_bf)
+            #     ik_link_root_bf = self[ik_link_root_bone.name][fno]
+            #     ik_link_root_bf.ik_rotation = ik_link_root_bf.rotation * over_offset_qq
+            #     self[ik_link_root_bone.name].append(ik_link_root_bf)
 
-                motion_bone_qqs[0, ik_link_root_bone.index] = motion_bone_ik_qqs[
-                    0, ik_link_root_bone.index
-                ] = ik_link_root_bf.ik_rotation.to_matrix4x4().vector
+            #     motion_bone_qqs[0, ik_link_root_bone.index] = motion_bone_ik_qqs[
+            #         0, ik_link_root_bone.index
+            #     ] = ik_link_root_bf.ik_rotation.to_matrix4x4().vector
 
-                # # --------------
-                # ik_link_root_offset_bf = VmdBoneFrame(
-                #     ik_fno, ik_link_root_bone.name, register=True
-                # )
-                # ik_link_root_offset_bf.rotation = over_offset_qq
-                # bake_motion.append_bone_frame(ik_link_root_offset_bf)
-                # ik_fno += 1
+            #     # # --------------
+            #     # ik_link_root_offset_bf = VmdBoneFrame(
+            #     #     ik_fno, ik_link_root_bone.name, register=True
+            #     # )
+            #     # ik_link_root_offset_bf.rotation = over_offset_qq
+            #     # bake_motion.append_bone_frame(ik_link_root_offset_bf)
+            #     # ik_fno += 1
 
-                # ik_link_root_bake_bf = VmdBoneFrame(
-                #     ik_fno, ik_link_root_bone.name, register=True
-                # )
-                # ik_link_root_bake_bf.rotation = ik_link_root_bf.ik_rotation
-                # bake_motion.append_bone_frame(ik_link_root_bake_bf)
-                # ik_fno += 1
-                # # --------------
+            #     # ik_link_root_bake_bf = VmdBoneFrame(
+            #     #     ik_fno, ik_link_root_bone.name, register=True
+            #     # )
+            #     # ik_link_root_bake_bf.rotation = ik_link_root_bf.ik_rotation
+            #     # bake_motion.append_bone_frame(ik_link_root_bake_bf)
+            #     # ik_fno += 1
+            #     # # --------------
 
             is_break = False
             limit_loop_count = ik_bone.ik.loop_count / 2
