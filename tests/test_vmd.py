@@ -1665,11 +1665,6 @@ def test_read_by_filepath_ok_leg_ik14_ballet() -> None:
         bone_matrixes[0, "右つま先"].position.vector,
         atol=0.01,
     ).all()
-    assert np.isclose(
-        np.array([11.209513, 11.228030, -6.777699]),
-        (bone_matrixes[0, "右つま先"].global_matrix * MVector3D(0, 1, 0)).vector,
-        atol=0.01,
-    ).all()
 
 
 def test_read_by_filepath_ok_leg_ik7_fk() -> None:

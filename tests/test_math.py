@@ -360,31 +360,31 @@ def test_MQuaternion_from_euler_degrees():
 def test_MQuaternion_to_euler_degrees():
     import numpy as np
 
-    from mlib.core.math import MQuaternion
+    from mlib.core.math import MQuaternion, MQuaternionOrder
 
     assert np.isclose(
         np.array([0, 0, 0]),
-        MQuaternion(1, 0, 0, 0).to_euler_degrees().vector,
+        MQuaternion(1, 0, 0, 0).to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
     assert np.isclose(
         np.array([10, 0, 0]),
         MQuaternion(0.9961946980917455, 0.08715574274765817, 0.0, 0.0)
-        .to_euler_degrees()
+        .to_euler_degrees(MQuaternionOrder.XYZ)
         .vector,
     ).all()
 
     assert np.isclose(
         np.array([10, 20, 30]),
         MQuaternion(0.94371436, 0.12767944, 0.14487813, 0.26853582)
-        .to_euler_degrees()
+        .to_euler_degrees(MQuaternionOrder.XYZ)
         .vector,
     ).all()
 
     assert np.isclose(
         np.array([60, -20, -80]),
         MQuaternion(-0.59752575, -0.47386805, -0.20131049, 0.61472444)
-        .to_euler_degrees()
+        .to_euler_degrees(MQuaternionOrder.XYZ)
         .vector,
     ).all()
 
@@ -1007,31 +1007,25 @@ def test_MQuaternion_separate_local_axis_x_z():
 def test_MQuaternion_separate_local_axis_x_xy():
     import numpy as np
 
-    from mlib.core.math import MQuaternion, MVector3D
+    from mlib.core.math import MQuaternion, MQuaternionOrder, MVector3D
 
-    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(
+    x_qq, y_qq, z_qq, _ = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(
         MVector3D(1, 1, 0)
     )
 
     assert np.isclose(
         np.array([4.98118019, 4.96188763, 0.65447593]),
-        x_qq.to_euler_degrees().vector,
+        x_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
     assert np.isclose(
         np.array([4.98118019, -4.96188763, -0.65447593]),
-        y_qq.to_euler_degrees().vector,
+        y_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
     assert np.isclose(
-        np.array(
-            [
-                0.0,
-                0.0,
-                0.0,
-            ]
-        ),
-        z_qq.to_euler_degrees().vector,
+        np.array([0.0, 0.0, 0.0]),
+        z_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
 
