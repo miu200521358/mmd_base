@@ -922,7 +922,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         fno: int,
         model: PmxModel,
         bone: Bone,
-        fk_qq: MQuaternion,
     ) -> MQuaternion:
         """
         IKを加味した回転を求める
