@@ -870,7 +870,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         if is_calc_ik and bone.ik_link_indexes:
             # IK結果回転
-            ik_qq = self.get_ik_rotation(fno, model, bone, fk_qq)
+            ik_qq = self.get_ik_rotation(fno, model, bone)
         else:
             # IKを加味した回転を必要があれば軸に沿わせる
             ik_qq = self.get_axis_rotation(bone, fk_qq)
@@ -951,30 +951,27 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 is_calc_ik=False,
             )
 
-            ik_local_position = (
-                ik_matrixes[fno, ik_bone.name].position
-                - ik_matrixes[fno, ik_link_root_bone.name].position
-            )
-            ik_bone_indexes = list(
-                reversed(
-                    [effector_bone.index]
-                    + [ik_link.bone_index for ik_link in ik_bone.ik.links]
-                )
-            )
-            # IKボーンの距離
-            bone_distances = [
-                model.bones[parent_bone_index].position.distance(
-                    model.bones[child_bone_index].position
-                )
-                for parent_bone_index, child_bone_index in zip(
-                    ik_bone_indexes, ik_bone_indexes[1:]
-                )
-            ]
-            # IKボーンの位置がIK関連ボーンの長さより長い場合、IKオーバーと見なす
-            is_ik_over = sum(bone_distances) < ik_local_position.length()
-            if is_ik_over:
-                # IKオーバーしていたらIK計算しないでMMDに任せる
-                return fk_qq
+            # ik_local_position = (
+            #     ik_matrixes[fno, ik_bone.name].position
+            #     - ik_matrixes[fno, ik_link_root_bone.name].position
+            # )
+            # ik_bone_indexes = list(
+            #     reversed(
+            #         [effector_bone.index]
+            #         + [ik_link.bone_index for ik_link in ik_bone.ik.links]
+            #     )
+            # )
+            # # IKボーンの距離
+            # bone_distances = [
+            #     model.bones[parent_bone_index].position.distance(
+            #         model.bones[child_bone_index].position
+            #     )
+            #     for parent_bone_index, child_bone_index in zip(
+            #         ik_bone_indexes, ik_bone_indexes[1:]
+            #     )
+            # ]
+            # # IKボーンの位置がIK関連ボーンの長さより長い場合、IKオーバーと見なす
+            # is_ik_over = sum(bone_distances) < ik_local_position.length()
 
             # 処理対象ボーン名取得
             target_bone_names = self.get_animate_bone_names(model, [effector_bone.name])
