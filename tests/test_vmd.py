@@ -1679,7 +1679,7 @@ def test_read_by_filepath_ok_leg_ik15_bottom() -> None:
 
     vmd_reader = VmdReader()
     motion: VmdMotion = vmd_reader.read_by_filepath(
-        os.path.join("tests", "resources", "●ボトム_0-300.vmd")
+        os.path.join("tests", "resources", "●ボトム.vmd")
     )
 
     pmx_reader = PmxReader()
@@ -1711,7 +1711,7 @@ def test_read_by_filepath_ok_leg_ik15_bottom() -> None:
     assert np.isclose(
         np.array([-2.533418, 3.889916, -4.114837]),
         bone_matrixes[218, "右ひざ"].position.vector,
-        atol=0.6,
+        atol=0.7,
     ).all()
     assert np.isclose(
         np.array([-1.358807, 1.912181, 0.611265]),

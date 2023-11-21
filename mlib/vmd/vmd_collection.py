@@ -2,6 +2,7 @@ import os
 from bisect import bisect_left
 from functools import lru_cache
 from itertools import product
+from math import radians
 from typing import Iterable, Optional
 
 import numpy as np
@@ -927,6 +928,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         IKを加味した回転を求める
         """
 
+        # フリップを回避する上限ラジアン
+        flip_radian = radians(178)
+
         # ik_fno = 1
         # bake_motion = VmdMotion()
 
@@ -949,28 +953,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 bone_names=[ik_bone.name, ik_link_root_bone.name],
                 is_calc_ik=False,
             )
-
-            # ik_local_position = (
-            #     ik_matrixes[fno, ik_bone.name].position
-            #     - ik_matrixes[fno, ik_link_root_bone.name].position
-            # )
-            # ik_bone_indexes = list(
-            #     reversed(
-            #         [effector_bone.index]
-            #         + [ik_link.bone_index for ik_link in ik_bone.ik.links]
-            #     )
-            # )
-            # # IKボーンの距離
-            # bone_distances = [
-            #     model.bones[parent_bone_index].position.distance(
-            #         model.bones[child_bone_index].position
-            #     )
-            #     for parent_bone_index, child_bone_index in zip(
-            #         ik_bone_indexes, ik_bone_indexes[1:]
-            #     )
-            # ]
-            # # IKボーンの位置がIK関連ボーンの長さより長い場合、IKオーバーと見なす
-            # is_ik_over = sum(bone_distances) < ik_local_position.length()
 
             # 処理対象ボーン名取得
             target_bone_names = self.get_animate_bone_names(model, [effector_bone.name])
@@ -995,44 +977,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 target_bone_names,
                 out_fno_log=False,
             )
-
-            # if is_ik_over:
-            #     # IKリンクルートの軸の向きをIKターゲットの向きにする
-            #     ik_link_root_cross_position = ik_matrixes[
-            #         fno, ik_link_root_bone.name
-            #     ].global_matrix * MVector3D(0, 0, -1)
-
-            #     over_offset_qq = MQuaternion.rotate(
-            #         (
-            #             ik_link_root_cross_position
-            #             - ik_matrixes[fno, ik_link_root_bone.name].position
-            #         ).normalized(),
-            #         ik_local_position.normalized(),
-            #     )
-
-            #     ik_link_root_bf = self[ik_link_root_bone.name][fno]
-            #     ik_link_root_bf.ik_rotation = ik_link_root_bf.rotation * over_offset_qq
-            #     self[ik_link_root_bone.name].append(ik_link_root_bf)
-
-            #     motion_bone_qqs[0, ik_link_root_bone.index] = motion_bone_ik_qqs[
-            #         0, ik_link_root_bone.index
-            #     ] = ik_link_root_bf.ik_rotation.to_matrix4x4().vector
-
-            #     # # --------------
-            #     # ik_link_root_offset_bf = VmdBoneFrame(
-            #     #     ik_fno, ik_link_root_bone.name, register=True
-            #     # )
-            #     # ik_link_root_offset_bf.rotation = over_offset_qq
-            #     # bake_motion.append_bone_frame(ik_link_root_offset_bf)
-            #     # ik_fno += 1
-
-            #     # ik_link_root_bake_bf = VmdBoneFrame(
-            #     #     ik_fno, ik_link_root_bone.name, register=True
-            #     # )
-            #     # ik_link_root_bake_bf.rotation = ik_link_root_bf.ik_rotation
-            #     # bake_motion.append_bone_frame(ik_link_root_bake_bf)
-            #     # ik_fno += 1
-            #     # # --------------
 
             is_break = False
             limit_loop_count = ik_bone.ik.loop_count / 2
@@ -1207,12 +1151,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             # 全ての角度をラジアン角度に分解する
                             limit_radians = total_ideal_ik_qq.as_radians().mmd
 
-                            if not (
-                                ik_link.min_angle_limit.radians.x
-                                <= limit_radians.x
-                                <= ik_link.max_angle_limit.radians.x
+                            if (
+                                not (
+                                    ik_link.min_angle_limit.radians.x
+                                    <= limit_radians.x
+                                    <= ik_link.max_angle_limit.radians.x
+                                )
+                                and abs(limit_radians.x) <= flip_radian
                             ):
-                                # 範囲外の場合、一旦軸を反転する
+                                # 範囲外かつフリップ角度以内の場合、一旦軸を反転する
                                 limit_radians.x *= -1
 
                             limit_x_radian = np.clip(
@@ -1299,8 +1246,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                                 ik_link.min_angle_limit.radians.x
                                 <= limit_radians.x
                                 <= ik_link.max_angle_limit.radians.x
-                            ):
-                                # 範囲内の場合、軸を反転する
+                            ) and abs(limit_radians.x) <= flip_radian:
+                                # 範囲内かつフリップ角度以内の場合、軸を反転する
                                 limit_radians.x *= -1
 
                             # 実際回転
