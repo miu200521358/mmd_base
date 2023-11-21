@@ -181,9 +181,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
 
         with wx.SingleChoiceDialog(
             self.frame,
-            __(
-                "ファイルを選んでダブルクリック、またはOKボタンをクリックしてください。"
-            ),
+            __("ファイルを選んでダブルクリック、またはOKボタンをクリックしてください。"),
             caption=__("ファイル履歴選択"),
             choices=histories,
             style=wx.CAPTION
@@ -203,6 +201,7 @@ class MFilePickerCtrl(Generic[TBaseHashModel, TBaseReader]):
             self.file_ctrl.SetInitialDirectory(
                 get_dir_path(choiceDialog.GetStringSelection())
             )
+            self.data = None
 
     @property
     def path(self) -> str:
@@ -334,6 +333,7 @@ class MFileDropTarget(wx.FileDropTarget):
             self.parent.file_ctrl.SetPath(files[0])
 
             # ファイル変更処理
+            self.parent.data = None
             self.parent.file_change_event(wx.FileDirPickerEvent())
 
             return True
