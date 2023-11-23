@@ -1110,9 +1110,7 @@ class MQuaternion(MVector):
         to_qq = MQuaternion.axis_to_quaternion(other_axis)
         return from_qq.inverse() * self * to_qq
 
-    def as_euler_degrees(
-        self, order: MQuaternionOrder = MQuaternionOrder.YXZ
-    ) -> MVector3D:
+    def as_euler_degrees(self, order: MQuaternionOrder) -> MVector3D:
         """
         クォータニオンをオイラー角に変換する(ライブラリ使用)
         """
@@ -1122,7 +1120,7 @@ class MQuaternion(MVector):
         return MVector3D(*np.degrees(self.as_radians(order).vector))
 
     def to_euler_degrees(
-        self, order: MQuaternionOrder = MQuaternionOrder.YXZ
+        self, order: MQuaternionOrder = MQuaternionOrder.XYZ
     ) -> MVector3D:
         """
         クォータニオンをオイラー角に変換する
@@ -1134,9 +1132,9 @@ class MQuaternion(MVector):
 
         return MVector3D(*np.degrees(self.to_radians(order).vector))
 
-    def to_radians(self, order: MQuaternionOrder = MQuaternionOrder.YXZ) -> MVector3D:
+    def to_radians(self, order: MQuaternionOrder) -> MVector3D:
         """
-        クォータニオンをラジアン角に変換する
+        クォータニオンをラジアン角に変換する(行列計算)
         https://programming-surgeon.com/script/euler-python-script/
         https://site.nicovideo.jp/ch/userblomaga_thanks/archive/ar805999
         """
@@ -1177,7 +1175,7 @@ class MQuaternion(MVector):
 
         return MVector3D(x_rad, y_rad, z_rad)
 
-    def as_radians(self, order: MQuaternionOrder = MQuaternionOrder.YXZ) -> MVector3D:
+    def as_radians(self, order: MQuaternionOrder) -> MVector3D:
         """
         クォータニオンをラジアン角に変換する(quaternionライブラリを使用)
         https://programming-surgeon.com/script/euler-python-script/
