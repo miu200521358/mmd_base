@@ -27,7 +27,6 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
     def create(self) -> "TBaseIndexModel":
         raise NotImplementedError
 
-    @verify_thread
     def __getitem__(self, index: int) -> TBaseIndexModel:
         if 0 > index:
             # マイナス指定の場合、後ろからの順番に置き換える
@@ -108,7 +107,6 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         self.indexes: list[int] = []
         self._names: dict[str, int] = {}
 
-    @verify_thread
     def __getitem__(self, key: int | str) -> TBaseIndexNameModel:
         if isinstance(key, str):
             return self.get_by_name(key)
@@ -392,7 +390,6 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
     def create(self, key: str) -> TBaseIndexNameDictModel:
         raise NotImplementedError
 
-    @verify_thread
     def __getitem__(self, key: str) -> TBaseIndexNameDictModel:
         if key not in self.data:
             self.append(self.create(key), name=key)

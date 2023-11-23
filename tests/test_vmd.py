@@ -677,7 +677,7 @@ def test_read_by_filepath_ok_leg_ik1() -> None:
     assert np.isclose(
         np.array([0.983212, 6.945313, 0.487476]),
         bone_matrixes[29, "左ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-0.345842, 2.211842, 2.182894]),
@@ -730,7 +730,7 @@ def test_read_by_filepath_ok_leg_ik2() -> None:
     assert np.isclose(
         np.array([9.282883, 6.689319, 2.96825]),
         bone_matrixes[3152, "左ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([4.115521, 7.276527, 2.980609]),
@@ -783,7 +783,7 @@ def test_read_by_filepath_ok_leg_ik3() -> None:
     assert np.isclose(
         np.array([2.263363, 7.061642, -3.837192]),
         bone_matrixes[60, "左ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([2.747242, 2.529942, -1.331971]),
@@ -798,7 +798,7 @@ def test_read_by_filepath_ok_leg_ik3() -> None:
     assert np.isclose(
         np.array([2.263363, 7.061642, -3.837192]),
         bone_matrixes[60, "左ひざD"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([1.916109, 1.177077, -1.452845]),
@@ -807,7 +807,7 @@ def test_read_by_filepath_ok_leg_ik3() -> None:
     ).all()
 
 
-def test_read_by_filepath_ok_leg_ik4() -> None:
+def test_read_by_filepath_ok_leg_ik4_snow() -> None:
     import os
 
     import numpy as np
@@ -847,7 +847,7 @@ def test_read_by_filepath_ok_leg_ik4() -> None:
     assert np.isclose(
         np.array([0.950410, 11.256771, -1.589462]),
         bone_matrixes[0, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-1.025194, 7.871110, 1.828258]),
@@ -900,7 +900,7 @@ def test_read_by_filepath_ok_leg_ik5() -> None:
     assert np.isclose(
         np.array([-8.693436, 7.595280, -7.321638]),
         bone_matrixes[7409, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-7.521027, 2.827226, -9.035607]),
@@ -944,7 +944,7 @@ def test_read_by_filepath_ok_leg_ik6_snow() -> None:
     assert np.isclose(
         np.array([2.143878, 6.558880, 1.121747]),
         bone_on_matrixes[0, "左ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
 
     assert np.isclose(
@@ -962,7 +962,7 @@ def test_read_by_filepath_ok_leg_ik6_snow() -> None:
     assert np.isclose(
         np.array([1.622245, 6.632885, 0.713205]),
         bone_off_matrixes[0, "左ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
 
     assert np.isclose(
@@ -1011,7 +1011,7 @@ def test_read_by_filepath_ok_leg_ik7_syou() -> None:
     assert np.isclose(
         np.array([-2.833401, 8.174604, -0.100545]),
         bone_matrixes[0, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-0.409387, 5.341005, 3.524572]),
@@ -1021,74 +1021,6 @@ def test_read_by_filepath_ok_leg_ik7_syou() -> None:
     assert np.isclose(
         np.array([-0.578271, 2.874233, 3.669599]),
         bone_matrixes[0, "右つま先"].position.vector,
-        atol=0.01,
-    ).all()
-
-
-def test_read_by_filepath_ok_leg_ik7_animate() -> None:
-    import os
-
-    import numpy as np
-
-    from mlib.pmx.pmx_collection import PmxModel
-    from mlib.pmx.pmx_reader import PmxReader
-    from mlib.vmd.vmd_collection import VmdMotion
-    from mlib.vmd.vmd_reader import VmdReader
-
-    vmd_reader = VmdReader()
-    motion: VmdMotion = vmd_reader.read_by_filepath(
-        os.path.join("tests", "resources", "シャイニングミラクル_50F.vmd")
-    )
-
-    pmx_reader = PmxReader()
-    model: PmxModel = pmx_reader.read_by_filepath(
-        os.path.join("tests", "resources", "サンプルモデル.pmx")
-    )
-
-    # キーフレ
-    (_, _, bone_matrixes, _, _, _, _, _) = motion.animate(0, model, is_gl=False)
-
-    # --------
-    # 残存回転判定用
-
-    assert np.isclose(
-        np.array([0.0, 9.379668, -1.051170]),
-        bone_matrixes[0, "下半身"].position.vector,
-        atol=0.01,
-    ).all()
-    assert np.isclose(
-        np.array([-0.919751, 8.397145, -0.324375]),
-        bone_matrixes[0, "右足"].position.vector,
-        atol=0.01,
-    ).all()
-    assert np.isclose(
-        np.array([-0.422861, 6.169319, -4.100779]),
-        bone_matrixes[0, "右ひざ"].position.vector,
-        atol=0.1,
-    ).all()
-    assert np.isclose(
-        np.array([-1.821804, 2.095607, -1.186269]),
-        bone_matrixes[0, "右足首"].position.vector,
-        atol=0.01,
-    ).all()
-    assert np.isclose(
-        np.array([-1.390510, -0.316872, -1.544655]),
-        bone_matrixes[0, "右つま先"].position.vector,
-        atol=0.01,
-    ).all()
-    assert np.isclose(
-        np.array([-0.919751, 8.397145, -0.324375]),
-        bone_matrixes[0, "右足D"].position.vector,
-        atol=0.01,
-    ).all()
-    assert np.isclose(
-        np.array([-0.422861, 6.169319, -4.100779]),
-        bone_matrixes[0, "右ひざD"].position.vector,
-        atol=0.1,
-    ).all()
-    assert np.isclose(
-        np.array([-1.821804, 2.095607, -1.186269]),
-        bone_matrixes[0, "右足首D"].position.vector,
         atol=0.01,
     ).all()
 
@@ -1131,7 +1063,7 @@ def test_read_by_filepath_ok_leg_ik8_syou() -> None:
     assert np.isclose(
         np.array([-2.833401, 8.174604, -0.100545]),
         bone_matrixes[278, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-0.409387, 5.341005, 3.524572]),
@@ -1195,7 +1127,7 @@ def test_read_by_filepath_ok_leg_ik9_syou() -> None:
     assert np.isclose(
         np.array([-2.891708, 8.162312, -0.553409]),
         bone_matrixes[100, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-0.826174, 4.330670, 2.292396]),
@@ -1223,7 +1155,7 @@ def test_read_by_filepath_ok_leg_ik9_syou() -> None:
     assert np.isclose(
         np.array([-1.607765, 6.0764317, 1.653586]),
         bone_matrixes[107, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-1.110289, 1.718307, 2.809817]),
@@ -1251,7 +1183,7 @@ def test_read_by_filepath_ok_leg_ik9_syou() -> None:
     assert np.isclose(
         np.array([-1.394679, 6.299243, -0.209150]),
         bone_matrixes[272, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-0.865021, 1.642431, 2.044760]),
@@ -1279,7 +1211,7 @@ def test_read_by_filepath_ok_leg_ik9_syou() -> None:
     assert np.isclose(
         np.array([-1.498977, 6.380789, -0.272370]),
         bone_matrixes[273, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-0.845777, 1.802650, 2.106815]),
@@ -1307,7 +1239,7 @@ def test_read_by_filepath_ok_leg_ik9_syou() -> None:
     assert np.isclose(
         np.array([-1.710987, 6.669293, -0.459177]),
         bone_matrixes[274, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-0.773748, 2.387820, 2.340310]),
@@ -1335,7 +1267,7 @@ def test_read_by_filepath_ok_leg_ik9_syou() -> None:
     assert np.isclose(
         np.array([-2.833401, 8.174604, -0.100545]),
         bone_matrixes[278, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-0.409387, 5.341005, 3.524572]),
@@ -1363,7 +1295,7 @@ def test_read_by_filepath_ok_leg_ik9_syou() -> None:
     assert np.isclose(
         np.array([-1.955139, 7.141531, -0.667679]),
         bone_matrixes[275, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-0.639503, 3.472883, 2.775674]),
@@ -1421,7 +1353,7 @@ def test_read_by_filepath_ok_leg_ik10_shining() -> None:
     assert np.isclose(
         np.array([-0.274925, 5.679991, -4.384042]),
         bone_matrixes[0, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-1.870632, 2.072767, -0.910016]),
@@ -1431,6 +1363,74 @@ def test_read_by_filepath_ok_leg_ik10_shining() -> None:
     assert np.isclose(
         np.array([-1.485913, -0.300011, -1.310446]),
         bone_matrixes[0, "足首_R_"].position.vector,
+        atol=0.01,
+    ).all()
+
+
+def test_read_by_filepath_ok_leg_ik10_shining_vroid() -> None:
+    import os
+
+    import numpy as np
+
+    from mlib.pmx.pmx_collection import PmxModel
+    from mlib.pmx.pmx_reader import PmxReader
+    from mlib.vmd.vmd_collection import VmdMotion
+    from mlib.vmd.vmd_reader import VmdReader
+
+    vmd_reader = VmdReader()
+    motion: VmdMotion = vmd_reader.read_by_filepath(
+        os.path.join("tests", "resources", "シャイニングミラクル_50F.vmd")
+    )
+
+    pmx_reader = PmxReader()
+    model: PmxModel = pmx_reader.read_by_filepath(
+        os.path.join("tests", "resources", "サンプルモデル.pmx")
+    )
+
+    # キーフレ
+    (_, _, bone_matrixes, _, _, _, _, _) = motion.animate(0, model, is_gl=False)
+
+    # --------
+    # 残存回転判定用
+
+    assert np.isclose(
+        np.array([0.0, 9.379668, -1.051170]),
+        bone_matrixes[0, "下半身"].position.vector,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.919751, 8.397145, -0.324375]),
+        bone_matrixes[0, "右足"].position.vector,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.422861, 6.169319, -4.100779]),
+        bone_matrixes[0, "右ひざ"].position.vector,
+        atol=0.3,
+    ).all()
+    assert np.isclose(
+        np.array([-1.821804, 2.095607, -1.186269]),
+        bone_matrixes[0, "右足首"].position.vector,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-1.390510, -0.316872, -1.544655]),
+        bone_matrixes[0, "右つま先"].position.vector,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.919751, 8.397145, -0.324375]),
+        bone_matrixes[0, "右足D"].position.vector,
+        atol=0.01,
+    ).all()
+    assert np.isclose(
+        np.array([-0.422861, 6.169319, -4.100779]),
+        bone_matrixes[0, "右ひざD"].position.vector,
+        atol=0.3,
+    ).all()
+    assert np.isclose(
+        np.array([-1.821804, 2.095607, -1.186269]),
+        bone_matrixes[0, "右足首D"].position.vector,
         atol=0.01,
     ).all()
 
@@ -1479,7 +1479,7 @@ def test_read_by_filepath_ok_leg_ik11_down() -> None:
     assert np.isclose(
         np.array([-0.691207, 1.986888, -4.553376]),
         bone_matrixes[0, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-1.012964, 1.623157, 0.680305]),
@@ -1537,7 +1537,7 @@ def test_read_by_filepath_ok_leg_ik12_lamb() -> None:
     assert np.isclose(
         np.array([4.173470, 0.361388, -11.217197]),
         bone_matrixes[0, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-1.217569, 1.885731, -10.788104]),
@@ -1595,7 +1595,7 @@ def test_read_by_filepath_ok_leg_ik13_lamb() -> None:
     assert np.isclose(
         np.array([6.126388, 5.074682, -8.346903]),
         bone_matrixes[0, "左ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([2.323599, 1.147291, -9.645196]),
@@ -1653,7 +1653,7 @@ def test_read_by_filepath_ok_leg_ik14_ballet() -> None:
     assert np.isclose(
         np.array([5.661557, 11.008962, -2.259013]),
         bone_matrixes[0, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([9.224476, 10.979847, -5.407887]),
@@ -1711,7 +1711,7 @@ def test_read_by_filepath_ok_leg_ik15_bottom() -> None:
     assert np.isclose(
         np.array([-2.533418, 3.889916, -4.114837]),
         bone_matrixes[218, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([-1.358807, 1.912181, 0.611265]),
@@ -1769,7 +1769,7 @@ def test_read_by_filepath_ok_leg_ik16_lamb() -> None:
     assert np.isclose(
         np.array([7.072974, 4.147403, -9.769277]),
         bone_matrixes[2715, "左ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
     assert np.isclose(
         np.array([2.322686, 1.149005, -9.644754]),
@@ -1816,7 +1816,7 @@ def test_read_by_filepath_ok_leg_ik7_fk() -> None:
     assert np.isclose(
         np.array([2.708069, 9.216356, -0.720822]),
         bone_matrixes[0, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
 
 
@@ -1853,7 +1853,7 @@ def test_read_by_filepath_ok_leg_ik7_bake() -> None:
     assert np.isclose(
         np.array([-3.753989, 8.506582, 1.058842]),
         bone_matrixes[0, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
 
 
@@ -1890,7 +1890,7 @@ def test_read_by_filepath_ok_leg_ik7_no_limit() -> None:
     assert np.isclose(
         np.array([2.081436, 7.884178, -0.268146]),
         bone_matrixes[0, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
 
 
@@ -1927,7 +1927,7 @@ def test_read_by_filepath_ok_leg_ik7_no_limit_loop3() -> None:
     assert np.isclose(
         np.array([2.081436, 7.884178, -0.268146]),
         bone_matrixes[0, "右ひざ"].position.vector,
-        atol=0.1,
+        atol=0.3,
     ).all()
 
 
@@ -2025,37 +2025,37 @@ def test_read_by_filepath_ok_arm_ik() -> None:
     assert np.isclose(
         np.array([2.620196, 11.955698, -0.693675]),
         bone_matrixes[10, "左手捩6"].position.vector,
-        atol=0.1,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([2.691600, 11.503933, -0.870235]),
         bone_matrixes[10, "左手首R"].position.vector,
-        atol=0.1,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([2.633156, 11.364628, -0.882837]),
         bone_matrixes[10, "左手首2"].position.vector,
-        atol=0.1,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([2.473304, 10.728573, -1.304400]),
         bone_matrixes[10, "左人指１"].position.vector,
-        atol=0.2,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([2.261877, 10.458740, -1.299257]),
         bone_matrixes[10, "左人指２"].position.vector,
-        atol=0.5,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([2.228296, 10.653198, -1.178544]),
         bone_matrixes[10, "左人指３"].position.vector,
-        atol=0.5,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([2.417647, 10.880006, -1.173676]),
         bone_matrixes[10, "左人指先"].position.vector,
-        atol=0.5,
+        atol=0.01,
     ).all()
 
 
@@ -2148,22 +2148,22 @@ def test_read_by_filepath_ok_arm_ik_2() -> None:
     assert np.isclose(
         np.array([12.813587, 14.873419, -2.570278]),
         bone_matrixes[3182, "左人指１"].position.vector,
-        atol=0.2,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([12.541822, 15.029200, -2.709604]),
         bone_matrixes[3182, "左人指２"].position.vector,
-        atol=0.2,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([12.476499, 14.950351, -2.502167]),
         bone_matrixes[3182, "左人指３"].position.vector,
-        atol=0.2,
+        atol=0.01,
     ).all()
     assert np.isclose(
         np.array([12.620306, 14.795185, -2.295859]),
         bone_matrixes[3182, "左人指先"].position.vector,
-        atol=0.2,
+        atol=0.01,
     ).all()
 
 

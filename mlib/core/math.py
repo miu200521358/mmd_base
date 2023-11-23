@@ -951,12 +951,19 @@ class MQuaternion(MVector):
     def dot(self, v: "MQuaternion") -> float:
         return np.sum(self.vector.components * v.vector.components)
 
-    def to_degrees(self) -> float:
+    def to_degree(self) -> float:
         """
         角度に変換
         """
 
         return MQuaternion.scalar_to_degrees(self.normalized().scalar)
+
+    def to_radian(self) -> float:
+        """
+        角度に変換
+        """
+
+        return MQuaternion.scalar_to_radians(self.normalized().scalar)
 
     def to_signed_degrees(self, local_axis: MVector3D) -> float:
         """
@@ -967,10 +974,6 @@ class MQuaternion(MVector):
 
         if sign != 0:
             deg *= sign
-
-        if 180 < abs(deg):
-            # 180度を超してる場合、フリップなので、除去
-            return (abs(deg) - 180) * np.sign(deg)
 
         return deg
 
@@ -1112,14 +1115,14 @@ class MQuaternion(MVector):
         to_qq = MQuaternion.axis_to_quaternion(other_axis)
         return from_qq.inverse() * self * to_qq
 
-    def as_euler_degrees(self, order: MQuaternionOrder) -> MVector3D:
+    def as_euler_degrees(self) -> MVector3D:
         """
         クォータニオンをオイラー角に変換する(ライブラリ使用)
         """
         if not self:
             return MVector3D()
 
-        return MVector3D(*np.degrees(self.as_radians(order).vector))
+        return MVector3D(*np.degrees(self.as_radians().vector))
 
     def to_euler_degrees(
         self, order: MQuaternionOrder = MQuaternionOrder.YXZ
@@ -1177,7 +1180,7 @@ class MQuaternion(MVector):
 
         return MVector3D(x_rad, y_rad, z_rad)
 
-    def as_radians(self, order: MQuaternionOrder) -> MVector3D:
+    def as_radians(self) -> MVector3D:
         """
         クォータニオンをラジアン角に変換する(quaternionライブラリを使用)
         https://programming-surgeon.com/script/euler-python-script/
@@ -1186,22 +1189,7 @@ class MQuaternion(MVector):
         if not self:
             return MVector3D()
 
-        rad = as_euler_angles(self.vector)
-
-        if order == MQuaternionOrder.XYZ:
-            return MVector3D(*rad)
-        elif order == MQuaternionOrder.XZY:
-            return MVector3D(rad[0], rad[2], rad[1])
-        elif order == MQuaternionOrder.YXZ:
-            return MVector3D(rad[1], rad[0], rad[2])
-        elif order == MQuaternionOrder.YZX:
-            return MVector3D(rad[1], rad[2], rad[0])
-        elif order == MQuaternionOrder.ZXY:
-            return MVector3D(rad[2], rad[0], rad[1])
-        elif order == MQuaternionOrder.ZYX:
-            return MVector3D(rad[2], rad[1], rad[0])
-
-        return MVector3D()
+        return MVector3D(*as_euler_angles(self.vector))
 
     def to_euler_degrees_by_axis(
         self, local_x_axis: MVector3D, local_y_axis: MVector3D, local_z_axis: MVector3D
@@ -1523,6 +1511,15 @@ class MQuaternion(MVector):
         angle = degrees(radian)
 
         return angle
+
+    @staticmethod
+    def scalar_to_radians(scalar: float) -> float:
+        """
+        与えられたscalarから角度に変換
+        """
+
+        # 角度を計算
+        return 2 * acos(min(1, max(-1, scalar)))
 
     @staticmethod
     def vector_to_degrees(a: MVector3D, b: MVector3D) -> float:
