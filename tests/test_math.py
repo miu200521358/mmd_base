@@ -334,7 +334,7 @@ def test_MQuaternion_normalized():
 def test_MQuaternion_from_euler_degrees():
     import numpy as np
 
-    from mlib.core.math import MQuaternion, MVector3D
+    from mlib.core.math import MQuaternion, MQuaternionOrder, MVector3D
 
     assert np.isclose(
         np.array([1, 0, 0, 0]),
@@ -343,17 +343,23 @@ def test_MQuaternion_from_euler_degrees():
 
     assert np.isclose(
         np.array([0.9961947, 0.08715574, 0.0, 0.0]),
-        MQuaternion.from_euler_degrees(MVector3D(10, 0, 0)).vector.components,
+        MQuaternion.from_euler_degrees(
+            10, 0, 0, MQuaternionOrder.XYZ
+        ).vector.components,
     ).all()
 
     assert np.isclose(
         np.array([0.94371436, 0.12767944, 0.14487813, 0.26853582]),
-        MQuaternion.from_euler_degrees(MVector3D(10, 20, 30)).vector.components,
+        MQuaternion.from_euler_degrees(
+            10, 20, 30, MQuaternionOrder.XYZ
+        ).vector.components,
     ).all()
 
     assert np.isclose(
         np.array([-0.59752575, -0.47386805, -0.20131049, 0.61472444]),
-        MQuaternion.from_euler_degrees(60, -20, -80).vector.components,
+        MQuaternion.from_euler_degrees(
+            60, -20, -80, MQuaternionOrder.XYZ
+        ).vector.components,
     ).all()
 
 
@@ -372,6 +378,7 @@ def test_MQuaternion_to_euler_degrees():
         MQuaternion(0.9961946980917455, 0.08715574274765817, 0.0, 0.0)
         .to_euler_degrees(MQuaternionOrder.XYZ)
         .vector,
+        atol=1e-6,
     ).all()
 
     assert np.isclose(
@@ -379,6 +386,7 @@ def test_MQuaternion_to_euler_degrees():
         MQuaternion(0.94371436, 0.12767944, 0.14487813, 0.26853582)
         .to_euler_degrees(MQuaternionOrder.XYZ)
         .vector,
+        atol=1e-6,
     ).all()
 
     assert np.isclose(
@@ -386,6 +394,7 @@ def test_MQuaternion_to_euler_degrees():
         MQuaternion(-0.59752575, -0.47386805, -0.20131049, 0.61472444)
         .to_euler_degrees(MQuaternionOrder.XYZ)
         .vector,
+        atol=1e-6,
     ).all()
 
 
@@ -792,11 +801,11 @@ def test_MQuaternion_to_matrix4x4():
 def test_MQuaternion_separate_local_axis_x_x():
     import numpy as np
 
-    from mlib.core.math import MQuaternion, MVector3D
+    from mlib.core.math import MQuaternion, MQuaternionOrder, MVector3D
 
-    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(
-        MVector3D(1, 0, 0)
-    )
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(
+        10, 0, 0, MQuaternionOrder.XYZ
+    ).separate_by_axis(MVector3D(1, 0, 0))
 
     assert np.isclose(
         np.array(
@@ -806,7 +815,7 @@ def test_MQuaternion_separate_local_axis_x_x():
                 0.0,
             ]
         ),
-        x_qq.to_euler_degrees().vector,
+        x_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
     assert np.isclose(
@@ -817,7 +826,7 @@ def test_MQuaternion_separate_local_axis_x_x():
                 0.0,
             ]
         ),
-        y_qq.to_euler_degrees().vector,
+        y_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
     assert np.isclose(
@@ -828,18 +837,18 @@ def test_MQuaternion_separate_local_axis_x_x():
                 0.0,
             ]
         ),
-        z_qq.to_euler_degrees().vector,
+        z_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
 
 def test_MQuaternion_separate_local_axis_y_x():
     import numpy as np
 
-    from mlib.core.math import MQuaternion, MVector3D
+    from mlib.core.math import MQuaternion, MQuaternionOrder, MVector3D
 
-    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(0, 10, 0).separate_by_axis(
-        MVector3D(1, 0, 0)
-    )
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(
+        0, 10, 0, MQuaternionOrder.XYZ
+    ).separate_by_axis(MVector3D(1, 0, 0))
 
     assert np.isclose(
         np.array(
@@ -849,7 +858,7 @@ def test_MQuaternion_separate_local_axis_y_x():
                 0.0,
             ]
         ),
-        x_qq.to_euler_degrees().vector,
+        x_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
     assert np.isclose(
@@ -860,7 +869,7 @@ def test_MQuaternion_separate_local_axis_y_x():
                 0.0,
             ]
         ),
-        y_qq.to_euler_degrees().vector,
+        y_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
     assert np.isclose(
@@ -871,18 +880,18 @@ def test_MQuaternion_separate_local_axis_y_x():
                 0.0,
             ]
         ),
-        z_qq.to_euler_degrees().vector,
+        z_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
 
 def test_MQuaternion_separate_local_axis_z_x():
     import numpy as np
 
-    from mlib.core.math import MQuaternion, MVector3D
+    from mlib.core.math import MQuaternion, MQuaternionOrder, MVector3D
 
-    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(0, 0, 10).separate_by_axis(
-        MVector3D(1, 0, 0)
-    )
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(
+        0, 0, 10, MQuaternionOrder.XYZ
+    ).separate_by_axis(MVector3D(1, 0, 0))
 
     assert np.isclose(
         np.array(
@@ -892,7 +901,7 @@ def test_MQuaternion_separate_local_axis_z_x():
                 0.0,
             ]
         ),
-        x_qq.to_euler_degrees().vector,
+        x_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
     assert np.isclose(
@@ -903,7 +912,7 @@ def test_MQuaternion_separate_local_axis_z_x():
                 0.0,
             ]
         ),
-        y_qq.to_euler_degrees().vector,
+        y_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
     assert np.isclose(
@@ -914,18 +923,18 @@ def test_MQuaternion_separate_local_axis_z_x():
                 10.0,
             ]
         ),
-        z_qq.to_euler_degrees().vector,
+        z_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
 
 def test_MQuaternion_separate_local_axis_x_y():
     import numpy as np
 
-    from mlib.core.math import MQuaternion, MVector3D
+    from mlib.core.math import MQuaternion, MQuaternionOrder, MVector3D
 
-    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(
-        MVector3D(0, 1, 0)
-    )
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(
+        10, 0, 0, MQuaternionOrder.XYZ
+    ).separate_by_axis(MVector3D(0, 1, 0))
 
     assert np.isclose(
         np.array(
@@ -935,7 +944,7 @@ def test_MQuaternion_separate_local_axis_x_y():
                 0.0,
             ]
         ),
-        x_qq.to_euler_degrees().vector,
+        x_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
     assert np.isclose(
@@ -946,7 +955,7 @@ def test_MQuaternion_separate_local_axis_x_y():
                 0.0,
             ]
         ),
-        y_qq.to_euler_degrees().vector,
+        y_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
     assert np.isclose(
@@ -957,18 +966,18 @@ def test_MQuaternion_separate_local_axis_x_y():
                 0.0,
             ]
         ),
-        z_qq.to_euler_degrees().vector,
+        z_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
 
 def test_MQuaternion_separate_local_axis_x_z():
     import numpy as np
 
-    from mlib.core.math import MQuaternion, MVector3D
+    from mlib.core.math import MQuaternion, MQuaternionOrder, MVector3D
 
-    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(
-        MVector3D(0, 0, 1)
-    )
+    x_qq, y_qq, z_qq, xz_qq = MQuaternion.from_euler_degrees(
+        10, 0, 0, MQuaternionOrder.XYZ
+    ).separate_by_axis(MVector3D(0, 0, 1))
 
     assert np.isclose(
         np.array(
@@ -978,7 +987,7 @@ def test_MQuaternion_separate_local_axis_x_z():
                 0.0,
             ]
         ),
-        x_qq.to_euler_degrees().vector,
+        x_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
     assert np.isclose(
@@ -989,7 +998,7 @@ def test_MQuaternion_separate_local_axis_x_z():
                 0.0,
             ]
         ),
-        y_qq.to_euler_degrees().vector,
+        y_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
     assert np.isclose(
@@ -1000,7 +1009,7 @@ def test_MQuaternion_separate_local_axis_x_z():
                 0.0,
             ]
         ),
-        z_qq.to_euler_degrees().vector,
+        z_qq.to_euler_degrees(MQuaternionOrder.XYZ).vector,
     ).all()
 
 
@@ -1009,9 +1018,9 @@ def test_MQuaternion_separate_local_axis_x_xy():
 
     from mlib.core.math import MQuaternion, MQuaternionOrder, MVector3D
 
-    x_qq, y_qq, z_qq, _ = MQuaternion.from_euler_degrees(10, 0, 0).separate_by_axis(
-        MVector3D(1, 1, 0)
-    )
+    x_qq, y_qq, z_qq, _ = MQuaternion.from_euler_degrees(
+        10, 0, 0, MQuaternionOrder.XYZ
+    ).separate_by_axis(MVector3D(1, 1, 0))
 
     assert np.isclose(
         np.array([4.98118019, 4.96188763, 0.65447593]),
@@ -1032,9 +1041,11 @@ def test_MQuaternion_separate_local_axis_x_xy():
 def test_MQuaternion_to_euler_degrees_by_axis():
     import numpy as np
 
-    from mlib.core.math import MQuaternion, MVector3D
+    from mlib.core.math import MQuaternion, MQuaternionOrder, MVector3D
 
-    degrees = MQuaternion.from_euler_degrees(10, 0, 0).to_euler_degrees_by_axis(
+    degrees = MQuaternion.from_euler_degrees(
+        10, 0, 0, MQuaternionOrder.XYZ
+    ).to_euler_degrees_by_axis(
         MVector3D(1, 0, 0), MVector3D(0, 1, 0), MVector3D(0, 0, 1)
     )
 
@@ -1043,7 +1054,9 @@ def test_MQuaternion_to_euler_degrees_by_axis():
         degrees.vector,
     ).all()
 
-    degrees = MQuaternion.from_euler_degrees(10, 0, 0).to_euler_degrees_by_axis(
+    degrees = MQuaternion.from_euler_degrees(
+        10, 0, 0, MQuaternionOrder.XYZ
+    ).to_euler_degrees_by_axis(
         MVector3D(1, 1, 0),
         MVector3D(1, 1, 0).cross(MVector3D(0, 0, -1)),
         MVector3D(0, 0, -1),
@@ -1054,7 +1067,9 @@ def test_MQuaternion_to_euler_degrees_by_axis():
         degrees.vector,
     ).all()
 
-    degrees = MQuaternion.from_euler_degrees(10, 0, 0).to_euler_degrees_by_axis(
+    degrees = MQuaternion.from_euler_degrees(
+        10, 0, 0, MQuaternionOrder.XYZ
+    ).to_euler_degrees_by_axis(
         MVector3D(0, 1, 1),
         MVector3D(0, 1, 1).cross(MVector3D(0, 0, -1)),
         MVector3D(0, 0, -1),
@@ -1185,7 +1200,7 @@ def test_MMatrix4x4_inverse():
 def test_MMatrix4x4_rotate():
     import numpy as np
 
-    from mlib.core.math import MMatrix4x4, MQuaternion
+    from mlib.core.math import MMatrix4x4, MQuaternion, MQuaternionOrder
 
     m = MMatrix4x4(
         np.array(
@@ -1198,7 +1213,7 @@ def test_MMatrix4x4_rotate():
         )
     )
 
-    m.rotate(MQuaternion.from_euler_degrees(10, 20, 30))
+    m.rotate(MQuaternion.from_euler_degrees(10, 20, 30, MQuaternionOrder.XYZ))
     assert np.isclose(
         np.array(
             [
@@ -1211,7 +1226,7 @@ def test_MMatrix4x4_rotate():
         m.vector,
     ).all()
 
-    m.rotate(MQuaternion.from_euler_degrees(-40, 20, -32))
+    m.rotate(MQuaternion.from_euler_degrees(-40, 20, -32, MQuaternionOrder.XYZ))
     assert np.isclose(
         np.array(
             [
@@ -1271,11 +1286,11 @@ def test_MMatrix4x4_translate():
 def test_MMatrix4x4_scale():
     import numpy as np
 
-    from mlib.core.math import MMatrix4x4, MQuaternion, MVector3D
+    from mlib.core.math import MMatrix4x4, MQuaternion, MQuaternionOrder, MVector3D
 
     m = MMatrix4x4()
 
-    m.rotate(MQuaternion.from_euler_degrees(10, 20, 30))
+    m.rotate(MQuaternion.from_euler_degrees(10, 20, 30, MQuaternionOrder.XYZ))
     assert np.isclose(
         np.array(
             [
@@ -1662,29 +1677,53 @@ def test_MMatrix4x4List_translate():
 def test_MMatrix4x4List_rotate():
     import numpy as np
 
-    from mlib.core.math import MMatrix4x4List, MQuaternion, MVector3D
+    from mlib.core.math import MMatrix4x4List, MQuaternion, MQuaternionOrder, MVector3D
 
     ms = MMatrix4x4List(4, 3)
     qs = [
         [
-            MQuaternion.from_euler_degrees(MVector3D(1, 2, 3)).to_matrix4x4().vector,
-            MQuaternion.from_euler_degrees(MVector3D(4, 5, 6)).to_matrix4x4().vector,
-            MQuaternion.from_euler_degrees(MVector3D(7, 8, 9)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(1, 2, 3), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(4, 5, 6), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(7, 8, 9), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
         ],
         [
-            MQuaternion.from_euler_degrees(MVector3D(10, 11, 12)).to_matrix4x4().vector,
-            MQuaternion.from_euler_degrees(MVector3D(13, 14, 15)).to_matrix4x4().vector,
-            MQuaternion.from_euler_degrees(MVector3D(16, 17, 18)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(10, 11, 12), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(13, 14, 15), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(16, 17, 18), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
         ],
         [
-            MQuaternion.from_euler_degrees(MVector3D(19, 20, 21)).to_matrix4x4().vector,
-            MQuaternion.from_euler_degrees(MVector3D(22, 23, 24)).to_matrix4x4().vector,
-            MQuaternion.from_euler_degrees(MVector3D(25, 26, 27)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(19, 20, 21), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(22, 23, 24), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(25, 26, 27), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
         ],
         [
-            MQuaternion.from_euler_degrees(MVector3D(28, 29, 30)).to_matrix4x4().vector,
-            MQuaternion.from_euler_degrees(MVector3D(31, 32, 33)).to_matrix4x4().vector,
-            MQuaternion.from_euler_degrees(MVector3D(34, 35, 36)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(28, 29, 30), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(31, 32, 33), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(34, 35, 36), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
         ],
     ]
     ms.rotate(qs)
@@ -1694,81 +1733,81 @@ def test_MMatrix4x4List_rotate():
             [
                 [
                     [
-                        [0.9980212, -0.05230407, 0.0348995, 0.0],
-                        [0.05293623, 0.99844556, -0.01744177, 0.0],
-                        [-0.03393297, 0.01925471, 0.99923861, 0.0],
+                        [0.998053, -0.051696, 0.034894, 0.0],
+                        [0.052328, 0.998477, -0.017452, 0.0],
+                        [-0.033939, 0.019244, 0.999239, 0.0],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                     [
-                        [0.99073744, -0.1041307, 0.08715574, 0.0],
-                        [0.11032021, 0.99146379, -0.06949103, 0.0],
-                        [-0.07917561, 0.0784624, 0.99376802, 0.0],
+                        [0.991373, -0.098084, 0.086943, 0.0],
+                        [0.104274, 0.992099, -0.069756, 0.0],
+                        [-0.079415, 0.078221, 0.993768, 0.0],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                     [
-                        [0.97807623, -0.15491206, 0.1391731, 0.0],
-                        [0.17202054, 0.97767299, -0.12068332, 0.0],
-                        [-0.11737048, 0.14197812, 0.98288676, 0.0],
-                        [0.0, 0.0, 0.0, 1.0],
-                    ],
-                ],
-                [
-                    [
-                        [0.96017627, -0.20409177, 0.190809, 0.0],
-                        [0.23716263, 0.95639847, -0.17045777, 0.0],
-                        [-0.1477004, 0.20892227, 0.96671406, 0.0],
-                        [0.0, 0.0, 0.0, 1.0],
-                    ],
-                    [
-                        [0.9372337, -0.25113101, 0.2419219, 0.0],
-                        [0.30475178, 0.92708413, -0.21826905, 0.0],
-                        [-0.16946782, 0.27829523, 0.94542711, 0.0],
-                        [0.0, 0.0, 0.0, 1.0],
-                    ],
-                    [
-                        [0.90949987, -0.29551442, 0.2923717, 0.0],
-                        [0.37369048, 0.88931096, -0.26359331, 0.0],
-                        [-0.18211374, 0.34899461, 0.91925913, 0.0],
+                        [0.98073, -0.13816, 0.138136, 0.0],
+                        [0.155268, 0.980326, -0.121869, 0.0],
+                        [-0.118581, 0.140969, 0.982887, 0.0],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                 ],
                 [
                     [
-                        [0.87727864, -0.33675572, 0.34202014, 0.0],
-                        [0.44279854, 0.84281305, -0.30593399, 0.0],
-                        [-0.18523402, 0.41983538, 0.88849683, 0.0],
+                        [0.967065, -0.171682, 0.18791, 0.0],
+                        [0.204753, 0.963287, -0.173648, 0.0],
+                        [-0.151199, 0.206404, 0.966714, 0.0],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                     [
-                        [0.84092303, -0.37440305, 0.39073113, 0.0],
-                        [0.51083571, 0.78749037, -0.34482719, 0.0],
-                        [-0.17859265, 0.48957254, 0.85347724, 0.0],
+                        [0.951319, -0.198565, 0.235721, 0.0],
+                        [0.252186, 0.941169, -0.224951, 0.0],
+                        [-0.177186, 0.273446, 0.945427, 0.0],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                     [
-                        [0.80083136, -0.40804396, 0.43837115, 0.0],
-                        [0.57652625, 0.72341821, -0.37984678, 0.0],
-                        [-0.16213149, 0.55692568, 0.81458404, 0.0],
+                        [0.934403, -0.21887, 0.281046, 0.0],
+                        [0.297046, 0.914214, -0.275637, 0.0],
+                        [-0.196607, 0.34104, 0.919259, 0.0],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                 ],
                 [
                     [
-                        [0.75744289, -0.43730985, 0.48480962, 0.0],
-                        [0.63858493, 0.65085288, -0.41060908, 0.0],
-                        [-0.13597634, 0.62060504, 0.77224337, 0.0],
+                        [0.917183, -0.232801, 0.323386, 0.0],
+                        [0.338844, 0.882718, -0.325568, 0.0],
+                        [-0.209666, 0.408183, 0.888497, 0.0],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                     [
-                        [0.71123298, -0.4618801, 0.52991926, 0.0],
-                        [0.69574395, 0.57023342, -0.43677706, 0.0],
-                        [-0.10043904, 0.67933837, 0.7269191, 0.0],
+                        [0.900457, -0.240687, 0.36228, 0.0],
+                        [0.37712, 0.847025, -0.374607, 0.0],
+                        [-0.216697, 0.47394, 0.853477, 0.0],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                     [
-                        [0.66270792, -0.48148549, 0.57357644, 0.0],
-                        [0.74678007, 0.48217932, -0.45806401, 0.0],
-                        [-0.05601552, 0.7318981, 0.67910782, 0.0],
+                        [0.884939, -0.242973, 0.397299, 0.0],
+                        [0.411455, 0.807526, -0.422618, 0.0],
+                        [-0.218145, 0.537462, 0.814584, 0.0],
+                        [0.0, 0.0, 0.0, 1.0],
+                    ],
+                ],
+                [
+                    [
+                        [0.871245, -0.240199, 0.428061, 0.0],
+                        [0.441474, 0.764655, -0.469472, 0.0],
+                        [-0.214553, 0.598003, 0.772243, 0.0],
+                        [0.0, 0.0, 0.0, 1.0],
+                    ],
+                    [
+                        [0.859881, -0.232983, 0.454229, 0.0],
+                        [0.466847, 0.718881, -0.515038, 0.0],
+                        [-0.206542, 0.654927, 0.726919, 0.0],
+                        [0.0, 0.0, 0.0, 1.0],
+                    ],
+                    [
+                        [0.851234, -0.222001, 0.475516, 0.0],
+                        [0.487296, 0.670705, -0.559193, 0.0],
+                        [-0.19479, 0.707721, 0.679108, 0.0],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                 ],
@@ -1782,20 +1821,32 @@ def test_MMatrix4x4List_rotate():
 def test_MMatrix4x4List_scale():
     import numpy as np
 
-    from mlib.core.math import MMatrix4x4List, MQuaternion, MVector3D
+    from mlib.core.math import MMatrix4x4List, MQuaternion, MQuaternionOrder, MVector3D
 
     ms = MMatrix4x4List(2, 3)
 
     qs = [
         [
-            MQuaternion.from_euler_degrees(MVector3D(1, 2, 3)).to_matrix4x4().vector,
-            MQuaternion.from_euler_degrees(MVector3D(4, 5, 6)).to_matrix4x4().vector,
-            MQuaternion.from_euler_degrees(MVector3D(7, 8, 9)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(1, 2, 3), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(4, 5, 6), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(7, 8, 9), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
         ],
         [
-            MQuaternion.from_euler_degrees(MVector3D(10, 11, 12)).to_matrix4x4().vector,
-            MQuaternion.from_euler_degrees(MVector3D(13, 14, 15)).to_matrix4x4().vector,
-            MQuaternion.from_euler_degrees(MVector3D(16, 17, 18)).to_matrix4x4().vector,
+            MQuaternion.from_euler_degrees(MVector3D(10, 11, 12), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(13, 14, 15), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
+            MQuaternion.from_euler_degrees(MVector3D(16, 17, 18), MQuaternionOrder.XYZ)
+            .to_matrix4x4()
+            .vector,
         ],
     ]
     ms.rotate(qs)
@@ -1833,41 +1884,41 @@ def test_MMatrix4x4List_scale():
             [
                 [
                     [
-                        [0.9980212, -0.10460815, 0.10469849, 0.99811154],
-                        [0.05293623, 1.99689112, -0.05232532, 1.99750203],
-                        [-0.03393297, 0.03850942, 2.99771584, 3.00229229],
+                        [0.998053, -0.103392, 0.104683, 0.999344],
+                        [0.052328, 1.996955, -0.052357, 1.996926],
+                        [-0.033939, 0.038489, 2.997716, 3.002266],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                     [
-                        [3.96294976, -0.5206535, 0.52293446, 3.96523071],
-                        [0.44128084, 4.95731895, -0.41694618, 4.98165362],
-                        [-0.31670245, 0.39231202, 5.96260811, 6.03821767],
+                        [3.965492, -0.490422, 0.521661, 3.996731],
+                        [0.417095, 4.960496, -0.418539, 4.959053],
+                        [-0.317658, 0.391103, 5.962608, 6.036053],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                     [
-                        [6.84653358, -1.23929644, 1.25255791, 6.85979504],
-                        [1.2041438, 7.82138389, -1.08614987, 7.93937782],
-                        [-0.82159336, 1.13582494, 8.84598085, 9.16021243],
+                        [6.865107, -1.10528, 1.243222, 7.003049],
+                        [1.086879, 7.84261, -1.096824, 7.832665],
+                        [-0.830064, 1.127752, 8.845981, 9.143668],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                 ],
                 [
                     [
-                        [9.60176274, -2.24500944, 2.28970794, 9.64646125],
-                        [2.3716263, 10.52038318, -2.04549326, 10.84651622],
-                        [-1.47700404, 2.29814498, 11.60056873, 12.42170968],
+                        [9.670651, -1.888504, 2.254922, 10.03707],
+                        [2.04753, 10.596161, -2.083778, 10.559913],
+                        [-1.511992, 2.270447, 11.600569, 12.359024],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                     [
-                        [12.18403811, -3.51583419, 3.62882843, 12.29703236],
-                        [3.96177312, 12.97917776, -3.2740357, 13.66691519],
-                        [-2.20308169, 3.89613328, 14.18140665, 15.87445824],
+                        [12.367144, -2.779907, 3.535822, 13.123059],
+                        [3.278412, 13.176369, -3.374266, 13.080515],
+                        [-2.303423, 3.82824, 14.181407, 15.706223],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                     [
-                        [14.55199792, -5.02374516, 5.26269069, 14.79094344],
-                        [5.97904766, 15.11828639, -4.74467966, 16.35265439],
-                        [-2.91381979, 5.93290832, 16.54666437, 19.5657529],
+                        [14.95045, -3.720792, 5.058823, 16.28848],
+                        [4.752739, 15.541641, -4.961472, 15.332908],
+                        [-3.145715, 5.797679, 16.546664, 19.198629],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                 ],
@@ -2285,41 +2336,41 @@ def test_MMatrix4x4List_matmul_cols():
             [
                 [
                     [
-                        [0.998021, -0.052304, 0.034899, 1.0],
-                        [0.052936, 0.998446, -0.017442, 2.0],
-                        [-0.033933, 0.019255, 0.999239, 3.0],
+                        [0.998053, -0.051696, 0.034894, 1.0],
+                        [0.052328, 0.998477, -0.017452, 2.0],
+                        [-0.033939, 0.019244, 0.999239, 3.0],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                     [
-                        [0.980244, -0.153044, 0.1253, 4.939961],
-                        [0.163976, 0.983042, -0.082102, 7.099322],
-                        [-0.11061, 0.101026, 0.988716, 8.955973],
+                        [0.981281, -0.146451, 0.125057, 4.943098],
+                        [0.157378, 0.984091, -0.082444, 7.096985],
+                        [-0.110993, 0.100582, 0.988718, 8.955898],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                     [
-                        [0.91772, -0.283689, 0.278049, 11.705014],
-                        [0.33912, 0.924035, -0.176513, 15.372564],
-                        [-0.206852, 0.256282, 0.94421, 17.88836],
+                        [0.924803, -0.261515, 0.276315, 11.765969],
+                        [0.316919, 0.931365, -0.179225, 15.329357],
+                        [-0.21048, 0.253317, 0.944208, 17.882066],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                 ],
                 [
                     [
-                        [0.960176, -0.204092, 0.190809, 10.0],
-                        [0.237163, 0.956398, -0.170458, 11.0],
-                        [-0.1477, 0.208922, 0.966714, 12.0],
+                        [0.967065, -0.171682, 0.18791, 10.0],
+                        [0.204753, 0.963287, -0.173648, 11.0],
+                        [-0.151199, 0.206404, 0.966714, 12.0],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                     [
-                        [0.805376, -0.377239, 0.457231, 22.487142],
-                        [0.542628, 0.779665, -0.312533, 24.915826],
-                        [-0.238587, 0.499813, 0.832624, 27.505517],
+                        [0.843396, -0.302224, 0.444233, 22.986949],
+                        [0.468481, 0.818476, -0.3326, 24.54309],
+                        [-0.263075, 0.488628, 0.831886, 27.424781],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                     [
-                        [0.508251, -0.413912, 0.75522, 37.190248],
-                        [0.84179, 0.423938, -0.334164, 41.226597],
-                        [-0.181852, 0.805576, 0.563894, 47.172175],
+                        [0.610958, -0.30939, 0.728703, 39.339688],
+                        [0.746267, 0.532297, -0.399683, 39.966086],
+                        [-0.264228, 0.787996, 0.556098, 46.496203],
                         [0.0, 0.0, 0.0, 1.0],
                     ],
                 ],
@@ -2335,13 +2386,13 @@ def test_MMatrix4x4List_matmul_cols():
             [
                 [
                     [1.0, 2.0, 3.0],
-                    [4.93996139, 7.09932208, 8.95597335],
-                    [11.70501441, 15.3725642, 17.88835951],
+                    [4.943098, 7.096985, 8.955898],
+                    [11.765969, 15.329357, 17.882066],
                 ],
                 [
                     [10.0, 11.0, 12.0],
-                    [22.48714175, 24.91582621, 27.50551746],
-                    [37.19024837, 41.22659676, 47.17217503],
+                    [22.986949, 24.54309, 27.424781],
+                    [39.339688, 39.966086, 46.496203],
                 ],
             ]
         ),

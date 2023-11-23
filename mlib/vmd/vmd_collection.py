@@ -843,7 +843,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         display_block=10,
                     )
                 # IKターゲットのボーンに対してIK計算を行う
-                self.get_rotation(fno, model, ik_target_bone, is_calc_ik=True)
+                self.get_ik_rotation(fno, model, ik_target_bone)
 
                 n += 1
 
@@ -927,8 +927,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         """
         IKを加味した回転を求める
         """
-        ik_fno = 1
-        bake_motion = VmdMotion()
+        # ik_fno = 1
+        # bake_motion = VmdMotion()
 
         for ik_target_bone_idx in bone.ik_link_indexes:
             # IKボーン自身の位置
@@ -1035,7 +1035,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 注目ノードを起点とした、IK目標のローカル位置
                     local_target_pos = link_inverse_matrix * global_target_pos
 
-                    if 1e-6 > (local_effector_pos - local_target_pos).length_squared():
+                    if (
+                        lidx == len(ik_bone.ik.links) - 1
+                        and 1e-7
+                        > (local_effector_pos - local_target_pos).length_squared()
+                    ):
                         # 位置の差がほとんどない場合、スルー
                         is_break = True
                         break
@@ -1058,7 +1062,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         .normalized()
                     )
 
-                    if 1e-6 > rotation_axis.length_squared():
+                    if 1e-7 > rotation_axis.length_squared():
                         is_break = True
                         break
 
@@ -1075,14 +1079,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     link_ik_qq, _ = self.get_rotation(fno, model, link_bone)
                     total_ideal_ik_qq = total_ik_qq = None
 
-                    # -----------------
-                    original_link_bf = VmdBoneFrame(
-                        ik_fno, link_bone.name, register=True
-                    )
-                    original_link_bf.rotation = link_ik_qq.copy()
-                    bake_motion.append_bone_frame(original_link_bf)
-                    ik_fno += 1
-                    # -----------------
+                    # # -----------------
+                    # original_link_bf = VmdBoneFrame(
+                    #     ik_fno, link_bone.name, register=True
+                    # )
+                    # original_link_bf.rotation = link_ik_qq.copy()
+                    # bake_motion.append_bone_frame(original_link_bf)
+                    # ik_fno += 1
+                    # # -----------------
 
                     if link_bone.has_fixed_axis:
                         # 軸制限ありの場合、軸にそった理想回転量とする
@@ -1160,13 +1164,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                             limit_x_radian = limit_radians.x
 
-                            # 角度自体は絶対値で求めておく
                             if not (
                                 ik_link.min_angle_limit.radians.x
                                 <= limit_x_radian
                                 <= ik_link.max_angle_limit.radians.x
                             ):
-                                # 範囲内かつフリップ角度以内の場合、軸を反転する
+                                # 範囲外の場合、符号を反転する
                                 limit_x_radian *= -1
 
                             limit_x_radian = np.clip(
@@ -1193,22 +1196,22 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         )
                         total_ik_qq = total_ideal_ik_qq = link_ik_qq * ideal_ik_qq
 
-                    # -----------------
-                    ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
-                    ideal_bf.rotation = ideal_ik_qq.copy()
-                    bake_motion.append_bone_frame(ideal_bf)
-                    ik_fno += 1
+                    # # -----------------
+                    # ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
+                    # ideal_bf.rotation = ideal_ik_qq.copy()
+                    # bake_motion.append_bone_frame(ideal_bf)
+                    # ik_fno += 1
 
-                    total_ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
-                    total_ideal_bf.rotation = total_ideal_ik_qq.copy()
-                    bake_motion.append_bone_frame(total_ideal_bf)
-                    ik_fno += 1
+                    # total_ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
+                    # total_ideal_bf.rotation = total_ideal_ik_qq.copy()
+                    # bake_motion.append_bone_frame(total_ideal_bf)
+                    # ik_fno += 1
 
-                    total_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
-                    total_bf.rotation = total_ik_qq.copy()
-                    bake_motion.append_bone_frame(total_bf)
-                    ik_fno += 1
-                    # -----------------
+                    # total_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
+                    # total_bf.rotation = total_ik_qq.copy()
+                    # bake_motion.append_bone_frame(total_bf)
+                    # ik_fno += 1
+                    # # -----------------
 
                     link_bf = self[link_bone.name][fno]
                     link_bf.ik_rotation = total_ik_qq
@@ -1224,7 +1227,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     if (
                         total_ideal_ik_qq
                         and total_ik_qq
-                        and not np.isclose(total_ideal_ik_qq.dot(total_ik_qq), 1)
                         and lidx < len(ik_bone.ik.links) - 1
                     ):
                         # 通常の計算の場合、理想回転と実際回転が離れていたら残存回転の計算を行う
@@ -1237,8 +1239,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             total_ideal_ik_qq * total_ik_qq.inverse()
                         )
 
-                        if 0 == loop:
-                            # 初回はすべての角度を残存回転に含める
+                        if loop:
+                            # 最初の方はすべての角度を残存回転に含める
                             remaining_qq = ideal_remaining_qq
                         else:
                             if (
@@ -1259,7 +1261,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                                     <= limit_x_radian
                                     <= ik_link.max_angle_limit.radians.x
                                 ):
-                                    # 範囲内かつフリップ角度以内の場合、軸を反転する
+                                    # 範囲外の場合、符号を反転する
                                     limit_x_radian *= -1
 
                                 limit_x_radian = np.clip(
@@ -1290,45 +1292,45 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             0, parent_link_bone.index
                         ] = parent_link_bf.ik_rotation.to_matrix4x4().vector
 
-                        # -------------
-                        original_parent_bf = VmdBoneFrame(
-                            ik_fno, parent_link_bone.name, register=True
-                        )
-                        original_parent_bf.rotation = parent_link_qq.copy()
-                        bake_motion.append_bone_frame(original_parent_bf)
-                        ik_fno += 1
+                        # # -------------
+                        # original_parent_bf = VmdBoneFrame(
+                        #     ik_fno, parent_link_bone.name, register=True
+                        # )
+                        # original_parent_bf.rotation = parent_link_qq.copy()
+                        # bake_motion.append_bone_frame(original_parent_bf)
+                        # ik_fno += 1
 
-                        remaining_bf = VmdBoneFrame(
-                            ik_fno, parent_link_bone.name, register=True
-                        )
-                        remaining_bf.rotation = remaining_qq.copy()
-                        bake_motion.append_bone_frame(remaining_bf)
-                        ik_fno += 1
+                        # remaining_bf = VmdBoneFrame(
+                        #     ik_fno, parent_link_bone.name, register=True
+                        # )
+                        # remaining_bf.rotation = remaining_qq.copy()
+                        # bake_motion.append_bone_frame(remaining_bf)
+                        # ik_fno += 1
 
-                        remaining_actual_bf = VmdBoneFrame(
-                            ik_fno, parent_link_bone.name, register=True
-                        )
-                        remaining_actual_bf.rotation = parent_link_bf.ik_rotation.copy()
-                        bake_motion.append_bone_frame(remaining_actual_bf)
-                        ik_fno += 1
-                        # -------------
+                        # remaining_actual_bf = VmdBoneFrame(
+                        #     ik_fno, parent_link_bone.name, register=True
+                        # )
+                        # remaining_actual_bf.rotation = parent_link_bf.ik_rotation.copy()
+                        # bake_motion.append_bone_frame(remaining_actual_bf)
+                        # ik_fno += 1
+                        # # -------------
 
                 if is_break:
                     break
             if is_break:
                 break
 
-        # --------------
-        from datetime import datetime
+        # # --------------
+        # from datetime import datetime
 
-        from mlib.vmd.vmd_writer import VmdWriter
+        # from mlib.vmd.vmd_writer import VmdWriter
 
-        VmdWriter(
-            bake_motion,
-            f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{ik_bone.name}_{fno:04d}.vmd",
-            model_name="Test Model",
-        ).save()
-        # --------------
+        # VmdWriter(
+        #     bake_motion,
+        #     f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{ik_bone.name}_{fno:04d}.vmd",
+        #     model_name="Test Model",
+        # ).save()
+        # # --------------
 
         # IKの計算結果の回転を加味して返す
         bf = self[bone.name][fno]

@@ -815,6 +815,8 @@ def cache_slerp_evaluate(q1: quaternion, q2: quaternion, t: float) -> quaternion
 
 
 class MQuaternionOrder(IntEnum):
+    # MMDのオイラー角度はYXZ型
+    # https://site.nicovideo.jp/ch/userblomaga_thanks/archive/ar805999
     XYZ = auto()
     XZY = auto()
     YXZ = auto()
@@ -1120,7 +1122,7 @@ class MQuaternion(MVector):
         return MVector3D(*np.degrees(self.as_radians(order).vector))
 
     def to_euler_degrees(
-        self, order: MQuaternionOrder = MQuaternionOrder.XYZ
+        self, order: MQuaternionOrder = MQuaternionOrder.YXZ
     ) -> MVector3D:
         """
         クォータニオンをオイラー角に変換する
@@ -1240,7 +1242,7 @@ class MQuaternion(MVector):
         a: Union[int, float, MVector3D],
         b: float = 0.0,
         c: float = 0.0,
-        order: MQuaternionOrder = MQuaternionOrder.XYZ,
+        order: MQuaternionOrder = MQuaternionOrder.YXZ,
     ) -> "MQuaternion":
         """
         オイラー角をクォータニオンに変換する
@@ -1257,15 +1259,39 @@ class MQuaternion(MVector):
         a: Union[int, float, MVector3D],
         b: float = 0.0,
         c: float = 0.0,
-        order: MQuaternionOrder = MQuaternionOrder.XYZ,
+        order: MQuaternionOrder = MQuaternionOrder.YXZ,
     ) -> "MQuaternion":
         """
         ラジアン角をクォータニオンに変換する
         """
         if isinstance(a, (int, float)):
             theta1, theta2, theta3 = a, b, c
+            # if order == MQuaternionOrder.XYZ:
+            #     theta1, theta2, theta3 = a, b, c
+            # elif order == MQuaternionOrder.XZY:
+            #     theta1, theta2, theta3 = a, c, b
+            # elif order == MQuaternionOrder.YXZ:
+            #     theta1, theta2, theta3 = b, a, c
+            # elif order == MQuaternionOrder.YZX:
+            #     theta1, theta2, theta3 = b, c, a
+            # elif order == MQuaternionOrder.ZXY:
+            #     theta1, theta2, theta3 = c, a, b
+            # elif order == MQuaternionOrder.ZYX:
+            #     theta1, theta2, theta3 = c, b, a
         else:
-            theta1, theta2, theta3 = a.vector
+            theta1, theta2, theta3 = a.x, a.y, a.z
+            # if order == MQuaternionOrder.XYZ:
+            #     theta1, theta2, theta3 = a.x, a.y, a.z
+            # elif order == MQuaternionOrder.XZY:
+            #     theta1, theta2, theta3 = a.x, a.z, a.y
+            # elif order == MQuaternionOrder.YXZ:
+            #     theta1, theta2, theta3 = a.y, a.x, a.z
+            # elif order == MQuaternionOrder.YZX:
+            #     theta1, theta2, theta3 = a.y, a.z, a.x
+            # elif order == MQuaternionOrder.ZXY:
+            #     theta1, theta2, theta3 = a.z, a.x, a.y
+            # elif order == MQuaternionOrder.ZYX:
+            #     theta1, theta2, theta3 = a.z, a.y, a.x
 
         c1 = np.cos(theta1)
         s1 = np.sin(theta1)
