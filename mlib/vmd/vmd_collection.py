@@ -1208,11 +1208,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 注目ノードを起点とした、IK目標のローカル位置
                     local_target_pos = link_inverse_matrix * global_target_pos
 
-                    if (
-                        lidx == len(ik_bone.ik.links) - 1
-                        and 1e-6
-                        > (local_effector_pos - local_target_pos).length_squared()
-                    ):
+                    if 1e-6 > (local_effector_pos - local_target_pos).length_squared():
                         # 位置の差がほとんどない場合、スルー
                         is_break = True
                         break
@@ -1239,15 +1235,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         is_break = True
                         break
 
-                    # 制限角で最大変位量を制限する
-                    if loop < limit_loop_count:
-                        rotation_radian = min(
-                            original_rotation_radian,
-                            ik_bone.ik.unit_rotation.radians.x,
-                        )
-                    else:
-                        rotation_radian = original_rotation_radian
-
                     # リンクボーンの角度を保持
                     link_ik_qq, _ = self.get_rotation(fno, model, link_bone)
                     total_ideal_ik_qq = total_actual_ik_qq = None
@@ -1264,7 +1251,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     if link_bone.has_fixed_axis:
                         # 軸制限ありの場合、軸にそった理想回転量とする
                         ideal_ik_qq = MQuaternion.from_axis_angles(
-                            link_bone.corrected_fixed_axis, rotation_radian
+                            link_bone.corrected_fixed_axis, original_rotation_radian
                         )
                     elif ik_link.local_angle_limit:
                         # ローカル軸角度制限が入っている場合、ローカル軸に合わせて理想回転を求める
@@ -1323,9 +1310,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             # X軸に角度制限が入っている場合（ひざ等）
                             link_axis = MVector3D(1, 0, 0)
 
-                            # 理想回転
+                            # 理想回転(単位角は後で適用する)
                             ideal_ik_qq = MQuaternion.from_axis_angles(
-                                rotation_axis, rotation_radian
+                                rotation_axis, original_rotation_radian
                             )
 
                             # 理想回転をすべて加算した場合の回転量
@@ -1334,7 +1321,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
                             total_actual_ik_qq = self.separate_limit_rotation(
                                 ik_link,
-                                total_ideal_ik_qq,
+                                link_ik_qq,
+                                ideal_ik_qq,
                                 MQuaternionOrder.YXZ,
                                 0,
                                 link_axis,
@@ -1345,12 +1333,21 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         else:
                             # TODO: Y軸制限、Z軸制限
                             ideal_ik_qq = MQuaternion.from_axis_angles(
-                                rotation_axis, rotation_radian
+                                rotation_axis, original_rotation_radian
                             )
                             total_actual_ik_qq = total_ideal_ik_qq = (
                                 link_ik_qq * ideal_ik_qq
                             )
                     else:
+                        # 制限角で最大変位量を制限する
+                        if loop < limit_loop_count:
+                            rotation_radian = min(
+                                original_rotation_radian,
+                                ik_bone.ik.unit_rotation.radians.x,
+                            )
+                        else:
+                            rotation_radian = original_rotation_radian
+
                         # 角度制限がない場合、そのまま計算
                         ideal_ik_qq = MQuaternion.from_axis_angles(
                             rotation_axis, rotation_radian
@@ -1512,7 +1509,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     def separate_limit_rotation(
         self,
         ik_link: IkLink,
-        total_qq: MQuaternion,
+        now_ik_qq: MQuaternion,
+        correct_ik_qq: MQuaternion,
         order: MQuaternionOrder,
         axis: int,
         axis_vec: MVector3D,
@@ -1523,11 +1521,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         """
         全ての角度をラジアン角度に分割して、そのうちのひとつの軸だけを動かす回転を取得する
         """
-        # 全ての軸の角度
-        total_rad = total_qq.to_radian()
+        # 現在IKに入ってるすべての角度
+        now_rad = now_ik_qq.to_radian()
+
+        # 現在調整予定角度の全ての軸の角度
+        total_rad = correct_ik_qq.to_radian()
 
         # 全ての角度をラジアン角度に分解する
-        limit_radians = total_qq.to_radians(order).mmd
+        limit_radians = correct_ik_qq.to_radians(order).mmd
 
         axis_rad = abs(limit_radians.vector[axis])
 
@@ -1548,23 +1549,25 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # 単位角で制限する
         limit_axis_rad = min(unit_radian, limit_rad) if unit_radian else limit_rad
 
-        if is_limit:
-            # 角度制限がある場合、その角度内に収める
-            limit_axis_rad = (
-                np.clip(
-                    limit_axis_rad * axis_sign,
-                    ik_link.min_angle_limit.radians.vector[axis],
-                    ik_link.max_angle_limit.radians.vector[axis],
-                )
-                if is_limit
-                else limit_axis_rad * axis_sign
+        # 全体の角度を計算する
+        total_axis_rad = (limit_axis_rad + now_rad) * axis_sign
+
+        # 角度制限がある場合、全体の角度をその角度内に収める
+        total_limit_axis_rad = (
+            np.clip(
+                total_axis_rad,
+                ik_link.min_angle_limit.radians.vector[axis],
+                ik_link.max_angle_limit.radians.vector[axis],
             )
+            if is_limit
+            else total_axis_rad
+        )
 
         # 単位角とジンバルロックの整合性を取る
         if self.GIMBAL2_RAD < total_rad:
-            result_axis_rad = self.HALF_RAD - limit_axis_rad
+            result_axis_rad = self.HALF_RAD - total_limit_axis_rad
         else:
-            result_axis_rad = limit_axis_rad
+            result_axis_rad = total_limit_axis_rad
 
         # 指定の軸方向に回す
         return MQuaternion.from_axis_angles(axis_vec, result_axis_rad)
