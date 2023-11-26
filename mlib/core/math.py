@@ -848,6 +848,14 @@ class MQuaternion(MVector):
         self.vector.components[0] = v
 
     @property
+    def w(self) -> float:
+        return self.vector.components[0]  # type: ignore
+
+    @w.setter
+    def w(self, v: float) -> None:
+        self.vector.components[0] = v
+
+    @property
     def x(self) -> float:
         return self.vector.components[1]  # type: ignore
 
