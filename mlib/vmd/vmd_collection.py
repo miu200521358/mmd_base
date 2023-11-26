@@ -27,6 +27,7 @@ from mlib.pmx.pmx_part import (
     Bone,
     BoneMorphOffset,
     GroupMorphOffset,
+    IkLink,
     Material,
     MaterialMorphCalcMode,
     MaterialMorphOffset,
@@ -267,6 +268,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
     def create(self, key: str) -> VmdBoneNameFrames:
         return VmdBoneNameFrames(name=key)
+
+    # 88.0f / 180.0f*3.14159265f
+    GIMBAL_RAD = radians(88)
+    GIMBAL2_RAD = radians(88 * 2)
+    HALF_RAD = radians(180)
 
     @property
     def max_fno(self) -> int:
@@ -929,11 +935,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # ik_fno = 1
         # bake_motion = VmdMotion()
 
-        # 88.0f / 180.0f*3.14159265f
-        gimbal_rad = radians(88)
-        gimbal2_rad = radians(88 * 2)
-        half_rad = radians(180)
-
         for ik_target_bone_idx in bone.ik_link_indexes:
             # IKボーン自身の位置
             ik_bone = model.bones[ik_target_bone_idx]
@@ -941,8 +942,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             if ik_target_bone_idx not in model.bones or not ik_bone.ik:
                 continue
 
-            # Ikリンクルートボーン
-            ik_link_root_bone = model.bones[ik_bone.ik.links[-1].bone_index]
             # IKターゲットボーン
             effector_bone = model.bones[ik_bone.ik.bone_index]
 
@@ -950,7 +949,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             ik_matrixes = self.animate_bone_matrixes(
                 [fno],
                 model,
-                bone_names=[ik_bone.name, ik_link_root_bone.name],
+                bone_names=[ik_bone.name],
                 is_calc_ik=False,
             )
 
@@ -1081,7 +1080,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     # リンクボーンの角度を保持
                     link_ik_qq, _ = self.get_rotation(fno, model, link_bone)
-                    total_ideal_ik_qq = total_ik_qq = None
+                    total_ideal_ik_qq = total_actual_ik_qq = None
 
                     # # ■ -----------------
                     # original_link_bf = VmdBoneFrame(
@@ -1161,53 +1160,32 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             # 理想回転をすべて加算した場合の回転量
                             total_ideal_ik_qq: MQuaternion = link_ik_qq * ideal_ik_qq
 
-                            # 全ての角度をラジアン角度に分解する
-                            limit_radians = total_ideal_ik_qq.to_radians(
-                                MQuaternionOrder.ZXY
-                            ).mmd
-
-                            x_limit_rad = abs(limit_radians.x)
-
-                            min_rad = min(
-                                abs(ik_link.min_angle_limit.radians.x),
-                                abs(ik_link.max_angle_limit.radians.x),
-                            )
-                            max_rad = max(
-                                abs(ik_link.min_angle_limit.radians.x),
-                                abs(ik_link.max_angle_limit.radians.x),
-                            )
-                            x_sign = (
-                                1
-                                if max_rad == abs(ik_link.max_angle_limit.radians.x)
-                                else -1
-                            )
-
-                            x_limit_rad = np.clip(x_limit_rad, min_rad, max_rad)
-
-                            # 初回以降で88度を超えている場合、逆に回す
-                            if 0 < loop:
-                                if gimbal2_rad < total_ideal_ik_qq.to_radian():
-                                    x_limit_rad = -(half_rad + x_limit_rad)
-                                elif gimbal_rad < total_ideal_ik_qq.to_radian():
-                                    x_limit_rad = half_rad - x_limit_rad
-
                             # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
-                            total_ik_qq = MQuaternion.from_axis_angles(
-                                MVector3D(x_sign, 0, 0), x_limit_rad
+                            total_actual_ik_qq = self.separate_limit_rotation(
+                                ik_link,
+                                total_ideal_ik_qq,
+                                MQuaternionOrder.YXZ,
+                                0,
+                                MVector3D(1, 0, 0),
+                                loop,
+                                True,
                             )
-
                         else:
                             # TODO: Y軸制限、Z軸制限
                             ideal_ik_qq = MQuaternion.from_axis_angles(
                                 rotation_axis, rotation_radian
                             )
-                            total_ik_qq = total_ideal_ik_qq = link_ik_qq * ideal_ik_qq
+                            total_actual_ik_qq = total_ideal_ik_qq = (
+                                link_ik_qq * ideal_ik_qq
+                            )
                     else:
                         # 角度制限がない場合、そのまま計算
                         ideal_ik_qq = MQuaternion.from_axis_angles(
                             rotation_axis, rotation_radian
                         )
-                        total_ik_qq = total_ideal_ik_qq = link_ik_qq * ideal_ik_qq
+                        total_actual_ik_qq = total_ideal_ik_qq = (
+                            link_ik_qq * ideal_ik_qq
+                        )
 
                     # # ■ -----------------
                     # ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
@@ -1221,13 +1199,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # ik_fno += 1
 
                     # total_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
-                    # total_bf.rotation = total_ik_qq.copy()
+                    # total_bf.rotation = total_actual_ik_qq.copy()
                     # bake_motion.append_bone_frame(total_bf)
                     # ik_fno += 1
                     # # ■ -----------------
 
                     link_bf = self[link_bone.name][fno]
-                    link_bf.ik_rotation = total_ik_qq
+                    link_bf.ik_rotation = total_actual_ik_qq
 
                     # IK用なので最後に追加して補間曲線は分割しない
                     self[link_bone.name].append(link_bf)
@@ -1235,11 +1213,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # IKの結果を更新
                     motion_bone_qqs[0, link_bone.index] = motion_bone_ik_qqs[
                         0, link_bone.index
-                    ] = total_ik_qq.to_matrix4x4().vector
+                    ] = total_actual_ik_qq.to_matrix4x4().vector
 
                     if (
                         total_ideal_ik_qq
-                        and total_ik_qq
+                        and total_actual_ik_qq
                         and lidx < len(ik_bone.ik.links) - 1
                     ):
                         # 通常の計算の場合、理想回転と実際回転が離れていたら残存回転の計算を行う
@@ -1249,7 +1227,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                         # 理想残存回転の計算
                         ideal_remaining_qq: MQuaternion = (
-                            total_ideal_ik_qq * total_ik_qq.inverse()
+                            total_ideal_ik_qq * total_actual_ik_qq.inverse()
                         )
 
                         if (
@@ -1258,27 +1236,29 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         ):
                             # X軸に角度制限が入っている場合（ひざ等）
 
-                            # 全ての角度をラジアン角度に分解する
-                            limit_radians = ideal_remaining_qq.to_radians(
-                                MQuaternionOrder.YXZ
-                            ).mmd
-
-                            x_limit_rad = abs(limit_radians.x)
-
                             # Xだけで残存回転を求める
-                            remaining_qq = MQuaternion.from_axis_angles(
-                                MVector3D(x_sign, 0, 0), x_limit_rad
+                            remaining_parent_qq = self.separate_limit_rotation(
+                                ik_link,
+                                ideal_remaining_qq,
+                                MQuaternionOrder.ZXY,
+                                0,
+                                MVector3D(1, 0, 0),
+                                loop,
+                                False,
                             )
+
                         else:
                             # TODO: YZも同様に再計算
-                            remaining_qq = ideal_remaining_qq
+                            remaining_parent_qq = ideal_remaining_qq
 
                         # 残存回転をひとつ後のリンクボーンに渡す
                         parent_link_qq, _ = self.get_rotation(
                             fno, model, parent_link_bone
                         )
                         parent_link_bf = self[parent_link_bone.name][fno]
-                        parent_link_bf.ik_rotation = parent_link_qq * remaining_qq
+                        parent_link_bf.ik_rotation = (
+                            parent_link_qq * remaining_parent_qq
+                        )
                         self[parent_link_bone.name].append(parent_link_bf)
 
                         # 残存回転の結果を更新
@@ -1304,7 +1284,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         # remaining_bf = VmdBoneFrame(
                         #     ik_fno, parent_link_bone.name, register=True
                         # )
-                        # remaining_bf.rotation = remaining_qq.copy()
+                        # remaining_bf.rotation = remaining_parent_qq.copy()
                         # bake_motion.append_bone_frame(remaining_bf)
                         # ik_fno += 1
 
@@ -1355,6 +1335,60 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 return qq.to_other_axis_rotation(bone.corrected_local_y_vector)
 
         return self.get_axis_rotation(bone, qq)
+
+    def separate_limit_rotation(
+        self,
+        ik_link: IkLink,
+        total_qq: MQuaternion,
+        order: MQuaternionOrder,
+        axis: int,
+        axis_vec: MVector3D,
+        loop: int,
+        is_limit: bool,
+    ) -> MQuaternion:
+        """
+        全ての角度をラジアン角度に分割して、そのうちのひとつの軸だけを動かす回転を取得する
+        """
+
+        # 全ての角度をラジアン角度に分解する
+        limit_radians = total_qq.to_radians(order).mmd
+
+        limit_rad = abs(limit_radians.vector[axis])
+
+        min_rad = min(
+            abs(ik_link.min_angle_limit.radians.vector[axis]),
+            abs(ik_link.max_angle_limit.radians.vector[axis]),
+        )
+        max_rad = max(
+            abs(ik_link.min_angle_limit.radians.vector[axis]),
+            abs(ik_link.max_angle_limit.radians.vector[axis]),
+        )
+        axis_sign = (
+            1 if max_rad == abs(ik_link.max_angle_limit.radians.vector[axis]) else -1
+        )
+
+        if is_limit:
+            # 制限角度でクリップする
+            limit_rad = np.clip(limit_rad, min_rad, max_rad)
+
+        axis_vec *= (
+            MVector3D(axis_sign, 1, 1)
+            if axis == 0
+            else MVector3D(1, axis_sign, 1)
+            if axis == 1
+            else MVector3D(1, 1, axis_sign)
+        )
+
+        # 初回以降でジンバルロックを超えている場合、逆に回す
+        if 0 < loop:
+            if self.GIMBAL2_RAD < total_qq.to_radian():
+                limit_rad = -(self.HALF_RAD + limit_rad)
+            elif self.GIMBAL_RAD < total_qq.to_radian():
+                limit_rad = self.HALF_RAD - limit_rad
+
+        # 既存のFK回転・IK回転・今回の計算をすべて含めて回転を求める
+        # return MQuaternion.from_axis_angles(axis_vec, limit_rad)
+        return MQuaternion.from_radians(axis_vec * limit_rad, order)
 
     def get_axis_rotation(self, bone: Bone, qq: MQuaternion) -> MQuaternion:
         """

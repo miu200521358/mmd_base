@@ -1,7 +1,7 @@
 import operator
 from enum import IntEnum, auto
 from functools import lru_cache
-from math import acos, cos, degrees, pi, radians, sin, sqrt
+from math import acos, asin, atan2, cos, degrees, pi, radians, sin, sqrt
 from typing import Optional, Type, TypeVar, Union
 
 import numpy as np
@@ -1137,8 +1137,6 @@ class MQuaternion(MVector):
     ) -> MVector3D:
         """
         クォータニオンをオイラー角に変換する
-        https://programming-surgeon.com/script/euler-python-script/
-        https://site.nicovideo.jp/ch/userblomaga_thanks/archive/ar805999
         """
         if not self:
             return MVector3D()
@@ -1148,7 +1146,7 @@ class MQuaternion(MVector):
     def to_radians(self, order: MQuaternionOrder) -> MVector3D:
         """
         クォータニオンをラジアン角に変換する(行列計算)
-        https://programming-surgeon.com/script/euler-python-script/
+        https://qiita.com/aa_debdeb/items/abe90a9bd0b4809813da
         https://site.nicovideo.jp/ch/userblomaga_thanks/archive/ar805999
         """
         if not self:
@@ -1162,31 +1160,137 @@ class MQuaternion(MVector):
         ) = self.to_matrix4x4().vector
 
         if order == MQuaternionOrder.XYZ:
-            x_rad = np.arctan(-r23 / r33)
-            y_rad = np.arctan(r13 * np.cos(x_rad) / r33)
-            z_rad = np.arctan(-r12 / r11)
-        elif order == MQuaternionOrder.XZY:
-            x_rad = np.arctan(r32 / r22)
-            z_rad = np.arctan(-r12 * np.cos(x_rad) / r22)
-            y_rad = np.arctan(r13 / r11)
-        elif order == MQuaternionOrder.YXZ:
-            y_rad = np.arctan(r13 / r33)
-            x_rad = np.arctan(-r23 * np.cos(y_rad) / r33)
-            z_rad = np.arctan(r21 / r22)
-        elif order == MQuaternionOrder.YZX:
-            y_rad = np.arctan(-r31 / r11)
-            z_rad = np.arctan(r21 * np.cos(y_rad) / r11)
-            x_rad = np.arctan(-r23 / r22)
-        elif order == MQuaternionOrder.ZXY:
-            z_rad = np.arctan(-r12 / r22)
-            x_rad = np.arctan(r32 * np.cos(z_rad) / r22)
-            y_rad = np.arctan(-r31 / r33)
-        elif order == MQuaternionOrder.ZYX:
-            z_rad = np.arctan(r21 / r11)
-            y_rad = np.arctan(-r31 * np.cos(z_rad) / r11)
-            x_rad = np.arctan(r32 / r33)
+            sy = 2 * (self.x * self.z + self.y * self.w)
+            unlocked = abs(sy) < 0.99999
+            return MVector3D(
+                atan2(
+                    -(2 * self.y * self.z - 2 * self.x * self.w),
+                    2 * self.w * self.w + 2 * self.z * self.z - 1,
+                )
+                if unlocked
+                else atan2(
+                    2 * self.y * self.z + 2 * self.x * self.w,
+                    2 * self.w * self.w + 2 * self.y * self.y - 1,
+                ),
+                asin(sy),
+                atan2(
+                    -(2 * self.x * self.y - 2 * self.z * self.w),
+                    2 * self.w * self.w + 2 * self.x * self.x - 1,
+                )
+                if unlocked
+                else 0,
+            )
 
-        return MVector3D(x_rad, y_rad, z_rad)
+        elif order == MQuaternionOrder.XZY:
+            sz = -(2 * self.x * self.y - 2 * self.z * self.w)
+            unlocked = abs(sz) < 0.99999
+            return MVector3D(
+                atan2(
+                    2 * self.y * self.z + 2 * self.x * self.w,
+                    2 * self.w * self.w + 2 * self.y * self.y - 1,
+                )
+                if unlocked
+                else atan2(
+                    -(2 * self.y * self.z - 2 * self.x * self.w),
+                    2 * self.w * self.w + 2 * self.z * self.z - 1,
+                ),
+                atan2(
+                    2 * self.x * self.z + 2 * self.y * self.w,
+                    2 * self.w * self.w + 2 * self.x * self.x - 1,
+                )
+                if unlocked
+                else 0,
+                asin(sz),
+            )
+        elif order == MQuaternionOrder.YXZ:
+            sx = -(2 * self.y * self.z - 2 * self.x * self.w)
+            unlocked = abs(sx) < 0.99999
+            return MVector3D(
+                asin(sx),
+                atan2(
+                    2 * self.x * self.z + 2 * self.y * self.w,
+                    2 * self.w * self.w + 2 * self.z * self.z - 1,
+                )
+                if unlocked
+                else atan2(
+                    -(2 * self.x * self.z - 2 * self.y * self.w),
+                    2 * self.w * self.w + 2 * self.x * self.x - 1,
+                ),
+                atan2(
+                    2 * self.x * self.y + 2 * self.z * self.w,
+                    2 * self.w * self.w + 2 * self.y * self.y - 1,
+                )
+                if unlocked
+                else 0,
+            )
+
+        elif order == MQuaternionOrder.YZX:
+            sz = 2 * (self.x * self.y + self.z * self.w)
+            unlocked = abs(sz) < 0.99999
+            return MVector3D(
+                atan2(
+                    -(2 * self.y * self.z - 2 * self.x * self.w),
+                    2 * self.w * self.w + 2 * self.y * self.y - 1,
+                )
+                if unlocked
+                else 0,
+                atan2(
+                    -(2 * self.x * self.z - 2 * self.y * self.w),
+                    2 * self.w * self.w + 2 * self.x * self.x - 1,
+                )
+                if unlocked
+                else atan2(
+                    2 * self.x * self.z + 2 * self.y * self.w,
+                    2 * self.w * self.w + 2 * self.z * self.z - 1,
+                ),
+                asin(sz),
+            )
+
+        elif order == MQuaternionOrder.ZXY:
+            sx = 2 * (self.y * self.z + self.x * self.w)
+            unlocked = abs(sx) < 0.99999
+            return MVector3D(
+                asin(sx),
+                atan2(
+                    -(2 * self.x * self.z - 2 * self.y * self.w),
+                    2 * self.w * self.w + 2 * self.z * self.z - 1,
+                )
+                if unlocked
+                else 0,
+                atan2(
+                    -(2 * self.x * self.y - 2 * self.z * self.w),
+                    2 * self.w * self.w + 2 * self.y * self.y - 1,
+                )
+                if unlocked
+                else atan2(
+                    2 * self.x * self.y + 2 * self.z * self.w,
+                    2 * self.w * self.w + 2 * self.x * self.x - 1,
+                ),
+            )
+
+        elif order == MQuaternionOrder.ZYX:
+            sy = -(2 * self.x * self.z - 2 * self.y * self.w)
+            unlocked = abs(sy) < 0.99999
+            return MVector3D(
+                atan2(
+                    2 * self.y * self.z + 2 * self.x * self.w,
+                    2 * self.w * self.w + 2 * self.z * self.z - 1,
+                )
+                if unlocked
+                else 0,
+                asin(sy),
+                atan2(
+                    2 * self.x * self.y + 2 * self.z * self.w,
+                    2 * self.w * self.w + 2 * self.x * self.x - 1,
+                )
+                if unlocked
+                else atan2(
+                    -(2 * self.x * self.y - 2 * self.z * self.w),
+                    2 * self.w * self.w + 2 * self.y * self.y - 1,
+                ),
+            )
+
+        return MVector3D()
 
     def as_radians(self) -> MVector3D:
         """
@@ -1259,9 +1363,10 @@ class MQuaternion(MVector):
     ) -> "MQuaternion":
         """
         ラジアン角をクォータニオンに変換する
+        https://qiita.com/aa_debdeb/items/abe90a9bd0b4809813da
         """
         if isinstance(a, (int, float)):
-            theta1, theta2, theta3 = a, b, c
+            theta_x, theta_y, theta_z = a, b, c
             # if order == MQuaternionOrder.XYZ:
             #     theta1, theta2, theta3 = a, b, c
             # elif order == MQuaternionOrder.XZY:
@@ -1275,7 +1380,7 @@ class MQuaternion(MVector):
             # elif order == MQuaternionOrder.ZYX:
             #     theta1, theta2, theta3 = c, b, a
         else:
-            theta1, theta2, theta3 = a.x, a.y, a.z
+            theta_x, theta_y, theta_z = a.x, a.y, a.z
             # if order == MQuaternionOrder.XYZ:
             #     theta1, theta2, theta3 = a.x, a.y, a.z
             # elif order == MQuaternionOrder.XZY:
@@ -1289,68 +1394,62 @@ class MQuaternion(MVector):
             # elif order == MQuaternionOrder.ZYX:
             #     theta1, theta2, theta3 = a.z, a.y, a.x
 
-        c1 = np.cos(theta1)
-        s1 = np.sin(theta1)
-        c2 = np.cos(theta2)
-        s2 = np.sin(theta2)
-        c3 = np.cos(theta3)
-        s3 = np.sin(theta3)
+        cx = cos(0.5 * theta_x)
+        sx = sin(0.5 * theta_x)
+        cy = cos(0.5 * theta_y)
+        sy = sin(0.5 * theta_y)
+        cz = cos(0.5 * theta_z)
+        sz = sin(0.5 * theta_z)
+
+        qq = MQuaternion()
 
         if order == MQuaternionOrder.XYZ:
-            matrix = np.array(
-                [
-                    [c2 * c3, -c2 * s3, s2],
-                    [c1 * s3 + c3 * s1 * s2, c1 * c3 - s1 * s2 * s3, -c2 * s1],
-                    [s1 * s3 - c1 * c3 * s2, c3 * s1 + c1 * s2 * s3, c1 * c2],
-                ]
+            qq.vector = quaternion(
+                -sx * sy * sz + cx * cy * cz,
+                cx * sy * sz + sx * cy * cz,
+                -sx * cy * sz + cx * sy * cz,
+                cx * cy * sz + sx * sy * cz,
             )
 
         elif order == MQuaternionOrder.XZY:
-            matrix = np.array(
-                [
-                    [c2 * c3, -s2, c2 * s3],
-                    [s1 * s3 + c1 * c3 * s2, c1 * c2, c1 * s2 * s3 - c3 * s1],
-                    [c3 * s1 * s2 - c1 * s3, c2 * s1, c1 * c3 + s1 * s2 * s3],
-                ]
+            qq.vector = quaternion(
+                sx * sy * sz + cx * cy * cz,
+                -cx * sy * sz + sx * cy * cz,
+                cx * sy * cz - sx * cy * sz,
+                sx * sy * cz + cx * cy * sz,
             )
 
         elif order == MQuaternionOrder.YXZ:
-            matrix = np.array(
-                [
-                    [c1 * c3 + s1 * s2 * s3, c3 * s1 * s2 - c1 * s3, c2 * s1],
-                    [c2 * s3, c2 * c3, -s2],
-                    [c1 * s2 * s3 - c3 * s1, c1 * c3 * s2 + s1 * s3, c1 * c2],
-                ]
+            qq.vector = quaternion(
+                sx * sy * sz + cx * cy * cz,
+                cx * sy * sz + sx * cy * cz,
+                -sx * cy * sz + cx * sy * cz,
+                cx * cy * sz - sx * sy * cz,
             )
 
         elif order == MQuaternionOrder.YZX:
-            matrix = np.array(
-                [
-                    [c1 * c2, s1 * s3 - c1 * c3 * s2, c3 * s1 + c1 * s2 * s3],
-                    [s2, c2 * c3, -c2 * s3],
-                    [-c2 * s1, c1 * s3 + c3 * s1 * s2, c1 * c3 - s1 * s2 * s3],
-                ]
+            qq.vector = (
+                -sx * sy * sz + cx * cy * cz,
+                sx * cy * cz + cx * sy * sz,
+                sx * cy * sz + cx * sy * cz,
+                -sx * sy * cz + cx * cy * sz,
             )
 
         elif order == MQuaternionOrder.ZXY:
-            matrix = np.array(
-                [
-                    [c1 * c3 - s1 * s2 * s3, -c2 * s1, c1 * s3 + c3 * s1 * s2],
-                    [c3 * s1 + c1 * s2 * s3, c1 * c2, s1 * s3 - c1 * c3 * s2],
-                    [-c2 * s3, s2, c2 * c3],
-                ]
-            )
-        elif order == MQuaternionOrder.ZYX:
-            matrix = np.array(
-                [
-                    [c1 * c2, c1 * s2 * s3 - c3 * s1, s1 * s3 + c1 * c3 * s2],
-                    [c2 * s1, c1 * c3 + s1 * s2 * s3, c3 * s1 * s2 - c1 * s3],
-                    [-s2, c2 * s3, c2 * c3],
-                ]
+            qq.vector = quaternion(
+                -sx * sy * sz + cx * cy * cz,
+                -cx * sy * sz + sx * cy * cz,
+                cx * sy * cz + sx * cy * sz,
+                sx * sy * cz + cx * cy * sz,
             )
 
-        qq = MQuaternion()
-        qq.vector = from_rotation_matrix(matrix)
+        elif order == MQuaternionOrder.ZYX:
+            qq.vector = quaternion(
+                sx * sy * sz + cx * cy * cz,
+                sx * cy * cz - cx * sy * sz,
+                sx * cy * sz + cx * sy * cz,
+                -sx * sy * cz + cx * cy * sz,
+            )
 
         return qq
 
