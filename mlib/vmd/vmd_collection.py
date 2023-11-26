@@ -1,5 +1,6 @@
 import os
 from bisect import bisect_left
+from concurrent.futures import Future, ThreadPoolExecutor
 from functools import lru_cache
 from itertools import product
 from math import radians
@@ -273,6 +274,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     GIMBAL_RAD = radians(88)
     GIMBAL2_RAD = radians(88 * 2)
     HALF_RAD = radians(180)
+    FULL_RAD = radians(360)
 
     @property
     def max_fno(self) -> int:
@@ -291,6 +293,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         is_calc_ik: bool = True,
         out_fno_log: bool = False,
         description: str = "",
+        max_worker: int = 1,
     ) -> VmdBoneFrameTrees:
         # 処理対象ボーン名取得
         target_bone_names = self.get_animate_bone_names(model, bone_names)
@@ -339,21 +342,40 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             )
 
         # モーションボーン操作
-        (
-            motion_bone_poses,
-            motion_bone_qqs,
-            motion_bone_scales,
-            motion_bone_local_poses,
-            motion_bone_local_qqs,
-            motion_bone_local_scales,
-            motion_bone_ik_qqs,
-        ) = self.get_bone_matrixes(
-            fnos,
-            model,
-            target_bone_names,
-            out_fno_log=out_fno_log,
-            description=description,
-        )
+        if 1 < len(fnos) and 1 < max_worker:
+            # 複数キーフレを並列で求められる条件である場合、並列処理で求める
+            (
+                motion_bone_poses,
+                motion_bone_qqs,
+                motion_bone_scales,
+                motion_bone_local_poses,
+                motion_bone_local_qqs,
+                motion_bone_local_scales,
+                motion_bone_ik_qqs,
+            ) = self.get_bone_matrixes_parallel(
+                fnos,
+                model,
+                target_bone_names,
+                out_fno_log=out_fno_log,
+                description=description,
+                max_worker=max_worker,
+            )
+        else:
+            (
+                motion_bone_poses,
+                motion_bone_qqs,
+                motion_bone_scales,
+                motion_bone_local_poses,
+                motion_bone_local_qqs,
+                motion_bone_local_scales,
+                motion_bone_ik_qqs,
+            ) = self.get_bone_matrixes(
+                fnos,
+                model,
+                target_bone_names,
+                out_fno_log=out_fno_log,
+                description=description,
+            )
 
         # ボーン変形行列
         matrixes = np.full(motion_bone_poses.shape, np.eye(4))
@@ -550,6 +572,154 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_scales = np.full((row, col, 4, 4), np.eye(4))
 
         total_count = len(fnos) * len(target_bone_names)
+
+        for fidx, fno in enumerate(fnos):
+            fno_poses: dict[int, MVector3D] = {}
+            fno_scales: dict[int, MVector3D] = {}
+            fno_local_poses: dict[int, MVector3D] = {}
+            fno_local_qqs: dict[int, MQuaternion] = {}
+            fno_local_scales: dict[int, MVector3D] = {}
+
+            is_valid_local_pos = False
+            is_valid_local_rot = False
+            is_valid_local_scale = False
+
+            for bidx, bone_name in enumerate(target_bone_names):
+                if out_fno_log:
+                    logger.count(
+                        "ボーン計算[{d}]",
+                        d=description,
+                        index=fidx * len(target_bone_names) + bidx,
+                        total_index_count=total_count,
+                        display_block=100,
+                    )
+
+                bone = model.bones[bone_name]
+                if bone.index in fno_local_poses:
+                    continue
+                bf = self[bone.name][fno]
+                fno_poses[bone.index] = bf.position
+                fno_scales[bone.index] = bf.scale
+                fno_local_poses[bone.index] = bf.local_position
+                fno_local_qqs[bone.index] = bf.local_rotation
+                fno_local_scales[bone.index] = bf.local_scale
+
+                is_valid_local_pos = is_valid_local_pos or bool(bf.local_position)
+                is_valid_local_rot = is_valid_local_rot or bool(bf.local_rotation)
+                is_valid_local_scale = is_valid_local_scale or bool(bf.local_scale)
+
+            for bone_name in target_bone_names:
+                bone = model.bones[bone_name]
+
+                is_parent_bone_not_local_cancels: list[bool] = []
+                parent_local_poses: list[MVector3D] = []
+                parent_local_qqs: list[MQuaternion] = []
+                parent_local_scales: list[MVector3D] = []
+                parent_local_axises: list[MVector3D] = []
+
+                for parent_index in bone.tree_indexes[:-1]:
+                    parent_bone = model.bones[parent_index]
+                    if parent_bone.index not in fno_local_poses:
+                        parent_bf = self[parent_bone.name][fno]
+                        fno_local_poses[parent_bone.index] = parent_bf.local_position
+                        fno_local_qqs[parent_bone.index] = parent_bf.local_rotation
+                        fno_local_scales[parent_bone.index] = parent_bf.local_scale
+                    is_parent_bone_not_local_cancels.append(
+                        model.bones.is_bone_not_local_cancels[parent_bone.index]
+                    )
+                    parent_local_axises.append(
+                        model.bones.local_axises[parent_bone.index]
+                    )
+                    parent_local_poses.append(fno_local_poses[parent_bone.index])
+                    parent_local_qqs.append(fno_local_qqs[parent_bone.index])
+                    parent_local_scales.append(fno_local_scales[parent_bone.index])
+
+                poses[fidx, bone.index] = self.get_position(
+                    fno, model, bone, fno_poses[bone.index]
+                )
+
+                # モーションによるローカル移動量
+                if is_valid_local_pos:
+                    local_pos_mat = self.get_local_position(
+                        bone,
+                        fno_local_poses,
+                        is_parent_bone_not_local_cancels,
+                        parent_local_poses,
+                        parent_local_axises,
+                    )
+                    local_poses[fidx, bone.index] = local_pos_mat
+
+                # FK(捩り) > IK(捩り) > 付与親(捩り)
+                # ここではもうIKの回転結果は求まってるのでIK計算を追加では行わない
+                qq, ik_qq = self.get_rotation(fno, model, bone)
+                qqs[fidx, bone.index] = qq.to_matrix4x4().vector
+                ik_qqs[fidx, bone.index] = ik_qq.to_matrix4x4().vector
+
+                # ローカル回転
+                if is_valid_local_rot:
+                    local_rot_mat = self.get_local_rotation(
+                        bone,
+                        fno_local_qqs,
+                        is_parent_bone_not_local_cancels,
+                        parent_local_qqs,
+                        parent_local_axises,
+                    )
+                    local_qqs[fidx, bone.index] = local_rot_mat
+
+                # モーションによるスケール変化
+                scale_mat = self.get_scale(fno, model, bone, fno_scales[bone.index])
+                scales[fidx, bone.index] = scale_mat
+
+                # ローカルスケール
+                if is_valid_local_scale:
+                    local_scale_mat = self.get_local_scale(
+                        bone,
+                        fno_local_scales,
+                        is_parent_bone_not_local_cancels,
+                        parent_local_scales,
+                        parent_local_axises,
+                    )
+                    local_scales[fidx, bone.index] = local_scale_mat
+
+        return poses, qqs, scales, local_poses, local_qqs, local_scales, ik_qqs
+
+    def get_bone_matrixes_parallel(
+        self,
+        fnos: list[int],
+        model: PmxModel,
+        target_bone_names: list[str],
+        out_fno_log: bool = False,
+        description: str = "",
+        max_worker: int = 1,
+    ) -> tuple[
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+    ]:
+        """ボーン変形行列を求める"""
+
+        row = len(fnos)
+        col = len(model.bones)
+        poses = np.full((row, col, 4, 4), np.eye(4))
+        qqs = np.full((row, col, 4, 4), np.eye(4))
+        ik_qqs = np.full((row, col, 4, 4), np.eye(4))
+        scales = np.full((row, col, 4, 4), np.eye(4))
+        local_poses = np.full((row, col, 4, 4), np.eye(4))
+        local_qqs = np.full((row, col, 4, 4), np.eye(4))
+        local_scales = np.full((row, col, 4, 4), np.eye(4))
+
+        total_count = len(fnos) * len(target_bone_names)
+
+        with ThreadPoolExecutor(
+            thread_name_prefix="bone_matrixes", max_workers=self.max_worker
+        ) as executor:
+            pos_futures: list[Future] = []
+            local_pos_futures: list[Future] = []
+            local_pos_futures: list[Future] = []
 
         for fidx, fno in enumerate(fnos):
             fno_poses: dict[int, MVector3D] = {}
@@ -932,8 +1102,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         IKを加味した回転を求める
         """
 
-        # ik_fno = 1
-        # bake_motion = VmdMotion()
+        ik_fno = 1
+        bake_motion = VmdMotion()
 
         for ik_target_bone_idx in bone.ik_link_indexes:
             # IKボーン自身の位置
@@ -1070,7 +1240,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         break
 
                     # 制限角で最大変位量を制限する
-                    if 0 < loop < limit_loop_count:
+                    if loop < limit_loop_count:
                         rotation_radian = min(
                             original_rotation_radian,
                             ik_bone.ik.unit_rotation.radians.x,
@@ -1082,14 +1252,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     link_ik_qq, _ = self.get_rotation(fno, model, link_bone)
                     total_ideal_ik_qq = total_actual_ik_qq = None
 
-                    # # ■ -----------------
-                    # original_link_bf = VmdBoneFrame(
-                    #     ik_fno, link_bone.name, register=True
-                    # )
-                    # original_link_bf.rotation = link_ik_qq.copy()
-                    # bake_motion.append_bone_frame(original_link_bf)
-                    # ik_fno += 1
-                    # # ■ -----------------
+                    # ■ -----------------
+                    original_link_bf = VmdBoneFrame(
+                        ik_fno, link_bone.name, register=True
+                    )
+                    original_link_bf.rotation = link_ik_qq.copy()
+                    bake_motion.append_bone_frame(original_link_bf)
+                    ik_fno += 1
+                    # ■ -----------------
 
                     if link_bone.has_fixed_axis:
                         # 軸制限ありの場合、軸にそった理想回転量とする
@@ -1151,6 +1321,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             or ik_link.max_angle_limit.radians.x
                         ):
                             # X軸に角度制限が入っている場合（ひざ等）
+                            link_axis = MVector3D(1, 0, 0)
 
                             # 理想回転
                             ideal_ik_qq = MQuaternion.from_axis_angles(
@@ -1166,7 +1337,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                                 total_ideal_ik_qq,
                                 MQuaternionOrder.YXZ,
                                 0,
-                                MVector3D(1, 0, 0),
+                                link_axis,
+                                ik_bone.ik.unit_rotation.radians.x,
                                 loop,
                                 True,
                             )
@@ -1187,22 +1359,22 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             link_ik_qq * ideal_ik_qq
                         )
 
-                    # # ■ -----------------
-                    # ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
-                    # ideal_bf.rotation = ideal_ik_qq.copy()
-                    # bake_motion.append_bone_frame(ideal_bf)
-                    # ik_fno += 1
+                    # ■ -----------------
+                    ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
+                    ideal_bf.rotation = ideal_ik_qq.copy()
+                    bake_motion.append_bone_frame(ideal_bf)
+                    ik_fno += 1
 
-                    # total_ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
-                    # total_ideal_bf.rotation = total_ideal_ik_qq.copy()
-                    # bake_motion.append_bone_frame(total_ideal_bf)
-                    # ik_fno += 1
+                    total_ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
+                    total_ideal_bf.rotation = total_ideal_ik_qq.copy()
+                    bake_motion.append_bone_frame(total_ideal_bf)
+                    ik_fno += 1
 
-                    # total_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
-                    # total_bf.rotation = total_actual_ik_qq.copy()
-                    # bake_motion.append_bone_frame(total_bf)
-                    # ik_fno += 1
-                    # # ■ -----------------
+                    total_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
+                    total_bf.rotation = total_actual_ik_qq.copy()
+                    bake_motion.append_bone_frame(total_bf)
+                    ik_fno += 1
+                    # ■ -----------------
 
                     link_bf = self[link_bone.name][fno]
                     link_bf.ik_rotation = total_actual_ik_qq
@@ -1215,103 +1387,104 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         0, link_bone.index
                     ] = total_actual_ik_qq.to_matrix4x4().vector
 
-                    if (
-                        total_ideal_ik_qq
-                        and total_actual_ik_qq
-                        and lidx < len(ik_bone.ik.links) - 1
-                    ):
-                        # 通常の計算の場合、理想回転と実際回転が離れていたら残存回転の計算を行う
-                        parent_link_bone = model.bones[
-                            ik_bone.ik.links[lidx + 1].bone_index
-                        ]
+                    # if (
+                    #     total_ideal_ik_qq
+                    #     and total_actual_ik_qq
+                    #     and lidx < len(ik_bone.ik.links) - 1
+                    # ):
+                    #     # 通常の計算の場合、理想回転と実際回転が離れていたら残存回転の計算を行う
+                    #     parent_link_bone = model.bones[
+                    #         ik_bone.ik.links[lidx + 1].bone_index
+                    #     ]
 
-                        # 理想残存回転の計算
-                        ideal_remaining_qq: MQuaternion = (
-                            total_ideal_ik_qq * total_actual_ik_qq.inverse()
-                        )
+                    #     # 理想残存回転の計算
+                    #     ideal_remaining_qq: MQuaternion = (
+                    #         total_ideal_ik_qq * total_actual_ik_qq.inverse()
+                    #     )
 
-                        if (
-                            ik_link.min_angle_limit.radians.x
-                            or ik_link.max_angle_limit.radians.x
-                        ):
-                            # X軸に角度制限が入っている場合（ひざ等）
+                    #     if (
+                    #         ik_link.min_angle_limit.radians.x
+                    #         or ik_link.max_angle_limit.radians.x
+                    #     ):
+                    #         # X軸に角度制限が入っている場合（ひざ等）
 
-                            # Xだけで残存回転を求める
-                            remaining_parent_qq = self.separate_limit_rotation(
-                                ik_link,
-                                ideal_remaining_qq,
-                                MQuaternionOrder.ZXY,
-                                0,
-                                MVector3D(1, 0, 0),
-                                loop,
-                                False,
-                            )
+                    #         # Xだけで残存回転を求める
+                    #         remaining_parent_qq = self.separate_limit_rotation(
+                    #             ik_link,
+                    #             ideal_remaining_qq,
+                    #             MQuaternionOrder.YXZ,
+                    #             0,
+                    #             link_axis,
+                    #             0,
+                    #             loop,
+                    #             False,
+                    #         )
 
-                        else:
-                            # TODO: YZも同様に再計算
-                            remaining_parent_qq = ideal_remaining_qq
+                    #     else:
+                    #         # TODO: YZも同様に再計算
+                    #         remaining_parent_qq = ideal_remaining_qq
 
-                        # 残存回転をひとつ後のリンクボーンに渡す
-                        parent_link_qq, _ = self.get_rotation(
-                            fno, model, parent_link_bone
-                        )
-                        parent_link_bf = self[parent_link_bone.name][fno]
-                        parent_link_bf.ik_rotation = (
-                            parent_link_qq * remaining_parent_qq
-                        )
-                        self[parent_link_bone.name].append(parent_link_bf)
+                    #     # 残存回転をひとつ後のリンクボーンに渡す
+                    #     parent_link_qq, _ = self.get_rotation(
+                    #         fno, model, parent_link_bone
+                    #     )
+                    #     parent_link_bf = self[parent_link_bone.name][fno]
+                    #     parent_link_bf.ik_rotation = (
+                    #         parent_link_qq * remaining_parent_qq
+                    #     )
+                    #     self[parent_link_bone.name].append(parent_link_bf)
 
-                        # 残存回転の結果を更新
-                        motion_bone_qqs[0, parent_link_bone.index] = motion_bone_ik_qqs[
-                            0, parent_link_bone.index
-                        ] = parent_link_bf.ik_rotation.to_matrix4x4().vector
+                    #     # 残存回転の結果を更新
+                    #     motion_bone_qqs[0, parent_link_bone.index] = motion_bone_ik_qqs[
+                    #         0, parent_link_bone.index
+                    #     ] = parent_link_bf.ik_rotation.to_matrix4x4().vector
 
-                        # # ■ -------------
-                        # original_parent_bf = VmdBoneFrame(
-                        #     ik_fno, parent_link_bone.name, register=True
-                        # )
-                        # original_parent_bf.rotation = parent_link_qq.copy()
-                        # bake_motion.append_bone_frame(original_parent_bf)
-                        # ik_fno += 1
+                    #     # ■ -------------
+                    #     original_parent_bf = VmdBoneFrame(
+                    #         ik_fno, parent_link_bone.name, register=True
+                    #     )
+                    #     original_parent_bf.rotation = parent_link_qq.copy()
+                    #     bake_motion.append_bone_frame(original_parent_bf)
+                    #     ik_fno += 1
 
-                        # remaining_ideal_bf = VmdBoneFrame(
-                        #     ik_fno, parent_link_bone.name, register=True
-                        # )
-                        # remaining_ideal_bf.rotation = ideal_remaining_qq.copy()
-                        # bake_motion.append_bone_frame(remaining_ideal_bf)
-                        # ik_fno += 1
+                    #     remaining_ideal_bf = VmdBoneFrame(
+                    #         ik_fno, parent_link_bone.name, register=True
+                    #     )
+                    #     remaining_ideal_bf.rotation = ideal_remaining_qq.copy()
+                    #     bake_motion.append_bone_frame(remaining_ideal_bf)
+                    #     ik_fno += 1
 
-                        # remaining_bf = VmdBoneFrame(
-                        #     ik_fno, parent_link_bone.name, register=True
-                        # )
-                        # remaining_bf.rotation = remaining_parent_qq.copy()
-                        # bake_motion.append_bone_frame(remaining_bf)
-                        # ik_fno += 1
+                    #     remaining_bf = VmdBoneFrame(
+                    #         ik_fno, parent_link_bone.name, register=True
+                    #     )
+                    #     remaining_bf.rotation = remaining_parent_qq.copy()
+                    #     bake_motion.append_bone_frame(remaining_bf)
+                    #     ik_fno += 1
 
-                        # remaining_actual_bf = VmdBoneFrame(
-                        #     ik_fno, parent_link_bone.name, register=True
-                        # )
-                        # remaining_actual_bf.rotation = parent_link_bf.ik_rotation.copy()
-                        # bake_motion.append_bone_frame(remaining_actual_bf)
-                        # ik_fno += 1
-                        # # ■ -------------
+                    #     remaining_actual_bf = VmdBoneFrame(
+                    #         ik_fno, parent_link_bone.name, register=True
+                    #     )
+                    #     remaining_actual_bf.rotation = parent_link_bf.ik_rotation.copy()
+                    #     bake_motion.append_bone_frame(remaining_actual_bf)
+                    #     ik_fno += 1
+                    #     # ■ -------------
 
                 if is_break:
                     break
             if is_break:
                 break
 
-        # # ■ --------------
-        # from datetime import datetime
+        # ■ --------------
+        from datetime import datetime
 
-        # from mlib.vmd.vmd_writer import VmdWriter
+        from mlib.vmd.vmd_writer import VmdWriter
 
-        # VmdWriter(
-        #     bake_motion,
-        #     f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{ik_bone.name}_{fno:04d}.vmd",
-        #     model_name="Test Model",
-        # ).save()
-        # # ■ --------------
+        VmdWriter(
+            bake_motion,
+            f"E:/MMD/サイジング/足IK/IK_step/{datetime.now():%Y%m%d_%H%M%S_%f}_{ik_bone.name}_{fno:04d}.vmd",
+            model_name="Test Model",
+        ).save()
+        # ■ --------------
 
         # IKの計算結果の回転を加味して返す
         bf = self[bone.name][fno]
@@ -1343,6 +1516,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         order: MQuaternionOrder,
         axis: int,
         axis_vec: MVector3D,
+        unit_radian: float,
         loop: int,
         is_limit: bool,
     ) -> MQuaternion:
@@ -1350,37 +1524,108 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         全ての角度をラジアン角度に分割して、そのうちのひとつの軸だけを動かす回転を取得する
         """
 
+        # rad = (
+        #     min(total_qq.to_radian(), unit_radian)
+        #     if unit_radian
+        #     else total_qq.to_radian()
+        # )
+
+        # max_rad = max(
+        #     abs(ik_link.min_angle_limit.radians.vector[axis]),
+        #     abs(ik_link.max_angle_limit.radians.vector[axis]),
+        # )
+        # min_rad = min(
+        #     abs(ik_link.min_angle_limit.radians.vector[axis]),
+        #     abs(ik_link.max_angle_limit.radians.vector[axis]),
+        # )
+        # axis_sign = (
+        #     1 if max_rad == abs(ik_link.max_angle_limit.radians.vector[axis]) else -1
+        # )
+
+        # limit_rad = (
+        #     np.clip(
+        #         rad * axis_sign,
+        #         ik_link.min_angle_limit.radians.vector[axis],
+        #         ik_link.max_angle_limit.radians.vector[axis],
+        #     )
+        #     if is_limit
+        #     else rad * axis_sign
+        # )
+
+        # # 指定の軸方向に回す
+        # return MQuaternion.from_axis_angles(axis_vec, limit_rad)
+
+        # 全ての軸の角度
+        total_rad = total_qq.to_radian()
+
         # 全ての角度をラジアン角度に分解する
         limit_radians = total_qq.to_radians(order).mmd
 
-        limit_rad = abs(limit_radians.vector[axis])
+        axis_rad = abs(limit_radians.vector[axis])
+
+        if self.GIMBAL_RAD < total_rad < self.GIMBAL2_RAD:
+            limit_rad = axis_rad + self.HALF_RAD
+        else:
+            limit_rad = axis_rad
 
         max_rad = max(
             abs(ik_link.min_angle_limit.radians.vector[axis]),
             abs(ik_link.max_angle_limit.radians.vector[axis]),
         )
+
         axis_sign = (
             1 if max_rad == abs(ik_link.max_angle_limit.radians.vector[axis]) else -1
         )
 
+        # 単位角で制限する
+        limit_axis_rad = min(unit_radian, limit_rad) if unit_radian else limit_rad
+
         if is_limit:
-            min_rad = min(
-                abs(ik_link.min_angle_limit.radians.vector[axis]),
-                abs(ik_link.max_angle_limit.radians.vector[axis]),
+            # 角度制限がある場合、その角度内に収める
+            limit_axis_rad = (
+                np.clip(
+                    limit_axis_rad * axis_sign,
+                    ik_link.min_angle_limit.radians.vector[axis],
+                    ik_link.max_angle_limit.radians.vector[axis],
+                )
+                if is_limit
+                else limit_axis_rad * axis_sign
             )
 
-            # 制限角度でクリップする
-            limit_rad = np.clip(limit_rad, min_rad, max_rad)
-
-        # 初回以降でジンバルロックを超えている場合、逆に回す
-        if 0 < loop:
-            if self.GIMBAL2_RAD < total_qq.to_radian():
-                limit_rad = -(self.HALF_RAD + limit_rad)
-            elif self.GIMBAL_RAD < total_qq.to_radian():
-                limit_rad = self.HALF_RAD - limit_rad
+        # 単位角とジンバルロックの整合性を取る
+        if self.GIMBAL2_RAD < total_rad:
+            result_axis_rad = self.HALF_RAD - limit_axis_rad
+        else:
+            result_axis_rad = limit_axis_rad
 
         # 指定の軸方向に回す
-        return MQuaternion.from_radians(axis_vec * (axis_sign * limit_rad), order)
+        return MQuaternion.from_axis_angles(axis_vec, result_axis_rad)
+
+        # if is_limit:
+        #     min_rad = min(
+        #         abs(ik_link.min_angle_limit.radians.vector[axis]),
+        #         abs(ik_link.max_angle_limit.radians.vector[axis]),
+        #     )
+
+        #     # 制限角度でクリップする
+        #     limit_rad = np.clip(
+        #         limit_rad * axis_sign,
+        #         ik_link.min_angle_limit.radians.vector[axis],
+        #         ik_link.max_angle_limit.radians.vector[axis],
+        #     )
+
+        # # 初回以降でジンバルロックを超えている場合、逆に回す
+        # if 0 < loop:
+        #     if self.GIMBAL2_RAD < total_qq.to_radian():
+        #         limit_rad = (self.HALF_RAD * 2) - abs(limit_rad)
+        #     elif self.GIMBAL_RAD < total_qq.to_radian():
+        #         limit_rad = self.HALF_RAD + abs(limit_rad)
+
+        # # 指定の軸方向に回す
+        # return MQuaternion.from_axis_angles(axis_vec, limit_rad)
+        # return MQuaternion.from_radians(
+        #     (axis_sign * limit_rad), 0, 0, MQuaternionOrder.YXZ
+        # )
 
     def get_axis_rotation(self, bone: Bone, qq: MQuaternion) -> MQuaternion:
         """
@@ -2080,6 +2325,7 @@ class VmdMotion(BaseHashModel):
         clear_ik: bool = False,
         out_fno_log: bool = False,
         description: str = "",
+        max_worker: int = 1,
     ) -> VmdBoneFrameTrees:
         all_morph_bone_frames = VmdBoneFrames()
 
