@@ -1386,8 +1386,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             elif self.GIMBAL_RAD < total_qq.to_radian():
                 limit_rad = self.HALF_RAD - limit_rad
 
-        # 既存のFK回転・IK回転・今回の計算をすべて含めて回転を求める
-        # return MQuaternion.from_axis_angles(axis_vec, limit_rad)
+        # 指定の軸方向に回す
         return MQuaternion.from_radians(axis_vec * limit_rad, order)
 
     def get_axis_rotation(self, bone: Bone, qq: MQuaternion) -> MQuaternion:
