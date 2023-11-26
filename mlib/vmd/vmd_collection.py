@@ -1523,38 +1523,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         """
         全ての角度をラジアン角度に分割して、そのうちのひとつの軸だけを動かす回転を取得する
         """
-
-        # rad = (
-        #     min(total_qq.to_radian(), unit_radian)
-        #     if unit_radian
-        #     else total_qq.to_radian()
-        # )
-
-        # max_rad = max(
-        #     abs(ik_link.min_angle_limit.radians.vector[axis]),
-        #     abs(ik_link.max_angle_limit.radians.vector[axis]),
-        # )
-        # min_rad = min(
-        #     abs(ik_link.min_angle_limit.radians.vector[axis]),
-        #     abs(ik_link.max_angle_limit.radians.vector[axis]),
-        # )
-        # axis_sign = (
-        #     1 if max_rad == abs(ik_link.max_angle_limit.radians.vector[axis]) else -1
-        # )
-
-        # limit_rad = (
-        #     np.clip(
-        #         rad * axis_sign,
-        #         ik_link.min_angle_limit.radians.vector[axis],
-        #         ik_link.max_angle_limit.radians.vector[axis],
-        #     )
-        #     if is_limit
-        #     else rad * axis_sign
-        # )
-
-        # # 指定の軸方向に回す
-        # return MQuaternion.from_axis_angles(axis_vec, limit_rad)
-
         # 全ての軸の角度
         total_rad = total_qq.to_radian()
 
@@ -1600,32 +1568,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 指定の軸方向に回す
         return MQuaternion.from_axis_angles(axis_vec, result_axis_rad)
-
-        # if is_limit:
-        #     min_rad = min(
-        #         abs(ik_link.min_angle_limit.radians.vector[axis]),
-        #         abs(ik_link.max_angle_limit.radians.vector[axis]),
-        #     )
-
-        #     # 制限角度でクリップする
-        #     limit_rad = np.clip(
-        #         limit_rad * axis_sign,
-        #         ik_link.min_angle_limit.radians.vector[axis],
-        #         ik_link.max_angle_limit.radians.vector[axis],
-        #     )
-
-        # # 初回以降でジンバルロックを超えている場合、逆に回す
-        # if 0 < loop:
-        #     if self.GIMBAL2_RAD < total_qq.to_radian():
-        #         limit_rad = (self.HALF_RAD * 2) - abs(limit_rad)
-        #     elif self.GIMBAL_RAD < total_qq.to_radian():
-        #         limit_rad = self.HALF_RAD + abs(limit_rad)
-
-        # # 指定の軸方向に回す
-        # return MQuaternion.from_axis_angles(axis_vec, limit_rad)
-        # return MQuaternion.from_radians(
-        #     (axis_sign * limit_rad), 0, 0, MQuaternionOrder.YXZ
-        # )
 
     def get_axis_rotation(self, bone: Bone, qq: MQuaternion) -> MQuaternion:
         """
