@@ -1355,10 +1355,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         limit_rad = abs(limit_radians.vector[axis])
 
-        min_rad = min(
-            abs(ik_link.min_angle_limit.radians.vector[axis]),
-            abs(ik_link.max_angle_limit.radians.vector[axis]),
-        )
         max_rad = max(
             abs(ik_link.min_angle_limit.radians.vector[axis]),
             abs(ik_link.max_angle_limit.radians.vector[axis]),
@@ -1368,16 +1364,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         )
 
         if is_limit:
+            min_rad = min(
+                abs(ik_link.min_angle_limit.radians.vector[axis]),
+                abs(ik_link.max_angle_limit.radians.vector[axis]),
+            )
+
             # 制限角度でクリップする
             limit_rad = np.clip(limit_rad, min_rad, max_rad)
-
-        axis_vec *= (
-            MVector3D(axis_sign, 1, 1)
-            if axis == 0
-            else MVector3D(1, axis_sign, 1)
-            if axis == 1
-            else MVector3D(1, 1, axis_sign)
-        )
 
         # 初回以降でジンバルロックを超えている場合、逆に回す
         if 0 < loop:
@@ -1387,7 +1380,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 limit_rad = self.HALF_RAD - limit_rad
 
         # 指定の軸方向に回す
-        return MQuaternion.from_radians(axis_vec * limit_rad, order)
+        return MQuaternion.from_radians(axis_vec * (axis_sign * limit_rad), order)
 
     def get_axis_rotation(self, bone: Bone, qq: MQuaternion) -> MQuaternion:
         """
