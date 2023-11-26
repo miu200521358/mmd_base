@@ -271,8 +271,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         return VmdBoneNameFrames(name=key)
 
     # 88.0f / 180.0f*3.14159265f
-    GIMBAL_RAD = radians(88)
-    GIMBAL2_RAD = radians(88 * 2)
+    GIMBAL_RAD = radians(90)
+    GIMBAL2_RAD = radians(90 * 2)
     HALF_RAD = radians(180)
     FULL_RAD = radians(360)
 
@@ -1310,24 +1310,16 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             # X軸に角度制限が入っている場合（ひざ等）
                             link_axis = MVector3D(1, 0, 0)
 
-                            # 理想回転(単位角は後で適用する)
-                            ideal_ik_qq = MQuaternion.from_axis_angles(
-                                rotation_axis, original_rotation_radian
-                            )
-
-                            # 理想回転をすべて加算した場合の回転量
-                            total_ideal_ik_qq: MQuaternion = link_ik_qq * ideal_ik_qq
-
                             # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
                             total_actual_ik_qq = self.separate_limit_rotation(
                                 ik_link,
                                 link_ik_qq,
-                                ideal_ik_qq,
+                                rotation_axis,
+                                original_rotation_radian,
                                 MQuaternionOrder.YXZ,
                                 0,
                                 link_axis,
                                 ik_bone.ik.unit_rotation.radians.x,
-                                loop,
                                 True,
                             )
                         else:
@@ -1357,6 +1349,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         )
 
                     # ■ -----------------
+                    ideal_ik_qq = MQuaternion.from_axis_angles(
+                        rotation_axis, original_rotation_radian
+                    )
+
+                    total_ideal_ik_qq: MQuaternion = link_ik_qq * ideal_ik_qq
+
                     ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
                     ideal_bf.rotation = ideal_ik_qq.copy()
                     bake_motion.append_bone_frame(ideal_bf)
@@ -1510,29 +1508,26 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         self,
         ik_link: IkLink,
         now_ik_qq: MQuaternion,
-        correct_ik_qq: MQuaternion,
+        rotation_axis: MVector3D,
+        rotation_rad: float,
         order: MQuaternionOrder,
         axis: int,
         axis_vec: MVector3D,
         unit_radian: float,
-        loop: int,
         is_limit: bool,
     ) -> MQuaternion:
         """
         全ての角度をラジアン角度に分割して、そのうちのひとつの軸だけを動かす回転を取得する
         """
-        # 現在IKに入ってるすべての角度
-        now_rad = now_ik_qq.to_radian()
-
         # 現在調整予定角度の全ての軸の角度
-        total_rad = correct_ik_qq.to_radian()
+        correct_ik_qq = MQuaternion.from_axis_angles(rotation_axis, rotation_rad)
 
         # 全ての角度をラジアン角度に分解する
-        limit_radians = correct_ik_qq.to_radians(order).mmd
+        correct_rads = correct_ik_qq.to_radians(order).mmd
 
-        axis_rad = abs(limit_radians.vector[axis])
+        axis_rad = abs(correct_rads.vector[axis])
 
-        if self.GIMBAL_RAD < total_rad < self.GIMBAL2_RAD:
+        if self.GIMBAL_RAD < rotation_rad < self.GIMBAL2_RAD:
             limit_rad = axis_rad + self.HALF_RAD
         else:
             limit_rad = axis_rad
@@ -1549,8 +1544,19 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # 単位角で制限する
         limit_axis_rad = min(unit_radian, limit_rad) if unit_radian else limit_rad
 
+        # 単位角で制限した角度に基づいたクォータニオン
+        correct_limit_ik_qq = MQuaternion.from_axis_angles(
+            rotation_axis, limit_axis_rad
+        )
+
+        # 現在IKに入ってるすべての角度
+        total_ik_qq = now_ik_qq * correct_limit_ik_qq
+
         # 全体の角度を計算する
-        total_axis_rad = (limit_axis_rad + now_rad) * axis_sign
+        total_axis_ik_rad = total_ik_qq.to_radian()
+        total_axis_ik_rads = total_ik_qq.to_radians(order).mmd
+
+        total_axis_rad = abs(total_axis_ik_rads.vector[axis]) * axis_sign
 
         # 角度制限がある場合、全体の角度をその角度内に収める
         total_limit_axis_rad = (
@@ -1564,7 +1570,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         )
 
         # 単位角とジンバルロックの整合性を取る
-        if self.GIMBAL2_RAD < total_rad:
+        if self.GIMBAL_RAD < total_axis_ik_rad:
             result_axis_rad = self.HALF_RAD - total_limit_axis_rad
         else:
             result_axis_rad = total_limit_axis_rad
