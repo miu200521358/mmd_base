@@ -17,6 +17,11 @@ class BasePanel(wx.Panel):
         self.selectable_background_color = wx.Colour("ORANGE")
         """ボタンが有効になっている時の背景色"""
 
+        self.default_background_color = wx.SystemSettings.GetColour(
+            wx.SYS_COLOUR_BTNFACE
+        )
+        """デフォルトボタン背景色"""
+
         self.root_sizer = wx.BoxSizer(wx.VERTICAL)
         self.is_fix_tab = False
 
