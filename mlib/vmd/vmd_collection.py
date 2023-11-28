@@ -23,12 +23,12 @@ from mlib.core.math import (
     MVector4D,
     calc_list_by_ratio,
 )
+from mlib.core.part import BaseRotationModel
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import (
     Bone,
     BoneMorphOffset,
     GroupMorphOffset,
-    IkLink,
     Material,
     MaterialMorphCalcMode,
     MaterialMorphOffset,
@@ -1256,7 +1256,55 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         )
                     elif ik_link.local_angle_limit:
                         # ローカル軸角度制限が入っている場合、ローカル軸に合わせて理想回転を求める
-                        pass
+                        if (
+                            ik_link.local_min_angle_limit.radians.x
+                            or ik_link.local_max_angle_limit.radians.x
+                        ):
+                            # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
+                            total_actual_ik_qq = self.separate_limit_rotation(
+                                ik_link,
+                                ik_link.local_min_angle_limit,
+                                ik_link.local_max_angle_limit,
+                                rotation_axis,
+                                rotation_rad,
+                                0,
+                                ik_bone.corrected_local_x_vector,
+                                ik_bone.ik.unit_rotation.radians.x,
+                                True,
+                            )
+                        elif (
+                            ik_link.local_min_angle_limit.radians.y
+                            or ik_link.local_max_angle_limit.radians.y
+                        ):
+                            # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
+                            total_actual_ik_qq = self.separate_limit_rotation(
+                                ik_link,
+                                ik_link.local_min_angle_limit,
+                                ik_link.local_max_angle_limit,
+                                rotation_axis,
+                                rotation_rad,
+                                1,
+                                ik_bone.corrected_local_y_vector,
+                                ik_bone.ik.unit_rotation.radians.x,
+                                True,
+                            )
+                        elif (
+                            ik_link.local_min_angle_limit.radians.z
+                            or ik_link.local_max_angle_limit.radians.z
+                        ):
+                            # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
+                            total_actual_ik_qq = self.separate_limit_rotation(
+                                ik_link.local_min_angle_limit,
+                                ik_link.local_max_angle_limit,
+                                link_ik_qq,
+                                rotation_axis,
+                                rotation_rad,
+                                2,
+                                ik_bone.corrected_local_z_vector,
+                                ik_bone.ik.unit_rotation.radians.x,
+                                True,
+                            )
+
                     elif ik_link.angle_limit:
                         # 角度制限が入ってる場合
 
@@ -1266,7 +1314,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         ):
                             # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
                             total_actual_ik_qq = self.separate_limit_rotation(
-                                ik_link,
+                                ik_link.min_angle_limit,
+                                ik_link.max_angle_limit,
                                 link_ik_qq,
                                 rotation_axis,
                                 rotation_rad,
@@ -1281,7 +1330,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         ):
                             # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
                             total_actual_ik_qq = self.separate_limit_rotation(
-                                ik_link,
+                                ik_link.min_angle_limit,
+                                ik_link.max_angle_limit,
                                 link_ik_qq,
                                 rotation_axis,
                                 rotation_rad,
@@ -1296,7 +1346,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         ):
                             # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
                             total_actual_ik_qq = self.separate_limit_rotation(
-                                ik_link,
+                                ik_link.min_angle_limit,
+                                ik_link.max_angle_limit,
                                 link_ik_qq,
                                 rotation_axis,
                                 rotation_rad,
@@ -1374,30 +1425,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # IKの計算結果の回転を加味して返す
         bf = self[bone.name][fno]
-        qq = bf.rotation * bf.ik_rotation if bf.ik_rotation else bf.rotation
-
-        if bone.local_angle_limit:
-            if (
-                bone.local_min_angle_limit.degrees.z
-                or bone.local_min_angle_limit.degrees.z
-            ):
-                return qq.to_other_axis_rotation(bone.corrected_local_z_vector)
-            elif (
-                ik_link.local_min_angle_limit.degrees.x
-                or ik_link.local_min_angle_limit.degrees.x
-            ):
-                return qq.to_other_axis_rotation(bone.corrected_local_x_vector)
-            elif (
-                ik_link.local_min_angle_limit.degrees.y
-                or ik_link.local_min_angle_limit.degrees.y
-            ):
-                return qq.to_other_axis_rotation(bone.corrected_local_y_vector)
+        qq = bf.ik_rotation if bf.ik_rotation else bf.rotation
 
         return self.get_axis_rotation(bone, qq)
 
     def separate_limit_rotation(
         self,
-        ik_link: IkLink,
+        min_angle_limit: BaseRotationModel,
+        max_angle_limit: BaseRotationModel,
         now_ik_qq: MQuaternion,
         rotation_axis: MVector3D,
         rotation_rad: float,
@@ -1425,13 +1460,11 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             limit_rad = axis_rad
 
         max_rad = max(
-            abs(ik_link.min_angle_limit.radians.vector[axis]),
-            abs(ik_link.max_angle_limit.radians.vector[axis]),
+            abs(min_angle_limit.radians.vector[axis]),
+            abs(max_angle_limit.radians.vector[axis]),
         )
 
-        axis_sign = (
-            -1 if max_rad != abs(ik_link.max_angle_limit.radians.vector[axis]) else 1
-        )
+        axis_sign = -1 if max_rad != abs(max_angle_limit.radians.vector[axis]) else 1
 
         # 単位角で制限する
         limit_axis_rad = min(unit_radian, limit_rad) if unit_radian else limit_rad
@@ -1463,8 +1496,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         total_limit_axis_rad = (
             np.clip(
                 total_axis_rad,
-                ik_link.min_angle_limit.radians.vector[axis],
-                ik_link.max_angle_limit.radians.vector[axis],
+                min_angle_limit.radians.vector[axis],
+                max_angle_limit.radians.vector[axis],
             )
             if is_limit
             else total_axis_rad
