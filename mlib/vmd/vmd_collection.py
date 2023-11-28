@@ -1239,22 +1239,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     total_actual_ik_qq = None
                     # total_ideal_ik_qq = total_actual_ik_qq = None
 
-                    if link_bone.has_fixed_axis:
-                        # 軸制限ありの場合、軸にそった理想回転量とする
-
-                        # 制限角で最大変位量を制限する
-                        limit_rotation_rad = min(
-                            ik_bone.ik.unit_rotation.radians.x, rotation_rad
-                        )
-                        # 現在の角度を取得する
-                        link_rad = link_ik_qq.to_radian()
-
-                        # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
-                        total_actual_ik_qq = MQuaternion.from_axis_angles(
-                            link_bone.corrected_fixed_axis,
-                            link_rad + limit_rotation_rad,
-                        )
-                    elif ik_link.local_angle_limit:
+                    if ik_link.local_angle_limit:
                         # ローカル軸角度制限が入っている場合、ローカル軸に合わせて理想回転を求める
                         if (
                             ik_link.local_min_angle_limit.radians.x
@@ -1356,6 +1341,22 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                                 ik_bone.ik.unit_rotation.radians.x,
                                 True,
                             )
+
+                    elif link_bone.has_fixed_axis:
+                        # 軸制限ありの場合、軸にそった理想回転量とする
+
+                        # 制限角で最大変位量を制限する
+                        limit_rotation_rad = min(
+                            ik_bone.ik.unit_rotation.radians.x, rotation_rad
+                        )
+                        # 現在の角度を取得する
+                        link_rad = link_ik_qq.to_radian()
+
+                        # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
+                        total_actual_ik_qq = MQuaternion.from_axis_angles(
+                            link_bone.corrected_fixed_axis,
+                            link_rad + limit_rotation_rad,
+                        )
 
                     else:
                         # 制限角で最大変位量を制限する

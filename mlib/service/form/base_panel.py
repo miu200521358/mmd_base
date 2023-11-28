@@ -12,6 +12,9 @@ class BasePanel(wx.Panel):
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
 
         self.active_background_color = wx.Colour("PINK")
+        """ボタンの何かの設定が入ってる時の背景色"""
+
+        self.selectable_background_color = wx.Colour("ORANGE")
         """ボタンが有効になっている時の背景色"""
 
         self.root_sizer = wx.BoxSizer(wx.VERTICAL)
