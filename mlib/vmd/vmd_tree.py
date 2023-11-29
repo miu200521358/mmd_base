@@ -1,3 +1,4 @@
+from itertools import product
 from typing import Iterator, Optional
 
 import numpy as np
@@ -14,7 +15,6 @@ class VmdBoneFrameTree:
         "local_matrix_ary",
         "frame_position_matrix_ary",
         "frame_rotation_matrix_ary",
-        "frame_ik_rotation_matrix_ary",
         "cache_global_matrix",
         "cache_local_matrix",
         "cache_global_matrix_no_scale",
@@ -22,7 +22,6 @@ class VmdBoneFrameTree:
         "cache_position",
         "cache_frame_position",
         "cache_frame_rotation",
-        "cache_frame_ik_rotation",
     )
 
     def __init__(
@@ -34,7 +33,6 @@ class VmdBoneFrameTree:
         local_matrix_ary: np.ndarray,
         frame_position_matrix_ary: np.ndarray,
         frame_rotation_matrix_ary: np.ndarray,
-        frame_ik_rotation_matrix_ary: np.ndarray,
     ) -> None:
         self.fno = fno
         self.bone_index = bone_index
@@ -43,7 +41,6 @@ class VmdBoneFrameTree:
         self.local_matrix_ary = local_matrix_ary
         self.frame_position_matrix_ary = frame_position_matrix_ary
         self.frame_rotation_matrix_ary = frame_rotation_matrix_ary
-        self.frame_ik_rotation_matrix_ary = frame_ik_rotation_matrix_ary
         self.cache_global_matrix: Optional[MMatrix4x4] = None
         self.cache_local_matrix: Optional[MMatrix4x4] = None
         self.cache_global_matrix_no_scale: Optional[MMatrix4x4] = None
@@ -51,7 +48,6 @@ class VmdBoneFrameTree:
         self.cache_position: Optional[MVector3D] = None
         self.cache_frame_position: Optional[MVector3D] = None
         self.cache_frame_rotation: Optional[MQuaternion] = None
-        self.cache_frame_ik_rotation: Optional[MQuaternion] = None
 
     @property
     def global_matrix(self) -> MMatrix4x4:
@@ -123,87 +119,99 @@ class VmdBoneFrameTree:
         ).to_quaternion()
         return self.cache_frame_rotation
 
-    @property
-    def frame_ik_rotation(self) -> MQuaternion:
-        if self.cache_frame_ik_rotation is not None:
-            return self.cache_frame_ik_rotation
-
-        self.cache_frame_ik_rotation = MMatrix4x4(
-            self.frame_ik_rotation_matrix_ary
-        ).to_quaternion()
-        return self.cache_frame_ik_rotation
-
 
 class VmdBoneFrameTrees:
     __slots__ = (
         "_names",
         "_indexes",
-        "data",
+        "_result_global_matrixes",
+        "_result_matrixes",
+        "_motion_bone_poses",
+        "_motion_bone_qqs",
+        "_cache_frames",
     )
 
-    def __init__(self) -> None:
-        self._names: list[str] = []
-        self._indexes: list[int] = []
-        self.data: dict[tuple[int, str], VmdBoneFrameTree] = {}
-
-    def append(
+    def __init__(
         self,
-        fno: int,
-        bone_index: int,
-        bone_name: str,
-        global_matrix: np.ndarray,
-        local_matrix: np.ndarray,
-        frame_position_matrix: np.ndarray,
-        frame_rotation_matrix: np.ndarray,
-        frame_ik_rotation_matrix: np.ndarray,
-    ):
+        bone_dict: dict[str, int],
+        fnos: list[int],
+        result_global_matrixes: np.ndarray,
+        result_matrixes: np.ndarray,
+        motion_bone_poses: np.ndarray,
+        motion_bone_qqs: np.ndarray,
+    ) -> None:
         """
-        ボーン変形結果追加
+        ボーン変形行列生成
 
         Parameters
         ----------
-        fno: キーフレ
-        bone_index: ボーンINDEX
-        bone_name: ボーン名
-        global_matrix : 自身のボーン位置を加味した行列
-        local_matrix : 自身のボーン位置を加味しない行列
-        frame_position_matrix : キーフレ時点の位置
-        frame_rotation_matrix : キーフレ時点の回転（FK・IK・付与）
-        frame_ik_rotation_matrix : キーフレ時点の付与を含まない回転（FK・IK）
+        bone_names : list[str]
+            ボーン名
+        fnos : list[int]
+            キーフレ番号リスト
+        result_global_matrixes : np.ndarray
+            自身のボーン位置を加味したグローバル行列
+        result_matrixes : np.ndarray
+            自身のボーン位置を加味しないローカル行列
+        motion_bone_poses : np.ndarray
+            キーフレ時点の位置
+        motion_bone_qqs : np.ndarray
+            キーフレ時点の回転（FK・IK・付与）
         """
+        self._names = bone_dict
+        self._indexes: dict[int, int] = dict(
+            [(fno, fidx) for fidx, fno in enumerate(fnos)]
+        )
+        self._result_global_matrixes = result_global_matrixes
+        self._result_matrixes = result_matrixes
+        self._motion_bone_poses = motion_bone_poses
+        self._motion_bone_qqs = motion_bone_qqs
+        self._cache_frames: dict[tuple[int, int], VmdBoneFrameTree] = {}
 
-        self.data[(fno, bone_name)] = VmdBoneFrameTree(
+    def __getitem__(self, key: tuple[str, int]) -> VmdBoneFrameTree:
+        bone_name, fno = key
+
+        if not self.exists(bone_name, fno):
+            return VmdBoneFrameTree(
+                fno, -1, "NONE", np.eye(4), np.eye(4), np.eye(4), np.eye(4)
+            )
+
+        bone_index = self._names[bone_name]
+        fidx = self._indexes[fno]
+
+        if (bone_index, fidx) in self._cache_frames:
+            return self._cache_frames[(bone_index, fidx)]
+
+        vbf = VmdBoneFrameTree(
             fno,
             bone_index,
             bone_name,
-            global_matrix,
-            local_matrix,
-            frame_position_matrix,
-            frame_rotation_matrix,
-            frame_ik_rotation_matrix,
+            self._result_global_matrixes[fidx, bone_index],
+            self._result_matrixes[fidx, bone_index],
+            self._motion_bone_poses[fidx, bone_index],
+            self._motion_bone_qqs[fidx, bone_index],
         )
-        if bone_name not in self._names:
-            self._names.append(bone_name)
-        if fno not in self._indexes:
-            self._indexes.append(fno)
+        self._cache_frames[(bone_index, fidx)] = vbf
 
-    def __getitem__(self, key) -> VmdBoneFrameTree:
-        return self.data[key]
+        return vbf
 
-    def exists(self, fno: int, bone_name: str) -> bool:
+    def exists(self, bone_name: str, fno: int) -> bool:
         """既に該当ボーンの情報が登録されているか"""
-        return (fno, bone_name) in self.data
+        return bone_name in self._names and fno in self._indexes
 
     def __len__(self) -> int:
         return len(self._indexes)
 
     def __iter__(self) -> Iterator[VmdBoneFrameTree]:
-        return iter([self.data[k] for k in list(self.data.keys())])
+        return iter(
+            self[bone_name, fno]
+            for bone_name, fno in product(self._names.keys(), self._indexes.keys())
+        )
 
     @property
     def indexes(self) -> list[int]:
-        return sorted(self._indexes)
+        return sorted(self._indexes.keys())
 
     @property
     def names(self) -> list[str]:
-        return self._names
+        return list(self._names.keys())
