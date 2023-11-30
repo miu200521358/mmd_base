@@ -264,7 +264,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
     def is_non_identity_matrix(self, mat: np.ndarray) -> bool:
         """行列が恒等行列でないかどうかをチェックする"""
-        return not np.allclose(mat, self.EYE_MAT, atol=1e-5)
+        return not np.all(mat == self.EYE_MAT)
 
     @property
     def max_fno(self) -> int:
