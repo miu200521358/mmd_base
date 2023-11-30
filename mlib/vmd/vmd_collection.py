@@ -552,12 +552,19 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # 行列積ボーン変形行列結果
         result_matrixes = np.full(motion_bone_poses.shape, np.eye(4))
         result_global_matrixes = np.full(motion_bone_poses.shape, np.eye(4))
+        total_index_count = len(fnos) * len(bone_offset_matrixes)
 
         for i, (fidx, (bone_index, offset_matrix)) in enumerate(
             product(list(range(len(fnos))), bone_offset_matrixes)
         ):
-            if out_fno_log and 0 < i and 0 == i % 100000:
-                logger.info("-- ボーン変形行列積[{d}][{i}]", d=description, i=i)
+            if out_fno_log:
+                logger.count(
+                    "ボーン変形行列積[{d}]",
+                    d=description,
+                    index=i,
+                    total_index_count=total_index_count,
+                    display_block=50000,
+                )
 
             result_matrixes[fidx, bone_index] = offset_matrix.copy()
             # ボーンツリーINDEXリストごとのボーン変形行列リスト(子どもから親に遡る)
