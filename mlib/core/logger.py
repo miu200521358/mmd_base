@@ -176,10 +176,8 @@ class MLogger:
         lno: Optional[int] = 0,
         **kwargs,
     ):
-        if (
-            0 < total_index_count
-            and 0 < index
-            and (0 == index % display_block or index == total_index_count)
+        if 0 < total_index_count and (
+            0 == index % display_block or index == total_index_count
         ):
             add_mlogger_handler(self)
 
@@ -462,9 +460,7 @@ def get_file_encoding(file_path):
 
     for encoding in codes:
         try:
-            fstr = fbytes.decode(
-                encoding
-            )  # bytes文字列から指定文字コードの文字列に変換
+            fstr = fbytes.decode(encoding)  # bytes文字列から指定文字コードの文字列に変換
             fbytes = fstr.encode("utf-8")  # uft-8文字列に変換
             # 問題なく変換できたらエンコードを返す
             return encoding

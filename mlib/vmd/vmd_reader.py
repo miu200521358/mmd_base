@@ -221,13 +221,13 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                 self.read_by_format[VmdBoneFrame].size,
             )
 
-            motion.bones[bf.name].append(bf)
+            motion.bones[bf.name].append(bf, is_sort=False)
 
             logger.count(
                 "ボーンデータ読み取り",
                 index=i,
                 total_index_count=total_index_count,
-                display_block=20000,
+                display_block=50000,
             )
 
         for bfs in motion.bones:

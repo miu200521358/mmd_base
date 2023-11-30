@@ -1,9 +1,6 @@
-import cProfile
 import os
 import sys
-import threading
 import time
-from functools import wraps
 from multiprocessing import freeze_support
 from winsound import SND_ALIAS, PlaySound
 
@@ -19,23 +16,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from mlib.pmx.pmx_reader import PmxReader  # noqa: E402
 from mlib.vmd.vmd_reader import VmdReader  # noqa: E402
-
-
-def thread_profile(sort_key):
-    def inner(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            th = threading.current_thread()
-            pr = cProfile.Profile()
-            pr.runcall(f, *args, **kwargs)
-            print(f"[{th.name}] end of thread")
-            stats_file = f"{th.name}.prof"
-            print(f"[{th.name}] dumping prof to {stats_file}")
-            pr.print_stats(sort_key)
-
-        return wrapper
-
-    return inner
 
 
 def main() -> None:
@@ -63,14 +43,14 @@ def main() -> None:
     # 時間計測開始
     start_time = time.perf_counter()
 
-    # max_worker = 1
-    max_worker = 2
+    max_worker = 1
+    # max_worker = 2
     # max_worker = 4
     # max_worker = max(1, int(min(32, (os.cpu_count() or 0) + 4) / 4))
     print(f"max_worker: {max_worker}")
 
     motion.animate_bone(
-        list(range(1000, 1500)),
+        list(range(1000, 1100)),
         model,
         out_fno_log=True,
         max_worker=max_worker,
