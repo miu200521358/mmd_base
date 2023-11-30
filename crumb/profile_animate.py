@@ -43,8 +43,8 @@ def main() -> None:
     # 時間計測開始
     start_time = time.perf_counter()
 
-    # max_worker = 1
-    max_worker = 2
+    max_worker = 1
+    # max_worker = 2
     # max_worker = 4
     # max_worker = max(1, int(min(32, (os.cpu_count() or 0) + 4) / 4))
     print(f"max_worker: {max_worker}")

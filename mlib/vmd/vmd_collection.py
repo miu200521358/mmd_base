@@ -393,18 +393,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         matrixes = np.full(motion_bone_poses.shape, np.eye(4))
 
         # モーフの適用
-        if self.is_non_identity_matrix(morph_bone_poses):
-            matrixes = matrixes @ morph_bone_poses
-        if self.is_non_identity_matrix(morph_bone_local_poses):
-            matrixes = matrixes @ morph_bone_local_poses
-        if self.is_non_identity_matrix(morph_bone_qqs):
-            matrixes = matrixes @ morph_bone_qqs
-        if self.is_non_identity_matrix(morph_bone_local_qqs):
-            matrixes = matrixes @ morph_bone_local_qqs
-        if self.is_non_identity_matrix(morph_bone_scales):
-            matrixes = matrixes @ morph_bone_scales
-        if self.is_non_identity_matrix(morph_bone_local_scales):
-            matrixes = matrixes @ morph_bone_local_scales
+        matrixes = self.calc_bone_matrixes_array(
+            morph_bone_poses,
+            morph_bone_qqs,
+            morph_bone_scales,
+            morph_bone_local_poses,
+            morph_bone_local_qqs,
+            morph_bone_local_scales,
+            np.full(motion_bone_poses.shape, np.eye(4)),
+        )
 
         return self.calc_bone_matrixes(
             fnos,
@@ -459,6 +456,34 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             bone_dict[bone.name] = bone.index
         return bone_dict, bone_offset_mats, bone_pos_mats
 
+    def calc_bone_matrixes_array(
+        self,
+        bone_poses: np.ndarray,
+        bone_qqs: np.ndarray,
+        bone_scales: np.ndarray,
+        bone_local_poses: np.ndarray,
+        bone_local_qqs: np.ndarray,
+        bone_local_scales: np.ndarray,
+        matrixes: np.ndarray = None,
+    ) -> np.ndarray:
+        if matrixes is None:
+            matrixes = np.full(bone_poses.shape, np.eye(4))
+
+        if self.is_non_identity_matrix(bone_poses):
+            matrixes = matrixes @ bone_poses
+        if self.is_non_identity_matrix(bone_local_poses):
+            matrixes = matrixes @ bone_local_poses
+        if self.is_non_identity_matrix(bone_qqs):
+            matrixes = matrixes @ bone_qqs
+        if self.is_non_identity_matrix(bone_local_qqs):
+            matrixes = matrixes @ bone_local_qqs
+        if self.is_non_identity_matrix(bone_scales):
+            matrixes = matrixes @ bone_scales
+        if self.is_non_identity_matrix(bone_local_scales):
+            matrixes = matrixes @ bone_local_scales
+
+        return matrixes
+
     def calc_bone_matrixes(
         self,
         fnos: list[int],
@@ -476,22 +501,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         out_fno_log: bool = False,
         description: str = "",
     ) -> VmdBoneFrameTrees:
-        if matrixes is None:
-            matrixes = np.full(motion_bone_poses.shape, np.eye(4))
-
-        # モーションの適用
-        if self.is_non_identity_matrix(motion_bone_poses):
-            matrixes = matrixes @ motion_bone_poses
-        if self.is_non_identity_matrix(motion_bone_local_poses):
-            matrixes = matrixes @ motion_bone_local_poses
-        if self.is_non_identity_matrix(motion_bone_qqs):
-            matrixes = matrixes @ motion_bone_qqs
-        if self.is_non_identity_matrix(motion_bone_local_qqs):
-            matrixes = matrixes @ motion_bone_local_qqs
-        if self.is_non_identity_matrix(motion_bone_scales):
-            matrixes = matrixes @ motion_bone_scales
-        if self.is_non_identity_matrix(motion_bone_local_scales):
-            matrixes = matrixes @ motion_bone_local_scales
+        matrixes = self.calc_bone_matrixes_array(
+            motion_bone_poses,
+            motion_bone_qqs,
+            motion_bone_scales,
+            motion_bone_local_poses,
+            motion_bone_local_qqs,
+            motion_bone_local_scales,
+            matrixes,
+        )
 
         if out_fno_log:
             logger.info("ボーン行列計算[{d}]", d=description)

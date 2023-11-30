@@ -170,12 +170,6 @@ class VmdBoneFrameTrees:
 
     def __getitem__(self, key: tuple[str, int]) -> VmdBoneFrameTree:
         bone_name, fno = key
-
-        if not self.exists(bone_name, fno):
-            return VmdBoneFrameTree(
-                fno, -1, "NONE", np.eye(4), np.eye(4), np.eye(4), np.eye(4)
-            )
-
         bone_index = self._names[bone_name]
         fidx = self._indexes[fno]
 
