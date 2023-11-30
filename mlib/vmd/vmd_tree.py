@@ -123,6 +123,7 @@ class VmdBoneFrameTree:
 class VmdBoneFrameTrees:
     __slots__ = (
         "_names",
+        "_name_indexes",
         "_indexes",
         "_result_global_matrixes",
         "_result_matrixes",
@@ -159,6 +160,9 @@ class VmdBoneFrameTrees:
             キーフレ時点の回転（FK・IK・付与）
         """
         self._names = bone_dict
+        self._name_indexes: dict[int, str] = dict(
+            [(idx, name) for name, idx in bone_dict.items()]
+        )
         self._indexes: dict[int, int] = dict(
             [(fno, fidx) for fidx, fno in enumerate(fnos)]
         )
@@ -198,8 +202,10 @@ class VmdBoneFrameTrees:
 
     def __iter__(self) -> Iterator[VmdBoneFrameTree]:
         return iter(
-            self[bone_name, fno]
-            for bone_name, fno in product(self._names.keys(), self._indexes.keys())
+            self[self._name_indexes[bone_index], fno]
+            for bone_index, fno in product(
+                sorted(self._names.values()), self._indexes.keys()
+            )
         )
 
     @property

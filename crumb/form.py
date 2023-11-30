@@ -14,7 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from mlib.core.exception import MApplicationException  # noqa: E402
 from mlib.core.logger import MLogger  # noqa: E402
-from mlib.core.math import MVector3D  # noqa: E402
+from mlib.core.math import MQuaternion  # noqa: E402
 from mlib.pmx.canvas import PmxCanvas, SyncSubCanvasWindow  # noqa: E402
 from mlib.pmx.pmx_collection import PmxModel  # noqa: E402
 from mlib.pmx.pmx_part import (  # noqa: E402
@@ -902,11 +902,15 @@ class TestFrame(NotebookFrame):
         # bf.local_scale = MVector3D(0, 1, 1)
         # dress_motion.bones["頭"].append(bf)
 
+        # -------------------
         # モーフ追加
-        morph = Morph(name="左腕")
+        morph_bone_name = "上半身"
+        morph = Morph(name=morph_bone_name)
         morph.morph_type = MorphType.BONE
         offset1 = BoneMorphOffset(
-            dress.bones["左腕"].index, local_scale=MVector3D(1, 0, 0)
+            # dress.bones[morph_bone_name].index, local_scale=MVector3D(1, 0, 0)
+            dress.bones[morph_bone_name].index,
+            qq=MQuaternion.from_euler_degrees(90, 0, 0),
         )
         morph.offsets.append(offset1)
         # offset2 = BoneMorphOffset(
@@ -915,7 +919,10 @@ class TestFrame(NotebookFrame):
         # morph.offsets.append(offset2)
         dress.morphs.append(morph)
 
-        dress_motion.morphs["左腕"].append(VmdMorphFrame(0, "左腕", 1))
+        dress_motion.morphs[morph_bone_name].append(
+            VmdMorphFrame(0, morph_bone_name, 1)
+        )
+        # -------------------
 
         # dress.update_vertices_by_bone()
 

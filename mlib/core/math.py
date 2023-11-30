@@ -1172,7 +1172,7 @@ class MQuaternion(MVector):
                     2 * self.y * self.z + 2 * self.x * self.w,
                     2 * self.w * self.w + 2 * self.y * self.y - 1,
                 ),
-                asin(sy),
+                asin(max(-1, min(1, sy))),
                 atan2(
                     -(2 * self.x * self.y - 2 * self.z * self.w),
                     2 * self.w * self.w + 2 * self.x * self.x - 1,
@@ -1200,13 +1200,13 @@ class MQuaternion(MVector):
                 )
                 if unlocked
                 else 0,
-                asin(sz),
+                asin(max(-1, min(1, sz))),
             )
         elif order == MQuaternionOrder.YXZ:
             sx = -(2 * self.y * self.z - 2 * self.x * self.w)
             unlocked = abs(sx) < 0.99999
             return MVector3D(
-                asin(sx),
+                asin(max(-1, min(1, sx))),
                 atan2(
                     2 * self.x * self.z + 2 * self.y * self.w,
                     2 * self.w * self.w + 2 * self.z * self.z - 1,
@@ -1243,14 +1243,14 @@ class MQuaternion(MVector):
                     2 * self.x * self.z + 2 * self.y * self.w,
                     2 * self.w * self.w + 2 * self.z * self.z - 1,
                 ),
-                asin(sz),
+                asin(max(-1, min(1, sz))),
             )
 
         elif order == MQuaternionOrder.ZXY:
             sx = 2 * (self.y * self.z + self.x * self.w)
             unlocked = abs(sx) < 0.99999
             return MVector3D(
-                asin(sx),
+                asin(max(-1, min(1, sx))),
                 atan2(
                     -(2 * self.x * self.z - 2 * self.y * self.w),
                     2 * self.w * self.w + 2 * self.z * self.z - 1,
@@ -1278,7 +1278,7 @@ class MQuaternion(MVector):
                 )
                 if unlocked
                 else 0,
-                asin(sy),
+                asin(max(-1, min(1, sy))),
                 atan2(
                     2 * self.x * self.y + 2 * self.z * self.w,
                     2 * self.w * self.w + 2 * self.x * self.x - 1,
