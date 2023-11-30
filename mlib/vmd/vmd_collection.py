@@ -2369,11 +2369,11 @@ class VmdMotion(BaseHashModel):
         for fidx, fno in enumerate(fnos):
             if out_fno_log:
                 logger.count(
-                    "キーフレ確認[{d}]",
+                    "キーフレーム確認[{d}]",
                     d=description,
                     index=fidx,
                     total_index_count=len(fnos),
-                    display_block=100,
+                    display_block=500,
                 )
 
             # logger.test(f"-- ボーンアニメーション[{model.name}][{fno:04d}]: 開始")
