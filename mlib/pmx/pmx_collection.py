@@ -1251,73 +1251,73 @@ class PmxModel(BaseHashModel):
         if "全ての親" == bone.name:
             bone.position = MVector3D()
         elif "グルーブ" == bone.name and "センター" in self.bones:
-            bone.position = bone_matrixes[0, "センター"].position * 1.025
+            bone.position = bone_matrixes["センター", 0].position * 1.025
         elif (bone.is_leg_d or "肩P" == bone.name[-2:]) and bone.name[:-1] in self.bones:
-            bone.position = bone_matrixes[0, bone.name[:-1]].position.copy()
+            bone.position = bone_matrixes[bone.name[:-1], 0].position.copy()
         elif "肩C" in bone.name and f"{direction}腕" in self.bones:
-            bone.position = bone_matrixes[0, f"{direction}腕"].position.copy()
+            bone.position = bone_matrixes[f"{direction}腕", 0].position.copy()
             bone.tail_position = MVector3D()
             bone.bone_flg &= ~BoneFlg.TAIL_IS_BONE
         elif "足IK親" in bone.name and f"{direction}足首" in self.bones:
-            bone.position = bone_matrixes[0, f"{direction}足首"].position.copy()
+            bone.position = bone_matrixes[f"{direction}足首", 0].position.copy()
             bone.position.y = 0
         elif "腰" == bone.name and "下半身" in self.bones and "足中心" in self.bones:
             bone.position = (
-                bone_matrixes[0, "下半身"].position + bone_matrixes[0, "足中心"].position
+                bone_matrixes["下半身", 0].position + bone_matrixes["足中心", 0].position
             ) / 2
             bone.local_x_vector = (
-                bone_matrixes[0, "足中心"].position - bone_matrixes[0, "下半身"].position
+                bone_matrixes["足中心", 0].position - bone_matrixes["下半身", 0].position
             ).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
         elif "上半身2" == bone.name and "上半身" in self.bones and "首" in self.bones:
             bone.position = (
-                bone_matrixes[0, "上半身"].position + bone_matrixes[0, "首"].position
+                bone_matrixes["上半身", 0].position + bone_matrixes["首", 0].position
             ) / 2
             bone.position.z += (
                 abs(
-                    bone_matrixes[0, "首"].position.z
-                    - bone_matrixes[0, "上半身"].position.z
+                    bone_matrixes["首", 0].position.z
+                    - bone_matrixes["上半身", 0].position.z
                 )
                 * 0.5
             )
             bone.local_x_vector = (
-                bone_matrixes[0, "首"].position - bone_matrixes[0, "上半身"].position
+                bone_matrixes["首", 0].position - bone_matrixes["上半身", 0].position
             ).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
         elif "上半身3" == bone.name and "上半身2" in self.bones and "上半身" in self.bones:
             if "首" in self.bones:
                 bone.position = (
-                    bone_matrixes[0, "上半身2"].position + bone_matrixes[0, "首"].position
+                    bone_matrixes["上半身2", 0].position + bone_matrixes["首", 0].position
                 ) / 2
                 bone.position.z += (
                     abs(
-                        bone_matrixes[0, "首"].position.z
-                        - bone_matrixes[0, "上半身2"].position.z
+                        bone_matrixes["首", 0].position.z
+                        - bone_matrixes["上半身2", 0].position.z
                     )
                     * 0.5
                 )
                 bone.local_x_vector = (
-                    bone_matrixes[0, "首"].position - bone_matrixes[0, "上半身2"].position
+                    bone_matrixes["首", 0].position - bone_matrixes["上半身2", 0].position
                 ).normalized()
             else:
-                bone.position = bone_matrixes[0, "上半身"].position + (
+                bone.position = bone_matrixes["上半身", 0].position + (
                     (
-                        bone_matrixes[0, "上半身2"].position
-                        - bone_matrixes[0, "上半身"].position
+                        bone_matrixes["上半身2", 0].position
+                        - bone_matrixes["上半身", 0].position
                     )
                     / 2
                 )
                 bone.position.z += (
                     abs(
-                        bone_matrixes[0, "上半身2"].position.z
-                        - bone_matrixes[0, "上半身"].position.z
+                        bone_matrixes["上半身2", 0].position.z
+                        - bone_matrixes["上半身", 0].position.z
                     )
                     * 0.5
                 )
                 bone.local_x_vector = (
-                    bone_matrixes[0, "上半身2"].position - bone_matrixes[0, "上半身"].position
+                    bone_matrixes["上半身2", 0].position - bone_matrixes["上半身", 0].position
                 ).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
@@ -1329,20 +1329,20 @@ class PmxModel(BaseHashModel):
             bone.position = MVector3D(
                 *np.average(
                     [
-                        bone_matrixes[0, f"{direction}腕"].position.vector,
-                        bone_matrixes[0, f"{direction}ひじ"].position.vector,
+                        bone_matrixes[f"{direction}腕", 0].position.vector,
+                        bone_matrixes[f"{direction}ひじ", 0].position.vector,
                     ],
                     weights=[0.4, 0.6],
                     axis=0,
                 )
             )
             bone.fixed_axis = (
-                bone_matrixes[0, f"{direction}ひじ"].position
-                - bone_matrixes[0, f"{direction}腕"].position
+                bone_matrixes[f"{direction}ひじ", 0].position
+                - bone_matrixes[f"{direction}腕", 0].position
             ).normalized()
             bone.local_x_vector = (
-                bone_matrixes[0, f"{direction}ひじ"].position
-                - bone_matrixes[0, f"{direction}腕"].position
+                bone_matrixes[f"{direction}ひじ", 0].position
+                - bone_matrixes[f"{direction}腕", 0].position
             ).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.tail_position = MVector3D()
@@ -1355,20 +1355,20 @@ class PmxModel(BaseHashModel):
             bone.position = MVector3D(
                 *np.average(
                     [
-                        bone_matrixes[0, f"{direction}ひじ"].position.vector,
-                        bone_matrixes[0, f"{direction}手首"].position.vector,
+                        bone_matrixes[f"{direction}ひじ", 0].position.vector,
+                        bone_matrixes[f"{direction}手首", 0].position.vector,
                     ],
                     weights=[0.4, 0.6],
                     axis=0,
                 )
             )
             bone.fixed_axis = (
-                bone_matrixes[0, f"{direction}手首"].position
-                - bone_matrixes[0, f"{direction}ひじ"].position
+                bone_matrixes[f"{direction}手首", 0].position
+                - bone_matrixes[f"{direction}ひじ", 0].position
             ).normalized()
             bone.local_x_vector = (
-                bone_matrixes[0, f"{direction}手首"].position
-                - bone_matrixes[0, f"{direction}ひじ"].position
+                bone_matrixes[f"{direction}手首", 0].position
+                - bone_matrixes[f"{direction}ひじ", 0].position
             ).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.tail_position = MVector3D()
@@ -1383,16 +1383,16 @@ class PmxModel(BaseHashModel):
             bone.position = MVector3D(
                 *np.average(
                     [
-                        bone_matrixes[0, f"{direction}足首"].position.vector,
-                        bone_matrixes[0, toe_target_bone.name].position.vector,
+                        bone_matrixes[f"{direction}足首", 0].position.vector,
+                        bone_matrixes[toe_target_bone.name, 0].position.vector,
                     ],
                     weights=[0.35, 0.65],
                     axis=0,
                 )
             )
             bone.local_x_vector = (
-                bone_matrixes[0, toe_target_bone.name].position
-                - bone_matrixes[0, f"{direction}足首"].position
+                bone_matrixes[toe_target_bone.name, 0].position
+                - bone_matrixes[f"{direction}足首", 0].position
             ).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.tail_position = MVector3D()
@@ -1406,27 +1406,27 @@ class PmxModel(BaseHashModel):
             bone.position = MVector3D(
                 *np.average(
                     [
-                        bone_matrixes[0, f"{direction}手首"].position.vector,
-                        bone_matrixes[0, f"{direction}親指１"].position.vector,
+                        bone_matrixes[f"{direction}手首", 0].position.vector,
+                        bone_matrixes[f"{direction}親指１", 0].position.vector,
                     ],
                     weights=[0.2, 0.8],
                     axis=0,
                 )
             )
             bone.local_x_vector = (
-                bone_matrixes[0, f"{direction}親指１"].position
-                - bone_matrixes[0, f"{direction}手首"].position
+                bone_matrixes[f"{direction}親指１", 0].position
+                - bone_matrixes[f"{direction}手首", 0].position
             ).normalized()
             bone.local_z_vector = local_y_vector.cross(bone.local_x_vector).normalized()
             bone.bone_flg |= BoneFlg.HAS_LOCAL_COORDINATE
         elif "両目" == bone.name and "左目" in self.bones and "右目" in self.bones:
             bone.position = (
-                bone_matrixes[0, "左目"].position + bone_matrixes[0, "右目"].position
+                bone_matrixes["左目", 0].position + bone_matrixes["右目", 0].position
             ) / 2
         elif "親指先" in bone.name and f"{bone.name[0]}親指２":
-            bone.position = bone_matrixes[0, f"{bone.name[0]}親指２"].position
+            bone.position = bone_matrixes[f"{bone.name[0]}親指２", 0].position
         elif "指先" in bone.name and f"{bone.name[:2]}指３":
-            bone.position = bone_matrixes[0, f"{bone.name[:2]}指３"].position
+            bone.position = bone_matrixes[f"{bone.name[:2]}指３", 0].position
         else:
             return False
 
@@ -1470,8 +1470,8 @@ class PmxModel(BaseHashModel):
                 twist_bone.position = MVector3D(
                     *np.average(
                         [
-                            bone_matrixes[0, from_name].position.vector,
-                            bone_matrixes[0, to_name].position.vector,
+                            bone_matrixes[from_name, 0].position.vector,
+                            bone_matrixes[to_name, 0].position.vector,
                         ],
                         weights=[1 - ratio, ratio],
                         axis=0,
@@ -1510,7 +1510,7 @@ class PmxModel(BaseHashModel):
             waist_cancel_left_bone.parent_index = waist_cancel_left_parent_bone.index
 
             waist_cancel_left_bone.position = bone_matrixes[
-                0, left_leg_bone.name
+                left_leg_bone.name, 0
             ].position.copy()
             waist_cancel_left_bone.tail_position = MVector3D()
             waist_cancel_left_bone.bone_flg = BoneSettings.LEFT_WAIST_CANCEL.value.flag
@@ -1536,7 +1536,7 @@ class PmxModel(BaseHashModel):
             waist_cancel_right_bone.parent_index = waist_cancel_right_parent_bone.index
 
             waist_cancel_right_bone.position = bone_matrixes[
-                0, right_leg_bone.name
+                right_leg_bone.name, 0
             ].position.copy()
             waist_cancel_right_bone.tail_position = MVector3D()
             waist_cancel_right_bone.bone_flg = (

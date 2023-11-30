@@ -246,6 +246,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     # 88.0f / 180.0f*3.14159265f
     GIMBAL_RAD = radians(88)
     GIMBAL2_RAD = radians(88 * 2)
+    QUARTER_RAD = radians(90)
     HALF_RAD = radians(180)
     FULL_RAD = radians(360)
 
@@ -1077,19 +1078,36 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     n += 1
         else:
+            # 末端IKボーン名リストを取得する
+            tail_ik_bone_names: list[str] = []
+            for ik_bone_name in ik_bone_names:
+                bone = model.bones[ik_bone_name]
+                if (
+                    bone.is_ik
+                    and bone.ik.bone_index in model.bones
+                    and [ik_link.bone_index for ik_link in bone.ik.links]
+                    and not [
+                        ik_link.bone_index
+                        for child_bone_index in bone.child_bone_indexes
+                        if model.bones[child_bone_index].is_ik
+                        for ik_link in model.bones[child_bone_index].ik.links
+                    ]
+                ):
+                    tail_ik_bone_names.append(ik_bone_name)
+
             with ThreadPoolExecutor(
                 thread_name_prefix="bone_matrixes", max_workers=max_worker
             ) as executor:
                 futures: list[Future] = []
 
-                for ik_bone_name in ik_bone_names:
+                for ik_bone_name in tail_ik_bone_names:
                     ik_bone = model.bones[ik_bone_name]
 
                     for fidx, fno in enumerate(fnos):
-                        # IKターゲットのボーンに対してIK計算を行う
+                        # IKツリーの根元から、IKターゲットのボーンに対してIK計算を行う
                         futures.append(
                             executor.submit(
-                                self.get_ik_rotation, fidx, fno, model, ik_bone
+                                self.get_ik_rotation_tree, fidx, fno, model, ik_bone
                             )
                         )
 
@@ -1107,13 +1125,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     if future.exception():
                         raise future.exception()
 
-                    fno, ik_bone_index, ik_link_qqs = future.result()
+                    fno, ik_link_qqs = future.result()
 
-                    for link in model.bones[ik_bone_index].ik.links:
-                        link_bone = model.bones[link.bone_index]
+                    for ik_link_bone_index, ik_link_qq in ik_link_qqs.items():
+                        link_bone = model.bones[ik_link_bone_index]
 
                         link_bf = self[link_bone.name][fno]
-                        link_bf.ik_rotation = ik_link_qqs[link_bone.index]
+                        link_bf.ik_rotation = ik_link_qq
 
                         # IK用なので最後に追加して補間曲線は分割しない
                         self[link_bone.name].append(link_bf)
@@ -1188,12 +1206,32 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             # 負の付与親の場合、逆回転
             return (effect_qq.multiply_factor(abs(bone.effect_factor))).inverse()
 
+    def get_ik_rotation_tree(
+        self,
+        fidx: int,
+        fno: int,
+        model: PmxModel,
+        ik_bone: Bone,
+    ) -> tuple[int, dict[int, MQuaternion]]:
+        """
+        複数のIKが連なっている場合に直列で求められるようツリー関係を意識してIK計算を行う
+        """
+        qqs: Optional[dict[int, MQuaternion]] = None
+
+        for bone_index in model.bone_trees[ik_bone.name].indexes:
+            bone = model.bones[bone_index]
+            if bone.ik and bone.ik.links:
+                _, _, qqs = self.get_ik_rotation(fidx, fno, model, bone, qqs)
+
+        return fno, qqs
+
     def get_ik_rotation(
         self,
         fidx: int,
         fno: int,
         model: PmxModel,
         ik_bone: Bone,
+        qqs: dict[int, MQuaternion] = None,
     ) -> tuple[int, int, dict[int, MQuaternion]]:
         """
         IKを加味した回転を求める
@@ -1236,10 +1274,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             out_fno_log=False,
         )
 
-        qqs: dict[int, MQuaternion] = {}
+        if qqs is None:
+            qqs: dict[int, MQuaternion] = {}
+
         for bone_name in target_bone_names:
             bone = model.bones[bone_name]
-            _, _, _, qqs[bone.index] = self.get_rotation(fidx, fno, model, bone)
+            if bone.index in qqs:
+                motion_bone_qqs[0, bone.index] = qqs[bone.index].to_matrix4x4().vector
+            else:
+                _, _, _, qqs[bone.index] = self.get_rotation(fidx, fno, model, bone)
 
         is_break = False
         for loop in range(ik_bone.ik.loop_count):
@@ -1466,16 +1509,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     total_actual_ik_qq = link_ik_qq * correct_ik_qq
 
                 # # ■ -----------------
-                # original_link_bf = VmdBoneFrame(
-                #     ik_fno, link_bone.name, register=True
-                # )
+                # original_link_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
                 # original_link_bf.rotation = link_ik_qq.copy()
                 # bake_motion.append_bone_frame(original_link_bf)
                 # ik_fno += 1
 
-                # ideal_ik_qq = MQuaternion.from_axis_angles(
-                #     rotation_axis, rotation_rad
-                # )
+                # ideal_ik_qq = MQuaternion.from_axis_angles(rotation_axis, rotation_rad)
 
                 # total_ideal_ik_qq: MQuaternion = link_ik_qq * ideal_ik_qq
 
@@ -1569,9 +1608,23 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         total_axis_ik_rad = total_ik_qq.to_radian()
         total_axis_ik_rads = total_ik_qq.to_radians(order).mmd
 
-        if unit_radian > rotation_rad and self.HALF_RAD > total_axis_ik_rad:
+        if (
+            unit_radian > rotation_rad
+            and self.QUARTER_RAD > total_axis_ik_rad
+            and unit_radian > total_axis_ik_rad
+        ):
             # トータルが制限角度以内であれば全軸の角度を使う
             total_ik_qq = now_ik_qq * correct_ik_qq
+            total_axis_rad = total_ik_qq.to_radian() * axis_sign
+        elif (
+            self.GIMBAL_RAD > rotation_rad
+            and self.QUARTER_RAD > total_axis_ik_rad
+            and unit_radian > total_axis_ik_rad
+        ):
+            # トータルが88度以内で、軸分け後が制限角度以内であれば制限角度を使う
+            total_ik_qq = now_ik_qq * MQuaternion.from_axis_angles(
+                rotation_axis, unit_radian
+            )
             total_axis_rad = total_ik_qq.to_radian() * axis_sign
         elif self.HALF_RAD > total_axis_ik_rad:
             # トータルが180度以内であれば一軸の角度を全部使う
