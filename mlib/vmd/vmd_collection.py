@@ -1142,7 +1142,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         fno: int,
         model: PmxModel,
         bone: Bone,
-        is_calc_ik: bool = False,
         loop: int = 0,
     ) -> tuple[int, int, VmdAttributes, MQuaternion]:
         """
@@ -1155,14 +1154,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         if bf.ik_rotation is not None:
             # IK用回転を持っている場合、置き換え
-            fk_qq = bf.ik_rotation.copy()
+            ik_qq = bf.ik_rotation.copy()
         else:
             fk_qq = bf.rotation.copy()
 
-        if is_calc_ik and bone.ik_link_indexes:
-            # IK結果回転
-            ik_qq = self.get_ik_rotation(fidx, fno, model, bone)
-        else:
             # IKを加味した回転を必要があれば軸に沿わせる
             ik_qq = self.get_axis_rotation(bone, fk_qq)
 
@@ -1202,7 +1197,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             fno,
             model,
             effect_bone,
-            is_calc_ik=False,
             loop=loop + 1,
         )
         if 0 <= bone.effect_factor:
