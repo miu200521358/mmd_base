@@ -50,7 +50,7 @@ def main() -> None:
     print(f"max_worker: {max_worker}")
 
     motion.animate_bone(
-        list(range(1000, 1100)),
+        list(range(1000, 1500)),
         model,
         out_fno_log=True,
         max_worker=max_worker,

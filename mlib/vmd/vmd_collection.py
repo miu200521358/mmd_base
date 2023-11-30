@@ -289,7 +289,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         target_bone_names = self.get_animate_bone_names(model, bone_names)
 
         # 処理対象ボーンの行列取得
-        bone_dict, bone_offset_matrixes, bone_pos_matrixes = self.create_bone_matrixes(
+        bone_dict, bone_offset_mats, bone_pos_mats = self.create_bone_matrixes(
             model, target_bone_names
         )
 
@@ -412,8 +412,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             fnos,
             model,
             bone_dict,
-            bone_offset_matrixes,
-            bone_pos_matrixes,
+            bone_offset_mats,
+            bone_pos_mats,
             is_motion_identity_poses,
             is_motion_identity_qqs,
             is_motion_identity_scales,
@@ -457,15 +457,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         model: PmxModel,
         target_bone_names: list[str],
     ) -> tuple[dict[str, int], list[tuple[int, np.ndarray]], np.ndarray]:
-        bone_offset_matrixes: list[tuple[int, np.ndarray]] = []
-        bone_pos_matrixes = np.full((1, len(model.bones.indexes), 4, 4), np.eye(4))
+        bone_offset_mats: list[tuple[int, np.ndarray]] = []
+        bone_pos_mats = np.full((1, len(model.bones.indexes), 4, 4), np.eye(4))
         bone_dict: dict[str, int] = {}
         for bone_name in target_bone_names:
             bone = model.bones[bone_name]
-            bone_pos_matrixes[0, bone.index, :3, 3] = bone.position.vector
-            bone_offset_matrixes.append((bone.index, bone.offset_matrix))
+            bone_pos_mats[0, bone.index, :3, 3] = bone.position.vector
+            bone_offset_mats.append((bone.index, bone.offset_matrix))
             bone_dict[bone.name] = bone.index
-        return bone_dict, bone_offset_matrixes, bone_pos_matrixes
+        return bone_dict, bone_offset_mats, bone_pos_mats
 
     def calc_bone_matrixes_array(
         self,
@@ -506,8 +506,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         fnos: list[int],
         model: PmxModel,
         bone_dict: dict[str, int],
-        bone_offset_matrixes: list[tuple[int, np.ndarray]],
-        bone_pos_matrixes: np.ndarray,
+        bone_offset_mats: list[tuple[int, np.ndarray]],
+        bone_pos_mats: np.ndarray,
         is_motion_identity_poses: bool,
         is_motion_identity_qqs: bool,
         is_motion_identity_scales: bool,
@@ -554,7 +554,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         result_global_matrixes = np.full(motion_bone_poses.shape, np.eye(4))
 
         for i, (fidx, (bone_index, offset_matrix)) in enumerate(
-            product(list(range(len(fnos))), bone_offset_matrixes)
+            product(list(range(len(fnos))), bone_offset_mats)
         ):
             if out_fno_log and 0 < i and 0 == i % 100000:
                 logger.info("-- ボーン変形行列積[{d}][{i}]", d=description, i=i)
@@ -569,7 +569,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 )
 
         # グローバル行列は最後にボーン位置に移動させる
-        result_global_matrixes = result_matrixes @ bone_pos_matrixes
+        result_global_matrixes = result_matrixes @ bone_pos_mats
 
         return VmdBoneFrameTrees(
             bone_dict,
@@ -1417,7 +1417,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         target_bone_names = self.get_animate_bone_names(model, [effector_bone.name])
 
         # 処理対象ボーンの行列取得
-        bone_dict, bone_offset_matrixes, bone_pos_matrixes = self.create_bone_matrixes(
+        bone_dict, bone_offset_mats, bone_pos_mats = self.create_bone_matrixes(
             model, target_bone_names
         )
 
@@ -1480,8 +1480,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     [fno],
                     model,
                     bone_dict,
-                    bone_offset_matrixes,
-                    bone_pos_matrixes,
+                    bone_offset_mats,
+                    bone_pos_mats,
                     is_motion_identity_poses,
                     is_motion_identity_qqs,
                     is_motion_identity_scales,
