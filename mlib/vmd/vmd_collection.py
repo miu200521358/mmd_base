@@ -1,5 +1,4 @@
 import os
-from bisect import bisect_left
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from enum import IntEnum, auto
 from functools import lru_cache
@@ -41,7 +40,6 @@ from mlib.pmx.pmx_part import (
 from mlib.pmx.shader import MShader
 from mlib.service.base_worker import verify_thread
 from mlib.vmd.vmd_part import (
-    BoneInterpolations,
     VmdBoneFrame,
     VmdCameraFrame,
     VmdLightFrame,
@@ -86,11 +84,12 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             return VmdBoneFrame(name=key, index=0)
 
         # キーフレがない場合、生成したのを返す（保持はしない）
-        prev_index, middle_index, next_index = self.range_indexes(key)
+        prev_index, middle_index, next_index = self.range_indexes(
+            key, indexes=self.register_indexes
+        )
 
         if key in self.data:
             bf = self.get_by_index(key)
-            # bf.ik_rotation = self.calc_ik(prev_index, middle_index, next_index)
             return bf
 
         # prevとnextの範囲内である場合、補間曲線ベースで求め直す
@@ -124,7 +123,9 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             self._ik_indexes.append(value.index)
             self._ik_indexes.sort()
 
-        prev_index, middle_index, next_index = self.range_indexes(value.index)
+        prev_index, middle_index, next_index = self.range_indexes(
+            value.index, indexes=self.register_indexes
+        )
 
         replaced_map: dict[int, int] = {}
         super().append(value, is_sort, is_positive_index)
@@ -145,48 +146,10 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
 
         return replaced_map
 
-    def calc_ik(
-        self,
-        prev_index: int,
-        index: int,
-        next_index: int,
-    ) -> MQuaternion:
-        # IK回転情報
-        slice_idx = bisect_left(self._ik_indexes, index)
-        prev_ik_indexes = self._ik_indexes[:slice_idx]
-        next_ik_indexes = self._ik_indexes[slice_idx:]
-
-        prev_ik_index = prev_ik_indexes[-1] if prev_ik_indexes else prev_index
-        prev_ik_rotation = (
-            self.data[prev_ik_index].ik_rotation or MQuaternion()
-            if prev_ik_index in self.data
-            else MQuaternion()
-        )
-
-        next_ik_index = next_ik_indexes[0] if next_ik_indexes else next_index
-        next_ik_rotation = (
-            self.data[next_ik_index].ik_rotation or prev_ik_rotation
-            if next_ik_index in self.data
-            else prev_ik_rotation
-        )
-
-        if next_ik_index in self.data:
-            iry, _, _, _ = self.data[next_ik_index].interpolations.evaluate(
-                prev_ik_index, index, next_ik_index
-            )
-        else:
-            iry, _, _, _ = BoneInterpolations().evaluate(
-                prev_ik_index, index, next_ik_index
-            )
-
-        # IK用回転
-        return MQuaternion.slerp(prev_ik_rotation, next_ik_rotation, iry)
-
     @verify_thread
     def calc(self, prev_index: int, index: int, next_index: int) -> VmdBoneFrame:
         if index in self.data:
             bf = self.data[index]
-            # bf.ik_rotation = self.calc_ik(prev_index, index, next_index)
             return bf
 
         if index in self.cache:
@@ -1087,10 +1050,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         total_index_count = len(ik_bone_names) * len(fnos)
 
         if 1 == max_worker:
-            for ik_target_bone in (
-                model.bones[model.bones[ik_bone_name].ik.links[0].bone_index]
-                for ik_bone_name in ik_bone_names
-            ):
+            for ik_bone_name in ik_bone_names:
+                ik_bone = model.bones[ik_bone_name]
+
                 for fidx, fno in enumerate(fnos):
                     if out_fno_log:
                         logger.count(
@@ -1102,7 +1064,17 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         )
 
                     # IKターゲットのボーンに対してIK計算を行う
-                    self.get_ik_rotation(fidx, fno, model, ik_target_bone)
+                    _, _, ik_link_qqs = self.get_ik_rotation(fidx, fno, model, ik_bone)
+
+                    for link in ik_bone.ik.links:
+                        link_bone = model.bones[link.bone_index]
+
+                        link_bf = self[link_bone.name][fno]
+                        link_bf.ik_rotation = ik_link_qqs[link_bone.index]
+
+                        # IK用なので最後に追加して補間曲線は分割しない
+                        self[link_bone.name].append(link_bf)
+
                     n += 1
         else:
             with ThreadPoolExecutor(
@@ -1110,15 +1082,14 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             ) as executor:
                 futures: list[Future] = []
 
-                for ik_target_bone in (
-                    model.bones[model.bones[ik_bone_name].ik.links[0].bone_index]
-                    for ik_bone_name in ik_bone_names
-                ):
+                for ik_bone_name in ik_bone_names:
+                    ik_bone = model.bones[ik_bone_name]
+
                     for fidx, fno in enumerate(fnos):
                         # IKターゲットのボーンに対してIK計算を行う
                         futures.append(
                             executor.submit(
-                                self.get_ik_rotation, fidx, fno, model, ik_target_bone
+                                self.get_ik_rotation, fidx, fno, model, ik_bone
                             )
                         )
 
@@ -1135,6 +1106,17 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                     if future.exception():
                         raise future.exception()
+
+                    fno, ik_bone_index, ik_link_qqs = future.result()
+
+                    for link in model.bones[ik_bone_index].ik.links:
+                        link_bone = model.bones[link.bone_index]
+
+                        link_bf = self[link_bone.name][fno]
+                        link_bf.ik_rotation = ik_link_qqs[link_bone.index]
+
+                        # IK用なので最後に追加して補間曲線は分割しない
+                        self[link_bone.name].append(link_bf)
 
     def get_rotation(
         self,
@@ -1211,8 +1193,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         fidx: int,
         fno: int,
         model: PmxModel,
-        bone: Bone,
-    ) -> MQuaternion:
+        ik_bone: Bone,
+    ) -> tuple[int, int, dict[int, MQuaternion]]:
         """
         IKを加味した回転を求める
         """
@@ -1220,309 +1202,303 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # ik_fno = 1
         # bake_motion = VmdMotion()
 
-        for ik_target_bone_idx in bone.ik_link_indexes:
-            # IKボーン自身の位置
-            ik_bone = model.bones[ik_target_bone_idx]
+        # IKターゲットボーン
+        effector_bone = model.bones[ik_bone.ik.bone_index]
 
-            if ik_target_bone_idx not in model.bones or not ik_bone.ik:
-                continue
+        # IK関連の行列を一括計算
+        ik_matrixes = self.animate_bone_matrixes(
+            [fno],
+            model,
+            bone_names=[ik_bone.name],
+            is_calc_ik=False,
+        )
 
-            # IKターゲットボーン
-            effector_bone = model.bones[ik_bone.ik.bone_index]
+        # 処理対象ボーン名取得
+        target_bone_names = self.get_animate_bone_names(model, [effector_bone.name])
 
-            # IK関連の行列を一括計算
-            ik_matrixes = self.animate_bone_matrixes(
-                [fno],
-                model,
-                bone_names=[ik_bone.name],
-                is_calc_ik=False,
-            )
+        # 処理対象ボーンの行列取得
+        bone_dict, bone_offset_mats, bone_pos_mats = self.create_bone_matrixes(
+            model, target_bone_names
+        )
 
-            # 処理対象ボーン名取得
-            target_bone_names = self.get_animate_bone_names(model, [effector_bone.name])
+        # モーションボーンの初期値を取得
+        (
+            motion_bone_poses,
+            motion_bone_qqs,
+            motion_bone_scales,
+            motion_bone_local_poses,
+            motion_bone_local_qqs,
+            motion_bone_local_scales,
+        ) = self.get_bone_matrixes(
+            [fno],
+            model,
+            target_bone_names,
+            out_fno_log=False,
+        )
 
-            # 処理対象ボーンの行列取得
-            bone_dict, bone_offset_mats, bone_pos_mats = self.create_bone_matrixes(
-                model, target_bone_names
-            )
+        qqs: dict[int, MQuaternion] = {}
+        for bone_name in target_bone_names:
+            bone = model.bones[bone_name]
+            _, _, _, qqs[bone.index] = self.get_rotation(fidx, fno, model, bone)
 
-            # モーションボーンの初期値を取得
-            (
-                motion_bone_poses,
-                motion_bone_qqs,
-                motion_bone_scales,
-                motion_bone_local_poses,
-                motion_bone_local_qqs,
-                motion_bone_local_scales,
-            ) = self.get_bone_matrixes(
-                [fno],
-                model,
-                target_bone_names,
-                out_fno_log=False,
-            )
+        is_break = False
+        for loop in range(ik_bone.ik.loop_count):
+            for lidx, ik_link in enumerate(ik_bone.ik.links):
+                # ikLink は末端から並んでる
+                if ik_link.bone_index not in model.bones:
+                    continue
+                # if ik_bone.is_system and (loop + 1) % (lidx + 1) < lidx:
+                #     # システムIKの場合、末端のループ件数を少なくする
+                #     continue
 
-            is_break = False
-            for loop in range(ik_bone.ik.loop_count):
-                for lidx, ik_link in enumerate(ik_bone.ik.links):
-                    # ikLink は末端から並んでる
-                    if ik_link.bone_index not in model.bones:
-                        continue
-                    # if ik_bone.is_system and (loop + 1) % (lidx + 1) < lidx:
-                    #     # システムIKの場合、末端のループ件数を少なくする
-                    #     continue
+                # 処理対象IKボーン
+                link_bone = model.bones[ik_link.bone_index]
 
-                    # 処理対象IKボーン
-                    link_bone = model.bones[ik_link.bone_index]
+                if (
+                    ik_link.angle_limit
+                    and not ik_link.min_angle_limit.radians
+                    and not ik_link.max_angle_limit.radians
+                    and not ik_link.local_min_angle_limit.radians
+                    and not ik_link.local_max_angle_limit.radians
+                ):
+                    # 角度制限があってまったく動かない場合、IK計算しないで次に行く
+                    continue
+
+                # IK関連の行列を取得
+                effector_matrixes = self.calc_bone_matrixes(
+                    [fno],
+                    model,
+                    bone_dict,
+                    bone_offset_mats,
+                    bone_pos_mats,
+                    motion_bone_poses,
+                    motion_bone_qqs,
+                    motion_bone_scales,
+                    motion_bone_local_poses,
+                    motion_bone_local_qqs,
+                    motion_bone_local_scales,
+                    matrixes=None,
+                    out_fno_log=False,
+                    description="",
+                )
+
+                # IKボーンのグローバル位置
+                global_target_pos = ik_matrixes[ik_bone.name, fno].position
+
+                # 現在のIKターゲットボーンのグローバル位置を取得
+                global_effector_pos = effector_matrixes[
+                    effector_bone.name, fno
+                ].position
+
+                # 注目ノード（実際に動かすボーン）
+                link_matrix = effector_matrixes[link_bone.name, fno].global_matrix
+
+                # ワールド座標系から注目ノードの局所座標系への変換
+                link_inverse_matrix = link_matrix.inverse()
+
+                # 注目ノードを起点とした、エフェクタのローカル位置
+                local_effector_pos = link_inverse_matrix * global_effector_pos
+                # 注目ノードを起点とした、IK目標のローカル位置
+                local_target_pos = link_inverse_matrix * global_target_pos
+
+                if 1e-6 > (local_effector_pos - local_target_pos).length_squared():
+                    # 位置の差がほとんどない場合、スルー
+                    is_break = True
+                    break
+
+                # ベクトル (1) を (2) に一致させるための最短回転量（Axis-Angle）
+                # 回転角
+                rotation_rad: float = np.arccos(
+                    np.clip(
+                        local_effector_pos.dot(local_target_pos)
+                        / (local_effector_pos.length() * local_target_pos.length()),
+                        -1,
+                        1,
+                    )
+                )
+
+                # 回転軸
+                rotation_axis: MVector3D = (
+                    local_effector_pos.normalized()
+                    .cross(local_target_pos.normalized())
+                    .normalized()
+                )
+
+                if 1e-6 > rotation_axis.length_squared():
+                    is_break = True
+                    break
+
+                # リンクボーンの角度を取得
+                link_ik_qq = qqs[link_bone.index]
+                total_actual_ik_qq = None
+                # total_ideal_ik_qq = total_actual_ik_qq = None
+
+                if ik_link.local_angle_limit:
+                    # ローカル軸角度制限が入っている場合、ローカル軸に合わせて理想回転を求める
+                    if (
+                        ik_link.local_min_angle_limit.radians.x
+                        or ik_link.local_max_angle_limit.radians.x
+                    ):
+                        # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
+                        total_actual_ik_qq = self.separate_limit_rotation(
+                            ik_link,
+                            ik_link.local_min_angle_limit,
+                            ik_link.local_max_angle_limit,
+                            rotation_axis,
+                            rotation_rad,
+                            0,
+                            ik_bone.corrected_local_x_vector,
+                            ik_bone.ik.unit_rotation.radians.x,
+                            True,
+                        )
+                    elif (
+                        ik_link.local_min_angle_limit.radians.y
+                        or ik_link.local_max_angle_limit.radians.y
+                    ):
+                        # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
+                        total_actual_ik_qq = self.separate_limit_rotation(
+                            ik_link,
+                            ik_link.local_min_angle_limit,
+                            ik_link.local_max_angle_limit,
+                            rotation_axis,
+                            rotation_rad,
+                            1,
+                            ik_bone.corrected_local_y_vector,
+                            ik_bone.ik.unit_rotation.radians.x,
+                            True,
+                        )
+                    elif (
+                        ik_link.local_min_angle_limit.radians.z
+                        or ik_link.local_max_angle_limit.radians.z
+                    ):
+                        # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
+                        total_actual_ik_qq = self.separate_limit_rotation(
+                            ik_link.local_min_angle_limit,
+                            ik_link.local_max_angle_limit,
+                            link_ik_qq,
+                            rotation_axis,
+                            rotation_rad,
+                            2,
+                            ik_bone.corrected_local_z_vector,
+                            ik_bone.ik.unit_rotation.radians.x,
+                            True,
+                        )
+
+                elif ik_link.angle_limit:
+                    # 角度制限が入ってる場合
 
                     if (
-                        ik_link.angle_limit
-                        and not ik_link.min_angle_limit.radians
-                        and not ik_link.max_angle_limit.radians
-                        and not ik_link.local_min_angle_limit.radians
-                        and not ik_link.local_max_angle_limit.radians
+                        ik_link.min_angle_limit.radians.x
+                        or ik_link.max_angle_limit.radians.x
                     ):
-                        # 角度制限があってまったく動かない場合、IK計算しないで次に行く
-                        continue
-
-                    # IK関連の行列を取得
-                    effector_matrixes = self.calc_bone_matrixes(
-                        [fno],
-                        model,
-                        bone_dict,
-                        bone_offset_mats,
-                        bone_pos_mats,
-                        motion_bone_poses,
-                        motion_bone_qqs,
-                        motion_bone_scales,
-                        motion_bone_local_poses,
-                        motion_bone_local_qqs,
-                        motion_bone_local_scales,
-                        matrixes=None,
-                        out_fno_log=False,
-                        description="",
-                    )
-
-                    # IKボーンのグローバル位置
-                    global_target_pos = ik_matrixes[ik_bone.name, fno].position
-
-                    # 現在のIKターゲットボーンのグローバル位置を取得
-                    global_effector_pos = effector_matrixes[
-                        effector_bone.name, fno
-                    ].position
-
-                    # 注目ノード（実際に動かすボーン）
-                    link_matrix = effector_matrixes[link_bone.name, fno].global_matrix
-
-                    # ワールド座標系から注目ノードの局所座標系への変換
-                    link_inverse_matrix = link_matrix.inverse()
-
-                    # 注目ノードを起点とした、エフェクタのローカル位置
-                    local_effector_pos = link_inverse_matrix * global_effector_pos
-                    # 注目ノードを起点とした、IK目標のローカル位置
-                    local_target_pos = link_inverse_matrix * global_target_pos
-
-                    if 1e-6 > (local_effector_pos - local_target_pos).length_squared():
-                        # 位置の差がほとんどない場合、スルー
-                        is_break = True
-                        break
-
-                    # ベクトル (1) を (2) に一致させるための最短回転量（Axis-Angle）
-                    # 回転角
-                    rotation_rad: float = np.arccos(
-                        np.clip(
-                            local_effector_pos.dot(local_target_pos)
-                            / (local_effector_pos.length() * local_target_pos.length()),
-                            -1,
+                        # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
+                        total_actual_ik_qq = self.separate_limit_rotation(
+                            ik_link.min_angle_limit,
+                            ik_link.max_angle_limit,
+                            link_ik_qq,
+                            rotation_axis,
+                            rotation_rad,
+                            0,
+                            MVector3D(1, 0, 0),
+                            ik_bone.ik.unit_rotation.radians.x,
+                            True,
+                        )
+                    elif (
+                        ik_link.min_angle_limit.radians.y
+                        or ik_link.max_angle_limit.radians.y
+                    ):
+                        # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
+                        total_actual_ik_qq = self.separate_limit_rotation(
+                            ik_link.min_angle_limit,
+                            ik_link.max_angle_limit,
+                            link_ik_qq,
+                            rotation_axis,
+                            rotation_rad,
                             1,
+                            MVector3D(0, 1, 0),
+                            ik_bone.ik.unit_rotation.radians.x,
+                            True,
                         )
+                    elif (
+                        ik_link.min_angle_limit.radians.z
+                        or ik_link.max_angle_limit.radians.z
+                    ):
+                        # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
+                        total_actual_ik_qq = self.separate_limit_rotation(
+                            ik_link.min_angle_limit,
+                            ik_link.max_angle_limit,
+                            link_ik_qq,
+                            rotation_axis,
+                            rotation_rad,
+                            2,
+                            MVector3D(0, 0, 1),
+                            ik_bone.ik.unit_rotation.radians.x,
+                            True,
+                        )
+
+                elif link_bone.has_fixed_axis:
+                    # 軸制限ありの場合、軸にそった理想回転量とする
+
+                    # 制限角で最大変位量を制限する
+                    limit_rotation_rad = min(
+                        ik_bone.ik.unit_rotation.radians.x, rotation_rad
+                    )
+                    # 現在の角度を取得する
+                    link_rad = link_ik_qq.to_radian()
+
+                    # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
+                    total_actual_ik_qq = MQuaternion.from_axis_angles(
+                        link_bone.corrected_fixed_axis,
+                        link_rad + limit_rotation_rad,
                     )
 
-                    # 回転軸
-                    rotation_axis: MVector3D = (
-                        local_effector_pos.normalized()
-                        .cross(local_target_pos.normalized())
-                        .normalized()
+                else:
+                    # 制限角で最大変位量を制限する
+                    limit_rotation_rad = min(
+                        ik_bone.ik.unit_rotation.radians.x, rotation_rad
                     )
 
-                    if 1e-6 > rotation_axis.length_squared():
-                        is_break = True
-                        break
+                    correct_ik_qq = MQuaternion.from_axis_angles(
+                        rotation_axis, limit_rotation_rad
+                    )
 
-                    # リンクボーンの角度を保持
-                    _, _, _, link_ik_qq = self.get_rotation(fidx, fno, model, link_bone)
-                    total_actual_ik_qq = None
-                    # total_ideal_ik_qq = total_actual_ik_qq = None
+                    # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
+                    total_actual_ik_qq = link_ik_qq * correct_ik_qq
 
-                    if ik_link.local_angle_limit:
-                        # ローカル軸角度制限が入っている場合、ローカル軸に合わせて理想回転を求める
-                        if (
-                            ik_link.local_min_angle_limit.radians.x
-                            or ik_link.local_max_angle_limit.radians.x
-                        ):
-                            # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
-                            total_actual_ik_qq = self.separate_limit_rotation(
-                                ik_link,
-                                ik_link.local_min_angle_limit,
-                                ik_link.local_max_angle_limit,
-                                rotation_axis,
-                                rotation_rad,
-                                0,
-                                ik_bone.corrected_local_x_vector,
-                                ik_bone.ik.unit_rotation.radians.x,
-                                True,
-                            )
-                        elif (
-                            ik_link.local_min_angle_limit.radians.y
-                            or ik_link.local_max_angle_limit.radians.y
-                        ):
-                            # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
-                            total_actual_ik_qq = self.separate_limit_rotation(
-                                ik_link,
-                                ik_link.local_min_angle_limit,
-                                ik_link.local_max_angle_limit,
-                                rotation_axis,
-                                rotation_rad,
-                                1,
-                                ik_bone.corrected_local_y_vector,
-                                ik_bone.ik.unit_rotation.radians.x,
-                                True,
-                            )
-                        elif (
-                            ik_link.local_min_angle_limit.radians.z
-                            or ik_link.local_max_angle_limit.radians.z
-                        ):
-                            # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
-                            total_actual_ik_qq = self.separate_limit_rotation(
-                                ik_link.local_min_angle_limit,
-                                ik_link.local_max_angle_limit,
-                                link_ik_qq,
-                                rotation_axis,
-                                rotation_rad,
-                                2,
-                                ik_bone.corrected_local_z_vector,
-                                ik_bone.ik.unit_rotation.radians.x,
-                                True,
-                            )
+                # # ■ -----------------
+                # original_link_bf = VmdBoneFrame(
+                #     ik_fno, link_bone.name, register=True
+                # )
+                # original_link_bf.rotation = link_ik_qq.copy()
+                # bake_motion.append_bone_frame(original_link_bf)
+                # ik_fno += 1
 
-                    elif ik_link.angle_limit:
-                        # 角度制限が入ってる場合
+                # ideal_ik_qq = MQuaternion.from_axis_angles(
+                #     rotation_axis, rotation_rad
+                # )
 
-                        if (
-                            ik_link.min_angle_limit.radians.x
-                            or ik_link.max_angle_limit.radians.x
-                        ):
-                            # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
-                            total_actual_ik_qq = self.separate_limit_rotation(
-                                ik_link.min_angle_limit,
-                                ik_link.max_angle_limit,
-                                link_ik_qq,
-                                rotation_axis,
-                                rotation_rad,
-                                0,
-                                MVector3D(1, 0, 0),
-                                ik_bone.ik.unit_rotation.radians.x,
-                                True,
-                            )
-                        elif (
-                            ik_link.min_angle_limit.radians.y
-                            or ik_link.max_angle_limit.radians.y
-                        ):
-                            # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
-                            total_actual_ik_qq = self.separate_limit_rotation(
-                                ik_link.min_angle_limit,
-                                ik_link.max_angle_limit,
-                                link_ik_qq,
-                                rotation_axis,
-                                rotation_rad,
-                                1,
-                                MVector3D(0, 1, 0),
-                                ik_bone.ik.unit_rotation.radians.x,
-                                True,
-                            )
-                        elif (
-                            ik_link.min_angle_limit.radians.z
-                            or ik_link.max_angle_limit.radians.z
-                        ):
-                            # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
-                            total_actual_ik_qq = self.separate_limit_rotation(
-                                ik_link.min_angle_limit,
-                                ik_link.max_angle_limit,
-                                link_ik_qq,
-                                rotation_axis,
-                                rotation_rad,
-                                2,
-                                MVector3D(0, 0, 1),
-                                ik_bone.ik.unit_rotation.radians.x,
-                                True,
-                            )
+                # total_ideal_ik_qq: MQuaternion = link_ik_qq * ideal_ik_qq
 
-                    elif link_bone.has_fixed_axis:
-                        # 軸制限ありの場合、軸にそった理想回転量とする
+                # total_ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
+                # total_ideal_bf.rotation = total_ideal_ik_qq.copy()
+                # bake_motion.append_bone_frame(total_ideal_bf)
+                # ik_fno += 1
 
-                        # 制限角で最大変位量を制限する
-                        limit_rotation_rad = min(
-                            ik_bone.ik.unit_rotation.radians.x, rotation_rad
-                        )
-                        # 現在の角度を取得する
-                        link_rad = link_ik_qq.to_radian()
+                # total_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
+                # total_bf.rotation = total_actual_ik_qq.copy()
+                # bake_motion.append_bone_frame(total_bf)
+                # ik_fno += 1
+                # # ■ -----------------
 
-                        # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
-                        total_actual_ik_qq = MQuaternion.from_axis_angles(
-                            link_bone.corrected_fixed_axis,
-                            link_rad + limit_rotation_rad,
-                        )
+                # IKの結果を更新
+                qqs[link_bone.index] = self.get_axis_rotation(
+                    link_bone, total_actual_ik_qq
+                )
 
-                    else:
-                        # 制限角で最大変位量を制限する
-                        limit_rotation_rad = min(
-                            ik_bone.ik.unit_rotation.radians.x, rotation_rad
-                        )
+                motion_bone_qqs[
+                    0, link_bone.index
+                ] = total_actual_ik_qq.to_matrix4x4().vector
 
-                        correct_ik_qq = MQuaternion.from_axis_angles(
-                            rotation_axis, limit_rotation_rad
-                        )
-
-                        # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
-                        total_actual_ik_qq = link_ik_qq * correct_ik_qq
-
-                    # # ■ -----------------
-                    # original_link_bf = VmdBoneFrame(
-                    #     ik_fno, link_bone.name, register=True
-                    # )
-                    # original_link_bf.rotation = link_ik_qq.copy()
-                    # bake_motion.append_bone_frame(original_link_bf)
-                    # ik_fno += 1
-
-                    # ideal_ik_qq = MQuaternion.from_axis_angles(
-                    #     rotation_axis, rotation_rad
-                    # )
-
-                    # total_ideal_ik_qq: MQuaternion = link_ik_qq * ideal_ik_qq
-
-                    # total_ideal_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
-                    # total_ideal_bf.rotation = total_ideal_ik_qq.copy()
-                    # bake_motion.append_bone_frame(total_ideal_bf)
-                    # ik_fno += 1
-
-                    # total_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
-                    # total_bf.rotation = total_actual_ik_qq.copy()
-                    # bake_motion.append_bone_frame(total_bf)
-                    # ik_fno += 1
-                    # # ■ -----------------
-
-                    link_bf = self[link_bone.name][fno]
-                    link_bf.ik_rotation = total_actual_ik_qq
-
-                    # IK用なので最後に追加して補間曲線は分割しない
-                    self[link_bone.name].append(link_bf)
-
-                    # IKの結果を更新
-                    motion_bone_qqs[
-                        0, link_bone.index
-                    ] = total_actual_ik_qq.to_matrix4x4().vector
-
-                if is_break:
-                    break
             if is_break:
                 break
 
@@ -1539,10 +1515,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # # ■ --------------
 
         # IKの計算結果の回転を加味して返す
-        bf = self[bone.name][fno]
-        qq = bf.ik_rotation if bf.ik_rotation else bf.rotation
-
-        return self.get_axis_rotation(bone, qq)
+        return fno, ik_bone.index, qqs
 
     def separate_limit_rotation(
         self,
