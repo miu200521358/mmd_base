@@ -73,11 +73,13 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
         "_names",
         "_indexes",
         "_ik_indexes",
+        "_register_indexes",
     )
 
     def __init__(self, name: str = "") -> None:
         super().__init__(name)
         self._ik_indexes: list[int] = []
+        self._register_indexes: list[int] = []
 
     def __getitem__(self, key: int | str) -> VmdBoneFrame:
         if isinstance(key, str):
@@ -116,6 +118,10 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             self._ik_indexes.sort()
         super().append(value, is_sort, is_positive_index)
 
+        if value.register:
+            self._register_indexes.append(value.index)
+            self._register_indexes.sort()
+
     def insert(
         self, value: VmdBoneFrame, is_sort: bool = True, is_positive_index: bool = True
     ) -> dict[int, int]:
@@ -143,6 +149,10 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
                 )
                 self.data[middle_index].interpolations[i] = split_target_interpolation
                 self.data[next_index].interpolations[i] = split_next_interpolation
+
+        if value.register:
+            self._register_indexes.append(value.index)
+            self._register_indexes.sort()
 
         return replaced_map
 
@@ -229,7 +239,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
 
     @property
     def register_indexes(self) -> list[int]:
-        return sorted([bf.index for bf in self.data.values() if bf.register])
+        return self._register_indexes
 
 
 class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
@@ -253,7 +263,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
     EYE_MAT = np.eye(4)
 
     def is_non_identity_matrix(self, mat: np.ndarray) -> bool:
-        return not np.all(mat == self.EYE_MAT)
+        """行列が恒等行列でないかどうかをチェックする"""
+        return not np.allclose(mat, self.EYE_MAT, atol=1e-5)
 
     @property
     def max_fno(self) -> int:
@@ -288,6 +299,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         # モーフボーン操作
         if morph_bone_frames is not None:
             (
+                is_morph_identity_poses,
+                is_morph_identity_qqs,
+                is_morph_identity_scales,
+                is_morph_identity_local_poses,
+                is_morph_identity_local_qqs,
+                is_morph_identity_local_scales,
                 morph_bone_poses,
                 morph_bone_qqs,
                 morph_bone_scales,
@@ -303,6 +320,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         else:
             morph_row = len(fnos)
             morph_col = len(model.bones)
+            is_morph_identity_poses = True
+            is_morph_identity_qqs = True
+            is_morph_identity_scales = True
+            is_morph_identity_local_poses = True
+            is_morph_identity_local_qqs = True
+            is_morph_identity_local_scales = True
             morph_bone_poses = np.full((morph_row, morph_col, 4, 4), np.eye(4))
             morph_bone_qqs = np.full((morph_row, morph_col, 4, 4), np.eye(4))
             morph_bone_scales = np.full((morph_row, morph_col, 4, 4), np.eye(4))
@@ -323,6 +346,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         if 1 < len(fnos) and 1 < max_worker:
             # 複数キーフレを並列で求められる条件である場合、並列処理で求める
             (
+                is_motion_identity_poses,
+                is_motion_identity_qqs,
+                is_motion_identity_scales,
+                is_motion_identity_local_poses,
+                is_motion_identity_local_qqs,
+                is_motion_identity_local_scales,
                 motion_bone_poses,
                 motion_bone_qqs,
                 motion_bone_scales,
@@ -339,6 +368,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             )
         else:
             (
+                is_motion_identity_poses,
+                is_motion_identity_qqs,
+                is_motion_identity_scales,
+                is_motion_identity_local_poses,
+                is_motion_identity_local_qqs,
+                is_motion_identity_local_scales,
                 motion_bone_poses,
                 motion_bone_qqs,
                 motion_bone_scales,
@@ -358,6 +393,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # モーフの適用
         matrixes = self.calc_bone_matrixes_array(
+            is_morph_identity_poses,
+            is_morph_identity_qqs,
+            is_morph_identity_scales,
+            is_morph_identity_local_poses,
+            is_morph_identity_local_qqs,
+            is_morph_identity_local_scales,
             morph_bone_poses,
             morph_bone_qqs,
             morph_bone_scales,
@@ -373,6 +414,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             bone_dict,
             bone_offset_mats,
             bone_pos_mats,
+            is_motion_identity_poses,
+            is_motion_identity_qqs,
+            is_motion_identity_scales,
+            is_motion_identity_local_poses,
+            is_motion_identity_local_qqs,
+            is_motion_identity_local_scales,
             motion_bone_poses,
             motion_bone_qqs,
             motion_bone_scales,
@@ -422,6 +469,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
     def calc_bone_matrixes_array(
         self,
+        is_identity_poses: bool,
+        is_identity_qqs: bool,
+        is_identity_scales: bool,
+        is_identity_local_poses: bool,
+        is_identity_local_qqs: bool,
+        is_identity_local_scales: bool,
         bone_poses: np.ndarray,
         bone_qqs: np.ndarray,
         bone_scales: np.ndarray,
@@ -433,18 +486,18 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         if matrixes is None:
             matrixes = np.full(bone_poses.shape, np.eye(4))
 
-        if self.is_non_identity_matrix(bone_poses):
-            matrixes = matrixes @ bone_poses
-        if self.is_non_identity_matrix(bone_local_poses):
-            matrixes = matrixes @ bone_local_poses
-        if self.is_non_identity_matrix(bone_qqs):
-            matrixes = matrixes @ bone_qqs
-        if self.is_non_identity_matrix(bone_local_qqs):
-            matrixes = matrixes @ bone_local_qqs
-        if self.is_non_identity_matrix(bone_scales):
-            matrixes = matrixes @ bone_scales
-        if self.is_non_identity_matrix(bone_local_scales):
-            matrixes = matrixes @ bone_local_scales
+        if not is_identity_poses:
+            matrixes @= bone_poses
+        if not is_identity_local_poses:
+            matrixes @= bone_local_poses
+        if not is_identity_qqs:
+            matrixes @= bone_qqs
+        if not is_identity_local_qqs:
+            matrixes @= bone_local_qqs
+        if not is_identity_scales:
+            matrixes @= bone_scales
+        if not is_identity_local_scales:
+            matrixes @= bone_local_scales
 
         return matrixes
 
@@ -455,6 +508,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         bone_dict: dict[str, int],
         bone_offset_mats: list[tuple[int, np.ndarray]],
         bone_pos_mats: np.ndarray,
+        is_motion_identity_poses: bool,
+        is_motion_identity_qqs: bool,
+        is_motion_identity_scales: bool,
+        is_motion_identity_local_poses: bool,
+        is_motion_identity_local_qqs: bool,
+        is_motion_identity_local_scales: bool,
         motion_bone_poses: np.ndarray,
         motion_bone_qqs: np.ndarray,
         motion_bone_scales: np.ndarray,
@@ -466,6 +525,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         description: str = "",
     ) -> VmdBoneFrameTrees:
         matrixes = self.calc_bone_matrixes_array(
+            is_motion_identity_poses,
+            is_motion_identity_qqs,
+            is_motion_identity_scales,
+            is_motion_identity_local_poses,
+            is_motion_identity_local_qqs,
+            is_motion_identity_local_scales,
             motion_bone_poses,
             motion_bone_qqs,
             motion_bone_scales,
@@ -522,7 +587,20 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         target_bone_names: list[str],
         out_fno_log: bool = False,
         description: str = "",
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,]:
+    ) -> tuple[
+        bool,
+        bool,
+        bool,
+        bool,
+        bool,
+        bool,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+    ]:
         """ボーン変形行列を求める"""
 
         row = len(fnos)
@@ -533,6 +611,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_poses = np.full((row, col, 4, 4), np.eye(4))
         local_qqs = np.full((row, col, 4, 4), np.eye(4))
         local_scales = np.full((row, col, 4, 4), np.eye(4))
+        is_identity_poses = True
+        is_identity_qqs = True
+        is_identity_scales = True
+        is_identity_local_poses = True
+        is_identity_local_qqs = True
+        is_identity_local_scales = True
 
         total_count = len(fnos) * len(target_bone_names)
 
@@ -600,6 +684,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 _, _, _, poses[fidx, bone.index] = self.get_position(
                     fidx, fno, model, bone, fno_poses[bone.index]
                 )
+                if is_identity_poses and self.is_non_identity_matrix(
+                    poses[fidx, bone.index]
+                ):
+                    is_identity_poses = False
 
                 # モーションによるローカル移動量
                 if is_valid_local_pos:
@@ -612,11 +700,16 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         parent_local_axises,
                     )
                     local_poses[fidx, bone.index] = local_pos_mat
+                    is_identity_local_poses = False
 
                 # FK(捩り) > IK(捩り) > 付与親(捩り)
                 # ここではもうIKの回転結果は求まってるのでIK計算を追加では行わない
                 _, _, _, qq = self.get_rotation(fidx, fno, model, bone)
                 qqs[fidx, bone.index] = qq.to_matrix4x4().vector
+                if is_identity_qqs and self.is_non_identity_matrix(
+                    qqs[fidx, bone.index]
+                ):
+                    is_identity_qqs = False
 
                 # ローカル回転
                 if is_valid_local_rot:
@@ -629,12 +722,17 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         parent_local_axises,
                     )
                     local_qqs[fidx, bone.index] = local_rot_mat
+                    is_identity_local_qqs = False
 
                 # モーションによるスケール変化
                 _, _, _, scale_mat = self.get_scale(
                     fidx, fno, model, bone, fno_scales[bone.index]
                 )
                 scales[fidx, bone.index] = scale_mat
+                if is_identity_scales and self.is_non_identity_matrix(
+                    scales[fidx, bone.index]
+                ):
+                    is_identity_scales = False
 
                 # ローカルスケール
                 if is_valid_local_scale:
@@ -647,8 +745,22 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         parent_local_axises,
                     )
                     local_scales[fidx, bone.index] = local_scale_mat
+                    is_identity_local_scales = False
 
-        return poses, qqs, scales, local_poses, local_qqs, local_scales
+        return (
+            is_identity_poses,
+            is_identity_qqs,
+            is_identity_scales,
+            is_identity_local_poses,
+            is_identity_local_qqs,
+            is_identity_local_scales,
+            poses,
+            qqs,
+            scales,
+            local_poses,
+            local_qqs,
+            local_scales,
+        )
 
     def get_bone_matrixes_parallel(
         self,
@@ -658,7 +770,20 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         out_fno_log: bool = False,
         description: str = "",
         max_worker: int = 1,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,]:
+    ) -> tuple[
+        bool,
+        bool,
+        bool,
+        bool,
+        bool,
+        bool,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+    ]:
         """ボーン変形行列を求める"""
 
         row = len(fnos)
@@ -669,6 +794,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         local_poses = np.full((row, col, 4, 4), np.eye(4))
         local_qqs = np.full((row, col, 4, 4), np.eye(4))
         local_scales = np.full((row, col, 4, 4), np.eye(4))
+        is_identity_poses = True
+        is_identity_qqs = True
+        is_identity_scales = True
+        is_identity_local_poses = True
+        is_identity_local_qqs = True
+        is_identity_local_scales = True
 
         total_count = len(fnos) * len(target_bone_names)
 
@@ -824,18 +955,47 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             fidx, bone_index, attr, mat = future.result()
             if attr == VmdAttributes.POSITION:
                 poses[fidx, bone_index] = mat
+                if is_identity_poses and self.is_non_identity_matrix(mat):
+                    is_identity_poses = False
+
             elif attr == VmdAttributes.ROTATION:
                 qqs[fidx, bone_index] = mat.to_matrix4x4().vector
+                if is_identity_qqs and self.is_non_identity_matrix(
+                    qqs[fidx, bone_index]
+                ):
+                    is_identity_qqs = False
+
             elif attr == VmdAttributes.SCALE:
                 scales[fidx, bone_index] = mat
+                if is_identity_scales and self.is_non_identity_matrix(mat):
+                    is_identity_scales = False
+
             elif attr == VmdAttributes.LOCAL_POSITION:
                 local_poses[fidx, bone_index] = mat
+                is_identity_local_poses = False
+
             elif attr == VmdAttributes.LOCAL_ROTATION:
                 local_qqs[fidx, bone_index] = mat
+                is_identity_local_qqs = False
+
             elif attr == VmdAttributes.LOCAL_SCALE:
                 local_scales[fidx, bone_index] = mat
+                is_identity_local_scales = False
 
-        return poses, qqs, scales, local_poses, local_qqs, local_scales
+        return (
+            is_identity_poses,
+            is_identity_qqs,
+            is_identity_scales,
+            is_identity_local_poses,
+            is_identity_local_qqs,
+            is_identity_local_scales,
+            poses,
+            qqs,
+            scales,
+            local_poses,
+            local_qqs,
+            local_scales,
+        )
 
     def get_position(
         self,
@@ -1047,10 +1207,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             # IKリンクボーンがない場合はそのまま終了
             return
 
-        n = 0
-        total_index_count = len(ik_bone_names) * len(fnos)
-
         if 1 == max_worker:
+            n = 0
+            total_index_count = len(ik_bone_names) * len(fnos)
+
             for ik_bone_name in ik_bone_names:
                 ik_bone = model.bones[ik_bone_name]
 
@@ -1098,6 +1258,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             with ThreadPoolExecutor(
                 thread_name_prefix="bone_matrixes", max_workers=max_worker
             ) as executor:
+                n = 0
+                total_index_count = len(tail_ik_bone_names) * len(fnos)
                 futures: list[Future] = []
 
                 for ik_bone_name in tail_ik_bone_names:
@@ -1261,6 +1423,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # モーションボーンの初期値を取得
         (
+            is_motion_identity_poses,
+            is_motion_identity_qqs,
+            is_motion_identity_scales,
+            is_motion_identity_local_poses,
+            is_motion_identity_local_qqs,
+            is_motion_identity_local_scales,
             motion_bone_poses,
             motion_bone_qqs,
             motion_bone_scales,
@@ -1314,6 +1482,12 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     bone_dict,
                     bone_offset_mats,
                     bone_pos_mats,
+                    is_motion_identity_poses,
+                    is_motion_identity_qqs,
+                    is_motion_identity_scales,
+                    is_motion_identity_local_poses,
+                    is_motion_identity_local_qqs,
+                    is_motion_identity_local_scales,
                     motion_bone_poses,
                     motion_bone_qqs,
                     motion_bone_scales,
@@ -1537,6 +1711,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 motion_bone_qqs[
                     0, link_bone.index
                 ] = total_actual_ik_qq.to_matrix4x4().vector
+                is_motion_identity_qqs = False
 
             if is_break:
                 break

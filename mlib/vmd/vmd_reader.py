@@ -227,7 +227,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                 "ボーンデータ読み取り",
                 index=i,
                 total_index_count=total_index_count,
-                display_block=10000,
+                display_block=20000,
             )
 
         for bfs in motion.bones:
@@ -253,7 +253,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                 "モーフデータ読み取り",
                 index=i,
                 total_index_count=total_index_count,
-                display_block=10000,
+                display_block=20000,
             )
 
         for mfs in motion.morphs:
@@ -311,7 +311,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                     "カメラデータ読み取り",
                     index=i,
                     total_index_count=total_index_count,
-                    display_block=10000,
+                    display_block=20000,
                 )
 
             motion.cameras.sort_indexes()
@@ -343,7 +343,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                     "照明データ読み取り",
                     index=i,
                     total_index_count=total_index_count,
-                    display_block=10000,
+                    display_block=20000,
                 )
 
             motion.lights.sort_indexes()
@@ -371,7 +371,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                     "セルフ影データ読み取り",
                     index=i,
                     total_index_count=total_index_count,
-                    display_block=10000,
+                    display_block=20000,
                 )
 
             motion.shadows.sort_indexes()
@@ -397,7 +397,7 @@ class VmdReader(BaseReader[VmdMotion]):  # type: ignore
                     "IKデータ読み取り",
                     index=i,
                     total_index_count=total_index_count,
-                    display_block=10000,
+                    display_block=20000,
                 )
 
             motion.show_iks.sort_indexes()
