@@ -311,6 +311,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 morph_bone_local_poses,
                 morph_bone_local_qqs,
                 morph_bone_local_scales,
+                _,
             ) = morph_bone_frames.get_bone_matrixes(
                 fnos,
                 model,
@@ -358,6 +359,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 motion_bone_local_poses,
                 motion_bone_local_qqs,
                 motion_bone_local_scales,
+                motion_bone_fk_qqs,
             ) = self.get_bone_matrixes_parallel(
                 fnos,
                 model,
@@ -380,6 +382,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 motion_bone_local_poses,
                 motion_bone_local_qqs,
                 motion_bone_local_scales,
+                motion_bone_fk_qqs,
             ) = self.get_bone_matrixes(
                 fnos,
                 model,
@@ -426,6 +429,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             motion_bone_local_poses,
             motion_bone_local_qqs,
             motion_bone_local_scales,
+            motion_bone_fk_qqs,
             matrixes,
             out_fno_log,
             description,
@@ -520,6 +524,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         motion_bone_local_poses: np.ndarray,
         motion_bone_local_qqs: np.ndarray,
         motion_bone_local_scales: np.ndarray,
+        motion_bone_fk_qqs: np.ndarray,
         matrixes: np.ndarray = None,
         out_fno_log: bool = False,
         description: str = "",
@@ -585,6 +590,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             result_matrixes,
             motion_bone_poses,
             motion_bone_qqs,
+            motion_bone_fk_qqs,
         )
 
     def get_bone_matrixes(
@@ -607,6 +613,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         np.ndarray,
         np.ndarray,
         np.ndarray,
+        np.ndarray,
     ]:
         """ボーン変形行列を求める"""
 
@@ -614,6 +621,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         col = len(model.bones)
         poses = np.full((row, col, 4, 4), np.eye(4))
         qqs = np.full((row, col, 4, 4), np.eye(4))
+        fk_qqs = np.full((row, col, 4, 4), np.eye(4))
         scales = np.full((row, col, 4, 4), np.eye(4))
         local_poses = np.full((row, col, 4, 4), np.eye(4))
         local_qqs = np.full((row, col, 4, 4), np.eye(4))
@@ -711,8 +719,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
                 # FK(捩り) > IK(捩り) > 付与親(捩り)
                 # ここではもうIKの回転結果は求まってるのでIK計算を追加では行わない
-                _, _, _, qq = self.get_rotation(fidx, fno, model, bone)
+                _, _, _, (qq, fk_qq) = self.get_rotation(fidx, fno, model, bone)
                 qqs[fidx, bone.index] = qq.to_matrix4x4().vector
+                fk_qqs[fidx, bone.index] = fk_qq.to_matrix4x4().vector
                 if is_identity_qqs and self.is_non_identity_matrix(
                     qqs[fidx, bone.index]
                 ):
@@ -767,6 +776,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             local_poses,
             local_qqs,
             local_scales,
+            fk_qqs,
         )
 
     def get_bone_matrixes_parallel(
@@ -790,6 +800,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         np.ndarray,
         np.ndarray,
         np.ndarray,
+        np.ndarray,
     ]:
         """ボーン変形行列を求める"""
 
@@ -797,6 +808,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         col = len(model.bones)
         poses = np.full((row, col, 4, 4), np.eye(4))
         qqs = np.full((row, col, 4, 4), np.eye(4))
+        fk_qqs = np.full((row, col, 4, 4), np.eye(4))
         scales = np.full((row, col, 4, 4), np.eye(4))
         local_poses = np.full((row, col, 4, 4), np.eye(4))
         local_qqs = np.full((row, col, 4, 4), np.eye(4))
@@ -966,7 +978,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     is_identity_poses = False
 
             elif attr == VmdAttributes.ROTATION:
-                qqs[fidx, bone_index] = mat.to_matrix4x4().vector
+                qq, fk_qq = mat
+                qqs[fidx, bone_index] = qq.to_matrix4x4().vector
+                fk_qqs[fidx, bone_index] = fk_qq.to_matrix4x4().vector
                 if is_identity_qqs and self.is_non_identity_matrix(
                     qqs[fidx, bone_index]
                 ):
@@ -1002,6 +1016,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             local_poses,
             local_qqs,
             local_scales,
+            fk_qqs,
         )
 
     def get_position(
@@ -1312,7 +1327,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         model: PmxModel,
         bone: Bone,
         loop: int = 0,
-    ) -> tuple[int, int, VmdAttributes, MQuaternion]:
+    ) -> tuple[int, int, VmdAttributes, tuple[MQuaternion, MQuaternion]]:
         """
         該当キーフレにおけるボーンの相対位置
         is_calc_ik : IKを計算するか(循環してしまう場合があるので、デフォルトFalse)
@@ -1338,10 +1353,10 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 fidx,
                 bone.index,
                 VmdAttributes.ROTATION,
-                self.get_axis_rotation(bone, (ik_qq * effect_qq).normalized()),
+                (self.get_axis_rotation(bone, (ik_qq * effect_qq).normalized()), ik_qq),
             )
 
-        return fidx, bone.index, VmdAttributes.ROTATION, ik_qq
+        return fidx, bone.index, VmdAttributes.ROTATION, (ik_qq, ik_qq)
 
     def get_effect_rotation(
         self,
@@ -1361,7 +1376,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 付与親の回転量を取得する（それが付与持ちなら更に遡る）
         effect_bone = model.bones[bone.effect_index]
-        _, _, _, effect_qq = self.get_rotation(
+        _, _, _, (effect_qq, _) = self.get_rotation(
             fidx,
             fno,
             model,
@@ -1442,6 +1457,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             motion_bone_local_poses,
             motion_bone_local_qqs,
             motion_bone_local_scales,
+            motion_bone_fk_qqs,
         ) = self.get_bone_matrixes(
             [fno],
             model,
@@ -1457,7 +1473,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             if bone.index in qqs:
                 motion_bone_qqs[0, bone.index] = qqs[bone.index].to_matrix4x4().vector
             else:
-                _, _, _, qqs[bone.index] = self.get_rotation(fidx, fno, model, bone)
+                _, _, _, (qqs[bone.index], _) = self.get_rotation(
+                    fidx, fno, model, bone
+                )
 
         is_break = False
         for loop in range(ik_bone.ik.loop_count):
@@ -1501,6 +1519,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     motion_bone_local_poses,
                     motion_bone_local_qqs,
                     motion_bone_local_scales,
+                    motion_bone_fk_qqs,
                     matrixes=None,
                     out_fno_log=False,
                     description="",

@@ -15,6 +15,7 @@ class VmdBoneFrameTree:
         "local_matrix_ary",
         "frame_position_matrix_ary",
         "frame_rotation_matrix_ary",
+        "frame_fk_rotation_matrix_ary",
         "cache_global_matrix",
         "cache_local_matrix",
         "cache_global_matrix_no_scale",
@@ -22,6 +23,7 @@ class VmdBoneFrameTree:
         "cache_position",
         "cache_frame_position",
         "cache_frame_rotation",
+        "cache_frame_fk_rotation",
     )
 
     def __init__(
@@ -33,6 +35,7 @@ class VmdBoneFrameTree:
         local_matrix_ary: np.ndarray,
         frame_position_matrix_ary: np.ndarray,
         frame_rotation_matrix_ary: np.ndarray,
+        frame_fk_rotation_matrix_ary: np.ndarray,
     ) -> None:
         self.fno = fno
         self.bone_index = bone_index
@@ -41,6 +44,7 @@ class VmdBoneFrameTree:
         self.local_matrix_ary = local_matrix_ary
         self.frame_position_matrix_ary = frame_position_matrix_ary
         self.frame_rotation_matrix_ary = frame_rotation_matrix_ary
+        self.frame_fk_rotation_matrix_ary = frame_fk_rotation_matrix_ary
         self.cache_global_matrix: Optional[MMatrix4x4] = None
         self.cache_local_matrix: Optional[MMatrix4x4] = None
         self.cache_global_matrix_no_scale: Optional[MMatrix4x4] = None
@@ -48,6 +52,7 @@ class VmdBoneFrameTree:
         self.cache_position: Optional[MVector3D] = None
         self.cache_frame_position: Optional[MVector3D] = None
         self.cache_frame_rotation: Optional[MQuaternion] = None
+        self.cache_frame_fk_rotation: Optional[MQuaternion] = None
 
     @property
     def global_matrix(self) -> MMatrix4x4:
@@ -119,6 +124,16 @@ class VmdBoneFrameTree:
         ).to_quaternion()
         return self.cache_frame_rotation
 
+    @property
+    def frame_fk_rotation(self) -> MQuaternion:
+        if self.cache_frame_fk_rotation is not None:
+            return self.cache_frame_fk_rotation
+
+        self.cache_frame_fk_rotation = MMatrix4x4(
+            self.frame_fk_rotation_matrix_ary
+        ).to_quaternion()
+        return self.cache_frame_fk_rotation
+
 
 class VmdBoneFrameTrees:
     __slots__ = (
@@ -129,6 +144,7 @@ class VmdBoneFrameTrees:
         "_result_matrixes",
         "_motion_bone_poses",
         "_motion_bone_qqs",
+        "_motion_bone_fk_qqs",
         "_cache_frames",
     )
 
@@ -140,6 +156,7 @@ class VmdBoneFrameTrees:
         result_matrixes: np.ndarray,
         motion_bone_poses: np.ndarray,
         motion_bone_qqs: np.ndarray,
+        motion_bone_fk_qqs: np.ndarray,
     ) -> None:
         """
         ボーン変形行列生成
@@ -170,6 +187,7 @@ class VmdBoneFrameTrees:
         self._result_matrixes = result_matrixes
         self._motion_bone_poses = motion_bone_poses
         self._motion_bone_qqs = motion_bone_qqs
+        self._motion_bone_fk_qqs = motion_bone_fk_qqs
         self._cache_frames: dict[tuple[int, int], VmdBoneFrameTree] = {}
 
     def __getitem__(self, key: tuple[str, int]) -> VmdBoneFrameTree:
@@ -188,6 +206,7 @@ class VmdBoneFrameTrees:
             self._result_matrixes[fidx, bone_index],
             self._motion_bone_poses[fidx, bone_index],
             self._motion_bone_qqs[fidx, bone_index],
+            self._motion_bone_fk_qqs[fidx, bone_index],
         )
         self._cache_frames[(bone_index, fidx)] = vbf
 
