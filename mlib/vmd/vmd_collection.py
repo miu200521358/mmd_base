@@ -1243,7 +1243,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             d=description,
                             index=n,
                             total_index_count=total_index_count,
-                            display_block=500,
+                            display_block=200,
                         )
 
                     # IKターゲットのボーンに対してIK計算を行う
