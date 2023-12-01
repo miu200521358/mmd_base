@@ -1629,9 +1629,16 @@ class MQuaternion(MVector):
         return 2 * acos(min(1, max(-1, scalar)))
 
     @staticmethod
-    def vector_to_degrees(a: MVector3D, b: MVector3D) -> float:
+    def vector_to_degree(a: MVector3D, b: MVector3D) -> float:
         """
         与えられた2つのベクトルから角度に変換
+        """
+        return degrees(MQuaternion.vector_to_radian(a, b))
+
+    @staticmethod
+    def vector_to_radian(a: MVector3D, b: MVector3D) -> float:
+        """
+        与えられた2つのベクトルからラジアン角度に変換
         """
         p = a.dot(b)
         norm_a = float(np.linalg.norm(a.vector))
@@ -1639,11 +1646,9 @@ class MQuaternion(MVector):
 
         # 角度を計算
         cos_angle = p / (norm_a * norm_b)
-        radian = acos(min(1, max(-1, cos_angle)))
-        # ラジアンから度に変換
-        angle = degrees(radian)
+        rad = acos(min(1, max(-1, cos_angle)))
 
-        return angle
+        return rad
 
 
 class MMatrix4x4(MVector):
