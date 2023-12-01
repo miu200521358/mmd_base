@@ -65,7 +65,8 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         self.indexes = sorted(self.data.keys()) if self.data else []
 
     def __delitem__(self, index: int) -> None:
-        del self.data[index]
+        if index in self.data:
+            del self.data[index]
 
     def __len__(self) -> int:
         return len(self.data)
@@ -114,11 +115,19 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             return self.get_by_index(int(key))
 
     def __delitem__(self, key: int | str) -> None:
-        if key in self:
-            if isinstance(key, str):
+        if isinstance(key, str):
+            if key in self._names and self._names[key] in self.data:
                 del self.data[self._names[key]]
-            else:
+                del self._names[key]
+        else:
+            if int(key) in self.data:
+                for n, nidx in self._names.items():
+                    if nidx == key:
+                        name = n
+                        break
+
                 del self.data[int(key)]
+                del self._names[name]
 
     def __setitem__(self, index: int, v: TBaseIndexNameModel) -> None:
         self.data[index] = v
@@ -399,8 +408,13 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
         return dict([(k, v.copy()) for k, v in self.data.items() if k in keys])
 
     def __delitem__(self, key: str) -> None:
-        if key in self:
+        if key in self.data:
             del self.data[key]
+
+            for n, name in enumerate(self._names):
+                if name == key:
+                    del self._names[n]
+                    break
 
     def __setitem__(self, v: TBaseIndexNameDictModel) -> None:
         self.data[v.name] = v
