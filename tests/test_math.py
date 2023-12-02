@@ -494,15 +494,15 @@ def test_MQuaternion_to_degrees():
     ).all()
 
 
-def test_MQuaternion_to_signed_degrees():
+def test_MQuaternion_to_signed_degree():
     import numpy as np
 
-    from mlib.core.math import MQuaternion, MVector3D
+    from mlib.core.math import MQuaternion
 
     assert np.isclose(
         # np.array([0, 0, 0]),
         0,
-        MQuaternion(1, 0, 0, 0).to_signed_degrees(MVector3D(1, 2, -3)),
+        MQuaternion(1, 0, 0, 0).to_signed_degree(),
     ).all()
 
     assert np.isclose(
@@ -510,18 +510,18 @@ def test_MQuaternion_to_signed_degrees():
         10,
         MQuaternion(
             0.9961946980917455, 0.08715574274765817, 0.0, 0.0
-        ).to_signed_degrees(MVector3D(1, 2, -3)),
+        ).to_signed_degree(),
     ).all()
 
     assert np.isclose(
         # np.array([10, 20, 30]),
-        -35.81710117358426,
+        35.81710117358426,
         MQuaternion(
             0.9515485246437885,
             0.12767944069578063,
             0.14487812541736916,
             0.2392983377447303,
-        ).to_signed_degrees(MVector3D(1, 2, -3)),
+        ).to_signed_degree(),
     ).all()
 
     assert np.isclose(
@@ -532,7 +532,7 @@ def test_MQuaternion_to_signed_degrees():
             0.4738680537545347,
             0.20131048764138487,
             -0.48170221425083437,
-        ).to_signed_degrees(MVector3D(1, 2, -3)),
+        ).to_signed_degree(),
     ).all()
 
 
@@ -1032,49 +1032,6 @@ def test_MQuaternion_separate_local_axis_x_xy():
     ).all()
 
 
-def test_MQuaternion_to_euler_degrees_by_axis():
-    import numpy as np
-
-    from mlib.core.math import MQuaternion, MQuaternionOrder, MVector3D
-
-    degrees = MQuaternion.from_euler_degrees(
-        10, 0, 0, MQuaternionOrder.XYZ
-    ).to_euler_degrees_by_axis(
-        MVector3D(1, 0, 0), MVector3D(0, 1, 0), MVector3D(0, 0, 1)
-    )
-
-    assert np.isclose(
-        np.array([10, 0, 0]),
-        degrees.vector,
-    ).all()
-
-    degrees = MQuaternion.from_euler_degrees(
-        10, 0, 0, MQuaternionOrder.XYZ
-    ).to_euler_degrees_by_axis(
-        MVector3D(1, 1, 0),
-        MVector3D(1, 1, 0).cross(MVector3D(0, 0, -1)),
-        MVector3D(0, 0, -1),
-    )
-
-    assert np.isclose(
-        np.array([7.08004951, -7.08004951, 0.0]),
-        degrees.vector,
-    ).all()
-
-    degrees = MQuaternion.from_euler_degrees(
-        10, 0, 0, MQuaternionOrder.XYZ
-    ).to_euler_degrees_by_axis(
-        MVector3D(0, 1, 1),
-        MVector3D(0, 1, 1).cross(MVector3D(0, 0, -1)),
-        MVector3D(0, 0, -1),
-    )
-
-    assert np.isclose(
-        np.array([0.0, -10.0, 0.0]),
-        degrees.vector,
-    ).all()
-
-
 def test_MQuaternion_mul():
     import numpy as np
 
@@ -1101,14 +1058,14 @@ def test_MQuaternion_mul():
     ).all()
 
 
-def test_MQuaternion_vector_to_degrees():
+def test_MQuaternion_vector_to_degree():
     import numpy as np
 
     from mlib.core.math import MQuaternion, MVector3D
 
     assert np.isclose(
         81.78678929826181,
-        MQuaternion.vector_to_degrees(
+        MQuaternion.vector_to_degree(
             MVector3D(10, 20, 30).normalized(), MVector3D(30, -20, 10).normalized()
         ),
     ).all()

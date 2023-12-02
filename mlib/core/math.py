@@ -968,34 +968,42 @@ class MQuaternion(MVector):
 
     def to_radian(self) -> float:
         """
-        角度に変換
+        ラジアン角度に変換
         """
 
         return MQuaternion.scalar_to_radians(self.normalized().scalar)
 
-    def to_signed_degree(self, local_axis: MVector3D) -> float:
+    def to_signed_degree(self) -> float:
         """
-        軸による符号付き角度に変換
+        符号付き角度に変換
         """
-        deg = self.to_degree()
-        sign = np.sign(self.xyz.dot(local_axis)) * np.sign(self.scalar)
 
-        if sign != 0:
-            deg *= sign
+        # スカラー部分から基本的な角度を計算
+        basic_angle = MQuaternion.scalar_to_degrees(self.normalized().scalar)
 
-        return deg
+        # ベクトルの長さを使って、角度の正負を決定
+        if self.xyz.length() > 0:
+            # ベクトルの向きに基づいて角度を調整
+            return basic_angle * (1 if self.scalar >= 0 else -1)
 
-    def to_signed_radian(self, local_axis: MVector3D) -> float:
+        # ベクトル部分がない場合は基本角度をそのまま使用
+        return basic_angle
+
+    def to_signed_radian(self) -> float:
         """
-        軸による符号付きラジアン角度に変換
+        符号付きラジアン角度に変換
         """
-        rad = self.to_radian()
-        sign = np.sign(self.xyz.dot(local_axis)) * np.sign(self.scalar)
 
-        if sign != 0:
-            rad *= sign
+        # スカラー部分から基本的な角度を計算
+        basic_angle = MQuaternion.scalar_to_radians(self.normalized().scalar)
 
-        return rad
+        # ベクトルの長さを使って、角度の正負を決定
+        if self.xyz.length() > 0:
+            # ベクトルの向きに基づいて角度を調整
+            return basic_angle * (1 if self.scalar >= 0 else -1)
+
+        # ベクトル部分がない場合は基本角度をそのまま使用
+        return basic_angle
 
     def to_theta(self, v: "MQuaternion") -> float:
         """
@@ -1314,27 +1322,6 @@ class MQuaternion(MVector):
             return MVector3D()
 
         return MVector3D(*as_euler_angles(self.vector))
-
-    def to_euler_degrees_by_axis(
-        self, local_x_axis: MVector3D, local_y_axis: MVector3D, local_z_axis: MVector3D
-    ) -> MVector3D:
-        """
-        ローカル軸基準で オイラー角度を求める
-        https://programming-surgeon.com/script/euler-python-script/
-
-        Returns
-        -------
-        ローカル軸別のオイラー角度
-        """
-        x_qq, y_qq, z_qq, _ = self.separate_by_axis(local_x_axis)
-
-        x_signed_degree = x_qq.to_signed_degrees(local_x_axis)
-        y_signed_degree = y_qq.to_signed_degrees(local_y_axis)
-        z_signed_degree = z_qq.to_signed_degrees(local_z_axis)
-
-        degrees = MVector3D(x_signed_degree, y_signed_degree, z_signed_degree)
-
-        return degrees
 
     @staticmethod
     def axis_to_quaternion(
