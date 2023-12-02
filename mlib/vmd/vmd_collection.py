@@ -17,6 +17,7 @@ from mlib.core.collection import (
 from mlib.core.interpolation import split_interpolation
 from mlib.core.logger import MLogger
 from mlib.core.math import (
+    MMatrix4x4,
     MQuaternion,
     MQuaternionOrder,
     MVector3D,
@@ -1473,9 +1474,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             if bone.index in qqs:
                 motion_bone_qqs[0, bone.index] = qqs[bone.index].to_matrix4x4().vector
             else:
-                _, _, _, (qqs[bone.index], _) = self.get_rotation(
-                    fidx, fno, model, bone
-                )
+                qqs[bone.index] = MMatrix4x4(
+                    motion_bone_qqs[0, bone.index]
+                ).to_quaternion()
 
         is_break = False
         for loop in range(ik_bone.ik.loop_count):

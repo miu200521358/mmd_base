@@ -973,17 +973,29 @@ class MQuaternion(MVector):
 
         return MQuaternion.scalar_to_radians(self.normalized().scalar)
 
-    def to_signed_degrees(self, local_axis: MVector3D) -> float:
+    def to_signed_degree(self, local_axis: MVector3D) -> float:
         """
         軸による符号付き角度に変換
         """
-        deg = degrees(self.theta)
+        deg = self.to_degree()
         sign = np.sign(self.xyz.dot(local_axis)) * np.sign(self.scalar)
 
         if sign != 0:
             deg *= sign
 
         return deg
+
+    def to_signed_radian(self, local_axis: MVector3D) -> float:
+        """
+        軸による符号付きラジアン角度に変換
+        """
+        rad = self.to_radian()
+        sign = np.sign(self.xyz.dot(local_axis)) * np.sign(self.scalar)
+
+        if sign != 0:
+            rad *= sign
+
+        return rad
 
     def to_theta(self, v: "MQuaternion") -> float:
         """
