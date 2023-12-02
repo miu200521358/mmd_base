@@ -1691,10 +1691,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         rotation_axis, limit_rotation_rad
                     )
 
+                    actual_ik_qq = link_ik_qq * correct_ik_qq
+                    link_axis = actual_ik_qq.to_axis()
+                    link_rad = actual_ik_qq.to_radian()
+                    sign = np.sign(link_bone.corrected_fixed_axis.dot(link_axis))
+
                     # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
                     total_actual_ik_qq = MQuaternion.from_axis_angles(
                         link_bone.corrected_fixed_axis,
-                        (link_ik_qq * correct_ik_qq).to_signed_radian(),
+                        sign * link_rad,
                     )
 
                 else:

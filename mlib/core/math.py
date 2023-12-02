@@ -9,6 +9,7 @@ from numpy.linalg import inv, norm
 from quaternion import (
     as_euler_angles,
     as_rotation_matrix,
+    as_rotation_vector,
     from_rotation_matrix,
     from_rotation_vector,
     quaternion,
@@ -1098,6 +1099,13 @@ class MQuaternion(MVector):
         if factor == 0:
             return MQuaternion()
         return MQuaternion(self.scalar / factor, self.x, self.y, self.z)
+
+    def to_axis(self) -> MVector3D:
+        """
+        クォータニオンから軸に変換する
+        """
+
+        return MVector3D(*as_rotation_vector(self.vector))
 
     def to_fixed_axis_rotation(self, fixed_axis: MVector3D) -> "MQuaternion":
         """
