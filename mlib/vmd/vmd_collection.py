@@ -1687,13 +1687,18 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     limit_rotation_rad = min(
                         ik_bone.ik.unit_rotation.radians.x, rotation_rad
                     )
+                    correct_ik_qq = MQuaternion.from_axis_angles(
+                        rotation_axis, limit_rotation_rad
+                    )
+
                     # 現在の角度を取得する
-                    link_rad = link_ik_qq.to_radian()
+                    link_rad = link_ik_qq.to_signed_radian()
+                    correct_ik_rad = correct_ik_qq.to_signed_radian()
 
                     # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
                     total_actual_ik_qq = MQuaternion.from_axis_angles(
                         link_bone.corrected_fixed_axis,
-                        link_rad + limit_rotation_rad,
+                        link_rad + correct_ik_rad,
                     )
 
                 else:
