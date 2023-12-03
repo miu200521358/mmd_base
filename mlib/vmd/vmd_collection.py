@@ -1593,7 +1593,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             0,
                             link_bone.corrected_local_x_vector,
                             ik_bone.ik.unit_rotation.radians.x,
-                            True,
                         )
                     elif (
                         ik_link.local_min_angle_limit.radians.y
@@ -1609,7 +1608,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             1,
                             link_bone.corrected_local_y_vector,
                             ik_bone.ik.unit_rotation.radians.x,
-                            True,
                         )
                     elif (
                         ik_link.local_min_angle_limit.radians.z
@@ -1625,7 +1623,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             2,
                             link_bone.corrected_local_z_vector,
                             ik_bone.ik.unit_rotation.radians.x,
-                            True,
                         )
                 elif ik_link.angle_limit:
                     # 角度制限が入ってる場合
@@ -1644,7 +1641,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             0,
                             MVector3D(1, 0, 0),
                             ik_bone.ik.unit_rotation.radians.x,
-                            False,
                         )
                     elif (
                         ik_link.min_angle_limit.radians.y
@@ -1660,7 +1656,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             1,
                             MVector3D(0, 1, 0),
                             ik_bone.ik.unit_rotation.radians.x,
-                            False,
                         )
                     elif (
                         ik_link.min_angle_limit.radians.z
@@ -1676,7 +1671,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             2,
                             MVector3D(0, 0, 1),
                             ik_bone.ik.unit_rotation.radians.x,
-                            False,
                         )
 
                 elif link_bone.has_fixed_axis:
@@ -1775,7 +1769,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         axis: int,
         axis_vec: MVector3D,
         unit_radian: float,
-        is_local: bool,
     ) -> MQuaternion:
         """
         全ての角度をラジアン角度に分割して、そのうちのひとつの軸だけを動かす回転を取得する
@@ -1823,13 +1816,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             and unit_radian > total_axis_ik_rad
         ):
             # トータルが制限角度以内であれば全軸の角度を使う
-            if is_local:
-                total_axis_rad = (
-                    now_ik_qq.to_radian() + correct_ik_qq.to_radian()
-                ) * axis_sign
-            else:
-                total_ik_qq = now_ik_qq * correct_ik_qq
-                total_axis_rad = total_ik_qq.to_radian() * axis_sign
+            total_ik_qq = now_ik_qq * correct_ik_qq
+            total_axis_rad = total_ik_qq.to_radian() * axis_sign
         elif (
             self.GIMBAL_RAD > rotation_rad
             and self.QUARTER_RAD > total_axis_ik_rad
