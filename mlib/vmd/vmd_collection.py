@@ -1685,14 +1685,16 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     )
 
                     actual_ik_qq = link_ik_qq * correct_ik_qq
+                    link_axis = actual_ik_qq.to_axis()
                     link_rad = actual_ik_qq.to_signed_radian()
                     if link_rad > self.HALF_RAD:
                         link_rad -= self.HALF_RAD
+                    sign = np.sign(link_bone.corrected_fixed_axis.dot(link_axis))
 
                     # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
                     total_actual_ik_qq = MQuaternion.from_axis_angles(
                         link_bone.corrected_fixed_axis,
-                        link_rad,
+                        sign * link_rad,
                     )
 
                 else:
