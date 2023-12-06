@@ -1685,7 +1685,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     )
 
                     actual_ik_qq = link_ik_qq * correct_ik_qq
-                    link_axis = actual_ik_qq.to_axis()
+                    link_axis = (actual_ik_qq * link_bone.corrected_fixed_axis).normalized()
                     link_rad = actual_ik_qq.to_signed_radian()
                     if link_rad > self.HALF_RAD:
                         link_rad -= self.HALF_RAD
