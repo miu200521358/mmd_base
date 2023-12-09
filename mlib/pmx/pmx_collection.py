@@ -941,6 +941,7 @@ class PmxModel(BaseHashModel):
         bone.local_matrix = bone.local_axis.to_local_matrix4x4()
         if bone.has_fixed_axis:
             bone.correct_local_vector(bone.fixed_axis.normalized())
+            bone.correct_fixed_axis(bone.fixed_axis.normalized())
         else:
             bone.correct_local_vector(bone.local_axis)
 

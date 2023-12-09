@@ -119,7 +119,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
             self._ik_indexes.sort()
         super().append(value, is_sort, is_positive_index)
 
-        if value.register:
+        if value.register and value.index not in self._register_indexes:
             self._register_indexes.append(value.index)
             self._register_indexes.sort()
 
@@ -151,7 +151,7 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
                 self.data[middle_index].interpolations[i] = split_target_interpolation
                 self.data[next_index].interpolations[i] = split_next_interpolation
 
-        if value.register:
+        if value.register and value.index not in self._register_indexes:
             self._register_indexes.append(value.index)
             self._register_indexes.sort()
 
@@ -1685,16 +1685,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     )
 
                     actual_ik_qq = link_ik_qq * correct_ik_qq
-                    link_axis = (actual_ik_qq * link_bone.corrected_fixed_axis).normalized()
-                    link_rad = actual_ik_qq.to_signed_radian()
-                    if link_rad > self.HALF_RAD:
-                        link_rad -= self.HALF_RAD
+                    link_axis = actual_ik_qq.to_axis().normalized()
+                    link_rad = actual_ik_qq.to_radian()
                     sign = np.sign(link_bone.corrected_fixed_axis.dot(link_axis))
 
                     # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
                     total_actual_ik_qq = MQuaternion.from_axis_angles(
-                        link_bone.corrected_fixed_axis,
-                        sign * link_rad,
+                        link_bone.corrected_fixed_axis, link_rad * sign
                     )
 
                 else:
