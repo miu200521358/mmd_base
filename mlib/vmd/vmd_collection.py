@@ -1828,7 +1828,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             total_axis_ik_rads = total_axis_ik_qq.to_radians(order).mmd
         else:
             total_axis_ik_rads = total_ik_qq.to_radians(order).mmd
-            total_axis_ik_sign = 1
 
         if (
             unit_radian > rotation_rad
@@ -1868,9 +1867,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             result_axis_rad = total_limit_axis_rad
 
         # 指定の軸方向に回す
-        return MQuaternion.from_axis_angles(
-            axis_vec, result_axis_rad * total_axis_ik_sign
-        )
+        return MQuaternion.from_axis_angles(axis_vec, result_axis_rad)
 
     def get_axis_rotation(self, bone: Bone, qq: MQuaternion) -> MQuaternion:
         """
