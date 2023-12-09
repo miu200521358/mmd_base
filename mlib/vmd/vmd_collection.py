@@ -1593,6 +1593,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             0,
                             link_bone.corrected_local_x_vector,
                             ik_bone.ik.unit_rotation.radians.x,
+                            is_local=True,
                         )
                     elif (
                         ik_link.local_min_angle_limit.radians.y
@@ -1608,6 +1609,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             1,
                             link_bone.corrected_local_y_vector,
                             ik_bone.ik.unit_rotation.radians.x,
+                            is_local=True,
                         )
                     elif (
                         ik_link.local_min_angle_limit.radians.z
@@ -1623,6 +1625,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                             2,
                             link_bone.corrected_local_z_vector,
                             ik_bone.ik.unit_rotation.radians.x,
+                            is_local=True,
                         )
                 elif ik_link.angle_limit:
                     # 角度制限が入ってる場合
@@ -1766,6 +1769,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         axis: int,
         axis_vec: MVector3D,
         unit_radian: float,
+        is_local: bool = False,
     ) -> MQuaternion:
         """
         全ての角度をラジアン角度に分割して、そのうちのひとつの軸だけを動かす回転を取得する
@@ -1805,7 +1809,26 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
 
         # 全体の角度を計算する
         total_axis_ik_rad = total_ik_qq.to_radian()
-        total_axis_ik_rads = total_ik_qq.to_radians(order).mmd
+        if is_local:
+            # ローカル軸の場合、一旦グローバル軸に直す
+            total_axis_ik_axis = total_ik_qq.to_axis().normalized()
+            total_axis_ik_rad = total_ik_qq.to_radian()
+            total_axis_ik_sign = np.sign(axis_vec.dot(total_axis_ik_axis))
+
+            global_axis_vec = (
+                MVector3D(1, 0, 0)
+                if axis == 0
+                else MVector3D(0, 1, 0)
+                if axis == 1
+                else MVector3D(0, 0, 1)
+            )
+            total_axis_ik_qq = MQuaternion.from_axis_angles(
+                global_axis_vec, total_axis_ik_rad * total_axis_ik_sign
+            )
+            total_axis_ik_rads = total_axis_ik_qq.to_radians(order).mmd
+        else:
+            total_axis_ik_rads = total_ik_qq.to_radians(order).mmd
+            total_axis_ik_sign = 1
 
         if (
             unit_radian > rotation_rad
@@ -1837,15 +1860,17 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
         )
 
         # 単位角とジンバルロックの整合性を取る
-        if self.GIMBAL2_RAD < total_axis_ik_rad:
+        if self.GIMBAL2_RAD < total_axis_ik_rad and not is_local:
             result_axis_rad = self.HALF_RAD + abs(total_limit_axis_rad)
-        elif self.GIMBAL_RAD < total_axis_ik_rad:
+        elif self.GIMBAL_RAD < total_axis_ik_rad and not is_local:
             result_axis_rad = self.FULL_RAD + total_limit_axis_rad
         else:
             result_axis_rad = total_limit_axis_rad
 
         # 指定の軸方向に回す
-        return MQuaternion.from_axis_angles(axis_vec, result_axis_rad)
+        return MQuaternion.from_axis_angles(
+            axis_vec, result_axis_rad * total_axis_ik_sign
+        )
 
     def get_axis_rotation(self, bone: Bone, qq: MQuaternion) -> MQuaternion:
         """
