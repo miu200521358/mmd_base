@@ -1458,7 +1458,7 @@ class MQuaternion(MVector):
                 -sx * sy * cz + cx * cy * sz,
             )
 
-        return qq
+        return qq.normalized()
 
     @staticmethod
     def from_axis_angles(v: MVector3D, rad: float) -> "MQuaternion":
@@ -1469,7 +1469,7 @@ class MQuaternion(MVector):
         qq = MQuaternion()
         qq.vector = from_rotation_vector(v.vector * rad)
 
-        return qq
+        return qq.normalized()
 
     @staticmethod
     def from_direction(direction: MVector3D, up: MVector3D) -> "MQuaternion":
@@ -1488,7 +1488,7 @@ class MQuaternion(MVector):
 
         y_axis = z_axis.cross(x_axis)
 
-        return MQuaternion.from_axes(x_axis, y_axis, z_axis)
+        return MQuaternion.from_axes(x_axis, y_axis, z_axis).normalized()
 
     @staticmethod
     def rotate(from_v: MVector3D, to_v: MVector3D) -> "MQuaternion":
