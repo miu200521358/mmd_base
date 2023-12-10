@@ -1478,6 +1478,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     motion_bone_qqs[0, bone.index]
                 ).to_quaternion()
 
+        prev_qqs: dict[int, MQuaternion] = {}
+
         is_break = False
         for loop in range(ik_bone.ik.loop_count):
             for lidx, ik_link in enumerate(ik_bone.ik.links):
@@ -1546,7 +1548,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 local_target_pos = link_inverse_matrix * global_target_pos
 
                 if 1e-6 > (local_effector_pos - local_target_pos).length_squared():
-                    # 位置の差がほとんどない場合、スルー
+                    # 位置の差がほとんどない場合、終了
                     is_break = True
                     break
 
@@ -1569,6 +1571,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 )
 
                 if 1e-6 > rotation_axis.length_squared():
+                    # 回転軸がほとんどない場合、終了
                     is_break = True
                     break
 
@@ -1576,6 +1579,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 link_ik_qq = qqs[link_bone.index]
                 total_actual_ik_qq = None
                 # total_ideal_ik_qq = total_actual_ik_qq = None
+
+                if link_bone.index in prev_qqs and 1e-6 > 1 - abs(
+                    link_ik_qq.dot(prev_qqs[link_bone.index])
+                ):
+                    # 前回とほぼ変わらない角度であった場合、終了
+                    is_break = True
+                    break
+
+                prev_qqs[link_bone.index] = link_ik_qq
 
                 if ik_link.local_angle_limit:
                     # ローカル軸角度制限が入っている場合、ローカル軸に合わせて理想回転を求める
