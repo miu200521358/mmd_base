@@ -1479,6 +1479,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 ).to_quaternion()
 
         prev_qqs: dict[int, MQuaternion] = {}
+        now_qqs: dict[int, MQuaternion] = dict(
+            [(ik_link.bone_index, MQuaternion()) for ik_link in ik_bone.ik.links]
+        )
 
         is_break = False
         for loop in range(ik_bone.ik.loop_count):
@@ -1486,9 +1489,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 # ikLink は末端から並んでる
                 if ik_link.bone_index not in model.bones:
                     continue
-                # if ik_bone.is_system and (loop + 1) % (lidx + 1) < lidx:
-                #     # システムIKの場合、末端のループ件数を少なくする
-                #     continue
 
                 # 処理対象IKボーン
                 link_bone = model.bones[ik_link.bone_index]
@@ -1497,6 +1497,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     ik_link.angle_limit
                     and not ik_link.min_angle_limit.radians
                     and not ik_link.max_angle_limit.radians
+                ) or (
+                    ik_link.local_angle_limit
                     and not ik_link.local_min_angle_limit.radians
                     and not ik_link.local_max_angle_limit.radians
                 ):
@@ -1552,6 +1554,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     is_break = True
                     break
 
+                if link_bone.has_fixed_axis and 1e-8 > abs(
+                    1
+                    - local_effector_pos.normalized().dot(local_target_pos.normalized())
+                ):
+                    # ベクトルの向きがほぼ等しい場合、次へ行く
+                    continue
+
                 # ベクトル (1) を (2) に一致させるための最短回転量（Axis-Angle）
                 # 回転角
                 rotation_rad: float = np.arccos(
@@ -1570,24 +1579,13 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     .normalized()
                 )
 
-                if 1e-6 > rotation_axis.length_squared():
-                    # 回転軸がほとんどない場合、終了
-                    is_break = True
-                    break
+                if 1e-8 > rotation_rad or 1e-6 > rotation_axis.length_squared():
+                    # 回転角度もしくは回転軸がほとんどない場合、次へ行く
+                    continue
 
                 # リンクボーンの角度を取得
                 link_ik_qq = qqs[link_bone.index]
                 total_actual_ik_qq = None
-                # total_ideal_ik_qq = total_actual_ik_qq = None
-
-                if link_bone.index in prev_qqs and 1e-6 > 1 - abs(
-                    link_ik_qq.dot(prev_qqs[link_bone.index])
-                ):
-                    # 前回とほぼ変わらない角度であった場合、終了
-                    is_break = True
-                    break
-
-                prev_qqs[link_bone.index] = link_ik_qq
 
                 if ik_link.local_angle_limit:
                     # ローカル軸角度制限が入っている場合、ローカル軸に合わせて理想回転を求める
@@ -1722,6 +1720,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     # 既存のFK回転・IK回転・今回の計算をすべて含めて実際回転を求める
                     total_actual_ik_qq = link_ik_qq * correct_ik_qq
 
+                prev_qqs[link_bone.index] = now_qqs[link_bone.index]
+                now_qqs[link_bone.index] = total_actual_ik_qq
+
                 # # ■ -----------------
                 # original_link_bf = VmdBoneFrame(ik_fno, link_bone.name, register=True)
                 # original_link_bf.rotation = link_ik_qq.copy()
@@ -1754,6 +1755,16 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 is_motion_identity_qqs = False
 
             if is_break:
+                break
+
+            if False not in [
+                ik_link.bone_index in now_qqs
+                and ik_link.bone_index in prev_qqs
+                and 1e-6
+                > abs(1 - now_qqs[ik_link.bone_index].dot(prev_qqs[link_bone.index]))
+                for ik_link in ik_bone.ik.links
+            ]:
+                # すべてのリンクで前回とほぼ変わらない角度であった場合、終了
                 break
 
         # # ■ --------------
