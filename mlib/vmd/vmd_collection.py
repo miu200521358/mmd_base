@@ -1554,13 +1554,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     is_break = True
                     break
 
-                if link_bone.has_fixed_axis and 1e-8 > abs(
-                    1
-                    - local_effector_pos.normalized().dot(local_target_pos.normalized())
-                ):
-                    # ベクトルの向きがほぼ等しい場合、次へ行く
-                    continue
-
                 # ベクトル (1) を (2) に一致させるための最短回転量（Axis-Angle）
                 # 回転角
                 rotation_rad: float = np.arccos(
