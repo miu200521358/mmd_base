@@ -1754,7 +1754,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 ik_link.bone_index in now_qqs
                 and ik_link.bone_index in prev_qqs
                 and 1e-6
-                > abs(1 - now_qqs[ik_link.bone_index].dot(prev_qqs[link_bone.index]))
+                > abs(1 - now_qqs[ik_link.bone_index].dot(prev_qqs[ik_link.bone_index]))
                 for ik_link in ik_bone.ik.links
             ]:
                 # すべてのリンクで前回とほぼ変わらない角度であった場合、終了
