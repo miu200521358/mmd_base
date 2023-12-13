@@ -1572,10 +1572,6 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     .normalized()
                 )
 
-                if 1e-8 > rotation_rad or 1e-6 > rotation_axis.length_squared():
-                    # 回転角度もしくは回転軸がほとんどない場合、次へ行く
-                    continue
-
                 # リンクボーンの角度を取得
                 link_ik_qq = qqs[link_bone.index]
                 total_actual_ik_qq = None
