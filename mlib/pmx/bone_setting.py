@@ -37,7 +37,7 @@ class BoneFlg(Flag):
     IS_EXTERNAL_PARENT_DEFORM = 0x2000
     """外部親変形"""
     NOTHING = 0x3000
-    """ボーンが実際には存在しない場合のフラグ"""
+    """ボーンが実際には存在しない場合のフラグ(システム用)"""
 
 
 class BoneSetting:
