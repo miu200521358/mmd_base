@@ -317,7 +317,8 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 fnos,
                 model,
                 target_bone_names,
-                out_fno_log=False,
+                out_fno_log=out_fno_log,
+                description=description,
             )
         else:
             morph_row = len(fnos)
