@@ -36,7 +36,7 @@ class BoneFlg(Flag):
     """物理後変形"""
     IS_EXTERNAL_PARENT_DEFORM = 0x2000
     """外部親変形"""
-    NOTHING = 0x3000
+    NOTHING = 0x4000
     """ボーンが実際には存在しない場合のフラグ(システム用)"""
 
 

@@ -7,6 +7,7 @@ from typing import Tuple
 
 from mlib.core.base import BaseModel
 from mlib.core.logger import MLogger
+from mlib.pmx.bone_setting import BoneFlg
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.pmx.pmx_part import (
     Bdef1,
@@ -537,8 +538,12 @@ class PmxWriter(BaseModel):
             self.write_number(
                 fout, PmxBinaryType.INT, bone.layer, is_positive_only=True
             )
-            # ボーンフラグ
-            fout.write(struct.pack(PmxBinaryType.SHORT.value, bone.bone_flg.value))
+            # ボーンフラグ(システムフラグを除く)
+            fout.write(
+                struct.pack(
+                    PmxBinaryType.SHORT.value, (bone.bone_flg & ~BoneFlg.NOTHING).value
+                )
+            )
 
             if bone.is_tail_bone:
                 # 接続先ボーンのボーンIndex
