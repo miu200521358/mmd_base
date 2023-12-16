@@ -29,7 +29,7 @@ class VmdWriter(BaseModel):
                 )
             except Exception:
                 logger.warning(
-                    "モデル名に日本語・英語で判読できない文字が含まれているため、仮モデル名を設定します。 {m}",
+                    "モデル名に日本語・英語で判読できない文字（環境依存文字・他言語文字等）が含まれているため、仮モデル名を設定します。 {m}",
                     m=self.model_name,
                     decoration=MLogger.Decoration.BOX,
                 )
@@ -105,9 +105,7 @@ class VmdWriter(BaseModel):
                     fout.write(struct.pack("<L", int(mf.index)))
                     fout.write(struct.pack("<f", float(mf.ratio)))
 
-            fout.write(
-                struct.pack("<L", len(self.motion.cameras))
-            )  # カメラキーフレーム数
+            fout.write(struct.pack("<L", len(self.motion.cameras)))  # カメラキーフレーム数
             for fno in reversed(self.motion.cameras.indexes):
                 cf = self.motion.cameras[fno]
                 fout.write(struct.pack("<L", int(cf.index)))
@@ -137,9 +135,7 @@ class VmdWriter(BaseModel):
                 fout.write(struct.pack("<f", float(lf.position.y)))
                 fout.write(struct.pack("<f", float(lf.position.z)))
 
-            fout.write(
-                struct.pack("<L", len(self.motion.shadows))
-            )  # セルフ影キーフレーム数
+            fout.write(struct.pack("<L", len(self.motion.shadows)))  # セルフ影キーフレーム数
             for fno in reversed(self.motion.shadows.indexes):
                 sf = self.motion.shadows[fno]
                 fout.write(struct.pack("<L", int(sf.index)))
