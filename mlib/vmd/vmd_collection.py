@@ -318,7 +318,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 model,
                 target_bone_names,
                 out_fno_log=out_fno_log,
-                description=description,
+                description=description + "|Morph",
             )
         else:
             morph_row = len(fnos)
@@ -367,7 +367,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 model,
                 target_bone_names,
                 out_fno_log=out_fno_log,
-                description=description,
+                description=description + "|Bone",
                 max_worker=max_worker,
             )
         else:
@@ -390,7 +390,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 model,
                 target_bone_names,
                 out_fno_log=out_fno_log,
-                description=description,
+                description=description + "|Bone",
             )
 
         # ボーン変形行列
@@ -655,7 +655,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         d=description,
                         index=fidx * len(target_bone_names) + bidx,
                         total_index_count=total_count,
-                        display_block=50000,
+                        display_block=10000,
                     )
 
                 bone = model.bones[bone_name]
