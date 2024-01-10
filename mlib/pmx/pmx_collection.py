@@ -1591,18 +1591,14 @@ class PmxModel(BaseHashModel):
                 "上半身3" if "上半身3" in self.bones else "首" if "首" in self.bones else None
             )
             if tail_bone_name:
-                to_tail_y = (
-                    self.bones[tail_bone_name].position.y
-                    - self.bones["上半身2"].position.y
-                )
                 self.separate_weights(
                     "上半身",
                     "上半身2",
                     tail_bone_name,
                     0.3,
                     0.5,
-                    ("上半身", "上半身2"),
-                    to_tail_pos=MVector3D(0, to_tail_y, 0),
+                    ("上半身", "上半身2", "上半身3"),
+                    to_tail_pos=MVector3D(0, 1, 0),
                 )
             else:
                 self.separate_weights(
@@ -1611,21 +1607,20 @@ class PmxModel(BaseHashModel):
                     "上半身2",
                     0.3,
                     0.5,
-                    ("上半身", "上半身2"),
+                    ("上半身", "上半身2", "上半身3"),
                     to_tail_pos=MVector3D(0, 1, 0),
                 )
         if "上半身3" in bone_names and self.bones.exists(("上半身", "上半身2", "上半身3")):
             self.update_vertices_by_bone()
             if "首" in self.bones:
-                to_tail_y = self.bones["首"].position.y - self.bones["上半身3"].position.y
                 self.separate_weights(
                     "上半身2",
                     "上半身3",
                     "首",
                     0.3,
                     0.0,
-                    ("上半身2", "上半身3"),
-                    to_tail_pos=MVector3D(0, to_tail_y, 0),
+                    ("上半身", "上半身2", "上半身3"),
+                    to_tail_pos=MVector3D(0, 1, 0),
                 )
             else:
                 self.separate_weights(
@@ -1634,7 +1629,7 @@ class PmxModel(BaseHashModel):
                     "上半身3",
                     0.3,
                     0.0,
-                    ("上半身2", "上半身3"),
+                    ("上半身", "上半身2", "上半身3"),
                     to_tail_pos=MVector3D(0, 1, 0),
                 )
         if "右足先EX" in bone_names and self.bones.exists(("右足首", "右足首D", "右足先EX")):
@@ -1661,22 +1656,22 @@ class PmxModel(BaseHashModel):
             )
         if "右肩" in bone_names and self.bones.exists(("上半身", "上半身2", "右肩", "右腕")):
             self.separate_weights(
-                "上半身2",
+                "上半身3" if "上半身3" in self.bones else "上半身2",
                 "右肩",
                 "右腕",
-                0.05,
-                0.6,
-                ("上半身2", "右肩"),
+                0.1,
+                0.5,
+                (("上半身3" if "上半身3" in self.bones else "上半身2"), "右肩"),
                 is_shoulder=True,
             )
         if "左肩" in bone_names and self.bones.exists(("上半身", "上半身2", "左肩", "左腕")):
             self.separate_weights(
-                "上半身2",
+                "上半身3" if "上半身3" in self.bones else "上半身2",
                 "左肩",
                 "左腕",
-                0.05,
-                0.6,
-                ("上半身2", "左肩"),
+                0.1,
+                0.5,
+                (("上半身3" if "上半身3" in self.bones else "上半身2"), "左肩"),
                 is_shoulder=True,
             )
         if "右親指０" in bone_names and self.bones.exists(("右手首", "右親指０", "右親指１")):
@@ -2040,8 +2035,9 @@ class PmxModel(BaseHashModel):
                     if 1 <= ratio:
                         continue
                 else:
-                    if 0.0 == to_ratio:
+                    if 0.0 == to_ratio or 0 <= local_vpos.x:
                         # 全部TOに乗せるのであれば、そのまま分割ボーンに乗せ替え
+                        # TO寄りで、頂点のX位置がTOから遠い場合、分割ボーンに乗せ替え
                         v.deform.indexes = np.where(
                             bone_matches, separate_bone.index, v.deform.indexes
                         )

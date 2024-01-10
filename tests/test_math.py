@@ -2387,5 +2387,22 @@ def test_intersect_line_point():
     ).all()
 
 
+def test_evaluate():
+    from mlib.core.interpolation import Interpolation, evaluate
+    from mlib.core.math import MVector2D
+
+    interpolation = Interpolation()
+    interpolation.start = MVector2D(10, 30)
+    interpolation.end = MVector2D(100, 80)
+    start = 0
+    now = 2
+    end = 10
+    x, y, t = evaluate(interpolation, start, now, end)
+    ex, ey, et = (0.2, 0.24085271757748078, 0.2900272452240925)
+    assert x == ex, f"Expected {ex}, but got {x}"
+    assert y == ey, f"Expected {ey}, but got {y}"
+    assert t == et, f"Expected {et}, but got {t}"
+
+
 if __name__ == "__main__":
     pytest.main()

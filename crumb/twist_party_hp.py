@@ -243,7 +243,7 @@ def add_to_output_df(selected_cards, output_df):
     # 出力用DataFrameにデータを追加
     output_df.loc[len(output_df)] = output_data
 
-main_card ={'カードキャラクター名': 'リリア', 'カード種類': '右大将の甲冑'}
+main_card ={'カードキャラクター名': 'レオナ', 'カード種類': '寮服'}
 main_card_info = ssr_card_df[(ssr_card_df['カードキャラクター名'] == main_card['カードキャラクター名']) & (ssr_card_df['カード種類'] == main_card['カード種類'])]
 print(main_card)
 
