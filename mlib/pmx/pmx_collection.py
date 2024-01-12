@@ -1863,6 +1863,7 @@ class PmxModel(BaseHashModel):
                 for vertex_index in self.vertices_by_bones.get(
                     self.bones[weight_bone_name].index, []
                 )
+                if weight_bone_name in self.bones
             ]
         )
 
