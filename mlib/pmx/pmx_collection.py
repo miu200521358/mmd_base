@@ -1585,6 +1585,9 @@ class PmxModel(BaseHashModel):
         """準標準ボーンのウェイトの乗せ替え"""
 
         self.update_vertices_by_bone()
+        upper_wait_bone_names = (
+            ["上半身", "上半身2"] + ["上半身3"] if "上半身3" in self.bones else []
+        )
 
         if "上半身2" in bone_names and self.bones.exists(("上半身", "上半身2")):
             tail_bone_name = (
@@ -1597,7 +1600,7 @@ class PmxModel(BaseHashModel):
                     tail_bone_name,
                     0.3,
                     0.5,
-                    ("上半身", "上半身2", "上半身3"),
+                    upper_wait_bone_names,
                     to_tail_pos=MVector3D(0, 1, 0),
                 )
             else:
@@ -1607,7 +1610,7 @@ class PmxModel(BaseHashModel):
                     "上半身2",
                     0.3,
                     0.5,
-                    ("上半身", "上半身2", "上半身3"),
+                    upper_wait_bone_names,
                     to_tail_pos=MVector3D(0, 1, 0),
                 )
         if "上半身3" in bone_names and self.bones.exists(("上半身", "上半身2", "上半身3")):
@@ -1619,7 +1622,7 @@ class PmxModel(BaseHashModel):
                     "首",
                     0.3,
                     0.0,
-                    ("上半身", "上半身2", "上半身3"),
+                    upper_wait_bone_names,
                     to_tail_pos=MVector3D(0, 1, 0),
                 )
             else:
@@ -1629,7 +1632,7 @@ class PmxModel(BaseHashModel):
                     "上半身3",
                     0.3,
                     0.0,
-                    ("上半身", "上半身2", "上半身3"),
+                    upper_wait_bone_names,
                     to_tail_pos=MVector3D(0, 1, 0),
                 )
         if "右足先EX" in bone_names and self.bones.exists(("右足首", "右足首D", "右足先EX")):
