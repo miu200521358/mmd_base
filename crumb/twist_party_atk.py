@@ -113,27 +113,15 @@ output_columns = [
     "木属性数",
     "無属性数",
     "デュオ数",
-    "HP UP(中)数",
-    "HP UP(小)数",
     "ATK UP(中)数",
     "ATK UP(小)数",
+    "HP UP(中)数",
+    "HP UP(小)数",
     "デュオ1",
     "デュオ2",
     "デュオ3",
     "デュオ4",
     "デュオ5",
-    "HP UP(中)1",
-    "HP UP(中)2",
-    "HP UP(中)3",
-    "HP UP(中)4",
-    "HP UP(中)5",
-    "HP UP(中)6",
-    "HP UP(小)1",
-    "HP UP(小)2",
-    "HP UP(小)3",
-    "HP UP(小)4",
-    "HP UP(小)5",
-    "HP UP(小)6",
     "ATK UP(中)1",
     "ATK UP(中)2",
     "ATK UP(中)3",
@@ -146,6 +134,18 @@ output_columns = [
     "ATK UP(小)4",
     "ATK UP(小)5",
     "ATK UP(小)6",
+    "HP UP(中)1",
+    "HP UP(中)2",
+    "HP UP(中)3",
+    "HP UP(中)4",
+    "HP UP(中)5",
+    "HP UP(中)6",
+    "HP UP(小)1",
+    "HP UP(小)2",
+    "HP UP(小)3",
+    "HP UP(小)4",
+    "HP UP(小)5",
+    "HP UP(小)6",
 ]
 output_df = pd.DataFrame(columns=output_columns)
 
@@ -273,6 +273,10 @@ def add_to_output_df(selected_cards, output_df):
             count_green,  # 木属性数
             count_none,  # 無属性数
             len(duos),  # デュオ数
+            len(atk_up_medium),  # ATK UP(中)数
+            len(atk_up_small),  # ATK UP(小)数
+            len(hp_up_medium),  # HP UP(中)数
+            len(hp_up_small),  # HP UP(小)数
         ]
     )
 
@@ -280,25 +284,21 @@ def add_to_output_df(selected_cards, output_df):
     for i in range(5):
         output_data.append(duos[i] if i < len(duos) else "")
 
-    # HP UP(中)の組み合わせを追加（最大6組）
-    output_data.append(len(hp_up_medium))
-    for i in range(6):
-        output_data.append(hp_up_medium[i] if i < len(hp_up_medium) else "")
-
-    # HP UP(小)の組み合わせを追加（最大6組）
-    output_data.append(len(hp_up_small))
-    for i in range(6):
-        output_data.append(hp_up_small[i] if i < len(hp_up_small) else "")
-
     # ATK UP(中)の組み合わせを追加（最大6組）
-    output_data.append(len(atk_up_medium))
     for i in range(6):
         output_data.append(atk_up_medium[i] if i < len(atk_up_medium) else "")
 
     # ATK UP(小)の組み合わせを追加（最大6組）
-    output_data.append(len(atk_up_small))
     for i in range(6):
         output_data.append(atk_up_small[i] if i < len(atk_up_small) else "")
+
+    # HP UP(中)の組み合わせを追加（最大6組）
+    for i in range(6):
+        output_data.append(hp_up_medium[i] if i < len(hp_up_medium) else "")
+
+    # HP UP(小)の組み合わせを追加（最大6組）
+    for i in range(6):
+        output_data.append(hp_up_small[i] if i < len(hp_up_small) else "")
 
     # 出力用DataFrameにデータを追加
     output_df.loc[len(output_df)] = output_data
@@ -396,8 +396,8 @@ for n, other_characters in enumerate(tqdm(other_character_combinations)):
         if check_conditions(cards):
             add_to_output_df(cards, output_df)
 
-    # if n > 10:
-    #     break
+    if len(output_df) > 0:
+        break
 
 # Sort output_df based on priority order
 output_df = output_df.sort_values(
