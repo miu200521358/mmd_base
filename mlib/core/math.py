@@ -21,7 +21,6 @@ from .base import BaseModel
 
 
 class MRect(BaseModel):
-
     """
     矩形クラス
 
@@ -897,7 +896,9 @@ class MQuaternion(MVector):
         return MQuaternion(self.scalar, self.x, -self.y, -self.z)
 
     def __bool__(self) -> bool:
-        return qq_one != self.vector
+        return qq_one != self.vector or bool(
+            np.isclose(self.vector.components, 0).all()
+        )
 
     def __str__(self) -> str:
         return (
@@ -908,6 +909,9 @@ class MQuaternion(MVector):
     def effective(self, rtol: float = 1e-05, atol: float = 1e-08) -> "MQuaternion":
         vector = np.copy(self.vector.components)
         vector[np.where(np.isinf(vector) | np.isnan(vector))] = 0
+        if np.isclose(vector, 0, rtol=rtol, atol=atol).all():
+            # 全部0の場合、単位クォータニオンを返す
+            vector[0] = 1
         return MQuaternion(*vector)
 
     def length(self) -> float:
@@ -1191,43 +1195,51 @@ class MQuaternion(MVector):
             sy = 2 * (self.x * self.z + self.y * self.w)
             unlocked = abs(sy) < 0.99999
             return MVector3D(
-                atan2(
-                    -(2 * self.y * self.z - 2 * self.x * self.w),
-                    2 * self.w * self.w + 2 * self.z * self.z - 1,
-                )
-                if unlocked
-                else atan2(
-                    2 * self.y * self.z + 2 * self.x * self.w,
-                    2 * self.w * self.w + 2 * self.y * self.y - 1,
+                (
+                    atan2(
+                        -(2 * self.y * self.z - 2 * self.x * self.w),
+                        2 * self.w * self.w + 2 * self.z * self.z - 1,
+                    )
+                    if unlocked
+                    else atan2(
+                        2 * self.y * self.z + 2 * self.x * self.w,
+                        2 * self.w * self.w + 2 * self.y * self.y - 1,
+                    )
                 ),
                 asin(max(-1, min(1, sy))),
-                atan2(
-                    -(2 * self.x * self.y - 2 * self.z * self.w),
-                    2 * self.w * self.w + 2 * self.x * self.x - 1,
-                )
-                if unlocked
-                else 0,
+                (
+                    atan2(
+                        -(2 * self.x * self.y - 2 * self.z * self.w),
+                        2 * self.w * self.w + 2 * self.x * self.x - 1,
+                    )
+                    if unlocked
+                    else 0
+                ),
             )
 
         elif order == MQuaternionOrder.XZY:
             sz = -(2 * self.x * self.y - 2 * self.z * self.w)
             unlocked = abs(sz) < 0.99999
             return MVector3D(
-                atan2(
-                    2 * self.y * self.z + 2 * self.x * self.w,
-                    2 * self.w * self.w + 2 * self.y * self.y - 1,
-                )
-                if unlocked
-                else atan2(
-                    -(2 * self.y * self.z - 2 * self.x * self.w),
-                    2 * self.w * self.w + 2 * self.z * self.z - 1,
+                (
+                    atan2(
+                        2 * self.y * self.z + 2 * self.x * self.w,
+                        2 * self.w * self.w + 2 * self.y * self.y - 1,
+                    )
+                    if unlocked
+                    else atan2(
+                        -(2 * self.y * self.z - 2 * self.x * self.w),
+                        2 * self.w * self.w + 2 * self.z * self.z - 1,
+                    )
                 ),
-                atan2(
-                    2 * self.x * self.z + 2 * self.y * self.w,
-                    2 * self.w * self.w + 2 * self.x * self.x - 1,
-                )
-                if unlocked
-                else 0,
+                (
+                    atan2(
+                        2 * self.x * self.z + 2 * self.y * self.w,
+                        2 * self.w * self.w + 2 * self.x * self.x - 1,
+                    )
+                    if unlocked
+                    else 0
+                ),
                 asin(max(-1, min(1, sz))),
             )
         elif order == MQuaternionOrder.YXZ:
@@ -1235,41 +1247,49 @@ class MQuaternion(MVector):
             unlocked = abs(sx) < 0.99999
             return MVector3D(
                 asin(max(-1, min(1, sx))),
-                atan2(
-                    2 * self.x * self.z + 2 * self.y * self.w,
-                    2 * self.w * self.w + 2 * self.z * self.z - 1,
-                )
-                if unlocked
-                else atan2(
-                    -(2 * self.x * self.z - 2 * self.y * self.w),
-                    2 * self.w * self.w + 2 * self.x * self.x - 1,
+                (
+                    atan2(
+                        2 * self.x * self.z + 2 * self.y * self.w,
+                        2 * self.w * self.w + 2 * self.z * self.z - 1,
+                    )
+                    if unlocked
+                    else atan2(
+                        -(2 * self.x * self.z - 2 * self.y * self.w),
+                        2 * self.w * self.w + 2 * self.x * self.x - 1,
+                    )
                 ),
-                atan2(
-                    2 * self.x * self.y + 2 * self.z * self.w,
-                    2 * self.w * self.w + 2 * self.y * self.y - 1,
-                )
-                if unlocked
-                else 0,
+                (
+                    atan2(
+                        2 * self.x * self.y + 2 * self.z * self.w,
+                        2 * self.w * self.w + 2 * self.y * self.y - 1,
+                    )
+                    if unlocked
+                    else 0
+                ),
             )
 
         elif order == MQuaternionOrder.YZX:
             sz = 2 * (self.x * self.y + self.z * self.w)
             unlocked = abs(sz) < 0.99999
             return MVector3D(
-                atan2(
-                    -(2 * self.y * self.z - 2 * self.x * self.w),
-                    2 * self.w * self.w + 2 * self.y * self.y - 1,
-                )
-                if unlocked
-                else 0,
-                atan2(
-                    -(2 * self.x * self.z - 2 * self.y * self.w),
-                    2 * self.w * self.w + 2 * self.x * self.x - 1,
-                )
-                if unlocked
-                else atan2(
-                    2 * self.x * self.z + 2 * self.y * self.w,
-                    2 * self.w * self.w + 2 * self.z * self.z - 1,
+                (
+                    atan2(
+                        -(2 * self.y * self.z - 2 * self.x * self.w),
+                        2 * self.w * self.w + 2 * self.y * self.y - 1,
+                    )
+                    if unlocked
+                    else 0
+                ),
+                (
+                    atan2(
+                        -(2 * self.x * self.z - 2 * self.y * self.w),
+                        2 * self.w * self.w + 2 * self.x * self.x - 1,
+                    )
+                    if unlocked
+                    else atan2(
+                        2 * self.x * self.z + 2 * self.y * self.w,
+                        2 * self.w * self.w + 2 * self.z * self.z - 1,
+                    )
                 ),
                 asin(max(-1, min(1, sz))),
             )
@@ -1279,20 +1299,24 @@ class MQuaternion(MVector):
             unlocked = abs(sx) < 0.99999
             return MVector3D(
                 asin(max(-1, min(1, sx))),
-                atan2(
-                    -(2 * self.x * self.z - 2 * self.y * self.w),
-                    2 * self.w * self.w + 2 * self.z * self.z - 1,
-                )
-                if unlocked
-                else 0,
-                atan2(
-                    -(2 * self.x * self.y - 2 * self.z * self.w),
-                    2 * self.w * self.w + 2 * self.y * self.y - 1,
-                )
-                if unlocked
-                else atan2(
-                    2 * self.x * self.y + 2 * self.z * self.w,
-                    2 * self.w * self.w + 2 * self.x * self.x - 1,
+                (
+                    atan2(
+                        -(2 * self.x * self.z - 2 * self.y * self.w),
+                        2 * self.w * self.w + 2 * self.z * self.z - 1,
+                    )
+                    if unlocked
+                    else 0
+                ),
+                (
+                    atan2(
+                        -(2 * self.x * self.y - 2 * self.z * self.w),
+                        2 * self.w * self.w + 2 * self.y * self.y - 1,
+                    )
+                    if unlocked
+                    else atan2(
+                        2 * self.x * self.y + 2 * self.z * self.w,
+                        2 * self.w * self.w + 2 * self.x * self.x - 1,
+                    )
                 ),
             )
 
@@ -1300,21 +1324,25 @@ class MQuaternion(MVector):
             sy = -(2 * self.x * self.z - 2 * self.y * self.w)
             unlocked = abs(sy) < 0.99999
             return MVector3D(
-                atan2(
-                    2 * self.y * self.z + 2 * self.x * self.w,
-                    2 * self.w * self.w + 2 * self.z * self.z - 1,
-                )
-                if unlocked
-                else 0,
+                (
+                    atan2(
+                        2 * self.y * self.z + 2 * self.x * self.w,
+                        2 * self.w * self.w + 2 * self.z * self.z - 1,
+                    )
+                    if unlocked
+                    else 0
+                ),
                 asin(max(-1, min(1, sy))),
-                atan2(
-                    2 * self.x * self.y + 2 * self.z * self.w,
-                    2 * self.w * self.w + 2 * self.x * self.x - 1,
-                )
-                if unlocked
-                else atan2(
-                    -(2 * self.x * self.y - 2 * self.z * self.w),
-                    2 * self.w * self.w + 2 * self.y * self.y - 1,
+                (
+                    atan2(
+                        2 * self.x * self.y + 2 * self.z * self.w,
+                        2 * self.w * self.w + 2 * self.x * self.x - 1,
+                    )
+                    if unlocked
+                    else atan2(
+                        -(2 * self.x * self.y - 2 * self.z * self.w),
+                        2 * self.w * self.w + 2 * self.y * self.y - 1,
+                    )
                 ),
             )
 

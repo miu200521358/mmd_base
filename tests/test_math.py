@@ -2404,5 +2404,45 @@ def test_evaluate():
     assert t == et, f"Expected {et}, but got {t}"
 
 
+def test_MQuaternion_to_fixed_axis_rotation():
+    import numpy as np
+
+    from mlib.core.math import MQuaternion, MVector3D
+
+    q = MQuaternion(0.5, 0.5, 0.5, 0.5)
+    fixed_axis = MVector3D(1, 0, 0)
+    expected_result = MQuaternion(0.5, 0.866025403784439, 0, 0)
+    assert np.isclose(
+        expected_result.vector,
+        q.to_fixed_axis_rotation(fixed_axis).vector,
+    ).all()
+
+    q = MQuaternion(0.5, 0.5, 0.5, 0.5)
+    fixed_axis = MVector3D(0, 1, 0)
+    expected_result = MQuaternion(0.5, 0, 0.866025403784439, 0)
+    assert np.isclose(
+        expected_result.vector,
+        q.to_fixed_axis_rotation(fixed_axis).vector,
+    ).all()
+
+    q = MQuaternion(0.5, 0.5, 0.5, 0.5)
+    fixed_axis = MVector3D(0, 0, 1)
+    expected_result = MQuaternion(0.5, 0, 0, 0.866025403784439)
+    assert np.isclose(
+        expected_result.vector,
+        q.to_fixed_axis_rotation(fixed_axis).vector,
+    ).all()
+
+    q = MQuaternion(0.5, 0.5, 0.5, 0.5)
+    fixed_axis = MVector3D(0.5, 0.7, 0.2)
+    expected_result = MQuaternion(
+        0.5, 0.49029033784546, 0.686406472983644, 0.196116135138184
+    )
+    assert np.isclose(
+        expected_result.vector,
+        q.to_fixed_axis_rotation(fixed_axis).vector,
+    ).all()
+
+
 if __name__ == "__main__":
     pytest.main()
