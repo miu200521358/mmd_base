@@ -492,42 +492,44 @@ class MVector3D(MVector):
 
     def to_local_matrix4x4(self) -> "MMatrix4x4":
         """自身をローカル軸とした場合の回転行列を取得"""
+        v = self.copy()
         if not self:
-            return MMatrix4x4()
+            v = MVector3D(1.0, 0.0, 0.0)
 
         # ローカルX軸の方向ベクトル
-        x_axis = self.vector.copy()
-        norm_x_axis = norm(x_axis)
-        if not norm_x_axis:
-            return MMatrix4x4()
-        x_axis = x_axis / norm_x_axis
-        if np.all(np.isnan(x_axis)):
-            return MMatrix4x4()
+        x_axis = v.copy()
+        x_axis = x_axis / norm(x_axis.vector)
+        x_axis = x_axis.effective()
+        if not x_axis:
+            x_axis = MVector3D(1.0, 0.0, 0.0)
+        x_axis.normalize()
 
         # ローカルZ軸の方向ベクトル
-        z_axis = np.array([0.0, 0.0, -1.0])
-        if np.isclose(z_axis, self.vector).all():
+        z_axis = MVector3D(0.0, 0.0, -1.0)
+        if np.isclose(z_axis.vector, v.vector).all():
             # 自身がほぼZ軸ベクトルの場合、別ベクトルを与える
-            z_axis = np.array([0.0, 1.0, 0.0])
+            z_axis = MVector3D(0.0, 1.0, 0.0)
 
         # ローカルY軸の方向ベクトル
-        y_axis = np.cross(z_axis, x_axis)
-        norm_y_axis = norm(y_axis)
-        if not norm_y_axis:
-            return MMatrix4x4()
-        y_axis /= norm_y_axis
-        if np.all(np.isnan(y_axis)):
-            return MMatrix4x4()
+        y_axis = z_axis.cross(x_axis)
+        y_axis = y_axis / norm(y_axis.vector)
+        y_axis = y_axis.effective()
+        if not y_axis:
+            y_axis = MVector3D(0.0, 1.0, 0.0)
+        y_axis.normalize()
 
-        z_axis = np.cross(x_axis, y_axis)
-        norm_z_axis = norm(z_axis)
-        z_axis /= norm_z_axis
+        z_axis = x_axis.cross(y_axis)
+        z_axis = z_axis / norm(z_axis.vector)
+        z_axis = z_axis.effective()
+        if not z_axis:
+            z_axis = MVector3D(0.0, 0.0, -1.0)
+        z_axis.normalize()
 
         # ローカル軸に合わせた回転行列を作成する
         rotation_matrix = MMatrix4x4()
-        rotation_matrix.vector[:3, 0] = x_axis
-        rotation_matrix.vector[:3, 1] = y_axis
-        rotation_matrix.vector[:3, 2] = z_axis
+        rotation_matrix.vector[:3, 0] = x_axis.vector
+        rotation_matrix.vector[:3, 1] = y_axis.vector
+        rotation_matrix.vector[:3, 2] = z_axis.vector
 
         return rotation_matrix
 
