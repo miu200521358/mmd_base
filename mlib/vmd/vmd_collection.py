@@ -664,9 +664,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                 bf = self[bone.name][fno]
                 fno_poses[bone.index] = bf.position
                 fno_scales[bone.index] = bf.scale
-                fno_local_poses[bone.index] = bf.local_position
-                fno_local_qqs[bone.index] = bf.local_rotation
-                fno_local_scales[bone.index] = bf.local_scale
+                fno_local_poses[bone.index] = bf.local_position.effective()
+                fno_local_qqs[bone.index] = bf.local_rotation.effective()
+                fno_local_scales[bone.index] = bf.local_scale.effective()
 
                 is_valid_local_pos = is_valid_local_pos or bool(bf.local_position)
                 is_valid_local_rot = is_valid_local_rot or bool(bf.local_rotation)
@@ -685,9 +685,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     parent_bone = model.bones[parent_index]
                     if parent_bone.index not in fno_local_poses:
                         parent_bf = self[parent_bone.name][fno]
-                        fno_local_poses[parent_bone.index] = parent_bf.local_position
-                        fno_local_qqs[parent_bone.index] = parent_bf.local_rotation
-                        fno_local_scales[parent_bone.index] = parent_bf.local_scale
+                        fno_local_poses[parent_bone.index] = (
+                            parent_bf.local_position.effective()
+                        )
+                        fno_local_qqs[parent_bone.index] = (
+                            parent_bf.local_rotation.effective()
+                        )
+                        fno_local_scales[parent_bone.index] = (
+                            parent_bf.local_scale.effective()
+                        )
                     is_parent_bone_not_local_cancels.append(
                         model.bones.is_bone_not_local_cancels[parent_bone.index]
                     )
@@ -856,9 +862,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     bf = self[bone.name][fno]
                     fno_poses[bone.index] = bf.position
                     fno_scales[bone.index] = bf.scale
-                    fno_local_poses[bone.index] = bf.local_position
-                    fno_local_qqs[bone.index] = bf.local_rotation
-                    fno_local_scales[bone.index] = bf.local_scale
+                    fno_local_poses[bone.index] = bf.local_position.effective()
+                    fno_local_qqs[bone.index] = bf.local_rotation.effective()
+                    fno_local_scales[bone.index] = bf.local_scale.effective()
 
                     is_valid_local_pos = is_valid_local_pos or bool(bf.local_position)
                     is_valid_local_rot = is_valid_local_rot or bool(bf.local_rotation)
@@ -877,11 +883,15 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                         parent_bone = model.bones[parent_index]
                         if parent_bone.index not in fno_local_poses:
                             parent_bf = self[parent_bone.name][fno]
-                            fno_local_poses[
-                                parent_bone.index
-                            ] = parent_bf.local_position
-                            fno_local_qqs[parent_bone.index] = parent_bf.local_rotation
-                            fno_local_scales[parent_bone.index] = parent_bf.local_scale
+                            fno_local_poses[parent_bone.index] = (
+                                parent_bf.local_position.effective()
+                            )
+                            fno_local_qqs[parent_bone.index] = (
+                                parent_bf.local_rotation.effective()
+                            )
+                            fno_local_scales[parent_bone.index] = (
+                                parent_bf.local_scale.effective()
+                            )
                         is_parent_bone_not_local_cancels.append(
                             model.bones.is_bone_not_local_cancels[parent_bone.index]
                         )
@@ -1739,9 +1749,9 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
                     link_bone, total_actual_ik_qq
                 )
 
-                motion_bone_qqs[
-                    0, link_bone.index
-                ] = total_actual_ik_qq.to_matrix4x4().vector
+                motion_bone_qqs[0, link_bone.index] = (
+                    total_actual_ik_qq.to_matrix4x4().vector
+                )
                 is_motion_identity_qqs = False
 
             if is_break:
@@ -1831,9 +1841,7 @@ class VmdBoneFrames(BaseIndexNameDictWrapperModel[VmdBoneNameFrames]):
             global_axis_vec = (
                 MVector3D(1, 0, 0)
                 if axis == 0
-                else MVector3D(0, 1, 0)
-                if axis == 1
-                else MVector3D(0, 0, 1)
+                else MVector3D(0, 1, 0) if axis == 1 else MVector3D(0, 0, 1)
             )
             total_axis_ik_qq = MQuaternion.from_axis_angles(
                 global_axis_vec, total_axis_ik_rad * total_axis_ik_sign
@@ -2507,9 +2515,7 @@ class VmdMotion(BaseHashModel):
         """モーフキーフレ挿入"""
         self.morphs[mf.name].insert(mf)
 
-    def animate(
-        self, fno: int, model: PmxModel, is_gl: bool = True
-    ) -> tuple[
+    def animate(self, fno: int, model: PmxModel, is_gl: bool = True) -> tuple[
         int,
         np.ndarray,
         VmdBoneFrameTrees,
